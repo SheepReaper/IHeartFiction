@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "provider": "jsdelivr",
+      "library": "bootstrap@4.3.1",
+      "destination": "wwwroot/lib/bootstrap/"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "jquery@3.4.1",
+      "destination": "wwwroot/lib/jquery/"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "open-iconic@1.1.1",
+      "destination": "wwwroot/lib/fonts/open-iconic/"
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "iframe-resizer@4.1.1",
+      "destination": "wwwroot/lib/iframe-resizer/",
+      "files": [
+        "js/iframeResizer.contentWindow.js",
+        "js/iframeResizer.contentWindow.map",
+        "js/iframeResizer.contentWindow.min.js",
+        "js/iframeResizer.js",
+        "js/iframeResizer.map",
+        "js/iframeResizer.min.js"
+      ]
+    }
+  ,
+{
+  "provider": "jsdelivr",
+  "library": "iframe-resizer@4.1.1",
+  "destination": "wwwroot/lib/iframe-resizer/",
+  "files": [
+    "js/iframeResizer.contentWindow.js",
+    "js/iframeResizer.contentWindow.map",
+    "js/iframeResizer.contentWindow.min.js",
+    "js/iframeResizer.js",
+    "js/iframeResizer.map",
+    "js/iframeResizer.min.js"
+  ]
+}
+]
+}

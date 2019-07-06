@@ -1,0 +1,30 @@
+﻿@using Microsoft.AspNetCore.Components
+<Navbar id="mainNavbar" IsExpand="true" IsDark="false" Color="Color.Light">
+    <NavbarBrand id="mainNavbarBrand" Href="">IHeartFiction</NavbarBrand>
+    <NavbarToggler id="mainNavbarToggler" onclick="@OnHamburgerClick" />
+    <Collapse id="mainNavbarCollapseRegion" isOpen="@IsOpen" IsNavbar="true">
+        <BlazorNav id="mainNavbarNavRegion"  IsList="true" Class="mr-auto" IsNavbar="true">
+            <NavItem id="mainNavbarItem1" >
+                <BlazorNavLink id="navlink1" Href="#" IsActive="true">Home</BlazorNavLink>
+            </NavItem>
+            <NavItem id="mainNavbarItem2" >
+                <BlazorNavLink id="navlink2" Href="reader">ReadDirect</BlazorNavLink>
+            </NavItem>
+            <NavItem id="mainNavbarItem3" >
+                <BlazorNavLink id="navlink3" Href="docs">Api Docs</BlazorNavLink>
+            </NavItem>
+        </BlazorNav>
+    </Collapse>
+</Navbar>
+
+@code
+{
+    bool IsOpen { get; set; } = true;
+
+    public void OnHamburgerClick(UIMouseEventArgs e)
+    {
+        IsOpen = !IsOpen;
+        StateHasChanged();
+    }
+
+}
