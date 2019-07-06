@@ -9,6 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FictionScraper.Client", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FictionScraper.Shared", "src\FictionScraper.Shared\FictionScraper.Shared.csproj", "{F834A4B3-9D53-4D13-ABD0-6A6D9CC8FBD4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RepoItems", "RepoItems", "{258754FF-AC47-443E-A634-BD8E5FDB28E8}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
