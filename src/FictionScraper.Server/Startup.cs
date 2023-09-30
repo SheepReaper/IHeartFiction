@@ -1,17 +1,9 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.Blazor;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Linq;
 using System.Net.Mime;
 using System.Reflection;
 
@@ -90,12 +82,12 @@ namespace FictionScraper.Server
                 .UseResponseCompression()
                 .UseHttpsRedirection()
                 .UseSwagger()
-                .UseClientSideBlazorFiles<Client.Startup>()
+                // .UseClientSideBlazorFiles<Client.Startup>()
                 .UseRouting()
                 .UseEndpoints(endpoints =>
                 {
                     endpoints.MapDefaultControllerRoute();
-                    endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html");
+                    // endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html");
                 })
                 .UseSwaggerUI(options =>
                 {

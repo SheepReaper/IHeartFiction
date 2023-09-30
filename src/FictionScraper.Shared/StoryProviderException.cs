@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.Serialization;
-using System.Security.Permissions;
 
 namespace FictionScraper.Shared
 {
@@ -39,7 +38,6 @@ namespace FictionScraper.Shared
         }
 
         // Deserializer
-        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
         protected StoryProviderException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             FailureReasonCode = (RequestFailReason) info.GetValue("FailureReasonCode", typeof(RequestFailReason));
@@ -50,7 +48,6 @@ namespace FictionScraper.Shared
         public StoryProvider StoryProvider { get; set; } = new StoryProvider();
 
         // Serializer
-        [SecurityPermission(SecurityAction.Demand, SerializationFormatter = true)]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             if (info == null) throw new ArgumentNullException(nameof(info));
