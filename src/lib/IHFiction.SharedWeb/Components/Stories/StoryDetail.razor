@@ -1,0 +1,273 @@
+@inject StoryService StoryService
+
+
+@if (isLoading)
+{
+    <div class="section">
+        <div class="container has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Loading story details...</p>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="section">
+        <div class="container">
+            <div class="notification is-danger">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+    </div>
+}
+else if (story != null)
+{
+    <div class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    <h1 class="title is-2">@story.Title</h1>
+                    <p class="subtitle is-4 has-text-grey">
+                        by @foreach (var author in story.Authors)
+                        {
+                            <a href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
+                            @if (author != story.Authors.Last())
+                            {
+                                <text>, </text>
+                            }
+                        }
+                    </p>
+
+                    <div class="content">
+                        <p class="is-size-5">@story.Description</p>
+                    </div>
+
+                    @if (story.Tags.Any())
+                    {
+                        <div class="field is-grouped is-grouped-multiline">
+                            <label class="label">Tags:</label>
+                            @foreach (var tag in story.Tags)
+                            {
+                                <div class="control">
+                                    <div class="tags has-addons">
+                                        <span class="tag is-dark">@tag.Category</span>
+                                        <span class="tag is-info">@tag.Value</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="column">
+                    <div class="card">
+                        <div class="card-content">
+                            <div class="content">
+                                <div class="field">
+                                    @if (story.IsPublished)
+                                    {
+                                        @if (story.HasChapters)
+                                        {
+                                            <a href="/stories/@story.Id/read" class="button is-primary is-fullwidth is-large">
+                                                <span class="icon">
+                                                    <i class="fas fa-book-open"></i>
+                                                </span>
+                                                <span>Start Reading</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="/stories/@story.Id/read" class="button is-primary is-fullwidth is-large">
+                                                <span class="icon">
+                                                    <i class="fas fa-book-open"></i>
+                                                </span>
+                                                <span>Read Story</span>
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <button class="button is-fullwidth is-large" disabled>
+                                            <span class="icon">
+                                                <i class="fas fa-clock"></i>
+                                            </span>
+                                            <span>Not Published</span>
+                                        </button>
+                                    }
+                                </div>
+
+                                <hr>
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div>
+                                            <p class="heading">Status</p>
+                                            <p class="title is-6">
+                                                @if (story.IsPublished)
+                                                {
+                                                    <span class="tag is-success">Published</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="tag is-warning">Draft</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div>
+                                            <p class="heading">Type</p>
+                                            <p class="title is-6">
+                                                @if (story.HasChapters)
+                                                {
+                                                    <span class="tag is-info">Multi-Chapter</span>
+                                                }
+                                                else if (story.HasBooks)
+                                                {
+                                                    <span class="tag is-info">Multi-Book</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="tag is-light">One-shot</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (story.PublishedAt.HasValue)
+                                {
+                                    <div class="level is-mobile">
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                                <p class="heading">Published</p>
+                                                <p class="title is-6">@story.PublishedAt.Value.ToString("MMM dd, yyyy")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div>
+                                            <p class="heading">Last Updated</p>
+                                            <p class="title is-6">@story.UpdatedAt.ToString("MMM dd, yyyy")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (story.HasChapters && chapters?.Data?.Any() == true)
+            {
+                <div class="section">
+                    <h2 class="title is-4">Chapters</h2>
+                    <div class="columns is-multiline">
+                        @foreach (var chapter in chapters.Data)
+                        {
+                            <div class="column is-half">
+                                <div class="card">
+                                    <div class="card-content">
+                                        <h3 class="title is-6">@chapter.Title</h3>
+                                        <p class="subtitle is-7 has-text-grey">
+                                            @if (chapter.PublishedAt.HasValue)
+                                            {
+                                                <text>Published @chapter.PublishedAt.Value.ToString("MMM dd, yyyy")</text>
+                                            }
+                                            else
+                                            {
+                                                <text>Draft</text>
+                                            }
+                                        </p>
+                                    </div>
+                                    <footer class="card-footer">
+                                        @if (chapter.PublishedAt.HasValue)
+                                        {
+                                            <a href="/stories/@story.Id/chapters/@chapter.ChapterId" class="card-footer-item">
+                                                <span class="icon">
+                                                    <i class="fas fa-book-open"></i>
+                                                </span>
+                                                <span>Read</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="card-footer-item has-text-grey">
+                                                <span class="icon">
+                                                    <i class="fas fa-clock"></i>
+                                                </span>
+                                                <span>Not Available</span>
+                                            </span>
+                                        }
+                                    </footer>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+
+    private LinkedOfGetPublishedStoryResponse? story;
+    private LinkedPagedCollectionOfListStoryChaptersItem? chapters;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStory();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (story?.Id.ToString() != StoryId)
+        {
+            await LoadStory();
+        }
+    }
+
+    private async Task LoadStory()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var storyResult = await StoryService.GetStoryByIdAsync(StoryId);
+
+        if (storyResult.IsSuccess)
+        {
+            story = storyResult.Value;
+            
+            // Load chapters if the story has them
+            if (story?.HasChapters == true)
+            {
+                var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
+                
+                    @* chapters = chaptersResult.Value; *@
+                if (chaptersResult.IsSuccess)
+                {
+                    chapters = chaptersResult.Value;
+                }
+            }
+        }
+        else
+        {
+            errorMessage = storyResult.DomainError.Description;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

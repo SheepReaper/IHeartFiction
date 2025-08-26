@@ -1,0 +1,108 @@
+<div class="card">
+    <div class="card-content">
+        <div class="content">
+            <h3 class="title is-5">
+                <a href="/stories/@Story.StoryId" class="has-text-dark">@Story.Title</a>
+            </h3>
+            
+            <p class="subtitle is-6 has-text-grey">
+                by <a href="/authors/@Story.AuthorId" class="has-text-grey">@Story.AuthorName</a>
+            </p>
+
+            <p class="has-text-grey-dark">
+                @(Story.Description.Length > 200 ? Story.Description.Substring(0, 200) + "..." : Story.Description)
+            </p>
+
+            <div class="tags mt-4">
+                @* @if (Story.PublishedAt < DateTime.UtcNow)
+                {
+                    <span class="tag is-success">
+                        <span class="icon is-small">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <span>Published</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="tag is-warning">
+                        <span class="icon is-small">
+                            <i class="fas fa-clock"></i>
+                        </span>
+                        <span>Draft</span>
+                    </span>
+                } *@
+
+                @if (Story.HasChapters)
+                {
+                    <span class="tag is-info is-light">
+                        <span class="icon is-small">
+                            <i class="fas fa-list"></i>
+                        </span>
+                        <span>@Story.ChapterCount chapters</span>
+                    </span>
+                }
+                else if (Story.HasBooks)
+                {
+                    <span class="tag is-info is-light">
+                        <span class="icon is-small">
+                            <i class="fas fa-book"></i>
+                        </span>
+                        <span>Multi-book series</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="tag is-light">
+                        <span class="icon is-small">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <span>One-shot</span>
+                    </span>
+                }
+
+                <span class="tag is-light">
+                    <span class="icon is-small">
+                        <i class="fas fa-calendar"></i>
+                    </span>
+                    <span>@Story.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="card-footer">
+        <a href="/stories/@Story.StoryId" class="card-footer-item">
+            <span class="icon">
+                <i class="fas fa-eye"></i>
+            </span>
+            <span>View Details</span>
+        </a>
+        
+        @if (Story.PublishedAt < DateTime.UtcNow)
+        {
+            @if (Story.HasChapters)
+            {
+                <a href="/stories/@Story.StoryId/read" class="card-footer-item">
+                    <span class="icon">
+                        <i class="fas fa-book-open"></i>
+                    </span>
+                    <span>Start Reading</span>
+                </a>
+            }
+            else
+            {
+                <a href="/stories/@Story.StoryId/read" class="card-footer-item">
+                    <span class="icon">
+                        <i class="fas fa-book-open"></i>
+                    </span>
+                    <span>Read Story</span>
+                </a>
+            }
+        }
+    </footer>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public LinkedOfListPublishedStoriesItem Story { get; set; } = null!;
+}

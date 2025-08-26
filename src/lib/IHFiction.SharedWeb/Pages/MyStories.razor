@@ -1,0 +1,160 @@
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Authorization
+@page "/my-stories"
+@attribute [Authorize(Roles = "author")]
+@inject StoryService StoryService
+@inject NavigationManager Navigation
+
+<h1>My Stories</h1>
+
+<div class="block">
+    <button class="button is-primary" @onclick="CreateNewStory">Create New Story</button>
+</div>
+
+@if (_isLoading)
+{
+    <div class="section">
+        <div class="container has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Loading stories...</p>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="section">
+        <div class="container">
+            <div class="notification is-danger">
+                <strong>Error:</strong> @_errorMessage
+            </div>
+        </div>
+    </div>
+}
+else if (_stories != null)
+{
+    <Virtualize Items="_stories" Context="story">
+        <div class="box">
+            <div class="columns is-vcentered">
+                <div class="column">
+                    <p class="title is-5">@story.Title</p>
+                    <p class="subtitle is-6">@(story.IsPublished ? "Published" : "Draft")</p>
+                </div>
+                <div class="column is-narrow">
+                    <div class="dropdown is-hoverable is-right">
+                        <div class="dropdown-trigger">
+                            <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+                                <span>Actions</span>
+                                <span class="icon is-small">
+                                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                                </span>
+                            </button>
+                        </div>
+                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                            <div class="dropdown-content">
+                                <a @onclick="() => EditStory(story.Id)" class="dropdown-item">Edit</a>
+                                @if (story.IsPublished)
+                                {
+                                    <a @onclick="() => UnpublishStory(story.Id)" class="dropdown-item">Unpublish</a>
+                                }
+                                else
+                                {
+                                    <a @onclick="() => PublishStory(story.Id)" class="dropdown-item">Publish</a>
+                                }
+                                <hr class="dropdown-divider">
+                                <a @onclick="() => DeleteStory(story.Id)" class="dropdown-item is-danger">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Virtualize>
+}
+
+@code {
+    private ICollection<LinkedOfAuthorStoryItem>? _stories;
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStories();
+    }
+
+    private void CreateNewStory()
+    {
+        Navigation.NavigateTo("/stories/new");
+    }
+
+    private void EditStory(string storyId)
+    {
+        Navigation.NavigateTo($"/stories/{storyId}/edit");
+    }
+
+    private async Task PublishStory(string storyId)
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        var result = await StoryService.PublishStoryAsync(storyId);
+        if (result.IsSuccess)
+        {
+            await LoadStories();
+        }
+        else
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+        _isLoading = false;
+    }
+
+    private async Task UnpublishStory(string storyId)
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        var result = await StoryService.UnpublishStoryAsync(storyId);
+        if (result.IsSuccess)
+        {
+            await LoadStories();
+        }
+        else
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+        _isLoading = false;
+    }
+
+    private async Task DeleteStory(string storyId)
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        var result = await StoryService.DeleteStoryAsync(storyId);
+        if (result.IsSuccess)
+        {
+            await LoadStories();
+        }
+        else
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+        _isLoading = false;
+    }
+
+    private async Task LoadStories()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+        var result = await StoryService.GetCurrentAuthorStoriesAsync(new GetCurrentAuthorStoriesBody());
+        if (result.IsSuccess)
+        {
+            _stories = result.Value.Data;
+        }
+        else
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+        _isLoading = false;
+        StateHasChanged();
+    }
+}

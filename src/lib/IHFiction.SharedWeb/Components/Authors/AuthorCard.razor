@@ -1,0 +1,81 @@
+<div class="card">
+    <div class="card-content">
+        <div class="media">
+            <div class="media-left">
+                <figure class="image is-48x48">
+                    <div class="has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" style="width: 48px; height: 48px; border-radius: 50%;">
+                        <span class="has-text-weight-bold">@GetInitials(Author.Name)</span>
+                    </div>
+                </figure>
+            </div>
+            <div class="media-content">
+                <p class="title is-5">
+                    <a href="/authors/@Author.Id" class="has-text-dark">@Author.Name</a>
+                </p>
+                <p class="subtitle is-6 has-text-grey">
+                    @Author.PublishedStories published stories
+                </p>
+            </div>
+        </div>
+
+        <div class="content">
+            @if (!string.IsNullOrWhiteSpace(Author.Bio))
+            {
+                <p class="has-text-grey-dark">
+                    @(Author.Bio.Length > 150 ? Author.Bio.Substring(0, 150) + "..." : Author.Bio)
+                </p>
+            }
+            else
+            {
+                <p class="has-text-grey-light">
+                    <em>No biography available</em>
+                </p>
+            }
+            
+            <div class="tags">
+                <span class="tag is-light">
+                    <span class="icon is-small">
+                        <i class="fas fa-book"></i>
+                    </span>
+                    <span>@Author.TotalStories stories</span>
+                </span>
+                <span class="tag is-primary is-light">
+                    <span class="icon is-small">
+                        <i class="fas fa-calendar"></i>
+                    </span>
+                    <span>Joined @Author.CreatedAt.ToString("MMM yyyy")</span>
+                </span>
+            </div>
+        </div>
+    </div>
+    <footer class="card-footer">
+        <a href="/authors/@Author.Id" class="card-footer-item">
+            <span class="icon">
+                <i class="fas fa-user"></i>
+            </span>
+            <span>View Profile</span>
+        </a>
+        <a href="/authors/@Author.Id/stories" class="card-footer-item">
+            <span class="icon">
+                <i class="fas fa-book"></i>
+            </span>
+            <span>View Stories</span>
+        </a>
+    </footer>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public LinkedOfListAuthorsItem Author { get; set; } = null!;
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "?";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+            return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+        
+        return (parts[0].Substring(0, 1) + parts[^1].Substring(0, 1)).ToUpper();
+    }
+}

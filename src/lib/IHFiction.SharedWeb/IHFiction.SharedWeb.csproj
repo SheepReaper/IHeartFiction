@@ -1,0 +1,34 @@
+<?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <OpenApiReference Include="../../IHFiction.FictionApi/openapi.json" CodeGenerator="NSwagCSharp" Namespace="IHFiction.SharedWeb">
+      <ClassName>FictionApiClient</ClassName>
+      <Options>/UseBaseUrl:false /GenerateClientInterfaces:true /GenerateOptionalParameters:true /JsonLibrary:SystemTextJson</Options>
+    </OpenApiReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.KeyCloak.Authentication" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="NSwag.ApiDescription.Client" />
+    <PackageReference Include="Ulid" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />
+    <ProjectReference Include="../IHFiction.Data/IHFiction.Data.csproj" />
+  </ItemGroup>
+
+</Project>

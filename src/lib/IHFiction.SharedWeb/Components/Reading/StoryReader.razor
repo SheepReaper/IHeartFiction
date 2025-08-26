@@ -1,0 +1,255 @@
+@using Markdig
+@inherits CancellableComponent
+@inject StoryService StoryService
+@inject ThemeService theme
+@inject IJSRuntime js
+@inject MarkdownPipeline mdp
+
+@if (isLoading)
+{
+    <div class="section">
+        <div class="container has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Loading story...</p>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="section">
+        <div class="container">
+            <div class="notification is-danger">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+    </div>
+}
+else if (story != null)
+{
+    <div class="section">
+        <div class="container">
+            <!-- Story Header -->
+            <div class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <div>
+                            <h1 class="title is-3">@story.Title</h1>
+                            <p class="subtitle is-5 has-text-grey">
+                                by @foreach (var author in story.Authors)
+                                {
+                                    <a href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
+                                    @if (author != story.Authors.Last())
+                                    {
+                                        <text>, </text>
+                                    }
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <div class="level-item">
+                        <a href="/stories/@story.Id" class="button is-light">
+                            <span class="icon">
+                                <i class="fas fa-info-circle"></i>
+                            </span>
+                            <span>Story Details</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            @if (story.HasChapters)
+            {
+                <!-- Multi-chapter story -->
+                @if (chapters?.Data?.Any() == true)
+                {
+                    <div class="columns">
+                        <div class="column is-narrow">
+                            <aside class="menu">
+                                <p class="menu-label">Chapters</p>
+                                <ul class="menu-list">
+                                    @foreach (var chapter in chapters.Data.Where(c => c.PublishedAt.HasValue))
+                                    {
+                                        <li>
+                                            <a href="/stories/@story.Id/chapters/@chapter.ChapterId"
+                                                class="@(chapter.ChapterId.ToString() == CurrentChapterId ? "is-active" : "")">
+                                                @chapter.Title
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </aside>
+                        </div>
+                        <div class="column">
+                            @if (!string.IsNullOrEmpty(CurrentChapterId))
+                            {
+                                <ChapterReader ChapterId="@CurrentChapterId" StoryId="@story.Id.ToString()" />
+                            }
+                            else
+                            {
+                                <div class="content has-text-centered">
+                                    <h2 class="title is-4">Select a Chapter</h2>
+                                    <p>Choose a chapter from the menu to start reading.</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="content has-text-centered">
+                        <span class="icon is-large has-text-grey-light">
+                            <i class="fas fa-book fa-3x"></i>
+                        </span>
+                        <h2 class="title is-4 has-text-grey">No chapters available</h2>
+                        <p class="has-text-grey">This story doesn't have any published chapters yet.</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- Single story -->
+                @if (storyContent != null)
+                {
+                    <div class="content">
+
+                        @if (!string.IsNullOrWhiteSpace(storyContent.Note1))
+                        {
+                            <div class="message is-info">
+                                <div class="message-header">
+                                    <p>Author's Notes</p>
+                                </div>
+                                <div class="message-body">
+                                    @if (!string.IsNullOrWhiteSpace(storyContent.Note1))
+                                    {
+                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note1, mdp))</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <div class="box content">
+                            @((MarkupString)Markdown.ToHtml(storyContent?.Content ?? string.Empty, mdp))
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(storyContent?.Note2))
+                        {
+                            <div class="message is-info">
+                                <div class="message-header">
+                                    <p>Author's Notes</p>
+                                </div>
+                                <div class="message-body">
+                                    @if (!string.IsNullOrWhiteSpace(storyContent.Note2))
+                                    {
+                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note2, mdp))</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="content has-text-centered">
+                        <span class="icon is-large has-text-grey-light">
+                            <i class="fas fa-file-alt fa-3x"></i>
+                        </span>
+                        <h2 class="title is-4 has-text-grey">No content available</h2>
+                        <p class="has-text-grey">This story doesn't have any content yet.</p>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+    [Parameter] public string? CurrentChapterId { get; set; }
+
+    private LinkedOfGetPublishedStoryResponse? story;
+    private LinkedPagedCollectionOfListStoryChaptersItem? chapters;
+    private LinkedOfGetPublishedStoryContentResponse? storyContent;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private bool _disposed = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        theme.ThemeChanged += OnThemeChanged;
+        await LoadStory();
+        SetTheme();
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        SetTheme();
+    }
+
+    private void SetTheme()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (story?.Id.ToString() != StoryId)
+        {
+            await LoadStory();
+        }
+    }
+
+    private async Task LoadStory()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var storyResult = await StoryService.GetStoryByIdAsync(StoryId);
+
+        if (storyResult.IsSuccess)
+        {
+            story = storyResult.Value;
+
+            if (story?.HasChapters == true)
+            {
+                // Load chapters for multi-chapter story
+                var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
+
+                if (chaptersResult.IsSuccess)
+                {
+                    chapters = chaptersResult.Value;
+                }
+            }
+            else if (story?.HasContent == true)
+            {
+                // Load content for single story
+                var contentResult = await StoryService.GetPublishedStoryContentAsync(StoryId);
+
+                if (contentResult.IsSuccess)
+                {
+                    storyContent = contentResult.Value;
+                }
+            }
+        }
+        else
+        {
+            errorMessage = storyResult.DomainError.Description;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    protected override ValueTask DisposeAsyncCore()
+    {
+        if (_disposed) return ValueTask.CompletedTask;
+
+        theme.ThemeChanged -= OnThemeChanged;
+
+        _disposed = true;
+
+        return base.DisposeAsyncCore();
+    }
+}

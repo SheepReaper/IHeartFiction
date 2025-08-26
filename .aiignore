@@ -1,0 +1,57 @@
+# ===============================
+# Build artifacts
+# ===============================
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+out/
+artifacts/
+
+# ===============================
+# IDE / tooling state
+# ===============================
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.rsuser
+*.sln.docstates
+
+# ===============================
+# NuGet
+# ===============================
+*.nupkg
+*.snupkg
+*.nuspec
+# Ignore packages folder, unless you commit sources
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/repositories.config
+
+# ===============================
+# Test output
+# ===============================
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+*.trx
+*.testlog
+
+# ===============================
+# Temporary files
+# ===============================
+*.tmp
+*.temp
+*.cache
+*.bak
+*.log
+
+# ===============================
+# OS files
+# ===============================
+[Dd]esktop.ini
+[Tt]humbs.db
+ehthumbs.db
+*.DS_Store

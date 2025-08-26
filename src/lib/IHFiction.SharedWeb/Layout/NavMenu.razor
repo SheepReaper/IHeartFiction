@@ -1,0 +1,125 @@
+@using IHFiction.SharedKernel.Infrastructure
+@using IHFiction.SharedWeb.Services
+@rendermode RenderMode.InteractiveServer
+@inherits CancellableComponent
+@inject ThemeService theme
+@inject AppVersion appVersion
+
+<!DOCTYPE html>
+
+<nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <NavLink class="navbar-item" href="" Match="NavLinkMatch.All">
+            <strong>I❤️Fiction</strong>
+        </NavLink>
+
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample"
+            @onclick="ToggleMobileMenu">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+    </div>
+
+    <div id="navbarBasicExample" class="navbar-menu @(_isMobileMenuOpen ? "is-active" : "")">
+        <div class="navbar-start">
+            <NavLink class="navbar-item" href="stories">
+                <span class="icon">
+                    <i class="fas fa-book"></i>
+                </span>
+                <span>Stories</span>
+            </NavLink>
+
+            <NavLink class="navbar-item" href="authors">
+                <span class="icon">
+                    <i class="fas fa-users"></i>
+                </span>
+                <span>Authors</span>
+            </NavLink>
+            <AuthorizeView>
+                <Authorized>
+                    @if (context.User.IsInRole("author"))
+                    {
+                        <NavLink class="navbar-item" href="my-stories">
+                            <span class="icon">
+                                <i class="fas fa-book-open"></i>
+                            </span>
+                            <span>My Stories</span>
+                        </NavLink>
+                    }
+                    else
+                    {
+                        <NavLink class="navbar-item" href="become-author">
+                            <span class="icon">
+                                <i class="fas fa-pen-nib"></i>
+                            </span>
+                            <span>Start Writing</span>
+                        </NavLink>
+                    }
+                </Authorized>
+            </AuthorizeView>
+        </div>
+
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <LoginDisplay />
+            </div>
+            <div class="navbar-item">
+                <button class="button has-tooltip-bottom has-tooltip-subtle" data-tooltip="@Version" @onclick="ToggleTheme">
+                    <span class="icon"><i class="fas fa-@themeIcon"></i></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+@code {
+    private bool _isMobileMenuOpen = false;
+    private string themeIcon => theme.CurrentTheme == "dark" ? "moon" : "sun";
+    private bool _disposed = false;
+    private string Version => string.Format(
+        "{0}{1}",
+        appVersion.Information, 
+        string.IsNullOrEmpty(appVersion.Commit) ? string.Empty : $"+{appVersion.Commit}");
+
+    protected override Task OnInitializedAsync()
+    {
+        theme.ThemeChanged += OnThemeChanged;
+
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await theme.InitializeThemeAsync(CancellationToken);
+        }
+    }
+
+    private void ToggleMobileMenu()
+    {
+        _isMobileMenuOpen = !_isMobileMenuOpen;
+    }
+
+    private async Task ToggleTheme()
+    {
+        await theme.ToggleThemeAsync(CancellationToken);
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override ValueTask DisposeAsyncCore()
+    {
+        if(_disposed) return ValueTask.CompletedTask;
+
+        theme.ThemeChanged -= OnThemeChanged;
+
+        _disposed = true;
+
+        return base.DisposeAsyncCore();
+    }
+}

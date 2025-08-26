@@ -1,0 +1,10 @@
+@page "/authors/{authorId}"
+@using IHFiction.SharedWeb.Components.Authors
+
+<PageTitle>Author Profile - IHeartFiction</PageTitle>
+
+<AuthorDetail AuthorId="@AuthorId" />
+
+@code {
+    [Parameter] public string AuthorId { get; set; } = null!;
+}

@@ -1,0 +1,197 @@
+@inject AuthorService AuthorService
+
+<div class="section">
+    <div class="container">
+        <div class="level">
+            <div class="level-left">
+                <div class="level-item">
+                    <h1 class="title">Authors</h1>
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <div class="field has-addons">
+                        <div class="control has-icons-left">
+                            <input class="input" type="text" placeholder="Search authors..." @bind="searchQuery" @onkeypress="OnSearchKeyPress">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                        <div class="control">
+                            <button class="button is-primary" @onclick="SearchAuthors">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="control">
+                <div class="select">
+                    <select @bind="sortBy" @bind:after="() => OnSortChanged()">
+                        <option value="name">Sort by Name</option>
+                        <option value="createdAt">Sort by Join Date</option>
+                        <option value="updatedAt">Sort by Last Activity</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="has-text-centered">
+                <div class="is-loading" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <span class="icon is-large">
+                        <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                    </span>
+                </div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="notification is-danger">
+                <button class="delete" @onclick="ClearError"></button>
+                <strong>Error:</strong> @errorMessage
+            </div>
+        }
+        else if (authors?.Data?.Any() == true)
+        {
+            <div class="columns is-multiline">
+                @foreach (var author in authors.Data)
+                {
+                    <div class="column is-one-third">
+                        <AuthorCard Author="author" />
+                    </div>
+                }
+            </div>
+
+            @if (authors.TotalPages > 1)
+            {
+                <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                    <button class="pagination-previous" @onclick="PreviousPage" disabled="@(!HasPreviousPage)">
+                        Previous
+                    </button>
+                    <button class="pagination-next" @onclick="NextPage" disabled="@(!HasNextPage)">
+                        Next page
+                    </button>
+                    <ul class="pagination-list">
+                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(authors.TotalPages, currentPage + 2); i++)
+                        {
+                            <li>
+                                <button class="pagination-link @(i == currentPage ? "is-current" : "")" 
+                                        @onclick="() => GoToPage(i)">
+                                    @i
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="has-text-centered">
+                <div class="content">
+                    <span class="icon is-large has-text-grey-light">
+                        <i class="fas fa-users fa-3x"></i>
+                    </span>
+                    <h3 class="title is-4 has-text-grey">No authors found</h3>
+                    <p class="has-text-grey">Try adjusting your search criteria.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private LinkedPagedCollectionOfListAuthorsItem? authors;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string searchQuery = "";
+    private string sortBy = "name";
+    private int currentPage = 1;
+    private const int pageSize = 12;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthors();
+    }
+
+    private async Task LoadAuthors()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var result = await AuthorService.ListAuthorsAsync(
+            page: currentPage,
+            pageSize: pageSize,
+            search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
+            sort: sortBy);
+
+        if (result.IsSuccess)
+        {
+            authors = result.Value;
+        }
+        else
+        {
+            errorMessage = result.DomainError.Description;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task SearchAuthors()
+    {
+        currentPage = 1;
+        await LoadAuthors();
+    }
+
+    private async Task OnSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchAuthors();
+        }
+    }
+
+    private async Task OnSortChanged()
+    {
+        await SearchAuthors();
+    }
+
+    private async Task NextPage()
+    {
+        if (HasNextPage)
+        {
+            currentPage++;
+            await LoadAuthors();
+        }
+    }
+
+    private bool HasNextPage => authors?.Links.Any(l => l.Rel == "next-page") ?? false;
+
+    private async Task PreviousPage()
+    {
+        if (HasPreviousPage)
+        {
+            currentPage--;
+            await LoadAuthors();
+        }
+    }
+
+    private bool HasPreviousPage => authors?.Links.Any(l => l.Rel == "previous-page") ?? false;
+
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        await LoadAuthors();
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
+    }
+}
