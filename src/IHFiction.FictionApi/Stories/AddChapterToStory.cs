@@ -1,0 +1,232 @@
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
+using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
+using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Extensions;
+using IHFiction.SharedKernel.DataShaping;
+using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Validation;
+
+using MongoDB.Bson;
+using IHFiction.SharedKernel.Markdown;
+using System.Net.Mime;
+using IHFiction.SharedKernel.Linking;
+
+namespace IHFiction.FictionApi.Stories;
+
+internal sealed class AddChapterToStory(
+    FictionDbContext context,
+    StoryDbContext storyDbContext,
+    AuthorizationService authorizationService,
+    TimeProvider dateTimeProvider,
+    IOptions<MarkdownOptions> markdownOptions,
+    IHostEnvironment environment) : IUseCase, INameEndpoint<AddChapterToStory>
+{
+    internal static class Errors
+    {
+        // Use common errors for infrastructure concerns
+        public static readonly DomainError ConcurrencyConflict = CommonErrors.Database.ConcurrencyConflict;
+        public static readonly DomainError DatabaseError = CommonErrors.Database.SaveFailed;
+
+        // Business logic errors specific to chapter creation
+        public static readonly DomainError InvalidStoryStructure = new("AddChapterToStory.InvalidStoryStructure", "Story has direct content or books and cannot have chapters.");
+        public static readonly DomainError TitleExists = new("AddChapterToStory.TitleExists", "A chapter with this title already exists in the story.");
+    }
+
+    /// <summary>
+    /// Request body model for adding a new chapter to a story.
+    /// </summary>
+    /// <param name="Title">The title of the new chapter</param>
+    /// <param name="Content">The content of the chapter in markdown format</param>
+    /// <param name="Note1">Optional note field that can contain additional information about the chapter</param>
+    /// <param name="Note2">Optional second note field for additional author notes or comments</param>
+    internal sealed record AddChapterToStoryBody(
+        [property: Required(ErrorMessage = "Title is required.")]
+        [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 200 characters and unique amongst chapter titles.")]
+        [property: NoHarmfulContent]
+        string? Title = null,
+
+        [property: Required(ErrorMessage = "Content is required.")]
+        [property: StringLength(1000000, ErrorMessage = "Content must be no more than 1,000,000 characters.")]
+        [property: NoHarmfulContent]
+        string? Content = null,
+
+        [property: StringLength(500, ErrorMessage = "Note1 must be 500 characters or less.")]
+        [property: NoHarmfulContent]
+        string? Note1 = null,
+
+        [property: StringLength(500, ErrorMessage = "Note2 must be 500 characters or less.")]
+        [property: NoHarmfulContent]
+        string? Note2 = null);
+
+    internal sealed record Query(
+        [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
+        [property: ShapesType<AddChapterToStoryResponse>]
+        string? Fields = null
+    ) : IDataShapingSupport;
+
+    /// <summary>
+    /// Response model for adding a new chapter to a story.
+    /// </summary>
+    /// <param name="ChapterId">Unique identifier for the created chapter</param>
+    /// <param name="ChapterTitle">Title of the created chapter</param>
+    /// <param name="ContentId">Unique identifier for the chapter content document</param>
+    /// <param name="StoryId">Unique identifier of the story the chapter was added to</param>
+    /// <param name="StoryTitle">Title of the story</param>
+    /// <param name="ChapterCreatedAt">When the chapter was created</param>
+    /// <param name="StoryUpdatedAt">When the story was last updated</param>
+    internal sealed record AddChapterToStoryResponse(
+        Ulid ChapterId,
+        string ChapterTitle,
+        ObjectId ContentId,
+        Ulid StoryId,
+        string StoryTitle,
+        DateTime ChapterCreatedAt,
+        DateTime StoryUpdatedAt);
+
+    public async Task<Result<AddChapterToStoryResponse>> HandleAsync(
+        Ulid id,
+        AddChapterToStoryBody body,
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken cancellationToken = default)
+    {
+        // Authorize story access using centralized authorization service
+        var authResult = await authorizationService.AuthorizeStoryAccessAsync(
+            id, claimsPrincipal, StoryAccessLevel.Edit, includeDeleted: false, cancellationToken);
+        if (authResult.IsFailure) return authResult.DomainError;
+
+        var authorizationResult = authResult.Value;
+        var author = authorizationResult.Author;
+
+        // Reload story with additional data needed for chapter creation
+        var story = await context.Stories
+            .Include(s => s.Owner)
+            .Include(s => s.Authors)
+            .Include(s => s.Chapters)
+            .Include(s => s.Books)
+            .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
+
+        if (story is null)
+            return CommonErrors.Story.NotFound;
+
+        // Validate story structure - stories with direct content or books cannot have chapters
+        if (story.HasContent || story.HasBooks)
+            return Errors.InvalidStoryStructure;
+
+        // Sanitize input using markdown-aware sanitization
+        var options = markdownOptions.Value;
+        var isDevelopment = environment.IsDevelopment();
+
+        var sanitizedTitle = SanitizeTitle(body.Title!);
+        var sanitizedContent = MarkdownSanitizer.SanitizeContent(body.Content, options, isDevelopment);
+        var sanitizedNote1 = MarkdownSanitizer.SanitizeNote(body.Note1, options, isDevelopment);
+        var sanitizedNote2 = MarkdownSanitizer.SanitizeNote(body.Note2, options, isDevelopment);
+
+        // Check if a chapter with this title already exists in the story
+        var existingChapter = story.Chapters.FirstOrDefault(c =>
+            string.Equals(c.Title, sanitizedTitle, StringComparison.OrdinalIgnoreCase));
+
+        if (existingChapter is not null)
+            return Errors.TitleExists;
+
+        try
+        {
+            // Create the chapter content first
+            var workBody = new WorkBody
+            {
+                Content = sanitizedContent,
+                Note1 = sanitizedNote1,
+                Note2 = sanitizedNote2,
+                UpdatedAt = dateTimeProvider.GetUtcNow().UtcDateTime
+            };
+
+            storyDbContext.WorkBodies.Add(workBody);
+            await storyDbContext.SaveChangesAsync(cancellationToken);
+
+            // Create the chapter
+            var chapter = new Chapter
+            {
+                Title = sanitizedTitle,
+                Owner = author,
+                OwnerId = author.Id,
+                Story = story,
+                StoryId = story.Id,
+                WorkBodyId = workBody.Id
+            };
+
+            // Add the author as a collaborator on the chapter
+            chapter.Authors.Add(author);
+
+            // Add the chapter to the story
+            story.Chapters.Add(chapter);
+
+            // Save changes to PostgreSQL
+            await context.SaveChangesAsync(cancellationToken);
+
+            return new AddChapterToStoryResponse(
+                chapter.Id,
+                chapter.Title,
+                workBody.Id,
+                story.Id,
+                story.Title,
+                chapter.CreatedAt,
+                story.UpdatedAt);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return Errors.ConcurrencyConflict;
+        }
+        catch (DbUpdateException)
+        {
+            return Errors.DatabaseError;
+        }
+    }
+
+    private static string SanitizeTitle(string title)
+    {
+        // Trim and normalize whitespace
+        var sanitized = ValidationRegexPatterns.ConsecutiveWhitespace().Replace(title.Trim(), " ");
+        return sanitized;
+    }
+        public static string EndpointName => nameof(AddChapterToStory);
+
+
+
+    internal sealed class Endpoint : IEndpoint
+    {
+        public string Name => EndpointName;
+
+
+        public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
+        {
+            return builder.MapPost("stories/{id:ulid}/chapters", async (
+                [FromRoute] Ulid id,
+                [AsParameters] Query query,
+                [FromBody] AddChapterToStoryBody body,
+                AddChapterToStory useCase,
+                ClaimsPrincipal claimsPrincipal,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
+
+                return result.ToCreatedResult($"/chapters/{result.Value?.ChapterId}", query);
+            })
+            .WithSummary("Add Chapter to Story")
+            .WithDescription("Creates a new chapter within a story with the provided title and content. " +
+                "Only story owners and authorized collaborators can add chapters. " +
+                "The story must support chapters (cannot have direct content or books). " +
+                "Chapter titles must be unique within the story. Requires authentication.")
+            .WithTags(ApiTags.Stories.Management)
+            .RequireAuthorization("author")
+            .WithStandardResponses()
+            .Produces<Linked<AddChapterToStoryResponse>>(StatusCodes.Status201Created)
+            .Accepts<AddChapterToStoryBody>(MediaTypeNames.Application.Json);
+        }
+    }
+}

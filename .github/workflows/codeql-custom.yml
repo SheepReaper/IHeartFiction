@@ -1,0 +1,39 @@
+name: "CodeQl for .NET 10"
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    analyze:
+        runs-on: ubuntu-latest
+        permissions:
+            actions: read
+            contents: read
+            security-events: write
+
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up .Net 10 SDK
+              uses: actions/setup-dotnet@v3
+              with:
+                dotnet-version: "10.x"
+
+            - name: Restore & build
+              run: |
+                dotnet restore
+                dotnet build --no-restore --configuration Release
+
+            - name: Initialize CodeQL
+              uses: github/codeql-action/init@v3
+              with:
+                languages: csharp
+                build-mode: manual
+
+            - name: Analyze with CodeQl
+              uses: github/codeql-action/analyze@v3
+              with:
+                category: "/language:csharp"

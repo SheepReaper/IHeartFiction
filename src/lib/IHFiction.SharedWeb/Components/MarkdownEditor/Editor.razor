@@ -1,0 +1,120 @@
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.Extensions.Hosting
+@rendermode RenderMode.InteractiveServer
+@inherits CancellableComponent
+@inject IJSRuntime JSRuntime
+@inject ThemeService Theme
+
+<HeadContent>
+    <link href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" rel="stylesheet" />
+
+    @if (Theme.CurrentTheme == "dark")
+    {
+        <link href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css" rel="stylesheet" />
+    }
+</HeadContent>
+
+<div @ref="_editorElement"></div>
+
+@code {
+    [Parameter, EditorRequired]
+    public required string Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter]
+    public EditorOptions Options { get; set; } = new();
+
+    private ElementReference _editorElement;
+    private DotNetObjectReference<Editor>? _dotNetObjectReference;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _editor;
+    private bool _disposed;
+
+    protected override Task OnInitializedAsync()
+    {
+        Theme.ThemeChanged += OnThemeChanged;
+
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetObjectReference = DotNetObjectReference.Create(this);
+            Options.Element = _editorElement;
+            Options.InitialValue = Value ?? string.Empty;
+
+            _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            CancellationToken,
+            "./_content/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor.js");
+
+            _editor = await _module.InvokeConstructorAsync(
+            "BoundToast",
+            CancellationToken,
+            [Options, _dotNetObjectReference]);
+        }
+    }
+
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_editor is not null)
+        {
+            var currentMarkdown = await _editor.InvokeAsync<string>("getMarkdown");
+            if (Value != currentMarkdown)
+            {
+                await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnEditorContentChanged(string markdown)
+    {
+        Value = markdown;
+        await ValueChanged.InvokeAsync(Value);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        if (_disposed) return;
+
+        Theme.ThemeChanged -= OnThemeChanged;
+
+        try
+        {
+            if (_editor is not null)
+            {
+                await _editor.InvokeVoidAsync("destroy").ConfigureAwait(false);
+                await _editor.DisposeAsync().ConfigureAwait(false);
+            }
+
+            if (_module is not null)
+                await _module.DisposeAsync().ConfigureAwait(false);
+
+            _editor = null;
+        }
+        catch (JSDisconnectedException)
+        {
+            Console.WriteLine("JSDisconnectedException");
+        }
+
+        _module = null;
+
+        _dotNetObjectReference?.Dispose();
+        _dotNetObjectReference = null;
+
+        _disposed = true;
+
+        await base.DisposeAsyncCore().ConfigureAwait(false);
+    }
+}

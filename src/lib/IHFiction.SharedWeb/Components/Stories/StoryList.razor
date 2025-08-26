@@ -1,0 +1,213 @@
+@inherits CancellableComponent
+@inject StoryService StoryService
+
+<div class="section">
+    <div class="container">
+        <div class="level">
+            <div class="level-left">
+                <div class="level-item">
+                    <h1 class="title">Stories</h1>
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <div class="field has-addons">
+                        <div class="control has-icons-left">
+                            <input class="input" type="text" placeholder="Search stories..." @bind="searchQuery"
+                                @onkeypress="OnSearchKeyPress">
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-search"></i>
+                            </span>
+                        </div>
+                        <div class="control">
+                            <button class="button is-primary" @onclick="SearchStories">
+                                Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="columns">
+            <div class="column is-narrow">
+                <div class="field">
+                    <label class="label">Sort by</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select @bind="sortBy" @bind:after="() => OnSortChanged()">
+                                <option value="publishedAt">Recently Published</option>
+                                <option value="title">Title (A-Z)</option>
+                                <option value="updatedAt">Recently Updated</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="column">
+                <!-- Filter options can be added here in the future -->
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="has-text-centered">
+                <div class="is-loading" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <span class="icon is-large">
+                        <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                    </span>
+                </div>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="notification is-danger">
+                <button class="delete" @onclick="ClearError"></button>
+                <strong>Error:</strong> @errorMessage
+            </div>
+        }
+        else if (stories?.Data?.Any() == true)
+        {
+            <div class="columns is-multiline">
+                @foreach (var story in stories.Data)
+                {
+                    <div class="column is-one-third">
+                        <StoryCard Story="story" />
+                    </div>
+                }
+            </div>
+
+            @if (stories.TotalPages > 1)
+            {
+                <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                    <button class="pagination-previous" @onclick="PreviousPage" disabled="@(!HasPreviousPage)">
+                        Previous
+                    </button>
+                    <button class="pagination-next" @onclick="NextPage" disabled="@(!HasNextPage)">
+                        Next page
+                    </button>
+                    <ul class="pagination-list">
+                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(stories.TotalPages, currentPage + 2); i++)
+                        {
+                            <li>
+                                <button class="pagination-link @(i == currentPage ? "is-current" : "")"
+                                    @onclick="() => GoToPage(i)">
+                                    @i
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="has-text-centered">
+                <div class="content">
+                    <span class="icon is-large has-text-grey-light">
+                        <i class="fas fa-book fa-3x"></i>
+                    </span>
+                    <h3 class="title is-4 has-text-grey">No stories found</h3>
+                    <p class="has-text-grey">Try adjusting your search criteria.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? AuthorId { get; set; } = null;
+
+    private LinkedPagedCollectionOfListPublishedStoriesItem? stories;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string searchQuery = "";
+    private string sortBy = "publishedAt";
+    private int currentPage = 1;
+    private const int pageSize = 12;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStories();
+    }
+
+    private async Task LoadStories()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var result = await StoryService.ListPublishedStoriesAsync(
+        page: currentPage,
+        pageSize: pageSize,
+        search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
+        sort: sortBy,
+        body: new()
+        {
+            AuthorId = AuthorId,
+        },
+        cancellationToken: CancellationToken);
+
+        if (result.IsSuccess)
+        {
+            stories = result.Value;
+        }
+        else
+        {
+            errorMessage = result.DomainError.Description;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task SearchStories()
+    {
+        currentPage = 1;
+        await LoadStories();
+    }
+
+    private async Task OnSearchKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchStories();
+        }
+    }
+
+    private async Task OnSortChanged()
+    {
+        await SearchStories();
+    }
+
+    private async Task NextPage()
+    {
+        if (HasNextPage)
+        {
+            currentPage++;
+            await LoadStories();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (HasNextPage)
+        {
+            currentPage--;
+            await LoadStories();
+        }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        await LoadStories();
+    }
+
+    private void ClearError()
+    {
+        errorMessage = null;
+    }
+
+    private bool HasNextPage => stories?.Links.Any(l => l.Rel == "next-page") ?? false;
+    private bool HasPreviousPage => stories?.Links.Any(l => l.Rel == "previous-page") ?? false;
+}

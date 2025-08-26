@@ -1,0 +1,128 @@
+@using Markdig
+@inject ChapterService ChapterService
+@inject MarkdownPipeline mdp
+
+
+@if (isLoading)
+{
+    <div class="has-text-centered">
+        <span class="icon is-large">
+            <i class="fas fa-spinner fa-pulse fa-2x"></i>
+        </span>
+        <p>Loading chapter...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="notification is-danger">
+        <strong>Error:</strong> @errorMessage
+    </div>
+}
+else if (chapterContent != null)
+{
+    <div class="content">
+        <div class="level">
+            <div class="level-left">
+                <div class="level-item">
+                    <h2 class="title is-4">@chapterContent.ChapterTitle</h2>
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <ChapterNavigation StoryId="@StoryId" CurrentChapterId="@ChapterId" />
+                </div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(chapterContent.Note1))
+        {
+            <div class="message is-info">
+                <div class="message-header">
+                    <p>Author's Notes</p>
+                </div>
+                <div class="message-body">
+                    @if (!string.IsNullOrWhiteSpace(chapterContent.Note1))
+                    {
+                        <p>@chapterContent.Note1</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="box">
+            @((MarkupString)Markdown.ToHtml(chapterContent.Content, mdp))
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(chapterContent.Note2))
+        {
+            <div class="message is-info">
+                <div class="message-header">
+                    <p>Author's Notes</p>
+                </div>
+                <div class="message-body">
+                    @if (!string.IsNullOrWhiteSpace(chapterContent.Note2))
+                    {
+                        <p>@chapterContent.Note2</p>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="level mt-6">
+            <div class="level-left">
+                <div class="level-item">
+                    <ChapterNavigation StoryId="@StoryId" CurrentChapterId="@ChapterId" ShowLabels="true" />
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <p class="has-text-grey is-size-7">
+                        Last updated: @chapterContent.ContentUpdatedAt.ToString("MMM dd, yyyy")
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string ChapterId { get; set; } = null!;
+    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+
+    private LinkedOfGetChapterContentResponse? chapterContent;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChapter();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (chapterContent?.ChapterId.ToString() != ChapterId)
+        {
+            await LoadChapter();
+        }
+    }
+
+    private async Task LoadChapter()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var result = await ChapterService.GetChapterContentAsync(ChapterId);
+
+        if (result.IsSuccess)
+        {
+            chapterContent = result.Value;
+        }
+        else
+        {
+            errorMessage = result.DomainError.Description;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,105 @@
+@using IHFiction.SharedWeb.Services
+@page "/become-author"
+@attribute [Authorize]
+@inherits CancellableComponent
+@inject AccountService AccountService
+@inject NavigationManager Navigation
+
+<div class="container">
+    <h1 class="title">Become an Author</h1>
+    <h2 class="subtitle">Join our community of creators</h2>
+
+    <div class="content box">
+        <p>
+            Before you can start writing, please read and agree to our community guidelines and content policies.
+            You can find the full, legally binding version of these rules <a href="#" target="_blank">here</a> (link to be added).
+        </p>
+    </div>
+
+    <div class="box">
+        <h3 class="title is-4">Content Guidelines</h3>
+        <div class="content">
+            <ul>
+                <li><strong>Tagging is Your Responsibility:</strong> You are responsible for accurately tagging your work with appropriate genres, warnings, and ratings.</li>
+                <li><strong>Safe by Default:</strong> To be visible to the public (unauthenticated users), you must explicitly tag your story as "Safe for All Audiences". All other works require users to log in.</li>
+                <li><strong>Explicit Content:</strong> Explicit content that is legal within your country of residence is permitted. You must accurately tag it as such. Failure to do so may result in moderation action.</li>
+                <li><strong>AI-Generated Works:</strong> AI-generated and AI-assisted works are welcome. These must be tagged appropriately so readers can choose what content they wish to engage with.</li>
+                <li><strong>Respect Copyright:</strong> Do not post content you do not own the rights to. Plagiarism and copyright infringement will not be tolerated.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3 class="title is-4">Content Usage & Moderation</h3>
+        <div class="content">
+            <h4>Your Content, Your Rights</h4>
+            <ul>
+                <li><strong>No AI Training:</strong> We will not use your original story content to train AI models. However, your content is publicly accessible on the internet, and we cannot prevent third-party web scrapers from accessing it.</li>
+                <li><strong>Privacy Policy:</strong> Your general user data is governed by our main Privacy Policy.</li>
+            </ul>
+            <h4>Moderation Policy</h4>
+            <ul>
+                <li>The moderation team reserves the right to remove work, either temporarily or permanently, for any reason, to maintain the health of the community.</li>
+                <li>Plagiarism complaints will be investigated by the moderation team. We use AI-based tools for proactive detection, but all final decisions are made by human moderators.</li>
+                <li>We will comply with properly submitted DMCA takedown requests.</li>
+                <li>Abuse of the platform, its rules, or its users may result in suspension of authoring privileges or a full account ban.</li>
+                <li>You have the right to appeal moderation decisions through our support system.</li>
+            </ul>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="notification is-danger">
+            <button class="delete" @onclick="() => _errorMessage = string.Empty"></button>
+            <strong>Error:</strong> @_errorMessage
+        </div>
+    }
+
+    <div class="field">
+        <div class="control">
+            <label class="checkbox">
+                <input type="checkbox" @bind="_agreedToTerms" />
+                I have read and agree to the <strong>Terms and Conditions</strong>, which include the Content Guidelines, Content Usage, and Moderation policies.
+            </label>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="control">
+            <button class="button is-primary is-large" disabled="@(!_agreedToTerms)" @onclick="OnBecomeAuthorClick">
+                <span class="icon is-small">
+                    <i class="fas fa-pen-nib"></i>
+                </span>
+                <span>Agree and Start Writing</span>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private bool _agreedToTerms;
+    private string? _errorMessage;
+
+    private async Task OnBecomeAuthorClick()
+    {
+        _errorMessage = null;
+        if (!_agreedToTerms) return;
+
+        var result = await AccountService.RegisterAsAuthorAsync(new(){AcceptTerms = true}, null, CancellationToken);
+
+        if (result.IsSuccess)
+        {
+            // Success! The user now has the 'author' role on the backend.
+            // We must now force a re-authentication to update the user's claims in the browser.
+            // We do this by navigating to the login endpoint with a redirect to the story editor.
+            // The 'forceLoad' is critical to ensure a full server roundtrip.
+            Navigation.NavigateTo($"authentication/login?returnUrl=/stories/new", forceLoad: true);
+        }
+        else
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+    }
+}
