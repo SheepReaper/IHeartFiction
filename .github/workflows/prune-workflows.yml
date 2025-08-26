@@ -11,7 +11,7 @@ jobs:
       actions: write
       contents: read
     steps:
-      - uses: Mattraks/delete-workflow-runs@v2
+      - uses: Mattraks/delete-workflow-runs@feeb82053ea847a97fe4ee2aa314c94eac0eff04 # v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           retain_days: 30
