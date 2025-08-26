@@ -1,0 +1,127 @@
+@using IHFiction.SharedWeb.Services
+@using IHFiction.SharedWeb.Components.MarkdownEditor
+
+@inherits CancellableComponent
+@inject StoryEditorService StoryEditorService
+
+<div class="chapter-manager">
+    <div class="columns">
+        <div class="column is-one-third">
+            <h3 class="subtitle">Chapters</h3>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-success is-fullwidth" @onclick="AddNewChapter">
+                        <span class="icon is-small">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                        <span>Add Chapter</span>
+                    </button>
+                </div>
+            </div>
+            @if (Story is not null)
+            {
+                <div class="chapter-list">
+                    @foreach (var chapter in Story.Chapters)
+                    {
+                        <div class="chapter-item field has-addons" @key="chapter.Id">
+                            <div class="control is-expanded">
+                                <a class="button is-fullwidth @(chapter.Id == SelectedChapter?.Id ? "is-primary" : "")" @onclick="() => SelectChapter(chapter)">
+                                    @chapter.Title
+                                </a>
+                            </div>
+                            <div class="control">
+                                <button class="button is-danger" @onclick="() => DeleteChapter(chapter)">
+                                    <span class="icon is-small">
+                                        <i class="fas fa-trash"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="column">
+            @if (SelectedChapter is not null)
+            {
+                <div class="field">
+                    <label class="label">Chapter Title</label>
+                    <div class="control">
+                        <input class="input" type="text" @bind="SelectedChapter.Title" @bind:event="oninput" @bind:after="StoryEditorService.NotifyStateChanged" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Chapter Content</label>
+                    <div class="control" style="height: 500px">
+                        <Editor @bind-Value="@SelectedChapter.Content" @bind-Value:after="StoryEditorService.NotifyStateChanged" />
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="has-text-centered">
+                    <p>Select a chapter to edit its content or add a new one.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private StoryEditorModel? Story => StoryEditorService.CurrentStory;
+    private ChapterEditorModel? SelectedChapter { get; set; }
+    private bool _disposed;
+
+    protected override Task OnInitializedAsync()
+    {
+        StoryEditorService.OnStoryChanged += OnStoryChanged;
+
+        return Task.CompletedTask;
+    }
+
+    private void OnStoryChanged(object? sender, StoryChangedEventArgs e)
+    {
+        SelectedChapter = null;
+        StateHasChanged();
+    }
+
+    private async Task AddNewChapter()
+    {
+        var result = await StoryEditorService.AddNewChapter();
+
+        if (result.IsSuccess)
+        {
+            SelectedChapter = result.Value;
+        }
+    }
+
+    private async Task SelectChapter(ChapterEditorModel chapter)
+    {
+        if (chapter.Content is null)
+        {
+            await StoryEditorService.LoadChapterContentAsync(chapter);
+        }
+        SelectedChapter = chapter;
+    }
+
+    private async Task DeleteChapter(ChapterEditorModel chapter)
+    {
+        if (SelectedChapter?.Id == chapter.Id)
+        {
+            SelectedChapter = null;
+        }
+
+        await StoryEditorService.DeleteChapter(chapter);
+    }
+
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        if (_disposed) return;
+
+        StoryEditorService.OnStoryChanged -= OnStoryChanged;
+
+        _disposed = true;
+
+        await base.DisposeAsyncCore().ConfigureAwait(false);
+    }
+}

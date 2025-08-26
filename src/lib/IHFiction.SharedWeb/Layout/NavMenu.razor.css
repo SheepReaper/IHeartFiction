@@ -1,0 +1,55 @@
+/* Tooltip container */
+[data-tooltip] {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Tooltip text */
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  background-color: #4a4a4a;
+  color: #fff;
+  padding: 0.5em 0.75em;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+/* Show the tooltip on hover */
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+/* Positioning */
+.has-tooltip-top::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5em;
+}
+
+.has-tooltip-right::after {
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  margin-left: 0.5em;
+}
+
+.has-tooltip-bottom::after {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0.5em;
+}
+
+.has-tooltip-left::after {
+  top: 50%;
+  right: 100%;
+  transform: translateY(-50%);
+  margin-right: 0.5em;
+}

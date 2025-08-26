@@ -1,0 +1,23 @@
+﻿<?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="MongoDB.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Testcontainers" />
+    <PackageReference Include="Testcontainers.MongoDb" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/IHFiction.FictionApi/IHFiction.FictionApi.csproj" />
+    <ProjectReference Include="../../src/lib/IHFiction.Data/IHFiction.Data.csproj" />
+    <ProjectReference Include="../../src/lib/IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

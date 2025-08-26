@@ -1,0 +1,927 @@
+@IHFiction.FictionApi_HostAddress = http://localhost:5046
+
+###
+
+# Create a new story
+POST {{IHFiction.FictionApi_HostAddress}}/stories
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "My First Story",
+  "description": "This is a compelling story about adventure and discovery. It will take readers on a journey through unknown lands."
+}
+
+###
+
+# Get story by ID
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789
+Accept: application/json
+
+###
+
+# Update story metadata
+PUT {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Updated Story Title",
+  "description": "This is an updated description for the story with more compelling details about the adventure."
+}
+
+###
+
+# Delete story (soft delete)
+DELETE {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# List all stories (public discovery)
+GET {{IHFiction.FictionApi_HostAddress}}/stories
+Accept: application/json
+
+###
+
+# List stories with pagination
+GET {{IHFiction.FictionApi_HostAddress}}/stories?page=1&pageSize=10
+Accept: application/json
+
+###
+
+# Search stories by title/description
+GET {{IHFiction.FictionApi_HostAddress}}/stories?search=adventure
+Accept: application/json
+
+###
+
+# Filter stories by author
+GET {{IHFiction.FictionApi_HostAddress}}/stories?author=JohnDoe
+Accept: application/json
+
+###
+
+# Filter stories by tags
+GET {{IHFiction.FictionApi_HostAddress}}/stories?tags=fantasy,adventure
+Accept: application/json
+
+###
+
+# Filter published stories only
+GET {{IHFiction.FictionApi_HostAddress}}/stories?isPublished=true
+Accept: application/json
+
+###
+
+# Sort stories by title ascending
+GET {{IHFiction.FictionApi_HostAddress}}/stories?sortBy=title&sortOrder=asc
+Accept: application/json
+
+###
+
+# Complex query with multiple filters
+GET {{IHFiction.FictionApi_HostAddress}}/stories?search=magic&author=Smith&tags=fantasy&isPublished=true&page=1&pageSize=5&sortBy=published&sortOrder=desc
+Accept: application/json
+
+###
+
+# Get current author's stories
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Get current author's stories with pagination
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?page=1&pageSize=10
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Search current author's stories
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?search=adventure
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Filter current author's stories by tags
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?tags=fantasy,adventure
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Filter current author's published stories only
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?isPublished=true
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Filter current author's owned stories only (exclude collaborations)
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?isOwned=true
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Filter current author's collaborative stories only (exclude owned)
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?isOwned=false
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Sort current author's stories by title ascending
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?sortBy=title&sortOrder=asc
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Complex query for current author's stories
+GET {{IHFiction.FictionApi_HostAddress}}/me/stories?search=magic&tags=fantasy&isPublished=true&isOwned=true&page=1&pageSize=5&sortBy=published&sortOrder=desc
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Update story content (create new content)
+PUT {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "This is the main content of my story. It can be quite long and contain multiple paragraphs.\n\nThis is the second paragraph of the story content.",
+  "note1": "Author's note about this story",
+  "note2": "Additional notes or comments"
+}
+
+###
+
+# Update story content (update existing content)
+PUT {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "This is the updated content of my story. I've made some revisions and improvements.\n\nThe story now has better character development and plot progression.",
+  "note1": "Updated author's note",
+  "note2": "Revision notes: improved dialogue and pacing"
+}
+
+###
+
+# Update story content with minimal data
+PUT {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "Simple story content without notes."
+}
+
+###
+
+# Update story content with long content
+PUT {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "This is a much longer story content that demonstrates the system's ability to handle substantial text. The story unfolds with rich descriptions, detailed character interactions, and complex plot developments that span multiple scenes and chapters within a single work body.\n\nThe narrative continues with intricate world-building, exploring themes of adventure, discovery, and personal growth. Characters face challenges that test their resolve and force them to evolve throughout the journey.\n\nThis content showcases the flexibility of the content management system to handle various story lengths and formats.",
+  "note1": "This is a longer form story",
+  "note2": "Contains multiple paragraphs and detailed narrative"
+}
+
+###
+
+# Get story content for editing
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/content
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Get story content for editing (different story)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE987654321/content
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Get story content for editing (story without content - should return 404)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE111111111/content
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Get story content for editing (unauthorized - should return 403)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE222222222/content
+Accept: application/json
+Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
+
+###
+
+# Get story content for editing (non-existent story - should return 404)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE999999999/content
+Accept: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Add chapter to story
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Chapter 1: The Beginning",
+  "content": "This is the first chapter of the story. It introduces the main characters and sets up the world.\n\nThe adventure begins here with our protagonist discovering something extraordinary.",
+  "note1": "Introduction chapter",
+  "note2": "Sets up the main plot"
+}
+
+###
+
+# Add another chapter to story
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Chapter 2: The Journey",
+  "content": "The second chapter continues the adventure as our protagonist embarks on their journey.\n\nNew challenges and allies are introduced as the plot thickens.",
+  "note1": "Development chapter",
+  "note2": "Introduces supporting characters"
+}
+
+###
+
+# Add chapter with minimal data
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Chapter 3: The Revelation",
+  "content": "A short but impactful chapter that reveals a crucial plot point."
+}
+
+###
+
+# Add chapter with long content
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Chapter 4: The Epic Battle",
+  "content": "This is a much longer chapter that describes an epic battle scene. The content includes detailed descriptions of the action, character development, and plot advancement.\n\nThe battle rages on for what seems like hours, with our heroes facing seemingly impossible odds. Each character must dig deep to find the strength to continue fighting.\n\nThe chapter showcases the system's ability to handle substantial content while maintaining the narrative flow and character development that readers expect from quality fiction.",
+  "note1": "Action-heavy chapter",
+  "note2": "Major plot advancement and character development"
+}
+
+###
+
+# Try to add chapter to story with existing content (should fail)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE111111111/chapters
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Chapter 1",
+  "content": "This should fail because the story already has direct content."
+}
+
+###
+
+# Try to add chapter with duplicate title (should fail)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "title": "Chapter 1: The Beginning",
+  "content": "This should fail because a chapter with this title already exists."
+}
+
+###
+
+# Update chapter content
+PUT {{IHFiction.FictionApi_HostAddress}}/chapters/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "This is the updated content for the chapter. I've made some revisions and improvements.\n\nThe chapter now has better character development and plot progression.",
+  "note1": "Updated chapter content",
+  "note2": "Revision notes: improved dialogue and pacing"
+}
+
+###
+
+# Update chapter content with minimal data
+PUT {{IHFiction.FictionApi_HostAddress}}/chapters/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "Simple updated chapter content without notes."
+}
+
+###
+
+# Update chapter content with long content
+PUT {{IHFiction.FictionApi_HostAddress}}/chapters/01JDQK8XAMPLE123456789/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "This is a much longer updated chapter content that demonstrates the system's ability to handle substantial text revisions. The chapter has been completely rewritten with new scenes, improved character interactions, and enhanced plot development.\n\nThe narrative now flows better and includes more detailed descriptions of the setting and characters. This revision addresses feedback from beta readers and improves the overall quality of the storytelling.\n\nThe updated content showcases the flexibility of the chapter content management system to handle various revision scenarios and content lengths.",
+  "note1": "Major revision of the chapter",
+  "note2": "Addressed beta reader feedback and improved narrative flow"
+}
+
+###
+
+# Update chapter content (different chapter)
+PUT {{IHFiction.FictionApi_HostAddress}}/chapters/01JDQK8XAMPLE987654321/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "Updated content for a different chapter in the story.",
+  "note1": "Minor edits",
+  "note2": "Fixed typos and improved clarity"
+}
+
+###
+
+# Try to update non-existent chapter content (should return 404)
+PUT {{IHFiction.FictionApi_HostAddress}}/chapters/01JDQK8XAMPLE999999999/content
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+  "content": "This should fail because the chapter doesn't exist."
+}
+
+###
+
+# Publish story
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/publish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Publish story with content
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE111111111/publish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Publish story with chapters
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE222222222/publish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to publish already published story (should fail with 409)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/publish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to publish story without content (should fail with 400)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE333333333/publish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to publish non-existent story (should return 404)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE999999999/publish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to publish story as non-owner (should return 403)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE444444444/publish
+Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
+
+###
+
+# Unpublish story
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/unpublish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Unpublish published story with content
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE111111111/unpublish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Unpublish published story with chapters
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE222222222/unpublish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to unpublish already unpublished story (should fail with 400)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/unpublish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to unpublish non-existent story (should return 404)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE999999999/unpublish
+Authorization: Bearer YOUR_TOKEN_HERE
+
+###
+
+# Try to unpublish story as non-owner (should return 403)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE444444444/unpublish
+Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
+
+###
+
+# List published stories (public endpoint - no auth required)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published
+
+###
+
+# List published stories with pagination
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?page=1&pageSize=10
+
+###
+
+# List published stories with search
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?search=adventure
+
+###
+
+# List published stories sorted by title ascending
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortBy=title&sortOrder=asc
+
+###
+
+# List published stories sorted by most recently updated
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortBy=updatedAt&sortOrder=desc
+
+###
+
+# List published stories with combined parameters
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?page=2&pageSize=5&search=fantasy&sortBy=publishedAt&sortOrder=asc
+
+###
+
+# List published stories with large page size
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?pageSize=50
+
+###
+
+# List published stories with maximum page size
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?pageSize=100
+
+###
+
+# Try invalid page size (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?pageSize=150
+
+###
+
+# Try invalid page (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?page=0
+
+###
+
+# Try invalid sort by (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortBy=invalid
+
+###
+
+# Try invalid sort order (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortOrder=invalid
+
+###
+
+# List authors (public endpoint - no auth required)
+GET {{IHFiction.FictionApi_HostAddress}}/authors
+
+###
+
+# List authors with pagination
+GET {{IHFiction.FictionApi_HostAddress}}/authors?page=1&pageSize=10
+
+###
+
+# List authors with search
+GET {{IHFiction.FictionApi_HostAddress}}/authors?search=john
+
+###
+
+# List authors sorted by creation date descending
+GET {{IHFiction.FictionApi_HostAddress}}/authors?sortBy=createdAt&sortOrder=desc
+
+###
+
+# List authors sorted by most recently updated
+GET {{IHFiction.FictionApi_HostAddress}}/authors?sortBy=updatedAt&sortOrder=desc
+
+###
+
+# List authors with combined parameters
+GET {{IHFiction.FictionApi_HostAddress}}/authors?page=2&pageSize=5&search=author&sortBy=name&sortOrder=asc
+
+###
+
+# List authors with large page size
+GET {{IHFiction.FictionApi_HostAddress}}/authors?pageSize=50
+
+###
+
+# List authors with maximum page size
+GET {{IHFiction.FictionApi_HostAddress}}/authors?pageSize=100
+
+###
+
+# Try invalid page size (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors?pageSize=150
+
+###
+
+# Try invalid page (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors?page=0
+
+###
+
+# Try invalid sort by (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors?sortBy=invalid
+
+###
+
+# Try invalid sort order (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors?sortOrder=invalid
+
+###
+
+# Search authors by name (public endpoint - no auth required)
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=john
+
+###
+
+# Search authors with pagination
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=author&page=1&pageSize=5
+
+###
+
+# Search authors with exact name match
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=Jane
+
+###
+
+# Search authors with partial name match
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=smith
+
+###
+
+# Search authors with case insensitive query
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=JOHN
+
+###
+
+# Search authors with minimum query length
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=jo
+
+###
+
+# Search authors with longer query
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=johnsmith
+
+###
+
+# Search authors with special characters
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=o'connor
+
+###
+
+# Try search without query (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search
+
+###
+
+# Try search with empty query (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=
+
+###
+
+# Try search with too short query (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=a
+
+###
+
+# Try search with invalid page size (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=john&pageSize=100
+
+###
+
+# Try search with invalid page (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/authors/search?q=john&page=0
+
+###
+
+# List story chapters as owner (authenticated - should show all chapters)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Authorization: Bearer {{auth_token}}
+
+###
+
+# List story chapters as owner including unpublished
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?includeUnpublished=true
+Authorization: Bearer {{auth_token}}
+
+###
+
+# List story chapters as owner excluding unpublished
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?includeUnpublished=false
+Authorization: Bearer {{auth_token}}
+
+###
+
+# List story chapters sorted by title
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?sortBy=title&sortOrder=asc
+Authorization: Bearer {{auth_token}}
+
+###
+
+# List story chapters sorted by creation date descending
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?sortBy=createdAt&sortOrder=desc
+Authorization: Bearer {{auth_token}}
+
+###
+
+# List story chapters sorted by publication date
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?sortBy=publishedAt&sortOrder=desc
+Authorization: Bearer {{auth_token}}
+
+###
+
+# List story chapters as collaborator (should show all chapters)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Authorization: Bearer COLLABORATOR_TOKEN_HERE
+
+###
+
+# List story chapters as public user for published story (should show only published chapters)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+Authorization: Bearer PUBLIC_USER_TOKEN_HERE
+
+###
+
+# Try to list chapters without authentication (should return 401)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters
+
+###
+
+# Try to list chapters for non-existent story (should return 404)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE999999999/chapters
+Authorization: Bearer {{auth_token}}
+
+###
+
+# Try to list chapters for unpublished story as non-owner (should return 404)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE444444444/chapters
+Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
+
+###
+
+# Try invalid sort by (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?sortBy=invalid
+Authorization: Bearer {{auth_token}}
+
+###
+
+# Try invalid sort order (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/chapters?sortOrder=invalid
+Authorization: Bearer {{auth_token}}
+
+###
+
+# Add tags to story as owner (authenticated - should succeed)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": [
+    "genre:fantasy",
+    "theme:adventure",
+    "setting:medieval:castle"
+  ]
+}
+
+###
+
+# Add more tags to story (should handle duplicates)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": [
+    "genre:fantasy",
+    "character:protagonist:hero",
+    "mood:dark"
+  ]
+}
+
+###
+
+# Add tags with various formats
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": [
+    "rating:teen",
+    "length:novella",
+    "status:complete"
+  ]
+}
+
+###
+
+# Add tags as collaborator (should succeed)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer COLLABORATOR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "tags": [
+    "collaboration:approved",
+    "review:positive"
+  ]
+}
+
+###
+
+# Try to add tags as non-owner/non-collaborator (should return 403)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "tags": [
+    "unauthorized:tag"
+  ]
+}
+
+###
+
+# Try to add tags without authentication (should return 401)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Content-Type: application/json
+
+{
+  "tags": [
+    "genre:fantasy"
+  ]
+}
+
+###
+
+# Try to add tags to non-existent story (should return 404)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE999999999/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": [
+    "genre:fantasy"
+  ]
+}
+
+###
+
+# Try to add empty tags array (should return 400)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": []
+}
+
+###
+
+# Try to add invalid tag format (should return 400 or skip invalid tags)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": [
+    "validtag:value",
+    "invalid-format",
+    "too:many:colons:here:invalid",
+    "another:valid:tag"
+  ]
+}
+
+###
+
+# Try to add tags with too long components (should return 400 or skip invalid tags)
+POST {{IHFiction.FictionApi_HostAddress}}/stories/01JDQK8XAMPLE123456789/tags
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "tags": [
+    "category:this-is-a-very-long-value-that-exceeds-fifty-characters-and-should-be-rejected",
+    "valid:tag"
+  ]
+}
+
+###
+
+# List all available tags (public endpoint - no auth required)
+GET {{IHFiction.FictionApi_HostAddress}}/tags
+
+###
+
+# List tags with pagination
+GET {{IHFiction.FictionApi_HostAddress}}/tags?page=1&pageSize=20
+
+###
+
+# List tags with search
+GET {{IHFiction.FictionApi_HostAddress}}/tags?search=fantasy
+
+###
+
+# List tags filtered by category
+GET {{IHFiction.FictionApi_HostAddress}}/tags?category=genre
+
+###
+
+# List tags sorted by value ascending
+GET {{IHFiction.FictionApi_HostAddress}}/tags?sortBy=value&sortOrder=asc
+
+###
+
+# List tags sorted by usage (most used first)
+GET {{IHFiction.FictionApi_HostAddress}}/tags?sortBy=usage&sortOrder=desc
+
+###
+
+# List tags sorted by creation date (newest first)
+GET {{IHFiction.FictionApi_HostAddress}}/tags?sortBy=createdAt&sortOrder=desc
+
+###
+
+# List tags with combined parameters
+GET {{IHFiction.FictionApi_HostAddress}}/tags?page=2&pageSize=10&search=adventure&sortBy=usage&sortOrder=desc
+
+###
+
+# List tags with category filter and search
+GET {{IHFiction.FictionApi_HostAddress}}/tags?category=genre&search=fan&sortBy=value&sortOrder=asc
+
+###
+
+# List tags with large page size
+GET {{IHFiction.FictionApi_HostAddress}}/tags?pageSize=100
+
+###
+
+# List tags with maximum page size
+GET {{IHFiction.FictionApi_HostAddress}}/tags?pageSize=200
+
+###
+
+# Try invalid page size (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/tags?pageSize=300
+
+###
+
+# Try invalid page (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/tags?page=0
+
+###
+
+# Try invalid sort by (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/tags?sortBy=invalid
+
+###
+
+# Try invalid sort order (should return 400)
+GET {{IHFiction.FictionApi_HostAddress}}/tags?sortOrder=invalid
+
+###

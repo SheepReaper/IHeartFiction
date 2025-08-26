@@ -1,0 +1,14 @@
+﻿<?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/IHFiction.FictionApi/IHFiction.FictionApi.csproj" />
+  </ItemGroup>
+
+</Project>
