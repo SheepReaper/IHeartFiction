@@ -1,0 +1,10 @@
+@using IHFiction.SharedWeb.Components.Reading
+@page "/stories/{storyId}/read"
+
+<PageTitle>Reading Story - IHeartFiction</PageTitle>
+
+<StoryReader StoryId="@StoryId" />
+
+@code {
+    [Parameter] public string StoryId { get; set; } = null!;
+}

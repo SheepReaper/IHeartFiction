@@ -1,0 +1,35 @@
+@inject NavigationManager Navigation
+
+<AuthorizeView>
+    <Authorized>
+        <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link">
+                @context.User.Identity?.Name
+            </a>
+
+            <div class="navbar-dropdown">
+                @* <form action="authentication/logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="@Navigation.Uri" />
+                    <button type="submit" class="navbar-item">
+                        Log out
+                    </button>
+                </form> *@
+                <a class="navbar-item" href="@($"authentication/logout?returnUrl={Navigation.Uri}")">
+                    Log out
+                </a>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="buttons">
+            <a class="button is-primary" href="@($"authentication/login?returnUrl={Navigation.Uri}")">
+                <strong>Sign up</strong>
+            </a>
+            <a class="button is-light" href="@($"authentication/login?returnUrl={Navigation.Uri}")">
+                Log in
+            </a>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+

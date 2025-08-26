@@ -1,0 +1,16 @@
+<?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../lib/IHFiction.ServiceDefaults/IHFiction.ServiceDefaults.csproj" />
+    <ProjectReference Include="../lib/IHFiction.SharedWeb/IHFiction.SharedWeb.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Keycloak.Authentication" />
+    <PackageReference Include="Keycloak.AuthServices.Authorization" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+  </ItemGroup>
+</Project>

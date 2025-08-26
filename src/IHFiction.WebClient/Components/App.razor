@@ -1,0 +1,33 @@
+@inject IWebHostEnvironment Env
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/bulma/bulma.min.css"]" rel="stylesheet" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/css/app.css"]" rel="stylesheet" />
+    <link href="@Assets["IHFiction.WebClient.styles.css"]" rel="stylesheet" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon.png"]" rel="icon" type="image/png" />
+    <ImportMap />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js" asp-append-version="true"></script>
+    <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]"></script>
+    @if (Env.IsDevelopment())
+    {
+        <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.js"></script>
+    }
+    else
+    {
+        <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+    }
+</body>
+
+</html>

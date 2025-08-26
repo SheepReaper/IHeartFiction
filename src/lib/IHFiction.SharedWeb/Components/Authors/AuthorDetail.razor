@@ -1,0 +1,169 @@
+@using Markdig
+@inject AuthorService AuthorService
+@inject MarkdownPipeline mdp
+
+@if (isLoading)
+{
+    <div class="section">
+        <div class="container has-text-centered">
+            <span class="icon is-large">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Loading author details...</p>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="section">
+        <div class="container">
+            <div class="notification is-danger">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+    </div>
+}
+else if (author != null)
+{
+    <div class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-one-quarter">
+                    <div class="card">
+                        <div class="card-content has-text-centered">
+                            <figure class="image is-128x128 is-inline-block">
+                                <div class="has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" 
+                                     style="width: 128px; height: 128px; border-radius: 50%;">
+                                    <span class="title is-2">@GetInitials(author.Name)</span>
+                                </div>
+                            </figure>
+                            <h1 class="title is-3 mt-4">@author.Name</h1>
+                            <div class="tags is-centered">
+                                <span class="tag is-primary">
+                                    <span class="icon">
+                                        <i class="fas fa-calendar"></i>
+                                    </span>
+                                    <span>Joined @author.UpdatedAt.ToString("MMM yyyy")</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column">
+                    <div class="content">
+                        <h2 class="title is-4">About</h2>
+                        @if (!string.IsNullOrWhiteSpace(author.Profile.Bio))
+                        {
+                            <div class="content">
+                                @((MarkupString)Markdown.ToHtml(author.Profile.Bio, mdp))
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="has-text-grey-light">
+                                <em>This author hasn't written a biography yet.</em>
+                            </p>
+                        }
+
+                        <div class="columns is-mobile">
+                            <div class="column">
+                                <div class="has-text-centered">
+                                    <p class="title is-2 has-text-primary">@author.Works.Count</p>
+                                    <p class="subtitle is-6">Total Stories</p>
+                                </div>
+                            </div>
+                            <div class="column">
+                                <div class="has-text-centered">
+                                    <p class="title is-2 has-text-success">@author.Works.Count</p>
+                                    <p class="subtitle is-6">Published</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (author.Works.Any())
+                        {
+                            <h3 class="title is-5">Stories</h3>
+                            <div class="columns is-multiline">
+                                @foreach (var work in author.Works)
+                                {
+                                    <div class="column is-half">
+                                        <div class="card">
+                                            <div class="card-content">
+                                                <h4 class="title is-6">
+                                                    <a href="/stories/@work.Id" class="has-text-dark">@work.Title</a>
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="has-text-centered mt-6">
+                                <span class="icon is-large has-text-grey-light">
+                                    <i class="fas fa-book fa-2x"></i>
+                                </span>
+                                <p class="has-text-grey">This author hasn't published any stories yet.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string AuthorId { get; set; } = null!;
+
+    private LinkedOfGetAuthorByIdResponse? author;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthor();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (author?.UserId.ToString() != AuthorId)
+        {
+            await LoadAuthor();
+        }
+    }
+
+    private async Task LoadAuthor()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var result = await AuthorService.GetAuthorByIdAsync(AuthorId);
+
+        if (result.IsSuccess)
+        {
+            author = result.Value;
+        }
+        else
+        {
+            errorMessage = result.DomainError.Description;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "?";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 1)
+            return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+        
+        return (parts[0].Substring(0, 1) + parts[^1].Substring(0, 1)).ToUpper();
+    }
+}

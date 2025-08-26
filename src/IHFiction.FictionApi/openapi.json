@@ -1,0 +1,5075 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "IHFiction.FictionApi | v1",
+    "description": "i❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
+    "termsOfService": "http://localhost",
+    "contact": {
+      "name": "Bryan Gonzalez",
+      "email": "bgonza868+fictionadmin@gmail.com"
+    },
+    "license": {
+      "name": "MIT License",
+      "identifier": "MIT"
+    },
+    "version": "1.0.0",
+    "summary": "I❤️HFiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this."
+  },
+  "paths": {
+    "/tags": {
+      "get": {
+        "tags": [
+          "Tag Discovery"
+        ],
+        "summary": "List Tags",
+        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
+        "operationId": "ListTags",
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "1-indexed page number for pagination",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            },
+            "example": "1"
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 200,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            },
+            "example": "50"
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "description": "Simple string to find in supported object fields.",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "my_term"
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "description": "Comma-separated list of fields and sort directions to sort results by",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": "category"
+            },
+            "example": "name asc, createdAt desc"
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListTagsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListTagsItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/books/{id}/chapters": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Add Chapter to Book",
+        "description": "Creates a new chapter within a book.",
+        "operationId": "AddChapterToBook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddChapterToBookBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfAddChapterToBookResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/chapters": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Add Chapter to Story",
+        "description": "Creates a new chapter within a story with the provided title and content. Only story owners and authorized collaborators can add chapters. The story must support chapters (cannot have direct content or books). Chapter titles must be unique within the story. Requires authentication.",
+        "operationId": "AddChapterToStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddChapterToStoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfAddChapterToStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "List Published Story Chapters",
+        "description": "Retrieves a list of published chapters for a specific published story. This is a public endpoint that only shows published chapters from published stories. Chapters can be sorted by various fields. No authentication required.",
+        "operationId": "ListStoryChapters",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListStoryChaptersItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/tags": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Add Tags to Story",
+        "description": "Adds one or more tags to a story for categorization and discovery. Tags must be in the format 'category:value' or 'category:subcategory:value'. Only story owners and authorized collaborators can add tags. Existing tags are skipped, and only new tags are added. Requires authentication and appropriate permissions.",
+        "operationId": "AddTagsToStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTagsToStoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfAddTagsToStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/convert": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Convert Story Type",
+        "description": "Converts a story from one type to another (e.g., One-Shot to Chaptered). The conversion path is linear and has conditions for downgrading.",
+        "operationId": "ConvertStoryType",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertStoryTypeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/books": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Create Book",
+        "description": "Creates a new book within a story.",
+        "operationId": "CreateBook",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfCreateBookResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Create Story",
+        "description": "Creates a new story with the provided title and description. The authenticated user becomes the owner of the story and can manage its content, collaborators, and publication status. Requires authentication.",
+        "operationId": "CreateStory",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoryBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfCreateStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chapters/{id}": {
+      "delete": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Delete Chapter",
+        "description": "Permanently deletes a chapter and its associated content.",
+        "operationId": "DeleteChapter",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Update Chapter Metadata",
+        "description": "Updates the metadata of an existing chapter.",
+        "operationId": "UpdateChapterMetadata",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChapterMetadataBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateChapterMetadataResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}": {
+      "delete": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Delete Story",
+        "description": "Permanently deletes a story and all its associated content including chapters, collaborators, and metadata. This action cannot be undone. Only the story owner can delete a story. The story must not have any active collaborators or pending invitations. Requires authentication and ownership permissions.",
+        "operationId": "DeleteStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Story by ID",
+        "description": "Retrieves detailed information about a specific story including metadata, authors, tags, and publication status. This is a public endpoint that does not require authentication.",
+        "operationId": "GetPublishedStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetPublishedStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Update Story Metadata",
+        "description": "Updates a story's title and description. Only the story owner or authorized collaborators can update story metadata. Requires authentication and appropriate permissions.",
+        "operationId": "UpdateStoryMetadata",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoryMetadataBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateStoryMetadataResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chapters/{id}/content": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Published Chapter Content",
+        "description": "Retrieves the content of a published chapter for public reading. This is a public endpoint that allows anyone to read published chapter content. Returns the markdown content along with any author notes and metadata. No authentication required.",
+        "operationId": "GetChapterContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetChapterContentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Update Chapter Content",
+        "description": "Updates the content of an existing chapter with new markdown content and optional notes. Only chapter owners and authorized collaborators can update chapter content. The content supports full markdown formatting including images and links. Requires authentication and appropriate permissions.",
+        "operationId": "UpdateChapterContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChapterContentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateChapterContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/books/{id}/content": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get My Book Content",
+        "description": "Retrieves the content of a book owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
+        "operationId": "GetCurrentAuthorBookContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetCurrentAuthorBookContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/chapters/{id}/content": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get My Chapter Content",
+        "description": "Retrieves the content of a chapter owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
+        "operationId": "GetCurrentAuthorChapterContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetCurrentAuthorChapterContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/stories": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get Current Author Stories",
+        "description": "Retrieves a paginated list of stories associated with the current authenticated author. Includes both owned stories and stories where the author is a collaborator. Supports filtering by publication status, ownership, tags, and search terms. Stories can be sorted by various fields. Requires authentication and author registration.",
+        "operationId": "GetCurrentAuthorStories",
+        "parameters": [
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "50"
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "1-indexed page number for pagination",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "1"
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "description": "Simple string to find in supported object fields.",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "my_term"
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "description": "Comma-separated list of fields and sort directions to sort results by",
+            "schema": {
+              "type": "string"
+            },
+            "example": "name asc, createdAt desc"
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetCurrentAuthorStoriesBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfAuthorStoryItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/stories/{id}/content": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get My Story Content",
+        "description": "Retrieves the content of a story owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
+        "operationId": "GetCurrentAuthorStoryContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetCurrentAuthorStoryContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/content": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Published Story Content",
+        "description": "Retrieves the content of a published story that has direct content (not chapters or books). This is a public endpoint that allows anyone to read published story content. Returns the markdown content along with any author notes and metadata. No authentication required.",
+        "operationId": "GetPublishedStoryContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetPublishedStoryContentResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Update Story Content",
+        "description": "Updates the content of a story that has direct content (not chapters or books). Only story owners and authorized collaborators can update story content. The content supports full markdown formatting including images and links with security validation. Images must be from approved domains or base64 encoded with size limits. Requires authentication and appropriate permissions.",
+        "operationId": "UpdateStoryContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoryContentBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateStoryContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/published": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "List Published Stories",
+        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Stories can be sorted by publication date, title, or last update date. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
+        "operationId": "ListPublishedStories",
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "1-indexed page number for pagination",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "1"
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "50"
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "description": "Simple string to find in supported object fields.",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 2,
+              "type": "string"
+            },
+            "example": "my_term"
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "description": "Comma-separated list of fields and sort directions to sort results by",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": "publishedAt"
+            },
+            "example": "name asc, createdAt desc"
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListPublishedStoriesBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListPublishedStoriesItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/publish": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Publish Story",
+        "description": "Makes a story publicly visible by setting its publication timestamp. Only story owners can publish their stories. The story must have content (either direct content or chapters) before it can be published. Once published, the story becomes discoverable in public listings. Requires authentication and story ownership.",
+        "operationId": "PublishStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfPublishStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/unpublish": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Unpublish Story",
+        "description": "Removes a story from public visibility by clearing its publication timestamp. Only story owners can unpublish their stories. The story must currently be published to be unpublished. Once unpublished, the story is no longer discoverable in public listings but remains accessible to the owner and collaborators. Requires authentication and story ownership.",
+        "operationId": "UnpublishStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUnpublishStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authors/{id}": {
+      "get": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "Get Author by ID",
+        "description": "Retrieves detailed information about a specific author by their unique identifier. Returns the author's profile information and a list of their works. This is a public endpoint that does not require authentication.",
+        "operationId": "GetAuthorById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetAuthorByIdResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/author": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get Current Author Profile",
+        "description": "Retrieves the profile information and works for the currently authenticated author. Returns the author's personal information, biography, and lists of both collaborative and owned works. This endpoint requires authentication and author registration.",
+        "operationId": "GetCurrentAuthorProfile",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetCurrentAuthorProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Register as Author",
+        "description": "Registers the currently authenticated user as an author, enabling them to create and manage stories. This process creates an author profile, assigns the author role in the identity system, and sets up the necessary permissions for content creation. This endpoint requires authentication but not existing author status.",
+        "operationId": "RegisterAsAuthor",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAsAuthorBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfRegisterAsAuthorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Update Author Profile",
+        "description": "Updates the profile information for the currently authenticated author. Allows modification of the author's biography and other profile details. The biography supports markdown formatting and is subject to content validation. This endpoint requires authentication and author registration.",
+        "operationId": "UpdateAuthorProfile",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAuthorProfileBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateAuthorProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authors": {
+      "get": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "List Authors",
+        "description": "Retrieves a paginated list of all authors who have published at least one story. Supports searching by author name or biography content. Authors can be sorted by name, creation date, or last update date. This is a public endpoint that does not require authentication.",
+        "operationId": "ListAuthors",
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "1-indexed page number for pagination",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "1"
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "50"
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "description": "Simple string to find in supported object fields.",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 2,
+              "type": "string"
+            },
+            "example": "my_term"
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "description": "Comma-separated list of fields and sort directions to sort results by",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": "name"
+            },
+            "example": "name asc, createdAt desc"
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListAuthorsItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddChapterToBookBody": {
+        "required": [
+          "title",
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The title of the new chapter."
+          },
+          "content": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The content of the chapter in markdown format."
+          },
+          "note1": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field that can contain additional information about the chapter."
+          },
+          "note2": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field for additional author notes or comments."
+          }
+        },
+        "description": "Request body model for adding a new chapter to a book."
+      },
+      "AddChapterToStoryBody": {
+        "required": [
+          "title",
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The title of the new chapter"
+          },
+          "content": {
+            "maxLength": 1000000,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The content of the chapter in markdown format"
+          },
+          "note1": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field that can contain additional information about the chapter"
+          },
+          "note2": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field for additional author notes or comments"
+          }
+        },
+        "description": "Request body model for adding a new chapter to a story."
+      },
+      "AddedTagItem": {
+        "required": [
+          "category",
+          "subcategory",
+          "value",
+          "isNew"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "The category of the tag"
+          },
+          "subcategory": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional subcategory of the tag"
+          },
+          "value": {
+            "type": "string",
+            "description": "The value of the tag"
+          },
+          "isNew": {
+            "type": "boolean",
+            "description": "Whether this tag was newly created"
+          }
+        },
+        "description": "Represents a tag item that was added to the story."
+      },
+      "AddTagsToStoryBody": {
+        "required": [
+          "tags"
+        ],
+        "type": "object",
+        "properties": {
+          "tags": {
+            "minLength": 1,
+            "type": "string",
+            "description": "List of tag strings to add to the story"
+          }
+        },
+        "description": "Request model for adding tags to a story."
+      },
+      "AuthorProfile": {
+        "required": [
+          "bio"
+        ],
+        "type": "object",
+        "properties": {
+          "bio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Author's biography or description"
+          }
+        },
+        "description": "Represents an author's profile information."
+      },
+      "AuthorWorkItem": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the work"
+          }
+        },
+        "description": "Represents a work (story) created by an author."
+      },
+      "BookContentChapterItem": {
+        "required": [
+          "id",
+          "title",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookSummary": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the book."
+          }
+        },
+        "description": "Represents a summary of a book within a story."
+      },
+      "ChapterSummary": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the chapter."
+          }
+        },
+        "description": "Represents a summary of a chapter within a story."
+      },
+      "ConvertStoryTypeBody": {
+        "required": [
+          "targetType"
+        ],
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new type of the story."
+          }
+        },
+        "description": "Request model for converting a story's type."
+      },
+      "CreateBookBody": {
+        "required": [
+          "title",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The title of the book."
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A detailed description of the book."
+          }
+        },
+        "description": "Request model for creating a new book."
+      },
+      "CreateStoryBody": {
+        "required": [
+          "title",
+          "description",
+          "storyType"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The title of the story"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A detailed description of the story"
+          },
+          "storyType": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The physical structure of the story",
+            "default": "SingleBody"
+          }
+        },
+        "description": "Request model for creating a new story."
+      },
+      "CurrentAuthorProfile": {
+        "required": [
+          "bio"
+        ],
+        "type": "object",
+        "properties": {
+          "bio": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Author's biography or description"
+          }
+        },
+        "description": "Represents the current authenticated author's profile information."
+      },
+      "CurrentAuthorWork": {
+        "description": "Represents a work (story) associated with the current author."
+      },
+      "GetCurrentAuthorStoriesBody": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "tags": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional comma-separated list of tags to filter stories by."
+          },
+          "isPublished": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Filter by publication status. True for published stories, false for unpublished, null for all."
+          },
+          "isOwned": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Filter by ownership. True for owned stories, false for collaborated stories, null for all."
+          }
+        },
+        "description": "Request model for getting the current author's stories with filtering and pagination."
+      },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A URI reference [RFC3986] that identifies the problem type."
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A short, human-readable summary of the problem type."
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The HTTP status code([RFC7231], Section 6) generated by the origin server for this occurrence of the problem.",
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A human-readable explanation specific to this occurrence of the problem."
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A URI reference that identifies the specific occurrence of the problem."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "A dictionary of validation errors keyed by field name."
+          }
+        },
+        "description": "An extension of the Standard RFC 7807/9457 problem details payload to include validation errors."
+      },
+      "LinkedOfAddChapterToBookResponse": {
+        "required": [
+          "links",
+          "chapterId",
+          "chapterTitle",
+          "contentId",
+          "bookId",
+          "bookTitle",
+          "chapterCreatedAt",
+          "bookUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "chapterId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "Title of the created chapter."
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "bookId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "bookTitle": {
+            "type": "string",
+            "description": "Title of the book."
+          },
+          "chapterCreatedAt": {
+            "type": "string",
+            "description": "When the chapter was created.",
+            "format": "date-time"
+          },
+          "bookUpdatedAt": {
+            "type": "string",
+            "description": "When the book was last updated.",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfAddChapterToStoryResponse": {
+        "required": [
+          "links",
+          "chapterId",
+          "chapterTitle",
+          "contentId",
+          "storyId",
+          "storyTitle",
+          "chapterCreatedAt",
+          "storyUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "chapterId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "Title of the created chapter"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "chapterCreatedAt": {
+            "type": "string",
+            "description": "When the chapter was created",
+            "format": "date-time"
+          },
+          "storyUpdatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfAddTagsToStoryResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "storyTitle",
+          "addedTags",
+          "skippedTags",
+          "totalTags"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "addedTags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddedTagItem"
+            },
+            "description": "List of tags that were successfully added"
+          },
+          "skippedTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of tag strings that were skipped (already existed)"
+          },
+          "totalTags": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of tags now associated with the story",
+            "format": "int32"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfAuthorStoryItem": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "description",
+          "publishedAt",
+          "isPublished",
+          "updatedAt",
+          "createdAt",
+          "isOwned",
+          "collaboratorNames",
+          "tags",
+          "hasContent",
+          "hasChapters",
+          "hasBooks",
+          "isValid"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the story"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the story was published (null if unpublished)",
+            "format": "date-time"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "description": "Whether the story is currently published"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the story was created",
+            "format": "date-time"
+          },
+          "isOwned": {
+            "type": "boolean",
+            "description": "Whether the current author owns this story"
+          },
+          "collaboratorNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names of collaborators on the story"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags associated with the story"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Whether the story has direct content"
+          },
+          "hasChapters": {
+            "type": "boolean",
+            "description": "Whether the story has chapters"
+          },
+          "hasBooks": {
+            "type": "boolean",
+            "description": "Whether the story has books"
+          },
+          "isValid": {
+            "type": "boolean",
+            "description": "Whether the story is in a valid state for operations"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfCreateBookResponse": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "description",
+          "updatedAt",
+          "ownerId",
+          "storyId"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the created book."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the created book."
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the book was created/last updated.",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfCreateStoryResponse": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "description",
+          "updatedAt",
+          "ownerId",
+          "ownerName"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the created story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the created story"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was created/last updated",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "Display name of the story owner"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetAuthorByIdResponse": {
+        "required": [
+          "links",
+          "userId",
+          "name",
+          "updatedAt",
+          "deletedAt",
+          "profile",
+          "works"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "userId": {
+            "type": "string",
+            "description": "The user ID associated with this author",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the author"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the author profile was last updated",
+            "format": "date-time"
+          },
+          "deletedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the author was deleted (null if not deleted)",
+            "format": "date-time"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/AuthorProfile"
+          },
+          "works": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthorWorkItem"
+            },
+            "description": "Collection of works created by this author"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetChapterContentResponse": {
+        "required": [
+          "links",
+          "chapterId",
+          "chapterTitle",
+          "storyId",
+          "storyTitle",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "chapterUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "chapterId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "Title of the chapter"
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string",
+            "description": "Title of the parent story"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string",
+            "description": "The chapter content in markdown format"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional author note about the content"
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second author note"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "description": "When the content was last updated",
+            "format": "date-time"
+          },
+          "chapterUpdatedAt": {
+            "type": "string",
+            "description": "When the chapter metadata was last updated",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetCurrentAuthorBookContentResponse": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "storyId",
+          "storyTitle",
+          "chapters",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string"
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookContentChapterItem"
+            }
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetCurrentAuthorChapterContentResponse": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "storyId",
+          "storyTitle",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetCurrentAuthorProfileResponse": {
+        "required": [
+          "links",
+          "id",
+          "userId",
+          "name",
+          "gravatarEmail",
+          "updatedAt",
+          "profile",
+          "works",
+          "ownedWorks"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "userId": {
+            "type": "string",
+            "description": "The user ID associated with this author",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the author"
+          },
+          "gravatarEmail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email address for Gravatar profile picture"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the author profile was last updated",
+            "format": "date-time"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/CurrentAuthorProfile"
+          },
+          "works": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrentAuthorWork"
+            },
+            "description": "Collection of works the author collaborates on"
+          },
+          "ownedWorks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrentAuthorWork"
+            },
+            "description": "Collection of works owned by the author"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetCurrentAuthorStoryContentResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "storyTitle",
+          "storyDescription",
+          "isPublished",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "storyUpdatedAt",
+          "chapters",
+          "books"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string",
+            "description": "Title of the story."
+          },
+          "storyDescription": {
+            "type": "string",
+            "description": "Description of the story."
+          },
+          "isPublished": {
+            "type": "boolean",
+            "description": "Whether the story is published."
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The content of the story."
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field that can contain additional information about the story."
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field for additional author notes or comments."
+          },
+          "contentUpdatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the content was last updated.",
+            "format": "date-time"
+          },
+          "storyUpdatedAt": {
+            "type": "string",
+            "description": "When the story was last updated.",
+            "format": "date-time"
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChapterSummary"
+            },
+            "description": "List of chapters within the story."
+          },
+          "books": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookSummary"
+            },
+            "description": "List of books within the story."
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetPublishedStoryContentResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "storyTitle",
+          "storyDescription",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "storyUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "storyDescription": {
+            "type": "string",
+            "description": "Description of the story"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string",
+            "description": "The story content in markdown format"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional author note about the content"
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second author note"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "description": "When the content was last updated",
+            "format": "date-time"
+          },
+          "storyUpdatedAt": {
+            "type": "string",
+            "description": "When the story metadata was last updated",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfGetPublishedStoryResponse": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "description",
+          "publishedAt",
+          "isPublished",
+          "updatedAt",
+          "createdAt",
+          "ownerId",
+          "ownerName",
+          "authors",
+          "tags",
+          "hasContent",
+          "hasChapters",
+          "hasBooks",
+          "isValid"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the story"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the story was published (null if unpublished)",
+            "format": "date-time"
+          },
+          "isPublished": {
+            "type": "boolean",
+            "description": "Whether the story is currently published"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the story was created",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "Display name of the story owner"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryAuthor"
+            },
+            "description": "Collection of authors associated with this story"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryTag"
+            },
+            "description": "Collection of tags associated with this story"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Whether the story has content written"
+          },
+          "hasChapters": {
+            "type": "boolean",
+            "description": "Whether the story has chapters"
+          },
+          "hasBooks": {
+            "type": "boolean",
+            "description": "Whether the story has books"
+          },
+          "isValid": {
+            "type": "boolean",
+            "description": "Whether the story data is valid"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfListAuthorsItem": {
+        "required": [
+          "links",
+          "id",
+          "name",
+          "bio",
+          "createdAt",
+          "updatedAt",
+          "totalStories",
+          "publishedStories"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the author"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Author's biography or description"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the author profile was created",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the author profile was last updated",
+            "format": "date-time"
+          },
+          "totalStories": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of stories by this author",
+            "format": "int32"
+          },
+          "publishedStories": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of published stories by this author",
+            "format": "int32"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfListPublishedStoriesItem": {
+        "required": [
+          "links",
+          "storyId",
+          "title",
+          "description",
+          "publishedAt",
+          "updatedAt",
+          "hasContent",
+          "hasChapters",
+          "hasBooks",
+          "chapterCount",
+          "authorId",
+          "authorName"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the story"
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the story was published",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Whether the story has direct content"
+          },
+          "hasChapters": {
+            "type": "boolean",
+            "description": "Whether the story has chapters"
+          },
+          "hasBooks": {
+            "type": "boolean",
+            "description": "Whether the story has books"
+          },
+          "chapterCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of chapters in the story",
+            "format": "int32"
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "authorName": {
+            "type": "string",
+            "description": "Name of the story author"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfListStoryChaptersItem": {
+        "required": [
+          "links",
+          "chapterId",
+          "title",
+          "publishedAt",
+          "createdAt",
+          "updatedAt",
+          "hasContent",
+          "contentLength"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "chapterId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the chapter"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the chapter was published (null if unpublished)",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the chapter was created",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the chapter was last updated",
+            "format": "date-time"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Whether the chapter has content written"
+          },
+          "contentLength": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Length of the chapter content in characters",
+            "format": "int32"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfListTagsItem": {
+        "required": [
+          "links",
+          "tagId",
+          "category",
+          "subcategory",
+          "value",
+          "createdAt",
+          "storyCount",
+          "displayFormat"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "tagId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "category": {
+            "type": "string",
+            "description": "The category this tag belongs to (e.g., \"genre\", \"theme\")"
+          },
+          "subcategory": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional subcategory for more specific classification"
+          },
+          "value": {
+            "type": "string",
+            "description": "The actual tag value"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the tag was first created",
+            "format": "date-time"
+          },
+          "storyCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of stories that use this tag",
+            "format": "int32"
+          },
+          "displayFormat": {
+            "type": "string",
+            "description": "Formatted display string for the tag"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfPublishStoryResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "title",
+          "description",
+          "publishedAt",
+          "updatedAt",
+          "hasContent",
+          "hasChapters",
+          "hasBooks",
+          "chapterCount"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the story"
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the story was published",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Whether the story has direct content"
+          },
+          "hasChapters": {
+            "type": "boolean",
+            "description": "Whether the story has chapters"
+          },
+          "hasBooks": {
+            "type": "boolean",
+            "description": "Whether the story has books"
+          },
+          "chapterCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of chapters in the story",
+            "format": "int32"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfRegisterAsAuthorResponse": {
+        "required": [
+          "links",
+          "id",
+          "userId",
+          "name",
+          "gravatarEmail",
+          "updatedAt",
+          "profile"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "userId": {
+            "type": "string",
+            "description": "The user ID associated with this author",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the author"
+          },
+          "gravatarEmail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email address for Gravatar profile picture"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the author profile was last updated",
+            "format": "date-time"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/AuthorProfile"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfUnpublishStoryResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "title",
+          "description",
+          "updatedAt",
+          "hasContent",
+          "hasChapters",
+          "hasBooks",
+          "chapterCount"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the story"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Whether the story has direct content"
+          },
+          "hasChapters": {
+            "type": "boolean",
+            "description": "Whether the story has chapters"
+          },
+          "hasBooks": {
+            "type": "boolean",
+            "description": "Whether the story has books"
+          },
+          "chapterCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Number of chapters in the story",
+            "format": "int32"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfUpdateAuthorProfileResponse": {
+        "required": [
+          "links",
+          "id",
+          "userId",
+          "name",
+          "gravatarEmail",
+          "updatedAt",
+          "profile"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "userId": {
+            "type": "string",
+            "description": "The user ID associated with this author",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the author"
+          },
+          "gravatarEmail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email address for Gravatar profile picture"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the author profile was last updated",
+            "format": "date-time"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/AuthorProfile"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfUpdateChapterContentResponse": {
+        "required": [
+          "links",
+          "chapterId",
+          "chapterTitle",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "chapterUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "chapterId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "Title of the chapter"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string",
+            "description": "Updated content of the chapter in markdown format"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Updated content of the top author note in markdown format"
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Updated content of the bottom author note in markdown format"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "description": "When the content was last updated",
+            "format": "date-time"
+          },
+          "chapterUpdatedAt": {
+            "type": "string",
+            "description": "When the chapter metadata was last updated",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfUpdateChapterMetadataResponse": {
+        "required": [
+          "links",
+          "chapterId",
+          "chapterTitle",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "chapterId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "New title of the chapter."
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the chapter was last updated.",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfUpdateStoryContentResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "storyTitle",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "storyUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string",
+            "description": "Title of the story"
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string",
+            "description": "Updated content of the story in markdown format"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Updated content of the top author note in markdown format"
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Updated content of the bottom author note in markdown format"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "description": "When the content was last updated",
+            "format": "date-time"
+          },
+          "storyUpdatedAt": {
+            "type": "string",
+            "description": "When the story metadata was last updated",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedOfUpdateStoryMetadataResponse": {
+        "required": [
+          "links",
+          "id",
+          "title",
+          "description",
+          "updatedAt",
+          "ownerId",
+          "ownerName"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Updated title of the story"
+          },
+          "description": {
+            "type": "string",
+            "description": "Updated description of the story"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "ownerId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "Display name of the story owner"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
+      "LinkedPagedCollectionOfAuthorStoryItem": {
+        "required": [
+          "links",
+          "totalCount",
+          "currentPage",
+          "pageSize",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The total number of items in the collection",
+            "format": "int32"
+          },
+          "currentPage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current page number",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items per page",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages based on total count and page size.",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedOfAuthorStoryItem"
+            },
+            "description": "The collection of items"
+          }
+        }
+      },
+      "LinkedPagedCollectionOfListAuthorsItem": {
+        "required": [
+          "links",
+          "totalCount",
+          "currentPage",
+          "pageSize",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The total number of items in the collection",
+            "format": "int32"
+          },
+          "currentPage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current page number",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items per page",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages based on total count and page size.",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedOfListAuthorsItem"
+            },
+            "description": "The collection of items"
+          }
+        }
+      },
+      "LinkedPagedCollectionOfListPublishedStoriesItem": {
+        "required": [
+          "links",
+          "totalCount",
+          "currentPage",
+          "pageSize",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The total number of items in the collection",
+            "format": "int32"
+          },
+          "currentPage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current page number",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items per page",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages based on total count and page size.",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedOfListPublishedStoriesItem"
+            },
+            "description": "The collection of items"
+          }
+        }
+      },
+      "LinkedPagedCollectionOfListStoryChaptersItem": {
+        "required": [
+          "links",
+          "totalCount",
+          "currentPage",
+          "pageSize",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The total number of items in the collection",
+            "format": "int32"
+          },
+          "currentPage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current page number",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items per page",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages based on total count and page size.",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedOfListStoryChaptersItem"
+            },
+            "description": "The collection of items"
+          }
+        }
+      },
+      "LinkedPagedCollectionOfListTagsItem": {
+        "required": [
+          "links",
+          "totalCount",
+          "currentPage",
+          "pageSize",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The total number of items in the collection",
+            "format": "int32"
+          },
+          "currentPage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current page number",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items per page",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages based on total count and page size.",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedOfListTagsItem"
+            },
+            "description": "The collection of items"
+          }
+        }
+      },
+      "LinkItem": {
+        "required": [
+          "href",
+          "rel",
+          "method"
+        ],
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string",
+            "description": "The URL of the linked resource."
+          },
+          "rel": {
+            "type": "string",
+            "description": "The relationship type of the link."
+          },
+          "method": {
+            "type": "string",
+            "description": "The HTTP method used to access the linked resource."
+          }
+        },
+        "description": "An object representing a hypermedia link."
+      },
+      "ListPublishedStoriesBody": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "authorId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Universally Unique Lexicographically Sortable Identifier",
+            "format": "ulid",
+            "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+          }
+        },
+        "description": "Request model for listing published stories."
+      },
+      "ListTagsBody": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "category": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional filter to show tags from a specific category only."
+          }
+        },
+        "description": "Request model for listing tags with pagination, search, and filtering capabilities."
+      },
+      "ObjectId": {
+        "type": [
+          "null",
+          "string"
+        ],
+        "description": "MongoDB ObjectID",
+        "format": "objectid",
+        "example": "507f191e810c19729de860ea"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A URI reference [RFC3986] that identifies the problem type."
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A short, human-readable summary of the problem type."
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The HTTP status code([RFC7231], Section 6) generated by the origin server for this occurrence of the problem.",
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A human-readable explanation specific to this occurrence of the problem."
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A URI reference that identifies the specific occurrence of the problem."
+          }
+        },
+        "description": "Standard RFC 7807/9457 problem details payload."
+      },
+      "RegisterAsAuthorBody": {
+        "required": [
+          "acceptTerms"
+        ],
+        "type": "object",
+        "properties": {
+          "acceptTerms": {
+            "type": "boolean",
+            "description": "Whether the user has accepted the terms and conditions"
+          }
+        },
+        "description": "Request model for registering as an author."
+      },
+      "StoryAuthor": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the author"
+          }
+        },
+        "description": "Represents an author associated with a story."
+      },
+      "StoryTag": {
+        "required": [
+          "category",
+          "subcategory",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "The category of the tag (e.g., \"genre\", \"theme\")"
+          },
+          "subcategory": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional subcategory for more specific classification"
+          },
+          "value": {
+            "type": "string",
+            "description": "The actual tag value"
+          }
+        },
+        "description": "Represents a tag associated with a story."
+      },
+      "Ulid": {
+        "type": [
+          "null",
+          "string"
+        ],
+        "description": "Universally Unique Lexicographically Sortable Identifier",
+        "format": "ulid",
+        "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+      },
+      "UpdateAuthorProfileBody": {
+        "type": "object",
+        "properties": {
+          "bio": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Author's biography or description. Markdown supported."
+          }
+        },
+        "description": "Request body model for updating an author's profile."
+      },
+      "UpdateChapterContentBody": {
+        "required": [
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The updated content of the chapter in markdown format"
+          },
+          "note1": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field that can contain additional information about the chapter"
+          },
+          "note2": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field for additional author notes or comments"
+          }
+        },
+        "description": "Request model for updating chapter content."
+      },
+      "UpdateChapterMetadataBody": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string",
+            "description": "The new title for the chapter."
+          }
+        },
+        "description": "Request body model for updating chapter metadata."
+      },
+      "UpdateStoryContentBody": {
+        "required": [
+          "content"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "maxLength": 1000000,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The main content of the story in markdown format"
+          },
+          "note1": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field that can contain markdown content for author notes or comments"
+          },
+          "note2": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field that can contain markdown content for additional author notes"
+          }
+        },
+        "description": "Request model for updating a story's content."
+      },
+      "UpdateStoryMetadataBody": {
+        "required": [
+          "title",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The updated title of the story"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 10,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The updated description of the story"
+          }
+        },
+        "description": "Request model for updating a story's metadata (title and description)."
+      }
+    },
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "OAuth 2.0 authentication with OpenID Connect.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://localhost:8080/realms/fiction/protocol/openid-connect/auth",
+            "tokenUrl": "https://localhost:8080/realms/fiction/protocol/openid-connect/token",
+            "refreshUrl": "https://localhost:8080/realms/fiction/protocol/openid-connect/token",
+            "scopes": {
+              "fiction_api": "Grants access to authenticated methods."
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    { }
+  ],
+  "tags": [
+    {
+      "name": "Tag Discovery"
+    },
+    {
+      "name": "Story Management"
+    },
+    {
+      "name": "Story Discovery"
+    },
+    {
+      "name": "Current User"
+    },
+    {
+      "name": "Author Discovery"
+    }
+  ]
+}
