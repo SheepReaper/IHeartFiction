@@ -6,7 +6,6 @@
   "enabledManagers": [
     "github-actions",
     "nuget",
-    "renovate-config-presets",
     "custom.regex"
   ],
   "customManagers": [
@@ -20,6 +19,13 @@
       ],
       "datasourceTemplate": "nuget",
       "versioningTemplate": "nuget"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["FluentAssertions"],
+      "enabled": false
     }
   ]
 }
