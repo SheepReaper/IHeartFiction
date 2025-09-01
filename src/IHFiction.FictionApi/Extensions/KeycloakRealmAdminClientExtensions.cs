@@ -1,3 +1,5 @@
+using IHFiction.FictionApi.Authors;
+
 using Microsoft.Extensions.Options;
 
 namespace IHFiction.FictionApi.Extensions;
@@ -61,5 +63,16 @@ internal static class KeycloakRealmAdminClientExtensions
         });
 
         return services;
+    }
+
+    public static IServiceCollection AddKeycloakRealmAdminClient(
+        this IServiceCollection services,
+        string serviceName,
+        string realm,
+        string clientId
+    ) => AddKeycloakRealmAdminClient<KeycloakAdminService>(services, GetServerUri(serviceName), clientId, realm);
+
+    private static string GetServerUri(string serviceName) {
+        return $"https+http://{serviceName}";
     }
 }
