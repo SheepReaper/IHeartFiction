@@ -5,9 +5,9 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <!-- <IsAspireHost>true</IsAspireHost> -->
     <UserSecretsId>c6f7845b-4507-4b76-9d66-de04efbd8180</UserSecretsId>
     <NoWarn>$(NoWarn);ASPIRE004</NoWarn>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +16,6 @@
     <PackageReference Include="Aspire.Hosting.KeyCloak" />
     <PackageReference Include="Aspire.Hosting.MongoDB" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
-    <!-- <PackageReference Include="MongoDB.Driver" /> -->
   </ItemGroup>
 
   <ItemGroup>
