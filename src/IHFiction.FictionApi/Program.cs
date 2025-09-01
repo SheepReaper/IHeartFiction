@@ -2,9 +2,12 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 using Cysharp.Serialization.Json;
 
@@ -14,6 +17,8 @@ using IHFiction.Data.Infrastructure;
 using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.SharedKernel.Linking;
+using IHFiction.SharedKernel.Markdown;
 
 using Keycloak.AuthServices.Authorization;
 
@@ -21,10 +26,12 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
 using Scalar.AspNetCore;
-using IHFiction.SharedKernel.Markdown;
-using IHFiction.SharedKernel.Linking;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Configuration["SecretsPath"] is string secretsPath) {
+    builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
+}
 
 // Initialize shared services
 TimeProvider dateTime = TimeProvider.System;
@@ -118,8 +125,8 @@ builder.Services.AddDbContextFactory<StoryDbContext>((services, options) => opti
     .UseMongoDB(services.GetRequiredService<IMongoClient>(), "stories-db")
     .UseSnakeCaseNamingConvention());
 
-builder.Services.AddAuthentication()
-    .AddKeycloakJwtBearer("keycloak", realm: "fiction", options =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddKeycloakJwtBearer("keycloak", realm: "fiction", JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.Audience = "fiction-api";
 
@@ -127,9 +134,35 @@ builder.Services.AddAuthentication()
         {
             options.RequireHttpsMetadata = false;
         }
+        else
+        {
+            if(builder.Configuration["OidcAuthority"] is string authority)
+                options.Authority = authority;
+        }
 
         // Allow for a small clock drift between the API and the identity provider
         options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(2);
+    })
+    // This is here to make configuring the docs client easier
+    .AddKeycloakOpenIdConnect("keycloak", "fiction", OpenIdConnectDefaults.AuthenticationScheme, options =>
+    {
+        options.ClientId = "fiction-api-docs";
+        options.Scope.Add("fiction_api");
+        options.ResponseType = OpenIdConnectResponseType.Code;
+        // options.SignInScheme
+        options.Resource = "fiction-api";
+
+        options.TokenValidationParameters.NameClaimType = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.PreferredUsername;
+
+        if (builder.Environment.IsDevelopment() || Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider")
+        {
+            options.RequireHttpsMetadata = false;
+        }
+        else
+        {
+            if(builder.Configuration["OidcAuthority"] is string authority)
+                options.Authority = authority;
+        }
     });
 
 builder.Services.AddAuthorizationBuilder()
@@ -142,17 +175,14 @@ builder.Services.AddKeycloakAuthorization(options =>
     options.Resource = "fiction-api";
 });
 
-#pragma warning disable S1075 // URIs should not be hardcoded
-builder.Services.AddKeycloakRealmAdminClient<KeycloakAdminService>(
-    "https+http://keycloak",
+
+builder.Services.AddKeycloakRealmAdminClient(
+    "keycloak",
     "fiction-admin-client",
     "fiction");
-#pragma warning restore S1075 // URIs should not be hardcoded
 
 // Configure OpenAPI documentation
-#pragma warning disable S1075 // URIs should not be hardcoded
-builder.Services.AddOpenApiWithAuth(builder.Configuration["services:keycloak:http:0"] ?? "https://localhost:8080/", "fiction");
-#pragma warning restore S1075 // URIs should not be hardcoded
+builder.Services.AddOpenApiWithAuth(OpenIdConnectDefaults.AuthenticationScheme);
 
 // Register application services
 // Core services
@@ -190,6 +220,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(o => o
         .AddPreferredSecuritySchemes("OAuth2")
+        .AddHttpAuthentication("JWT", scheme => scheme
+            .WithDescription("JWT with fiction-api audience."))
         .AddAuthorizationCodeFlow("OAuth2", flow => flow
             .WithClientId("fiction-api-docs")
             .WithSelectedScopes("fiction_api"))
