@@ -20,6 +20,10 @@ const string keycloakAuthenticationScheme = "Keycloak";
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Configuration["SecretsPath"] is string secretsPath) {
+    builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
+}
+
 builder.AddServiceDefaults();
 
 builder.Services.AddHttpContextAccessor();
@@ -39,6 +43,11 @@ builder.Services
         if (builder.Environment.IsDevelopment())
         {
             options.RequireHttpsMetadata = false;
+        }
+        else
+        {
+            if(builder.Configuration["OidcAuthority"] is string authority)
+                options.Authority = authority;
         }
     })
     .AddCookieWithOidcApiToken(CookieAuthenticationDefaults.AuthenticationScheme, keycloakAuthenticationScheme, 60);
