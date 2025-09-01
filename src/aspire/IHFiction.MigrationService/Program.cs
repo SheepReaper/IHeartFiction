@@ -10,9 +10,11 @@ using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-TimeProvider dateTime = TimeProvider.System;
+if (builder.Configuration["SecretsPath"] is string secretsPath) {
+    builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
+}
 
-builder.AddServiceDefaults();
+TimeProvider dateTime = TimeProvider.System;
 
 builder.Services.AddHostedService<Worker>();
 builder.Services.AddSingleton(dateTime);
