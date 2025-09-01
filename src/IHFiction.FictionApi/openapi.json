@@ -5036,23 +5036,21 @@
       }
     },
     "securitySchemes": {
-      "OAuth2": {
-        "type": "oauth2",
-        "description": "OAuth 2.0 authentication with OpenID Connect.",
-        "flows": {
-          "authorizationCode": {
-            "authorizationUrl": "https://localhost:8080/realms/fiction/protocol/openid-connect/auth",
-            "tokenUrl": "https://localhost:8080/realms/fiction/protocol/openid-connect/token",
-            "refreshUrl": "https://localhost:8080/realms/fiction/protocol/openid-connect/token",
-            "scopes": {
-              "fiction_api": "Grants access to authenticated methods."
-            }
-          }
-        }
+      "OpenIdConnect": {
+        "type": "openIdConnect",
+        "description": "OpenID Connect authentication.",
+        "openIdConnectUrl": "https+http://keycloak/realms/fiction/.well-known/openid-configuration"
+      },
+      "JWT": {
+        "type": "http",
+        "description": "JWT Bearer token authentication.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   },
   "security": [
+    { },
     { }
   ],
   "tags": [
