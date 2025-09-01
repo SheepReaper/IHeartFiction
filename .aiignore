@@ -55,3 +55,6 @@ artifacts/
 [Tt]humbs.db
 ehthumbs.db
 *.DS_Store
+
+# Production config
+appsettings.Production.json

@@ -488,3 +488,10 @@ $RECYCLE.BIN/
 
 # Local publish output
 /infra
+
+# Local data bind
+/data/*
+!/data/.gitkeep
+
+# Production config
+appsettings.Production.json
