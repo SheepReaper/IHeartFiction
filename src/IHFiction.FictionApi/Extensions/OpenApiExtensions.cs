@@ -1,20 +1,85 @@
+using System.Reflection;
+
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
+using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
+using IHFiction.SharedKernel.Pagination;
 
 using MongoDB.Bson;
-using IHFiction.SharedKernel.Pagination;
-using IHFiction.SharedKernel.Infrastructure;
 
 namespace IHFiction.FictionApi.Extensions;
 
 internal static class OpenApiExtensions
 {
-    public static IServiceCollection AddOpenApiWithAuth(this IServiceCollection services, string baseUrl, string realm) => AddOpenApiWithAuth(services, new Uri(baseUrl), realm);
-
-    public static IServiceCollection AddOpenApiWithAuth(this IServiceCollection services, Uri baseUrl, string realm) => services.AddOpenApi(options => options.AddDocumentTransformer((document, context, cancellationToken) =>
+    public static IServiceCollection AddOpenApiWithAuth(this IServiceCollection services, string? oidcScheme = null) => services.AddOpenApi(options => options.AddDocumentTransformer(async (document, context, cancellationToken) =>
     {
+        var options = context.ApplicationServices
+            .GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>()
+            .Get(oidcScheme);
+
+        document.Security ??= [];
+
+        if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider" && options.ConfigurationManager is not null)
+        {
+            var oidcConfig = await options.ConfigurationManager.GetConfigurationAsync(cancellationToken);
+
+            document.AddComponent("OAuth2", new OpenApiSecurityScheme()
+            {
+                Description = "OAuth 2.0 authentication with OpenID Connect.",
+                Flows = new()
+                {
+                    AuthorizationCode = new()
+                    {
+                        AuthorizationUrl = new(oidcConfig.AuthorizationEndpoint),
+                        RefreshUrl = new(oidcConfig.TokenEndpoint),
+                        Scopes = new Dictionary<string, string>
+                        {
+                            {"fiction_api", "Grants access to authenticated methods."}
+                        },
+                        TokenUrl = new(oidcConfig.TokenEndpoint)
+                    }
+                },
+                Type = SecuritySchemeType.OAuth2
+            });
+
+            document.Security.Add(new()
+            {
+                {new("OAuth2"), ["fiction_api"]}
+            });
+        }
+
+        if (options.MetadataAddress is not null)
+        {
+            document.AddComponent("OpenIdConnect", new OpenApiSecurityScheme()
+            {
+                Description = "OpenID Connect authentication.",
+                OpenIdConnectUrl = new(options.MetadataAddress),
+                Type = SecuritySchemeType.OpenIdConnect
+            });
+
+            document.Security.Add(new()
+            {
+                {new("OpenIdConnect"), ["fiction_api"]}
+            });
+        }
+
+        document.AddComponent("JWT", new OpenApiSecurityScheme()
+        {
+            BearerFormat = "JWT",
+            Description = "JWT Bearer token authentication.",
+            Scheme = OpenApiConstants.Bearer,
+            Type = SecuritySchemeType.Http
+        });
+
+        document.Security.Add(new()
+        {
+            {new("JWT"), []}
+        });
+
         document.Info = new(document.Info)
         {
             // Title and version are already set
@@ -24,38 +89,6 @@ internal static class OpenApiExtensions
             Summary = "I❤️HFiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
             TermsOfService = new("http://localhost") // I don't have ToS yet
         };
-
-        document.AddComponent("OAuth2", new OpenApiSecurityScheme()
-        {
-            BearerFormat = "JWT",
-            Description = "OAuth 2.0 authentication with OpenID Connect.",
-            Flows = new()
-            {
-                AuthorizationCode = new()
-                {
-                    AuthorizationUrl = new(baseUrl, $"realms/{realm}/protocol/openid-connect/auth"),
-                    RefreshUrl = new(baseUrl, $"realms/{realm}/protocol/openid-connect/token"),
-                    Scopes = new Dictionary<string, string>
-                    {
-                        {"fiction_api", "Grants access to authenticated methods."}
-                    },
-                    TokenUrl = new(baseUrl, $"realms/{realm}/protocol/openid-connect/token")
-                }
-            },
-            In = ParameterLocation.Header,
-            OpenIdConnectUrl = new(baseUrl, $"realms/{realm}/.well-known/openid-configuration"),
-            Scheme = "bearer",
-            Type = SecuritySchemeType.OAuth2
-        });
-
-        document.Security ??= [];
-
-        document.Security.Add(new()
-        {
-            {new("OAuth2"), ["fiction_api"]}
-        });
-
-        return Task.CompletedTask;
     }).AddSchemaTransformer(async (schema, context, ct) =>
     {
         var t = context.JsonTypeInfo.Type;
@@ -132,7 +165,6 @@ internal static class OpenApiExtensions
                     : li;
             }
         }
-
 
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Linked<>))
         {
