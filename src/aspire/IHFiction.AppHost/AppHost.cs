@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
+using IHFiction.AppHost.Docker;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 int apiReplicaCount = builder.Configuration.GetValue("Containers:Api:ReplicaCount", 1);
@@ -13,9 +15,6 @@ var keycloakClientSecret = builder.AddParameter(
 var keycloakAdminClientSecret = builder.AddParameter(
     "ApiKeycloakAdminClientSecret",
     secret: true);
-
-var compose = builder.AddDockerComposeEnvironment("internal")
-    .WithDashboard();
 
 var postgres = builder.AddPostgres("postgres")
     .WithDataBindMount(builder.Configuration["Containers:Postgres:DataPath"] ?? "../../../data/postgres")
@@ -49,7 +48,6 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithReference(keycloak)
     .WithReference(fictionDb)
     .WithReference(storiesDb)
-    .WithEnvironment("KeycloakAdminClientOptions__AuthClientSecret", keycloakAdminClientSecret)
     .WaitFor(storiesDb)
     .WaitFor(fictionDb)
     .WithHttpHealthCheck("/health")
@@ -59,11 +57,13 @@ var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithHttpHealthCheck("/health")
     .WithReference(fictionApi)
     .WithReference(keycloak)
-    .WithEnvironment("Authentication__Schemes__Keycloak__ClientSecret", keycloakClientSecret)
     .WithReplicas(webClientReplicaCount);
 
 if (builder.Environment.IsDevelopment())
 {
+    fictionApi.WithEnvironment("KeycloakAdminClientOptions__AuthClientSecret", keycloakAdminClientSecret);
+    webClient.WithEnvironment("Authentication__Schemes__Keycloak__ClientSecret", keycloakClientSecret);
+
     migrations
         .WithExplicitStart();
 }
@@ -81,33 +81,35 @@ if (!builder.Environment.IsDevelopment())
 // The following is environment specific configuration for docker compose publish. It won't work for you.
 if (builder.Environment.IsProduction())
 {
-    compose.ConfigureComposeFile(file =>
-    {
-        file.AddNetwork(new()
+    builder.AddDockerComposeEnvironment("internal")
+        .WithDashboard()
+        .ConfigureComposeFile(file =>
         {
-            Name = "t3_proxy",
-            External = true
+            file.AddNetwork(new()
+            {
+                Name = "t3_proxy",
+                External = true
+            })
+            .AddNetwork(new()
+            {
+                Name = "containers"
+            });
+
+            file.Secrets.Add("keycloak-admin-pass", new() { File = "./secrets/keycloak-admin-pass.secret" });
+            file.Secrets.Add("mongodb-root-pass", new() { File = "./secrets/mongodb-root-pass.secret" });
+            file.Secrets.Add("postgres-pass", new() { File = "./secrets/postgres-pass.secret" });
+
+            file.Secrets.Add("ConnectionStrings__fiction-db", new() { File = "./secrets/conn-fiction-db.secret" });
+            file.Secrets.Add("ConnectionStrings__stories-db", new() { File = "./secrets/conn-stories-db.secret" });
+
+            file.Secrets.Add("Authentication__Schemes__Keycloak__ClientSecret", new() { File = "./secrets/keycloak-frontend-client.secret" });
+            file.Secrets.Add("KeycloakAdminClientOptions__AuthClientSecret", new() { File = "./secrets/keycloak-admin-client.secret" });
         })
-        .AddNetwork(new()
+        .WithProperties(props =>
         {
-            Name = "containers"
-        });
-
-        file.Secrets.Add("keycloak-admin-pass", new() { File = "./secrets/keycloak-admin-pass.secret" });
-        file.Secrets.Add("mongodb-root-pass", new() { File = "./secrets/mongodb-root-pass.secret" });
-        file.Secrets.Add("postgres-pass", new() { File = "./secrets/postgres-pass.secret" });
-
-        file.Secrets.Add("ConnectionStrings__fiction-db", new() { File = "./secrets/conn-fiction-db.secret" });
-        file.Secrets.Add("ConnectionStrings__stories-db", new() { File = "./secrets/conn-stories-db.secret" });
-
-        file.Secrets.Add("Authentication__Schemes__Keycloak__ClientSecret", new() { File = "./secrets/keycloak-frontend-client.secret" });
-        file.Secrets.Add("KeycloakAdminClientOptions__AuthClientSecret", new() { File = "./secrets/keycloak-admin-client.secret" });
-    })
-    .WithProperties(props =>
-    {
-        props.DefaultNetworkName = "containers";
-        props.DefaultContainerRegistry = builder.Configuration["Registry"];
-    });
+            props.DefaultNetworkName = "containers";
+            props.DefaultContainerRegistry = builder.Configuration["Registry"];
+        }).PushToRegistry();
 
     postgres.PublishAsDockerComposeService((_, service) =>
     {
@@ -162,7 +164,6 @@ if (builder.Environment.IsProduction())
     {
         service.Environment.Remove("ConnectionStrings__fiction-db");
         service.Environment.Remove("ConnectionStrings__stories-db");
-        service.Environment.Remove("KeycloakAdminClientOptions__AuthClientSecret");
 
         if (builder.Configuration["OidcAuthority"] is string authority)
             service.Environment["OidcAuthority"] = authority;
@@ -193,8 +194,6 @@ if (builder.Environment.IsProduction())
 
     webClient.PublishAsDockerComposeService((_, service) =>
     {
-        service.Environment.Remove("Authentication__Schemes__Keycloak__ClientSecret");
-
         if (builder.Configuration["OidcAuthority"] is string authority)
             service.Environment["OidcAuthority"] = authority;
 
