@@ -26,6 +26,10 @@
       "matchManagers": ["nuget"],
       "matchPackageNames": ["FluentAssertions"],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["GitHubActionsTestLogger"],
+      "abandonmentThreshold": "2 years"
     }
   ]
 }
