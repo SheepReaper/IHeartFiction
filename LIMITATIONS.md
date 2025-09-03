@@ -4,16 +4,6 @@ This document outlines the known limitations and challenges in the IHFiction pro
 
 ## Deployment
 
-### .NET Aspire Container Labels
-
-Currently, there is a limitation in .NET Aspire regarding the ability to add custom labels to container resources. This feature is crucial for some deployment scenarios, such as when using Traefik as a reverse proxy, which relies on container labels for service discovery and configuration.
-
-A pull request ([#10710](https://github.com/dotnet/aspire/pull/10710)) has been submitted to the .NET Aspire repository to address this by introducing `WithLabel` and `WithLabels` extension methods. However, as of now, this PR has not been merged.
-
-**Workaround:**
-
-Until the pull request is merged and a new version of .NET Aspire is released, any required container labels must be configured manually in the deployment environment. This means that the automated benefits of Aspire's configuration cannot be fully leveraged for this aspect of deployment.
-
 ### Docker Swarm Deployment Labels
 
 A bug exists in the .NET Aspire SDK that prevents the correct generation of deployment labels for Docker Swarm services. When attempting to add labels to the `deploy` section of a service, Aspire incorrectly serializes them under an `additional_labels` key instead of the correct `labels` key.
@@ -51,6 +41,10 @@ docker stack deploy -c docker-compose.yml -c docker-compose.deploy.yml my_stack
 ```
 
 This approach uses a standard Docker Compose feature to merge the configurations, resulting in a valid deployment manifest without generating incorrect files.
+
+**Update:**
+PR is out for the fix: [#11204](https://github.com/dotnet/aspire/pull/11204)
+PR Is merged and should be included in 9.5 or 9.4.3 version
 
 ### Production Configuration in AppHost.cs
 
