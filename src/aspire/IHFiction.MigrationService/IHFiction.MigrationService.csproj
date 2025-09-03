@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <UserSecretsId>dotnet-IHFiction.MigrationService-28733df6-f6b6-445f-b66e-59c0912822e3</UserSecretsId>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
+    <ContainerImageFormat>OCI</ContainerImageFormat>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +15,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <!-- <PackageReference Include="MongoDB.Driver" /> -->
   </ItemGroup>
 
   <ItemGroup>
