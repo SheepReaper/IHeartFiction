@@ -1,6 +1,9 @@
 <?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
+    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
+    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
+    <ContainerImageFormat>OCI</ContainerImageFormat>
   </PropertyGroup>
 
   <ItemGroup>
