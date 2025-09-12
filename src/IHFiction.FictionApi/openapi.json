@@ -98,7 +98,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListTagsBody"
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ListTagsBody"
+                  }
+                ]
               }
             }
           }
@@ -1507,7 +1514,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GetCurrentAuthorStoriesBody"
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GetCurrentAuthorStoriesBody"
+                  }
+                ]
               }
             }
           }
@@ -1863,7 +1877,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ListPublishedStoriesBody"
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ListPublishedStoriesBody"
+                  }
+                ]
               }
             }
           }
@@ -2596,6 +2617,7 @@
         "type": "object",
         "properties": {
           "id": {
+            "description": "Unique identifier for the work",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -2655,6 +2677,7 @@
         "type": "object",
         "properties": {
           "id": {
+            "description": "Unique identifier for the book.",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -2672,6 +2695,7 @@
         "type": "object",
         "properties": {
           "id": {
+            "description": "Unique identifier for the chapter.",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -2779,13 +2803,25 @@
         "description": "Represents the current authenticated author's profile information."
       },
       "CurrentAuthorWork": {
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Unique identifier for the work",
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the work"
+          }
+        },
         "description": "Represents a work (story) associated with the current author."
       },
       "GetCurrentAuthorStoriesBody": {
-        "type": [
-          "null",
-          "object"
-        ],
+        "type": "object",
         "properties": {
           "tags": {
             "maxLength": 200,
@@ -2887,6 +2923,7 @@
             }
           },
           "chapterId": {
+            "description": "Unique identifier for the created chapter.",
             "$ref": "#/components/schemas/Ulid"
           },
           "chapterTitle": {
@@ -2894,9 +2931,11 @@
             "description": "Title of the created chapter."
           },
           "contentId": {
+            "description": "Unique identifier for the chapter content document.",
             "$ref": "#/components/schemas/ObjectId"
           },
           "bookId": {
+            "description": "Unique identifier of the book the chapter was added to.",
             "$ref": "#/components/schemas/Ulid"
           },
           "bookTitle": {
@@ -2936,6 +2975,7 @@
             }
           },
           "chapterId": {
+            "description": "Unique identifier for the created chapter",
             "$ref": "#/components/schemas/Ulid"
           },
           "chapterTitle": {
@@ -2943,9 +2983,11 @@
             "description": "Title of the created chapter"
           },
           "contentId": {
+            "description": "Unique identifier for the chapter content document",
             "$ref": "#/components/schemas/ObjectId"
           },
           "storyId": {
+            "description": "Unique identifier of the story the chapter was added to",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
@@ -2983,6 +3025,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier of the story",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
@@ -3042,6 +3085,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -3130,6 +3174,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the created book.",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -3146,9 +3191,11 @@
             "format": "date-time"
           },
           "ownerId": {
+            "description": "Unique identifier of the book owner.",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyId": {
+            "description": "Unique identifier of the story this book belongs to.",
             "$ref": "#/components/schemas/Ulid"
           }
         },
@@ -3173,6 +3220,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the created story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -3189,6 +3237,7 @@
             "format": "date-time"
           },
           "ownerId": {
+            "description": "Unique identifier of the story owner",
             "$ref": "#/components/schemas/Ulid"
           },
           "ownerName": {
@@ -3239,6 +3288,7 @@
             "format": "date-time"
           },
           "profile": {
+            "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/AuthorProfile"
           },
           "works": {
@@ -3274,6 +3324,7 @@
             }
           },
           "chapterId": {
+            "description": "Unique identifier of the chapter",
             "$ref": "#/components/schemas/Ulid"
           },
           "chapterTitle": {
@@ -3281,6 +3332,7 @@
             "description": "Title of the chapter"
           },
           "storyId": {
+            "description": "Unique identifier of the parent story",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
@@ -3288,6 +3340,7 @@
             "description": "Title of the parent story"
           },
           "contentId": {
+            "description": "Unique identifier for the content document",
             "$ref": "#/components/schemas/ObjectId"
           },
           "content": {
@@ -3448,6 +3501,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the author",
             "$ref": "#/components/schemas/Ulid"
           },
           "userId": {
@@ -3472,6 +3526,7 @@
             "format": "date-time"
           },
           "profile": {
+            "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/CurrentAuthorProfile"
           },
           "works": {
@@ -3516,6 +3571,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier for the story.",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
@@ -3531,6 +3587,7 @@
             "description": "Whether the story is published."
           },
           "contentId": {
+            "description": "Unique identifier for the content document.",
             "$ref": "#/components/schemas/ObjectId"
           },
           "content": {
@@ -3606,6 +3663,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier of the story",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
@@ -3617,6 +3675,7 @@
             "description": "Description of the story"
           },
           "contentId": {
+            "description": "Unique identifier for the content document",
             "$ref": "#/components/schemas/ObjectId"
           },
           "content": {
@@ -3678,6 +3737,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -3711,6 +3771,7 @@
             "format": "date-time"
           },
           "ownerId": {
+            "description": "Unique identifier of the story owner",
             "$ref": "#/components/schemas/Ulid"
           },
           "ownerName": {
@@ -3770,6 +3831,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the author",
             "$ref": "#/components/schemas/Ulid"
           },
           "name": {
@@ -3835,6 +3897,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier for the story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -3877,6 +3940,7 @@
             "format": "int32"
           },
           "authorId": {
+            "description": "Unique identifier for the story author",
             "$ref": "#/components/schemas/Ulid"
           },
           "authorName": {
@@ -3906,6 +3970,7 @@
             }
           },
           "chapterId": {
+            "description": "Unique identifier for the chapter",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -3966,6 +4031,7 @@
             }
           },
           "tagId": {
+            "description": "Unique identifier for the tag",
             "$ref": "#/components/schemas/Ulid"
           },
           "category": {
@@ -4026,6 +4092,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier of the published story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -4089,6 +4156,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the author",
             "$ref": "#/components/schemas/Ulid"
           },
           "userId": {
@@ -4113,6 +4181,7 @@
             "format": "date-time"
           },
           "profile": {
+            "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/AuthorProfile"
           }
         },
@@ -4139,6 +4208,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier of the unpublished story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -4197,6 +4267,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the author",
             "$ref": "#/components/schemas/Ulid"
           },
           "userId": {
@@ -4221,6 +4292,7 @@
             "format": "date-time"
           },
           "profile": {
+            "description": "Updated profile information including bio",
             "$ref": "#/components/schemas/AuthorProfile"
           }
         },
@@ -4247,6 +4319,7 @@
             }
           },
           "chapterId": {
+            "description": "Unique identifier of the updated chapter",
             "$ref": "#/components/schemas/Ulid"
           },
           "chapterTitle": {
@@ -4254,6 +4327,7 @@
             "description": "Title of the chapter"
           },
           "contentId": {
+            "description": "Unique identifier for the content document",
             "$ref": "#/components/schemas/ObjectId"
           },
           "content": {
@@ -4303,6 +4377,7 @@
             }
           },
           "chapterId": {
+            "description": "Unique identifier for the updated chapter.",
             "$ref": "#/components/schemas/Ulid"
           },
           "chapterTitle": {
@@ -4338,6 +4413,7 @@
             }
           },
           "storyId": {
+            "description": "Unique identifier for the story",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
@@ -4345,6 +4421,7 @@
             "description": "Title of the story"
           },
           "contentId": {
+            "description": "Unique identifier for the content document",
             "$ref": "#/components/schemas/ObjectId"
           },
           "content": {
@@ -4397,6 +4474,7 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the updated story",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
@@ -4413,6 +4491,7 @@
             "format": "date-time"
           },
           "ownerId": {
+            "description": "Unique identifier of the story owner",
             "$ref": "#/components/schemas/Ulid"
           },
           "ownerName": {
@@ -4751,10 +4830,7 @@
         "description": "An object representing a hypermedia link."
       },
       "ListPublishedStoriesBody": {
-        "type": [
-          "null",
-          "object"
-        ],
+        "type": "object",
         "properties": {
           "authorId": {
             "type": [
@@ -4769,10 +4845,7 @@
         "description": "Request model for listing published stories."
       },
       "ListTagsBody": {
-        "type": [
-          "null",
-          "object"
-        ],
+        "type": "object",
         "properties": {
           "category": {
             "maxLength": 50,
@@ -4860,6 +4933,7 @@
         "type": "object",
         "properties": {
           "id": {
+            "description": "Unique identifier for the author",
             "$ref": "#/components/schemas/Ulid"
           },
           "name": {

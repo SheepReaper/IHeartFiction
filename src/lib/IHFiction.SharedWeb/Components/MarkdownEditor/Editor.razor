@@ -105,7 +105,9 @@
         }
         catch (JSDisconnectedException)
         {
-            Console.WriteLine("JSDisconnectedException");
+            @* Console.WriteLine("JSDisconnectedException"); *@
+            _editor = null;
+            _module = null;
         }
 
         _module = null;

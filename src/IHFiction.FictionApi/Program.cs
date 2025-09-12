@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -29,9 +30,9 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Configuration["SecretsPath"] is string secretsPath) {
+if (builder.Configuration["SecretsPath"] is string secretsPath)
     builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
-}
+
 
 // Initialize shared services
 TimeProvider dateTime = TimeProvider.System;
@@ -73,29 +74,18 @@ if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider")
 }
 
 // Configure CORS
-builder.Services.AddCors(o =>
+if (builder.Environment.IsProduction())
 {
-    if (builder.Environment.IsDevelopment())
-    {
-        o.AddDefaultPolicy(p => p
-            .AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader());
-    }
-    else
-    {
-        var allowedOrigins = builder.Configuration
-            .GetValue<string>("Cors:AllowedOrigins")
-            ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            ?? throw new InvalidOperationException("Cors:AllowedOrigins configuration is required in production");
+    string[] allowedOrigins = [.. (builder.Configuration["AllowedOrigins"]
+        ?? throw new InvalidOperationException("AllowedOrigins configuration is required in production"))
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
 
-        o.AddDefaultPolicy(p => p
-            .WithOrigins(allowedOrigins)
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials());
-    }
-});
+    builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+        .WithOrigins(allowedOrigins)
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials()));
+}
 
 // Configure shared infrastructure services
 builder.Services.AddSingleton(dateTime);
@@ -111,7 +101,6 @@ builder.AddNpgsqlDbContext<FictionDbContext>(
 
 builder.AddMongoDBClient("stories-db",
     null,
-    // options => options.DisableHealthChecks = true,
     settings => settings.ClusterConfigurator = c => c.Subscribe(
         new DiagnosticsActivityEventSubscriber(
             new InstrumentationOptions()
@@ -136,7 +125,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
         else
         {
-            if(builder.Configuration["OidcAuthority"] is string authority)
+            if (builder.Configuration["OidcAuthority"] is string authority)
                 options.Authority = authority;
         }
 
@@ -149,7 +138,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.ClientId = "fiction-api-docs";
         options.Scope.Add("fiction_api");
         options.ResponseType = OpenIdConnectResponseType.Code;
-        // options.SignInScheme
         options.Resource = "fiction-api";
 
         options.TokenValidationParameters.NameClaimType = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.PreferredUsername;
@@ -160,7 +148,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         }
         else
         {
-            if(builder.Configuration["OidcAuthority"] is string authority)
+            if (builder.Configuration["OidcAuthority"] is string authority)
                 options.Authority = authority;
         }
     });
@@ -174,7 +162,6 @@ builder.Services.AddKeycloakAuthorization(options =>
     options.EnableRolesMapping = RolesClaimTransformationSource.All;
     options.Resource = "fiction-api";
 });
-
 
 builder.Services.AddKeycloakRealmAdminClient(
     "keycloak",
@@ -208,25 +195,47 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseHttpsRedirection();
-app.UseCors();
+
+if (app.Environment.IsProduction())
+{
+    string[] trustedProxiesCidr = [.. (builder.Configuration["TrustedProxies"]
+        ?? throw new InvalidOperationException("TrustedProxies configuration is required in production"))
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+
+    string[] allowedHosts = [.. (builder.Configuration["AllowedHosts"]
+        ?? throw new InvalidOperationException("AllowedHosts configuration is required in production"))
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+
+    ForwardedHeadersOptions options = new()
+    {
+        ForwardedHeaders = ForwardedHeaders.All,
+        ForwardLimit = null,
+        AllowedHosts = allowedHosts
+    };
+
+    foreach (var cidr in trustedProxiesCidr)
+    {
+        if (!System.Net.IPNetwork.TryParse(cidr, out var proxy)) continue;
+        options.KnownIPNetworks.Add(proxy);
+    }
+
+    app.UseForwardedHeaders(options);
+    app.UseCors();
+}
 
 // Configure authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapOpenApi();
 
-// Configure development-only features
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference(o => o
-        .AddPreferredSecuritySchemes("OAuth2")
-        .AddHttpAuthentication("JWT", scheme => scheme
-            .WithDescription("JWT with fiction-api audience."))
-        .AddAuthorizationCodeFlow("OAuth2", flow => flow
-            .WithClientId("fiction-api-docs")
-            .WithSelectedScopes("fiction_api"))
-        .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl));
-}
+app.MapScalarApiReference(o => o
+    .AddPreferredSecuritySchemes("OAuth2")
+    .AddHttpAuthentication("JWT", scheme => scheme
+        .WithDescription("JWT with fiction-api audience."))
+    .AddAuthorizationCodeFlow("OAuth2", flow => flow
+        .WithClientId("fiction-api-docs")
+        .WithSelectedScopes("fiction_api"))
+    .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl));
 
 // Map endpoints
 app.MapEndpoints();
