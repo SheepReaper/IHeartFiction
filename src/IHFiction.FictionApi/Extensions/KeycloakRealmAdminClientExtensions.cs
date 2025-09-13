@@ -1,6 +1,6 @@
-using IHFiction.FictionApi.Authors;
-
 using Microsoft.Extensions.Options;
+
+using IHFiction.FictionApi.Authors;
 
 namespace IHFiction.FictionApi.Extensions;
 
@@ -68,8 +68,8 @@ internal static class KeycloakRealmAdminClientExtensions
     public static IServiceCollection AddKeycloakRealmAdminClient(
         this IServiceCollection services,
         string serviceName,
-        string realm,
-        string clientId
+        string clientId,
+        string realm
     ) => AddKeycloakRealmAdminClient<KeycloakAdminService>(services, GetServerUri(serviceName), clientId, realm);
 
     private static string GetServerUri(string serviceName) {

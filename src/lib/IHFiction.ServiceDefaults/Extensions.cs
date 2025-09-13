@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,9 @@ public static class Extensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        if (builder.Configuration["SecretsPath"] is string secretsPath)
+            builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
+
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -31,7 +35,8 @@ public static class Extensions
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             // Turn on resilience by default
-            // http.AddStandardResilienceHandler();
+            if(!builder.Environment.IsDevelopment())
+                http.AddStandardResilienceHandler();
 
             // Turn on service discovery by default
             http.AddServiceDiscovery();
@@ -53,25 +58,50 @@ public static class Extensions
             logging.IncludeScopes = true;
         });
 
-        builder.Services.AddOpenTelemetry()
-            .WithMetrics(metrics => metrics
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
-                .AddRuntimeInstrumentation())
-            .WithTracing(tracing => tracing
-                .AddSource(builder.Environment.ApplicationName)
-                .AddAspNetCoreInstrumentation(tracing => tracing.Filter = context =>
-                    !context.Request.Path.StartsWithSegments(HealthEndpointPath, StringComparison.OrdinalIgnoreCase)
-                    && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
-                // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
-                //.AddGrpcClientInstrumentation()
-                .AddHttpClientInstrumentation()
-                // .AddHttpClientInstrumentation(tracing => tracing.FilterHttpRequestMessage = context => context.RequestUri is Uri uri
-                //     && !uri.AbsolutePath.StartsWith(HealthEndpointPath, StringComparison.OrdinalIgnoreCase)
-                //     && !uri.AbsolutePath.StartsWith(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
-            );
+        var useAuthOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]) && builder.Environment.IsProduction();
 
-        builder.AddOpenTelemetryExporters();
+        builder.Services.AddOpenTelemetry()
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation();
+
+                if (useAuthOtlpExporter)
+                {
+                    if (builder.Configuration["Dashboard:Otlp:PrimaryApiKey"] is not string otlpApiKey)
+                        throw new InvalidOperationException("Dashboard:Otlp:PrimaryApiKey configuration is required");
+
+                    metrics.AddOtlpExporter(o => o.Headers = $"x-otlp-api-key={otlpApiKey}");
+                }
+            })
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddSource(builder.Environment.ApplicationName)
+                    .AddAspNetCoreInstrumentation(tracing => tracing.Filter = context =>
+                        !context.Request.Path.StartsWithSegments(HealthEndpointPath, StringComparison.OrdinalIgnoreCase)
+                        && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
+                    // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
+                    //.AddGrpcClientInstrumentation()
+                    .AddHttpClientInstrumentation()
+            // .AddHttpClientInstrumentation(tracing => tracing.FilterHttpRequestMessage = context => context.RequestUri is Uri uri
+            //     && !uri.AbsolutePath.StartsWith(HealthEndpointPath, StringComparison.OrdinalIgnoreCase)
+            //     && !uri.AbsolutePath.StartsWith(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
+            ;
+
+                if (useAuthOtlpExporter)
+                {
+                    if (builder.Configuration["Dashboard:Otlp:PrimaryApiKey"] is not string otlpApiKey)
+                        throw new InvalidOperationException("Dashboard:Otlp:PrimaryApiKey configuration is required");
+
+                    tracing.AddOtlpExporter(o => o.Headers = $"x-otlp-api-key={otlpApiKey}");
+                }
+            });
+            
+        if(!useAuthOtlpExporter)
+            builder.AddOpenTelemetryExporters();
 
         return builder;
     }

@@ -30,10 +30,6 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Configuration["SecretsPath"] is string secretsPath)
-    builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
-
-
 // Initialize shared services
 TimeProvider dateTime = TimeProvider.System;
 
@@ -66,7 +62,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new LinkedConverterFactory());
 });
 
-if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider")
+if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider" && builder.Environment.IsProduction())
 {
     builder.Services.AddDataProtection()
         .PersistKeysToDbContext<FictionDbContext>()
@@ -165,8 +161,8 @@ builder.Services.AddKeycloakAuthorization(options =>
 
 builder.Services.AddKeycloakRealmAdminClient(
     "keycloak",
-    "fiction-admin-client",
-    "fiction");
+    clientId: "fiction-admin-client",
+    realm: "fiction");
 
 // Configure OpenAPI documentation
 builder.Services.AddOpenApiWithAuth(OpenIdConnectDefaults.AuthenticationScheme);

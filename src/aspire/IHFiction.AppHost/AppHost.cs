@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+
 using IHFiction.AppHost.Extensions;
 
 var builder = DistributedApplication.CreateBuilder(args);
@@ -27,7 +28,7 @@ var storiesDb = mongo.AddDatabase("stories-db");
 
 var fictionDb = postgres.AddDatabase("fiction-db");
 
-var keycloak = builder.AddKeycloak("keycloak")
+var keycloak = builder.AddKeycloak("keycloak", builder.Environment.IsDevelopment() ? 8080 : null)
     .WithImageTag("26.3")
     .WithLifetime(ContainerLifetime.Persistent);
 

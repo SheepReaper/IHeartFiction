@@ -27,21 +27,22 @@ const string keycloakAuthenticationScheme = "Keycloak";
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Configuration["SecretsPath"] is string secretsPath)
-    builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
-
 builder.AddServiceDefaults();
 
-builder.AddNpgsqlDbContext<FictionDbContext>(
-    "fiction-db",
-    configureDbContextOptions: (options) => options
-        .UseNpgsql(options => options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
-        .UseSnakeCaseNamingConvention());
-
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddDataProtection()
-    .PersistKeysToDbContext<FictionDbContext>()
-    .SetApplicationName(builder.Environment.ApplicationName);
+
+if (builder.Environment.IsProduction())
+{
+    builder.AddNpgsqlDbContext<FictionDbContext>(
+        "fiction-db",
+        configureDbContextOptions: (options) => options
+            .UseNpgsql(options => options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
+            .UseSnakeCaseNamingConvention());
+
+    builder.Services.AddDataProtection()
+        .PersistKeysToDbContext<FictionDbContext>()
+        .SetApplicationName(builder.Environment.ApplicationName);
+}
 
 builder.Services
     .AddAuthentication(keycloakAuthenticationScheme)

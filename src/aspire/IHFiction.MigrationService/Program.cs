@@ -8,10 +8,17 @@ using IHFiction.MigrationService;
 using MongoDB.Driver;
 using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
+using OpenTelemetry.Exporter;
+
 var builder = Host.CreateApplicationBuilder(args);
 
 if (builder.Configuration["SecretsPath"] is string secretsPath)
     builder.Configuration.AddKeyPerFile(secretsPath, optional: true, reloadOnChange: true);
+
+if (builder.Configuration["Dashboard:Otlp:PrimaryApiKey"] is string otlpApiKey)
+    builder.Services.Configure<OtlpExporterOptions>(o => o.Headers = $"x-otlp-api-key={otlpApiKey}");
+    
+else if(builder.Environment.IsProduction()) throw new InvalidOperationException("Dashboard:Otlp:PrimaryApiKey configuration is required");
 
 TimeProvider dateTime = TimeProvider.System;
 
