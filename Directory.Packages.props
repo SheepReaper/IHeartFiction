@@ -24,7 +24,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
     <PackageVersion Include="Keycloak.AuthServices.Authorization" Version="2.7.0" />
-    <PackageVersion Include="Markdig" Version="0.41.3" />
+    <PackageVersion Include="Markdig" Version="0.42.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="10.0.0-rc.1.25451.107" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0-rc.1.25451.107" />
