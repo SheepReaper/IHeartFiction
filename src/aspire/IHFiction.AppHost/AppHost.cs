@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-
-using IHFiction.AppHost;
+using IHFiction.AppHost.Extensions;
 
 var builder = DistributedApplication.CreateBuilder(args);
 

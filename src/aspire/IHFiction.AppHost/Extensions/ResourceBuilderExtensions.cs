@@ -4,11 +4,11 @@ using System.Text;
 
 using Aspire.Hosting.Publishing;
 
-namespace IHFiction.AppHost;
+namespace IHFiction.AppHost.Extensions;
 
 #pragma warning disable ASPIRECOMPUTE001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 #pragma warning disable ASPIREPUBLISHERS001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-internal static class Extensions
+internal static class ResourceBuilderExtensions
 {
     private static IPublishingStep? s_deployStep;
     private static ConcurrentBag<string>? s_pendingPushes;

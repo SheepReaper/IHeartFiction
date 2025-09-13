@@ -1,6 +1,6 @@
 using Aspire.Hosting.Docker;
 
-namespace IHFiction.AppHost;
+namespace IHFiction.AppHost.Extensions;
 
 internal static class ProductionConfigExtensions
 {
@@ -23,6 +23,12 @@ internal static class ProductionConfigExtensions
                 Source = $"{DataPath}/dashboard",
                 Target = "/home/app/.aspnet/DataProtection-Keys"
             });
+
+            service.Environment["ASPIRE_DASHBOARD_FILE_CONFIG_DIRECTORY"] = "/run/secrets";
+            service.Environment["Dashboard__ResourceServiceClient__AuthMode"] = "ApiKey";
+            service.Environment["Dashboard__ResourceServiceClient__Url"] = $"http://{service.Name}:18889";
+
+            service.Secrets.Add(new() { Source = "Dashboard__ResourceServiceClient__ApiKey" });
         }))
         .ConfigureComposeFile(file =>
         {
@@ -50,6 +56,9 @@ internal static class ProductionConfigExtensions
 
             file.Secrets.Add("Authentication__Schemes__Keycloak__ClientSecret", new() { File = $"{SecretsPath}/keycloak-frontend-client.secret" });
             file.Secrets.Add("KeycloakAdminClientOptions__AuthClientSecret", new() { File = $"{SecretsPath}/keycloak-admin-client.secret" });
+
+            file.Secrets.Add("Dashboard__ResourceServiceClient__ApiKey", new() { File = $"{SecretsPath}/otlp-api-key.secret" });
+            file.Secrets.Add("OpenTelemetry__OtlpExporterOptions__DefaultOptions__Headers", new() { File = $"{SecretsPath}/otlp-headers.secret" });
 
             // Cleanup noise for swarm spec
             foreach (var (_, service) in file.Services)
@@ -136,6 +145,7 @@ internal static class ProductionConfigExtensions
 
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
+            service.Secrets.Add(new() { Source = "OpenTelemetry__OtlpExporterOptions__DefaultOptions__Headers" });
 
             service.Deploy ??= new();
             service.Deploy.Mode = "replicated-job";
@@ -179,6 +189,7 @@ internal static class ProductionConfigExtensions
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
             service.Secrets.Add(new() { Source = "KeycloakAdminClientOptions__AuthClientSecret" });
+            service.Secrets.Add(new() { Source = "OpenTelemetry__OtlpExporterOptions__DefaultOptions__Headers" });
 
             if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
                 service.Image = image.ToTaggedString();
@@ -212,6 +223,7 @@ internal static class ProductionConfigExtensions
 
             service.Networks.Add(FrontEndNetwork);
             service.Secrets.Add(new() { Source = "Authentication__Schemes__Keycloak__ClientSecret" });
+            service.Secrets.Add(new() { Source = "OpenTelemetry__OtlpExporterOptions__DefaultOptions__Headers" });
 
             if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
                 service.Image = image.ToTaggedString();
