@@ -1,98 +1,169 @@
 @using IHFiction.SharedWeb.Services
 @using IHFiction.SharedWeb.Components.MarkdownEditor
+@using IHFiction.SharedWeb.Components
 
 @inherits CancellableComponent
 @inject StoryEditorService StoryEditorService
 
 <div class="chapter-manager">
-    <div class="columns">
-        <div class="column is-one-third">
-            <h3 class="subtitle">Chapters</h3>
+    <h3 class="subtitle">Chapters</h3>
+    <nav class="pagination is-centered is-small" role="navigation" aria-label="chapters pagination" style="margin-bottom: 1.5rem;">
+        <a class="pagination-previous" @onclick="() => SelectPreviousChapter()">&lt; Previous</a>
+        <ul class="pagination-list">
+            @for (int i = 0; i < Chapters.Count; i++)
+            {
+                var chapter = Chapters[i];
+                <li>
+                    <a class="pagination-link @(chapter.Id == SelectedChapter?.Id ? "is-current" : "")"
+                       aria-label="Chapter @(i + 1)" title="@chapter.Title"
+                       @onclick="async () => await SelectChapter(chapter)">@(i + 1)</a>
+                </li>
+            }
+            <li>
+                <a class="pagination-link" aria-label="Add Chapter" @onclick="AddNewChapter">
+                    <span class="icon is-small">
+                        <i class="fas fa-plus"></i>
+                    </span>
+                </a>
+            </li>
+        </ul>
+        <a class="pagination-next" @onclick="() => SelectNextChapter()">Next &gt;</a>
+    </nav>
+    <div>
+        @if (SelectedChapter is not null)
+        {
             <div class="field">
+                <label class="label">Chapter Title</label>
                 <div class="control">
-                    <button class="button is-success is-fullwidth" @onclick="AddNewChapter">
-                        <span class="icon is-small">
-                            <i class="fas fa-plus"></i>
-                        </span>
-                        <span>Add Chapter</span>
-                    </button>
+                    <input class="input" type="text" @bind="SelectedChapter.Title" @bind:event="oninput"
+                        @bind:after="StoryEditorService.NotifyStateChanged" />
                 </div>
             </div>
-            @if (Story is not null)
-            {
-                <div class="chapter-list">
-                    @foreach (var chapter in Story.Chapters)
-                    {
-                        <div class="chapter-item field has-addons" @key="chapter.Id">
-                            <div class="control is-expanded">
-                                <a class="button is-fullwidth @(chapter.Id == SelectedChapter?.Id ? "is-primary" : "")" @onclick="() => SelectChapter(chapter)">
-                                    @chapter.Title
-                                </a>
-                            </div>
-                            <div class="control">
-                                <button class="button is-danger" @onclick="() => DeleteChapter(chapter)">
-                                    <span class="icon is-small">
-                                        <i class="fas fa-trash"></i>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
-                    }
+            <div class="field">
+                <label class="label">Author's Notes (Start)</label>
+                <div class="control" style="height: 200px">
+                    <Editor @bind-Value="SelectedChapter.Note1"
+                        @bind-Value:after="StoryEditorService.NotifyStateChanged" />
                 </div>
-            }
-        </div>
-        <div class="column">
-            @if (SelectedChapter is not null)
-            {
-                <div class="field">
-                    <label class="label">Chapter Title</label>
-                    <div class="control">
-                        <input class="input" type="text" @bind="SelectedChapter.Title" @bind:event="oninput" @bind:after="StoryEditorService.NotifyStateChanged" />
-                    </div>
+            </div>
+            <div class="field">
+                <label class="label">Chapter Content</label>
+                <div class="control" style="height: 500px">
+                    <Editor @bind-Value="SelectedChapter.Content"
+                        @bind-Value:after="StoryEditorService.NotifyStateChanged" />
                 </div>
-                <div class="field">
-                    <label class="label">Chapter Content</label>
-                    <div class="control" style="height: 500px">
-                        <Editor @bind-Value="@SelectedChapter.Content" @bind-Value:after="StoryEditorService.NotifyStateChanged" />
-                    </div>
+            </div>
+            <div class="field">
+                <label class="label">Author's Notes (End)</label>
+                <div class="control" style="height: 200px">
+                    <Editor @bind-Value="SelectedChapter.Note2"
+                        @bind-Value:after="StoryEditorService.NotifyStateChanged" />
                 </div>
-            }
-            else
-            {
-                <div class="has-text-centered">
-                    <p>Select a chapter to edit its content or add a new one.</p>
-                </div>
-            }
-        </div>
+            </div>
+            <div class="field">
+                <button class="button is-danger" @onclick="() => DeleteChapter(SelectedChapter)">
+                    <span class="icon is-small">
+                        <i class="fas fa-trash"></i>
+                    </span>
+                    <span>Delete Chapter</span>
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="has-text-centered">
+                <p>Select a chapter to edit its content or add a new one.</p>
+            </div>
+        }
     </div>
 </div>
 
 @code {
-    private StoryEditorModel? Story => StoryEditorService.CurrentStory;
+    [Parameter]
+    public BookEditorModel? Book { get; set; }
+
     private ChapterEditorModel? SelectedChapter { get; set; }
+    private Ulid? _lastBookId;
     private bool _disposed;
+
 
     protected override Task OnInitializedAsync()
     {
         StoryEditorService.OnStoryChanged += OnStoryChanged;
-
         return Task.CompletedTask;
+    }
+
+    protected override void OnParametersSet()
+    {
+        var currentBookId = Book?.Id;
+        if (!Equals(currentBookId, _lastBookId))
+        {
+            _lastBookId = currentBookId;
+            // Auto-select the first chapter if available
+            if (Chapters.Count > 0)
+            {
+                SelectedChapter = Chapters[0];
+            }
+            else
+            {
+                SelectedChapter = null;
+            }
+            StateHasChanged();
+        }
     }
 
     private void OnStoryChanged(object? sender, StoryChangedEventArgs e)
     {
-        SelectedChapter = null;
+        // Auto-select the first chapter if available
+        if (Chapters.Count > 0)
+        {
+            SelectedChapter = Chapters[0];
+        }
+        else
+        {
+            SelectedChapter = null;
+        }
         StateHasChanged();
     }
 
-    private async Task AddNewChapter()
+    private IList<ChapterEditorModel> Chapters
     {
-        var result = await StoryEditorService.AddNewChapter();
-
-        if (result.IsSuccess)
+        get
         {
-            SelectedChapter = result.Value;
+            if (Book != null)
+                return Book.Chapters;
+            if (StoryEditorService.CurrentStory?.Chapters != null)
+                return StoryEditorService.CurrentStory.Chapters;
+            return new List<ChapterEditorModel>();
         }
+    }
+
+    private void AddNewChapter()
+    {
+        var newChapter = new ChapterEditorModel
+        {
+            Title = $"New Chapter {Chapters.Count + 1}",
+            Content = "# New Chapter"
+        };
+        Chapters.Add(newChapter);
+        SelectedChapter = newChapter;
+        StateHasChanged();
+    }
+
+    private async Task SelectPreviousChapter()
+    {
+        if (Chapters.Count == 0 || SelectedChapter == null) return;
+        var selectedIndex = Chapters.IndexOf(SelectedChapter);
+        var previousChapter = Chapters[selectedIndex == 0 ? ^1 : selectedIndex - 1];
+        await SelectChapter(previousChapter);
+    }
+
+    private async Task SelectNextChapter()
+    {
+        if (Chapters.Count == 0 || SelectedChapter == null) return;
+        var selectedIndex = Chapters.IndexOf(SelectedChapter);
+        var nextChapter = Chapters[(selectedIndex + 1) % Chapters.Count];
+        await SelectChapter(nextChapter);
     }
 
     private async Task SelectChapter(ChapterEditorModel chapter)
@@ -100,28 +171,26 @@
         if (chapter.Content is null)
         {
             await StoryEditorService.LoadChapterContentAsync(chapter);
+            StateHasChanged();
         }
         SelectedChapter = chapter;
     }
 
-    private async Task DeleteChapter(ChapterEditorModel chapter)
+    private void DeleteChapter(ChapterEditorModel chapter)
     {
         if (SelectedChapter?.Id == chapter.Id)
         {
             SelectedChapter = null;
         }
-
-        await StoryEditorService.DeleteChapter(chapter);
+        Chapters.Remove(chapter);
+        StateHasChanged();
     }
 
-    protected override async ValueTask DisposeAsyncCore()
+    protected override ValueTask DisposeAsyncCore()
     {
-        if (_disposed) return;
-
+        if (_disposed) return ValueTask.CompletedTask;
         StoryEditorService.OnStoryChanged -= OnStoryChanged;
-
         _disposed = true;
-
-        await base.DisposeAsyncCore().ConfigureAwait(false);
+        return base.DisposeAsyncCore();
     }
 }

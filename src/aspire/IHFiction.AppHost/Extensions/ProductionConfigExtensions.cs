@@ -128,7 +128,7 @@ internal static class ProductionConfigExtensions
 
             service.Command = ["start"];
             service.Deploy ??= new();
-            service.Deploy.Replicas = 1;
+            service.Deploy.Replicas = 1; // Keycloak resource builder doesn't support ReplicaAnnotation yet
         });
 
     public static IResourceBuilder<ProjectResource> ConfigureMigrationsForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
@@ -147,7 +147,7 @@ internal static class ProductionConfigExtensions
 
             service.Deploy ??= new();
             service.Deploy.Mode = "replicated-job";
-            service.Deploy.Replicas = 1;
+            service.Deploy.Replicas = 1; // Replicated jobs run globally until this many successful completions
 
             if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
                 service.Image = image.ToTaggedString();

@@ -110,6 +110,12 @@ internal sealed class CreateBook(
             StoryId = story.Id
         };
 
+        // Ensure owner/creator is in Authors
+        if (!book.Authors.Any(a => a.Id == author.Id))
+        {
+            book.Authors.Add(author);
+        }
+
         story.Books.Add(book);
         await context.SaveChangesAsync(cancellationToken);
 

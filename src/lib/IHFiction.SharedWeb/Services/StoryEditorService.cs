@@ -20,7 +20,8 @@ public class StoryEditorModel
     public string? Note2 { get; set; }
     public DateTime? ContentUpdatedAt { get; set; }
     public DateTime StoryUpdatedAt { get; set; }
-    public string StoryType { get; set; } = IHFiction.Data.Stories.Domain.StoryType.SingleBody;
+    // Avoid nested namespace error by assigning default as string literal or move using to top if needed
+    public string StoryType { get; set; } = Data.Stories.Domain.StoryType.SingleBody;
 
     public ObservableCollection<ChapterEditorModel> Chapters { get; } = [];
     public ObservableCollection<BookEditorModel> Books { get; } = [];
@@ -56,13 +57,23 @@ public class BookEditorModel
 {
     public Ulid Id { get; set; }
     public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string? Note1 { get; set; }
+    public string? Note2 { get; set; }
     public ObservableCollection<ChapterEditorModel> Chapters { get; } = [];
 
     internal string OriginalTitle { get; set; } = string.Empty;
+    internal string? OriginalDescription { get; set; }
+    internal string? OriginalNote1 { get; set; }
+    internal string? OriginalNote2 { get; set; }
 
     public bool IsDirty(StoryEditorService service)
     {
-        return Title != OriginalTitle || Chapters.Any(c => c.IsDirty(service));
+        return Title != OriginalTitle
+            || Description != OriginalDescription
+            || Note1 != OriginalNote1
+            || Note2 != OriginalNote2
+            || Chapters.Any(c => c.IsDirty(service));
     }
 }
 
@@ -103,6 +114,33 @@ public sealed class StoryChangedEventArgs(StoryEditorModel? value) : EventArgs
 
 public class StoryEditorService(StoryService storyService, ChapterService chapterService, AccountService accountService, BookService bookService)
 {
+    // Book support for MultiBook stories
+
+    public Task<Result<BookEditorModel>> AddNewBook()
+    {
+        // TODO: Implement actual API call and logic
+        var newBook = new BookEditorModel {
+            Id = Ulid.NewUlid(),
+            Title = "New Book",
+            Description = string.Empty,
+            Note1 = string.Empty,
+            Note2 = string.Empty
+        };
+        // Add to CurrentStory.Books, raise events, etc.
+        CurrentStory?.Books.Add(newBook);
+        NotifyStateChanged();
+        return Task.FromResult(Result.Success(newBook));
+    }
+
+    public Task<Result> DeleteBook(BookEditorModel book)
+    {
+        // TODO: Implement actual API call and logic
+        // Remove from CurrentStory.Books, raise events, etc.
+        CurrentStory?.Books.Remove(book);
+        NotifyStateChanged();
+        return Task.FromResult(Result.Success());
+    }
+
     private StoryEditorModel? _currentStory;
     private bool _isDirty;
 
@@ -337,9 +375,21 @@ public class StoryEditorService(StoryService storyService, ChapterService chapte
             return Result.Success();
         }
 
-        // For now, only chapters within books can be dirty.
-        // If there were API endpoints to update book metadata, they would go here.
+        // Save Book Metadata if changed
+        if (book.Title != book.OriginalTitle || book.Description != book.OriginalDescription)
+        {
+            var updateBookBody = new UpdateBookMetadataBody { Title = book.Title, Description = book.Description };
+            var result = await bookService.UpdateBookMetadataAsync(book.Id.ToString(), updateBookBody);
+            if (result.IsFailure)
+            {
+                return result.DomainError!;
+            }
+            var updateBookResponse = result.Value!;
+            book.OriginalTitle = updateBookResponse.Title;
+            book.OriginalDescription = updateBookResponse.Description;
+        }
 
+        // Save Chapters within the book
         foreach (var chapter in book.Chapters)
         {
             var saveChapterResult = await SaveChapterAsync(chapter);
@@ -354,7 +404,7 @@ public class StoryEditorService(StoryService storyService, ChapterService chapte
     {
         ArgumentNullException.ThrowIfNull(chapter);
 
-        var result = await chapterService.GetChapterContentAsync(chapter.Id.ToString());
+        var result = await chapterService.GetCurrentAuthorChapterContentAsync(chapter.Id.ToString());
 
         if (result.IsFailure)
         {
@@ -426,6 +476,18 @@ public class StoryEditorService(StoryService storyService, ChapterService chapte
         }
 
         var apiResponse = result.Value!;
+
+        // Update book metadata if present in the API response
+        if (!string.IsNullOrEmpty(apiResponse.Title))
+        {
+            book.Title = apiResponse.Title;
+            book.OriginalTitle = apiResponse.Title;
+        }
+        if (!string.IsNullOrEmpty(apiResponse.Description))
+        {
+            book.Description = apiResponse.Description;
+            book.OriginalDescription = apiResponse.Description;
+        }
 
         book.Chapters.Clear();
 

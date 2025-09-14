@@ -39,6 +39,7 @@ internal sealed class GetCurrentAuthorBookContent(
     internal sealed record GetCurrentAuthorBookContentResponse(
         Ulid Id,
         string Title,
+        string Description,
         Ulid StoryId,
         string StoryTitle,
         IEnumerable<BookContentChapterItem> Chapters,
@@ -66,21 +67,28 @@ internal sealed class GetCurrentAuthorBookContent(
 
         if (!book.Authors.Any(b => b.Id == author.Value.Id)) return CommonErrors.Book.NotAuthorized;
 
-        var chapterBodies = storyDbContext.WorkBodies
-            .Where(wb => book.Chapters.Any(c => c.WorkBodyId == wb.Id))
-            .AsNoTracking().Join(book.Chapters, wb => wb.Id, c => c.WorkBodyId, (wb, c) => new BookContentChapterItem(
-                c.Id,
-                c.Title,
-                wb.Id,
-                wb.Content,
-                wb.Note1,
-                wb.Note2,
-                wb.UpdatedAt
-            ));
+        // Materialize chapters and join in-memory to avoid EF Core translation issues
+        var chapters = book.Chapters.ToList();
+        var workBodyIds = chapters.Select(c => c.WorkBodyId).ToList();
+        var workBodies = await storyDbContext.WorkBodies
+            .Where(wb => workBodyIds.Contains(wb.Id))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        var chapterBodies = chapters.Join(workBodies, c => c.WorkBodyId, wb => wb.Id, (c, wb) => new BookContentChapterItem(
+            c.Id,
+            c.Title,
+            wb.Id,
+            wb.Content,
+            wb.Note1,
+            wb.Note2,
+            wb.UpdatedAt
+        ));
 
         return new GetCurrentAuthorBookContentResponse(
             book.Id,
             book.Title,
+            book.Description ?? string.Empty,
             book.Story!.Id,
             book.Story.Title,
             chapterBodies,

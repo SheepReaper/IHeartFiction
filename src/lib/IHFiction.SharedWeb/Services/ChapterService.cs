@@ -4,6 +4,20 @@ namespace IHFiction.SharedWeb.Services;
 
 public class ChapterService(IFictionApiClient client)
 {
+    public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
+        string chapterId,
+        string? fields = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await client.GetCurrentAuthorChapterContentAsync(chapterId, fields, cancellationToken);
+        }
+        catch (ApiException ex)
+        {
+            return ex.ToDomainError();
+        }
+    }
     public async ValueTask<Result<LinkedOfGetChapterContentResponse>> GetChapterContentAsync(
         string chapterId,
         string? fields = null,

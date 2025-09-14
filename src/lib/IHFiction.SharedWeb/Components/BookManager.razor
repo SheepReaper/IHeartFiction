@@ -1,0 +1,209 @@
+@namespace IHFiction.SharedWeb.Components
+@using IHFiction.SharedWeb.Services
+@using IHFiction.SharedWeb.Components.MarkdownEditor
+@using IHFiction.SharedWeb.Components
+
+@inherits CancellableComponent
+@inject StoryEditorService StoryEditorService
+
+<div class="book-manager">
+    <div class="columns">
+        <div class="column">
+            <h3 class="subtitle">Books</h3>
+            @if (Story is not null)
+            {
+                <nav class="pagination is-centered is-small" role="navigation" aria-label="books pagination"
+                    style="margin-bottom: 1.5rem;">
+                    <a class="pagination-previous" @onclick="() => SelectPreviousBook()">&lt; Previous</a>
+                    <ul class="pagination-list">
+                        @for (int i = 0; i < Story.Books.Count; i++)
+                        {
+                            var book = Story.Books[i];
+                            <li>
+                                <a class="pagination-link @(book.Id == SelectedBook?.Id ? "is-current" : "")"
+                                    aria-label="Book @(i + 1)" title="@book.Title"
+                                    @onclick="async () => await SelectBook(book)">@(i + 1)</a>
+                            </li>
+                        }
+                        <li>
+                            <a class="pagination-link" aria-label="Add Book" @onclick="AddNewBook">
+                                <span class="icon is-small">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <a class="pagination-next" @onclick="() => SelectNextBook()">Next &gt;</a>
+                </nav>
+            }
+            @if (SelectedBook is not null)
+            {
+                <div class="field">
+                    <label class="label">Book Title</label>
+                    <div class="control">
+                        <input class="input" type="text" @bind="SelectedBook.Title" @bind:event="oninput"
+                            @bind:after="StoryEditorService.NotifyStateChanged" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Book Description</label>
+                    <div class="control">
+                        <textarea class="textarea" @bind="SelectedBook.Description" @bind:event="oninput"
+                            @bind:after="StoryEditorService.NotifyStateChanged"></textarea>
+                    </div>
+                </div>
+                <div class="field">
+                    <button class="button is-danger" @onclick="() => DeleteBook(SelectedBook)">
+                        <span class="icon is-small">
+                            <i class="fas fa-trash"></i>
+                        </span>
+                        <span>Delete Book</span>
+                    </button>
+                </div>
+                <!-- Author's Notes fields removed: not supported for books -->
+                <hr />
+                <ChapterManager Book="SelectedBook" @key="SelectedBook?.Id" />
+            }
+            else
+            {
+                <div class="has-text-centered">
+                    <p>Select a book to edit its content or add a new one.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private StoryEditorModel? Story => StoryEditorService.CurrentStory;
+    private BookEditorModel? SelectedBook { get; set; }
+    private bool _disposed;
+
+
+    protected override Task OnInitializedAsync()
+    {
+        StoryEditorService.OnStoryChanged += OnStoryChanged;
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Auto-select the first book if available and none is selected
+        if (Story?.Books.Count > 0 && SelectedBook == null)
+        {
+            var firstBook = Story.Books[0];
+            if (firstBook.Chapters.Count == 0)
+            {
+                var result = await StoryEditorService.LoadBookChaptersAsync(firstBook);
+                if (result.IsSuccess && result.Value is BookEditorModel loadedBook)
+                {
+                    var idx = Story.Books.IndexOf(firstBook);
+                    if (idx >= 0)
+                    {
+                        Story.Books[idx] = loadedBook;
+                        SelectedBook = loadedBook;
+                    }
+                    else
+                    {
+                        SelectedBook = loadedBook;
+                    }
+                }
+                else
+                {
+                    SelectedBook = firstBook;
+                }
+            }
+            else
+            {
+                SelectedBook = firstBook;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void OnStoryChanged(object? sender, StoryChangedEventArgs e)
+    {
+        // Auto-select the first book if available
+        if (Story?.Books.Count > 0)
+        {
+            SelectedBook = Story.Books[0];
+        }
+        else
+        {
+            SelectedBook = null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task AddNewBook()
+    {
+        var result = await StoryEditorService.AddNewBook();
+        if (result.IsSuccess)
+        {
+            SelectedBook = result.Value;
+        }
+    }
+
+    private async Task SelectBook(BookEditorModel book)
+    {
+        SelectedBook = book;
+        // Load chapters and description from backend if not already loaded
+        if (book.Chapters.Count == 0)
+        {
+            var result = await StoryEditorService.LoadBookChaptersAsync(book);
+            if (result.IsSuccess && result.Value is BookEditorModel loadedBook)
+            {
+                // Update the reference in Story.Books to ensure UI binding is correct
+                var idx = Story?.Books.IndexOf(book) ?? -1;
+                if (idx >= 0 && Story != null)
+                {
+                    Story.Books[idx] = loadedBook;
+                    SelectedBook = loadedBook;
+                }
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async Task SelectPreviousBook()
+    {
+        if (Story == null) return;
+        if (SelectedBook == null) return;
+
+        var selectedIndex = Story.Books.IndexOf(SelectedBook);
+        var previousBook = Story.Books[selectedIndex == 0 ? ^1 : selectedIndex - 1];
+
+        await SelectBook(previousBook);
+    }
+
+    private async Task SelectNextBook()
+    {
+        if (Story == null) return;
+        if (SelectedBook == null) return;
+
+        var selectedIndex = Story.Books.IndexOf(SelectedBook);
+        var nextBook = Story.Books[(selectedIndex + 1) % Story.Books.Count];
+
+        await SelectBook(nextBook);
+    }
+
+    private async Task DeleteBook(BookEditorModel book)
+    {
+        if (SelectedBook?.Id == book.Id)
+        {
+            SelectedBook = null;
+        }
+        await StoryEditorService.DeleteBook(book);
+    }
+
+    protected override ValueTask DisposeAsyncCore()
+    {
+        if (_disposed) return ValueTask.CompletedTask;
+
+        StoryEditorService.OnStoryChanged -= OnStoryChanged;
+
+        _disposed = true;
+
+        return base.DisposeAsyncCore();
+    }
+}

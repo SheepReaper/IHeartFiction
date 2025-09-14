@@ -1,3 +1,4 @@
+@namespace IHFiction.SharedWeb.Components.MarkdownEditor
 @using Microsoft.AspNetCore.Hosting
 @using Microsoft.Extensions.Hosting
 @rendermode RenderMode.InteractiveServer
@@ -31,6 +32,7 @@
     private IJSObjectReference? _module;
     private IJSObjectReference? _editor;
     private bool _disposed;
+    private string? _lastSetMarkdown;
 
     protected override Task OnInitializedAsync()
     {
@@ -57,6 +59,13 @@
             CancellationToken,
             [Options, _dotNetObjectReference]);
         }
+
+        // Always update the editor content if Value changes, or if editor was just created
+        if (_editor is not null && (Value != _lastSetMarkdown || firstRender))
+        {
+            await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
+            _lastSetMarkdown = Value;
+        }
     }
 
     private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
@@ -64,24 +73,30 @@
         InvokeAsync(StateHasChanged);
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override Task OnParametersSetAsync()
     {
-        if (_editor is not null)
-        {
-            var currentMarkdown = await _editor.InvokeAsync<string>("getMarkdown");
-            if (Value != currentMarkdown)
-            {
-                await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
-            }
-        }
+        // No-op: handled in OnAfterRenderAsync
+        return Task.CompletedTask;
     }
 
     [JSInvokable]
     public async Task OnEditorContentChanged(string markdown)
     {
-        Value = markdown;
-        await ValueChanged.InvokeAsync(Value);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            if (_disposed) return;
+            Value = markdown;
+            if (ValueChanged.HasDelegate)
+            {
+                await ValueChanged.InvokeAsync(Value);
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Editor.OnEditorContentChanged exception: {ex}");
+            throw;
+        }
     }
 
     protected override async ValueTask DisposeAsyncCore()
@@ -105,9 +120,13 @@
         }
         catch (JSDisconnectedException)
         {
-            @* Console.WriteLine("JSDisconnectedException"); *@
+            // Swallow, expected on disconnect
             _editor = null;
             _module = null;
+        }
+        catch (Exception ex)
+        {
+            await Console.Error.WriteLineAsync($"Editor.DisposeAsyncCore exception: {ex}");
         }
 
         _module = null;

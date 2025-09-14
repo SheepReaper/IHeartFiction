@@ -1,9 +1,7 @@
 @page "/stories/new"
 @page "/stories/{StoryId}/edit"
 @attribute [Authorize(Roles = "author")]
-@using IHFiction.SharedWeb.Components
 @using IHFiction.SharedWeb.Components.MarkdownEditor
-@using IHFiction.SharedWeb.Services
 @using IHFiction.Data.Stories.Domain
 @using System.Globalization
 @inherits CancellableComponent
@@ -94,9 +92,21 @@ else
     {
         case StoryType.SingleBody or StoryType.New:
             <div class="field">
+                <label class="label">Author's Notes (Start)</label>
+                <div class="control" style="height: 200px">
+                    <Editor @bind-Value="EditorService.CurrentStory.Note1" @bind-Value:after="EditorService.NotifyStateChanged" />
+                </div>
+            </div>
+            <div class="field">
                 <label class="label">Content</label>
                 <div class="control" style="height: 500px">
                     <Editor @bind-Value="EditorService.CurrentStory.Content" @bind-Value:after="EditorService.NotifyStateChanged" />
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Author's Notes (End)</label>
+                <div class="control" style="height: 200px">
+                    <Editor @bind-Value="EditorService.CurrentStory.Note2" @bind-Value:after="EditorService.NotifyStateChanged" />
                 </div>
             </div>
             break;
@@ -104,7 +114,7 @@ else
             <ChapterManager />
             break;
         case StoryType.MultiBook:
-            <p>Book management UI will go here.</p>
+            <BookManager />
             break;
     }
 
@@ -168,16 +178,16 @@ else
         InvokeAsync(StateHasChanged);
     }
 
-    protected override async ValueTask DisposeAsyncCore()
+    protected override ValueTask DisposeAsyncCore()
     {
-        if (_disposed) return;
+        if (_disposed) return ValueTask.CompletedTask;
 
         EditorService.OnStoryChanged -= OnStoryChanged;
         EditorService.OnDirtyStateChanged -= OnDirtyStateChanged;
 
         _disposed = true;
 
-        await base.DisposeAsyncCore().ConfigureAwait(false);
+        return base.DisposeAsyncCore();
     }
 
     private void DetermineCurrentStoryType()

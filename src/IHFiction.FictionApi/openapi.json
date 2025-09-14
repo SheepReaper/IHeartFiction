@@ -2079,6 +2079,109 @@
         }
       }
     },
+    "/books/{id}": {
+      "put": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Update Book Metadata",
+        "description": "Updates a book's title, description, and author notes. Only the story owner or authorized collaborators can update book metadata. Requires authentication and appropriate permissions.",
+        "operationId": "UpdateBookMetadata",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookMetadataBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateBookMetadataResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/authors/{id}": {
       "get": {
         "tags": [
@@ -3379,6 +3482,7 @@
           "links",
           "id",
           "title",
+          "description",
           "storyId",
           "storyTitle",
           "chapters",
@@ -3396,6 +3500,9 @@
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           },
           "storyId": {
@@ -4298,6 +4405,41 @@
         },
         "description": "Entity wrapper that provides a Links collection to an arbitrary object"
       },
+      "LinkedOfUpdateBookMetadataResponse": {
+        "required": [
+          "links",
+          "bookId",
+          "title",
+          "description",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "bookId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+      },
       "LinkedOfUpdateChapterContentResponse": {
         "required": [
           "links",
@@ -4992,6 +5134,28 @@
           }
         },
         "description": "Request body model for updating an author's profile."
+      },
+      "UpdateBookMetadataBody": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Request body model for updating book metadata."
       },
       "UpdateChapterContentBody": {
         "required": [

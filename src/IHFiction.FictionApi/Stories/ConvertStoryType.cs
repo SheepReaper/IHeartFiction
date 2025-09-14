@@ -160,6 +160,12 @@ internal sealed class ConvertStoryType(
     {
         var book = new Book { Title = "Book 1", StoryId = story.Id, Owner = story.Owner, Description = "Book 1 description" };
 
+        // Ensure owner is also in Authors
+        if (!book.Authors.Any(a => a.Id == story.OwnerId))
+        {
+            book.Authors.Add(story.Owner);
+        }
+
         context.Books.Add(book);
 
         foreach (var chapter in story.Chapters)

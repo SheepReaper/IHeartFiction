@@ -10,6 +10,26 @@ namespace IHFiction.FictionApi.Common;
 /// </summary>
 internal static partial class InputSanitizationService
 {
+    /// <summary>
+    /// Sanitizes author notes with markdown-aware processing.
+    /// Used for book/chapter notes fields.
+    /// </summary>
+    public static string? SanitizeNote(string? note)
+    {
+        // Notes are optional, so return null for empty/whitespace
+        if (string.IsNullOrWhiteSpace(note))
+            return null;
+
+        // For notes, preserve line breaks but normalize whitespace
+        var lines = note.Split('\n', StringSplitOptions.None);
+        var sanitizedLines = lines.Select(line =>
+            ValidationRegexPatterns.ConsecutiveWhitespace().Replace(line.Trim(), " "));
+            
+        var sanitized = string.Join('\n', sanitizedLines).Trim();
+
+        return string.IsNullOrEmpty(sanitized) ? null : sanitized;
+    }
+
     [GeneratedRegex(@"\n\s*\n\s*\n+", RegexOptions.Multiline)]
     private static partial Regex ExcessiveBlankLinesRegex();
     /// <summary>
