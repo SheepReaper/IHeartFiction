@@ -1,9 +1,9 @@
-@using IHFiction.SharedWeb.Services
 @page "/become-author"
 @attribute [Authorize]
 @inherits CancellableComponent
 @inject AccountService AccountService
 @inject NavigationManager Navigation
+@inject LoaderService LoaderService
 
 <div class="container">
     <h1 class="title">Become an Author</h1>
@@ -67,7 +67,7 @@
 
     <div class="field">
         <div class="control">
-            <button class="button is-primary is-large" disabled="@(!_agreedToTerms)" @onclick="OnBecomeAuthorClick">
+            <button class="button is-primary is-large" disabled="@(!_agreedToTerms || _loading)" @onclick="OnBecomeAuthorClick">
                 <span class="icon is-small">
                     <i class="fas fa-pen-nib"></i>
                 </span>
@@ -79,27 +79,35 @@
 </div>
 
 @code {
+
     private bool _agreedToTerms;
     private string? _errorMessage;
+    private bool _loading;
 
     private async Task OnBecomeAuthorClick()
     {
         _errorMessage = null;
         if (!_agreedToTerms) return;
 
-        var result = await AccountService.RegisterAsAuthorAsync(new(){AcceptTerms = true}, null, CancellationToken);
+        _loading = true;
+        LoaderService.Show();
+        try
+        {
+            var result = await AccountService.RegisterAsAuthorAsync(new(){AcceptTerms = true}, null, CancellationToken);
 
-        if (result.IsSuccess)
-        {
-            // Success! The user now has the 'author' role on the backend.
-            // We must now force a re-authentication to update the user's claims in the browser.
-            // We do this by navigating to the login endpoint with a redirect to the story editor.
-            // The 'forceLoad' is critical to ensure a full server roundtrip.
-            Navigation.NavigateTo($"authentication/login?returnUrl=/stories/new", forceLoad: true);
+            if (result.IsSuccess)
+            {
+                Navigation.NavigateTo($"authentication/login?returnUrl=/stories/new", forceLoad: true);
+            }
+            else
+            {
+                _errorMessage = result.DomainError.Description;
+            }
         }
-        else
+        finally
         {
-            _errorMessage = result.DomainError.Description;
+            _loading = false;
+            LoaderService.Hide();
         }
     }
 }

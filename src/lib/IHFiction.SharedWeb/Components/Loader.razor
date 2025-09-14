@@ -1,0 +1,51 @@
+@inherits CancellableComponent
+@inject IHFiction.SharedWeb.Services.LoaderService LoaderService
+
+@if (isVisible)
+{
+    <div class="modal is-active" style="z-index: 9999;">
+        <div class="modal-background"></div>
+        <div class="modal-content has-text-centered">
+            <span class="icon is-large has-text-primary">
+                <i class="fas fa-spinner fa-pulse fa-3x"></i>
+            </span>
+            <div class="mt-4 has-text-weight-semibold">Loading...</div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isVisible;
+    private bool _disposed = false;
+
+    protected override void OnInitialized()
+    {
+        LoaderService.OnShow += Show;
+        LoaderService.OnHide += Hide;
+        isVisible = LoaderService.IsLoading;
+    }
+
+    private void Show(object? sender, EventArgs e)
+    {
+        isVisible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Hide(object? sender, EventArgs e)
+    {
+        isVisible = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override ValueTask DisposeAsyncCore()
+    {
+        if (_disposed) return ValueTask.CompletedTask;
+
+        LoaderService.OnShow -= Show;
+        LoaderService.OnHide -= Hide;
+
+        _disposed = true;
+
+        return base.DisposeAsyncCore();
+    }
+}

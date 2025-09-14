@@ -104,6 +104,9 @@ builder.Services.AddSingleton(new MarkdownPipelineBuilder()
 
 builder.Services.AddSingleton(VersionHelper.Get());
 
+// Register LoaderService for global loading spinner
+builder.Services.AddScoped<LoaderService>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

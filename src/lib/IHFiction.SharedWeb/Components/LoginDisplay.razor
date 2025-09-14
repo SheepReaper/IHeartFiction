@@ -1,4 +1,5 @@
 @inject NavigationManager Navigation
+@inject LoaderService LoaderService
 
 <AuthorizeView>
     <Authorized>
@@ -15,7 +16,7 @@
                         Log out
                     </button>
                 </form> *@
-                <a class="navbar-item" href="@($"authentication/logout?returnUrl={Navigation.Uri}")">
+                <a class="navbar-item" @onclick="OnLogoutClick" disabled="@_loading">
                     Log out
                 </a>
             </div>
@@ -23,13 +24,32 @@
     </Authorized>
     <NotAuthorized>
         <div class="buttons">
-            <a class="button is-primary" href="@($"authentication/login?returnUrl={Navigation.Uri}")">
+            <button class="button is-primary" @onclick="OnSignUpClick" disabled="@_loading">
                 <strong>Sign up</strong>
-            </a>
-            <a class="button is-light" href="@($"authentication/login?returnUrl={Navigation.Uri}")">
+            </button>
+            <button class="button is-light" @onclick="OnLoginClick" disabled="@_loading">
                 Log in
-            </a>
+            </button>
         </div>
     </NotAuthorized>
 </AuthorizeView>
 
+@code {
+    private bool _loading;
+
+    private void OnSignUpClick() => OnLoginClick();
+
+    private void OnLoginClick()
+    {
+        _loading = true;
+        LoaderService.Show();
+        Navigation.NavigateTo($"authentication/login?returnUrl={Navigation.Uri}", forceLoad: true);
+    }
+
+    private void OnLogoutClick()
+    {
+        _loading = true;
+        LoaderService.Show();
+        Navigation.NavigateTo($"authentication/logout?returnUrl={Navigation.Uri}", forceLoad: true);
+    }
+}
