@@ -10,6 +10,7 @@ internal static class ClaimsPrincipalExtensions
     {
         public static readonly DomainError MissingClaim = new("ClaimsPrincipal.MissingClaim", "The NameIdentifier claim is missing from the principal.");
         public static readonly DomainError UnparsableId = new("ClaimsPrincipal.UnparsableId", "The NameIdentifier claim could not be parsed to a GUID.");
+        public static readonly DomainError NameNotMapped = new("ClaimsPrincipal.NameNotMapped", "The Name claim is not mapped.");
     }
     public static Result<Guid> GetUid(this ClaimsPrincipal principal)
     {
@@ -25,8 +26,8 @@ internal static class ClaimsPrincipalExtensions
 
     public static Result<string> GetUsername(this ClaimsPrincipal principal)
     {
-        var username = principal.FindFirstValue(ClaimTypes.Name);
+        var username = principal.Identity?.Name;
 
-        return username is null ? Errors.MissingClaim : username;
+        return username is null ? Errors.NameNotMapped : username;
     }
 }

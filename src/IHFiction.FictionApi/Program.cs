@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
@@ -114,16 +115,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddKeycloakJwtBearer("keycloak", realm: "fiction", JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.Audience = "fiction-api";
+        options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 
         if (builder.Environment.IsDevelopment())
-        {
             options.RequireHttpsMetadata = false;
-        }
-        else
-        {
-            if (builder.Configuration["OidcAuthority"] is string authority)
-                options.Authority = authority;
-        }
+
+        else if (builder.Configuration["OidcAuthority"] is string authority)
+            options.Authority = authority;
 
         // Allow for a small clock drift between the API and the identity provider
         options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(2);
@@ -136,17 +134,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.Resource = "fiction-api";
 
-        options.TokenValidationParameters.NameClaimType = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.PreferredUsername;
+        options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 
         if (builder.Environment.IsDevelopment() || Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider")
-        {
             options.RequireHttpsMetadata = false;
-        }
-        else
-        {
-            if (builder.Configuration["OidcAuthority"] is string authority)
-                options.Authority = authority;
-        }
+
+        else if (builder.Configuration["OidcAuthority"] is string authority)
+            options.Authority = authority;
+
     });
 
 builder.Services.AddAuthorizationBuilder()
