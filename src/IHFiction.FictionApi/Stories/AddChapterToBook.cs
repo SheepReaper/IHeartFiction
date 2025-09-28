@@ -72,21 +72,34 @@ internal sealed class AddChapterToBook(
     /// <summary>
     /// Response model for adding a new chapter to a book.
     /// </summary>
-    /// <param name="ChapterId">Unique identifier for the created chapter.</param>
-    /// <param name="ChapterTitle">Title of the created chapter.</param>
-    /// <param name="ContentId">Unique identifier for the chapter content document.</param>
     /// <param name="BookId">Unique identifier of the book the chapter was added to.</param>
     /// <param name="BookTitle">Title of the book.</param>
-    /// <param name="ChapterCreatedAt">When the chapter was created.</param>
     /// <param name="BookUpdatedAt">When the book was last updated.</param>
+    /// <param name="ChapterId">Unique identifier for the created chapter.</param>
+    /// <param name="ChapterTitle">Title of the created chapter.</param>
+    /// <param name="ChapterCreatedAt">When the chapter was created.</param>
+    /// <param name="ChapterPublishedAt">When the chapter was published (null if unpublished).</param>
+    /// <param name="ChapterUpdatedAt">When the chapter was last updated.</param>
+    /// <param name="ContentId">Unique identifier for the chapter content document.</param>
+    /// <param name="Content">The content of the chapter in markdown format.</param>
+    /// <param name="Note1">Optional note field that can contain additional information about the chapter.</param>
+    /// <param name="Note2">Optional second note field for additional author notes or comments.</param>
+    /// <param name="ContentUpdatedAt">When the chapter content was last updated.</param>
     internal sealed record AddChapterToBookResponse(
-        Ulid ChapterId,
-        string ChapterTitle,
-        ObjectId ContentId,
         Ulid BookId,
         string BookTitle,
+        DateTime BookUpdatedAt,
+        Ulid ChapterId,
+        string ChapterTitle,
         DateTime ChapterCreatedAt,
-        DateTime BookUpdatedAt);
+        DateTime? ChapterPublishedAt,
+        DateTime ChapterUpdatedAt,
+        ObjectId ContentId,
+        string Content,
+        string? Note1,
+        string? Note2,
+        DateTime ContentUpdatedAt
+    );
 
     public async Task<Result<AddChapterToBookResponse>> HandleAsync(
         Ulid bookId,
@@ -149,13 +162,20 @@ internal sealed class AddChapterToBook(
             await context.SaveChangesAsync(cancellationToken);
 
             return new AddChapterToBookResponse(
-                chapter.Id,
-                chapter.Title,
-                workBody.Id,
                 book.Id,
                 book.Title,
+                book.UpdatedAt,
+                chapter.Id,
+                chapter.Title,
                 chapter.CreatedAt,
-                book.UpdatedAt);
+                chapter.PublishedAt,
+                chapter.UpdatedAt,
+                workBody.Id,
+                workBody.Content,
+                workBody.Note1,
+                workBody.Note2,
+                workBody.UpdatedAt
+            );
         }
         catch (DbUpdateConcurrencyException)
         {

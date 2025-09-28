@@ -20,17 +20,14 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
     public DbSet<Book> Books { get; set; } = null!;
     public DbSet<Chapter> Chapters { get; set; } = null!;
     public DbSet<Tag> Tags { get; set; } = null!;
+    public DbSet<Anthology> Anthologies { get; set; } = null!;
+    public DbSet<Work> Works { get; set; } = null!;
 
     // apply configurations from assembly except for WorkBodyConfiguration
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder
         .HasDefaultSchema(Schemas.Application)
         .ApplyConfigurationsFromAssembly(typeof(FictionDbContext).Assembly,
-            config => !config.IsAssignableTo(typeof(IEntityTypeConfiguration<WorkBody>)))
-        // .HasDbFunction(typeof(FictionDbContext).GetMethod(nameof(PromoteUserToAuthor), [typeof(string)])!)
-        // .HasName("promote_user_to_author")
-        // .HasSchema(Schemas.Application)
-        // .HasParameter("userid", p => p.HasStoreType("character varying"))
-        ;
+            config => !config.IsAssignableTo(typeof(IEntityTypeConfiguration<WorkBody>)));
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
@@ -44,6 +41,4 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
             .Properties<ObjectId>()
             .HaveConversion<ObjectIdToStringConverter>();
     }
-
-    // public IQueryable<Author> PromoteUserToAuthor(string userid) => FromExpression(() => PromoteUserToAuthor(userid));
 }

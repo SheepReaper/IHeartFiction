@@ -49,6 +49,7 @@ internal sealed class GetChapterContent(
     /// <param name="ChapterTitle">Title of the chapter</param>
     /// <param name="StoryId">Unique identifier of the parent story</param>
     /// <param name="StoryTitle">Title of the parent story</param>
+    /// <param name="BookId">Unique identifier of the parent book, if applicable</param>
     /// <param name="ContentId">Unique identifier for the content document</param>
     /// <param name="Content">The chapter content in markdown format</param>
     /// <param name="Note1">Optional author note about the content</param>
@@ -60,6 +61,7 @@ internal sealed class GetChapterContent(
         string ChapterTitle,
         Ulid StoryId,
         string StoryTitle,
+        Ulid BookId,
         ObjectId ContentId,
         string Content,
         string? Note1,
@@ -74,17 +76,23 @@ internal sealed class GetChapterContent(
         // Load the chapter with its story
         var chapter = await context.Chapters
             .Include(c => c.Story)
+            .Include(c => c.Book)
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
         if (chapter is null)
             return Errors.ChapterNotFound;
 
-        if (chapter.Story is null)
+        var bookStory = chapter.Book is not null ? await context.Books
+            .Include(b => b.Story)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == chapter.BookId, cancellationToken) : null;
+
+        if (chapter.Story is null && bookStory is null)
             return Errors.StoryNotFound;
 
         // Only allow access to published chapters from published stories
-        if (!chapter.Story.IsPublished)
+        if (!((chapter.Story?.IsPublished ?? false) || (bookStory?.Story?.IsPublished ?? false)))
             return Errors.StoryNotPublished;
 
         if (chapter.PublishedAt is null)
@@ -99,13 +107,16 @@ internal sealed class GetChapterContent(
             .AsNoTracking()
             .FirstOrDefaultAsync(wb => wb.Id == chapter.WorkBodyId, cancellationToken);
 
+        var story = chapter.Story ?? bookStory!.Story!;
+
         return workBody is null
             ? Errors.ContentNotFound
             : new GetChapterContentResponse(
                 chapter.Id,
                 chapter.Title,
-                chapter.Story.Id,
-                chapter.Story.Title,
+                story.Id,
+                story.Title,
+                chapter.BookId ?? Ulid.Empty,
                 workBody.Id,
                 workBody.Content,
                 workBody.Note1,

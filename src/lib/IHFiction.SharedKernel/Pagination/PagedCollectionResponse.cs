@@ -16,7 +16,7 @@ public record PagedCollectionResponse(
 };
 
 /// <summary>
-/// Standardized response model for paginated collections with full pagination metadata.
+/// Standardized response model for paginated collection of <typeparamref name="TData"/> with full pagination metadata.
 /// Use this for endpoints that return paginated collections and need to provide pagination information to clients.
 /// This type can be inherited from to create domain-specific response types while maintaining consistency.
 /// </summary>

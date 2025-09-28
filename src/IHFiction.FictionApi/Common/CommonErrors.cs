@@ -61,13 +61,13 @@ internal static class CommonErrors
         public static readonly DomainError NoContent = new("Chapter.NoContent", "Chapter does not have content yet.");
     }
 
-    internal static class Book{
+    internal static class Book
+    {
         public static readonly DomainError NotFound = new("Book.NotFound", "Book not found.");
         public static readonly DomainError AlreadyDeleted = new("Book.AlreadyDeleted", "Book has already been deleted.");
         public static readonly DomainError NotPublished = new("Book.NotPublished", "Book is not published.");
         public static readonly DomainError NoContent = new("Book.NoContent", "Book does not have content yet.");
-
         public static readonly DomainError NotAuthorized = new("Book.NotAuthorized", "You are not authorized to perform this action.");
-
+        public static readonly DomainError NotLinkedToStory = new("Book.NotLinkedToStory", "Book is not linked to a story.");
     }
 }

@@ -1,9 +1,9 @@
 namespace IHFiction.SharedKernel.Linking;
 
 /// <summary>
-/// Entity wrapper that provides a Links collection to an arbitrary object
+/// A Response model decorated with a collection of hyperlinks under the <paramref name="Links"/> property.
 /// </summary>
-/// <param name="Value">The value to wrap</param>
-/// <param name="Links">The collection of links</param>
-/// <typeparam name="T">The type of the value to wrap</typeparam>
+/// <typeparam name="T">The type of the wrapped value.</typeparam>
+/// <param name="Value">The value to wrap.</param>
+/// <param name="Links">The collection of links associated with <paramref name="Value"/>.</param>
 public record Linked<T>(T Value, IEnumerable<LinkItem> Links) : ILinks;

@@ -1,5 +1,8 @@
 namespace IHFiction.SharedKernel.Linking;
 
+/// <summary>
+/// A contract for types that include hypermedia links.
+/// </summary>
 public interface ILinks
 {
     /// <summary>

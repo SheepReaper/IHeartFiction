@@ -7,6 +7,7 @@ using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
+using IHFiction.Data.Stories.Domain;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -34,6 +35,35 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     internal sealed record StoryTag(string Category, string? Subcategory, string Value);
 
     /// <summary>
+    /// Represents a book associated with a story.
+    /// </summary>
+    /// <param name="Id">Unique identifier for the book</param>
+    /// <param name="Title">Title of the book</param>
+    /// <param name="Description">Description of the book</param>
+    /// <param name="Order">Order of the book within the story</param>
+    /// <param name="Chapters">Collection of chapters within the book</param>
+    internal sealed record BookItem(
+        Ulid Id,
+        string Title,
+        string Description,
+        int Order,
+        IEnumerable<ChapterItem> Chapters
+    );
+
+    /// <summary>
+    /// Represents a chapter within a book.
+    /// </summary>
+    /// <param name="Id">Unique identifier for the chapter</param>
+    /// <param name="Title">Title of the chapter</param>
+    /// <param name="Order">Order of the chapter within the book</param>
+
+    internal sealed record ChapterItem(
+        Ulid Id,
+        string Title,
+        int Order
+    );
+
+    /// <summary>
     /// Response model for getting a specific story by its ID.
     /// </summary>
     /// <param name="Id">Unique identifier for the story</param>
@@ -45,12 +75,11 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="CreatedAt">When the story was created</param>
     /// <param name="OwnerId">Unique identifier of the story owner</param>
     /// <param name="OwnerName">Display name of the story owner</param>
+    /// <param name="Type">The type of the story (e.g., "SingleBody", "MultiChapter", "MultiBook")</param>
     /// <param name="Authors">Collection of authors associated with this story</param>
     /// <param name="Tags">Collection of tags associated with this story</param>
-    /// <param name="HasContent">Whether the story has content written</param>
-    /// <param name="HasChapters">Whether the story has chapters</param>
-    /// <param name="HasBooks">Whether the story has books</param>
-    /// <param name="IsValid">Whether the story data is valid</param>
+    /// <param name="Books">Collection of books within this story (if applicable)</param>
+    /// <param name="Chapters">Collection of chapters within this story (if applicable)</param>
     internal sealed record GetPublishedStoryResponse(
         Ulid Id,
         string Title,
@@ -61,12 +90,12 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
         DateTime CreatedAt,
         Ulid OwnerId,
         string OwnerName,
+        string Type,
         IEnumerable<StoryAuthor> Authors,
         IEnumerable<StoryTag> Tags,
-        bool HasContent,
-        bool HasChapters,
-        bool HasBooks,
-        bool IsValid);
+        IEnumerable<BookItem> Books,
+        IEnumerable<ChapterItem> Chapters
+    );
 
     public async Task<Result<GetPublishedStoryResponse>> HandleAsync(
         Ulid id,
@@ -76,6 +105,11 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
         var story = await entityLoader.LoadStoryWithFullDetailsAsync(id, asNoTracking: true, cancellationToken: cancellationToken);
 
         if (story is null) return CommonErrors.Story.NotFound;
+
+        if (!story.IsPublished)
+            return CommonErrors.Story.NotPublished;
+
+        var storyType = GetCurrentStoryType(story);
 
         return !story.IsPublished
             ? CommonErrors.Story.NotPublished
@@ -89,13 +123,14 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             story.CreatedAt,
             story.OwnerId,
             story.Owner.Name,
+            storyType,
             story.Authors.Select(a => new StoryAuthor(a.Id, a.Name)),
             story.Tags.Select(t => new StoryTag(t.Category, t.Subcategory, t.Value)),
-            story.HasContent,
-            story.HasChapters,
-            story.HasBooks,
-            story.IsValid);
+            story.Books.Where(b => b.IsPublished).Select(b => new BookItem(b.Id, b.Title, b.Description, b.Order, b.Chapters.Where(c => c.IsPublished).Select(c => new ChapterItem(c.Id, c.Title, c.Order)))),
+            story.Chapters.Where(c => c.BookId == null && c.IsPublished).Select(c => new ChapterItem(c.Id, c.Title, c.Order))
+            );
     }
+
     public static string EndpointName => nameof(GetPublishedStory);
 
     internal sealed class Endpoint : IEndpoint
@@ -123,5 +158,17 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false, validation: false)
             .Produces<Linked<GetPublishedStoryResponse>>();
         }
+    }
+
+    private static string GetCurrentStoryType(Story story)
+    {
+        return story switch
+        {
+            { } when story.HasBooks => StoryType.MultiBook,
+            { } when story.HasChapters => StoryType.MultiChapter,
+            { } when story.HasContent => StoryType.SingleBody,
+            { } when !story.HasContent => StoryType.New,
+            _ => StoryType.Unknown
+        };
     }
 }

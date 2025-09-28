@@ -2,6 +2,7 @@ using System.Reflection;
 
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
@@ -15,7 +16,7 @@ namespace IHFiction.FictionApi.Extensions;
 
 internal static class OpenApiExtensions
 {
-    public static IServiceCollection AddOpenApiWithAuth(this IServiceCollection services, string? oidcScheme = null) => services.AddOpenApi(options => options.AddDocumentTransformer(async (document, context, cancellationToken) =>
+    private static Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task> CreatePrimaryDocumentTransformer(string? oidcScheme) => async (document, context, cancellationToken) =>
     {
         var options = context.ApplicationServices
             .GetRequiredService<IOptionsMonitor<OpenIdConnectOptions>>()
@@ -89,7 +90,9 @@ internal static class OpenApiExtensions
             Summary = "I❤️HFiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
             TermsOfService = new("http://localhost") // I don't have ToS yet
         };
-    }).AddSchemaTransformer(async (schema, context, ct) =>
+    };
+
+    private static async Task SchemaTransformer(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken ct)
     {
         var t = context.JsonTypeInfo.Type;
 
@@ -199,7 +202,9 @@ internal static class OpenApiExtensions
                 }
             }
         }
-    }).AddOperationTransformer((op, context, _) =>
+    }
+
+    private static Task OperationTransformer(OpenApiOperation op, OpenApiOperationTransformerContext context, CancellationToken ct)
     {
         var parameters = op.Parameters ?? [];
 
@@ -242,7 +247,34 @@ internal static class OpenApiExtensions
         }
 
         return Task.CompletedTask;
-    }));
+    }
+
+    public static IServiceCollection AddOpenApiWithAuth(this IServiceCollection services, string? oidcScheme = null)
+    {
+        services.AddOpenApi(options => options
+            .AddDocumentTransformer(CreatePrimaryDocumentTransformer(oidcScheme))
+            .AddSchemaTransformer(SchemaTransformer)
+            .AddOperationTransformer(OperationTransformer));
+
+        return Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"
+            ? services
+            : services.AddOpenApi("cloudflare", options =>
+        {
+            options.OpenApiVersion = OpenApiSpecVersion.OpenApi2_0;
+
+            options
+                .AddDocumentTransformer(CreatePrimaryDocumentTransformer(oidcScheme))
+                .AddDocumentTransformer((doc, ctx, ct) =>
+                {
+                    if(ctx.ApplicationServices.GetService<IConfiguration>()?["ApiBaseAddress"] is string apiBaseAddress)
+                        doc.Servers = [new() { Url = apiBaseAddress.TrimEnd('/') }];
+
+                    return Task.CompletedTask;
+                })
+                .AddSchemaTransformer(SchemaTransformer)
+                .AddOperationTransformer(OperationTransformer);
+        });
+    }
 
     public static OpenApiParameter With(this IOpenApiParameter parameter, string? description = null, string? example = null) => new()
     {

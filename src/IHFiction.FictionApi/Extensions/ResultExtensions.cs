@@ -46,7 +46,7 @@ internal static class ResultExtensions
         ToResult(result, shaped => Results.Created(new Uri(path.ToString(CultureInfo.InvariantCulture), UriKind.Relative), shaped), shapeQuery);
 
     public static IResult ToDeletedResult(this Result result) =>
-        ToResult(result, () => Results.NoContent());
+        ToResult(result, Results.NoContent);
 
     public static IResult ToDeletedResult<T>(this Result<T> result) =>
         ToResult(result, deleted => Results.NoContent());

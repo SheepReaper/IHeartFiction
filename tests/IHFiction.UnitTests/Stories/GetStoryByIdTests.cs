@@ -1,3 +1,4 @@
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Stories;
 
 namespace IHFiction.UnitTests.Stories;
@@ -32,12 +33,11 @@ public class GetStoryByIdTests
             now.AddDays(-1),
             ownerId,
             "Owner Name",
+            StoryType.SingleBody,
             authors,
             tags,
-            false,
-            false,
-            false,
-            true);
+            [],
+            []);
 
         // Assert
         Assert.Equal(id, response.Id);
@@ -51,10 +51,6 @@ public class GetStoryByIdTests
         Assert.Equal("Owner Name", response.OwnerName);
         Assert.Single(response.Authors);
         Assert.Single(response.Tags);
-        Assert.False(response.HasContent);
-        Assert.False(response.HasChapters);
-        Assert.False(response.HasBooks);
-        Assert.True(response.IsValid);
     }
 
     [Fact]
@@ -126,12 +122,11 @@ public class GetStoryByIdTests
             now.AddDays(-1),
             ownerId,
             "Owner Name",
+            StoryType.SingleBody,
             emptyAuthors,
             emptyTags,
-            false,
-            false,
-            false,
-            true);
+            [],
+            []);
 
         // Assert
         Assert.Equal(id, response.Id);
@@ -171,54 +166,14 @@ public class GetStoryByIdTests
             now.AddDays(-1),
             ownerId,
             "Primary Owner",
+            StoryType.MultiChapter,
             authors,
             tags,
-            true,
-            true,
-            false,
-            true);
+            [],
+            []);
 
         // Assert
         Assert.Equal(2, response.Authors.Count());
         Assert.Equal(3, response.Tags.Count());
-        Assert.True(response.HasContent);
-        Assert.True(response.HasChapters);
-        Assert.False(response.HasBooks);
-        Assert.True(response.IsValid);
-    }
-
-    [Fact]
-    public void GetStoryByIdResponse_StoryValidationStates_ReflectCorrectly()
-    {
-        // Arrange
-        var id = Ulid.NewUlid();
-        var ownerId = Ulid.NewUlid();
-        var now = DateTime.UtcNow;
-        var authors = Array.Empty<GetPublishedStory.StoryAuthor>();
-        var tags = Array.Empty<GetPublishedStory.StoryTag>();
-
-        // Act & Assert - New story (no content, chapters, or books)
-        var newStory = new GetPublishedStory.GetPublishedStoryResponse(
-            id, "New Story", "Description", null, false, now, now, ownerId, "Owner",
-            authors, tags, false, false, false, true);
-        Assert.True(newStory.IsValid);
-
-        // Act & Assert - One shot (has content, no chapters or books)
-        var oneShot = new GetPublishedStory.GetPublishedStoryResponse(
-            id, "One Shot", "Description", null, false, now, now, ownerId, "Owner",
-            authors, tags, true, false, false, true);
-        Assert.True(oneShot.IsValid);
-
-        // Act & Assert - Serial story (has chapters, no content or books)
-        var serial = new GetPublishedStory.GetPublishedStoryResponse(
-            id, "Serial", "Description", null, false, now, now, ownerId, "Owner",
-            authors, tags, false, true, false, true);
-        Assert.True(serial.IsValid);
-
-        // Act & Assert - Book series (has books, no content or chapters)
-        var series = new GetPublishedStory.GetPublishedStoryResponse(
-            id, "Series", "Description", null, false, now, now, ownerId, "Owner",
-            authors, tags, false, false, true, true);
-        Assert.True(series.IsValid);
     }
 }

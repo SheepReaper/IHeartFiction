@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.Pagination;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace IHFiction.FictionApi.Common;
 
@@ -62,6 +63,7 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
     /// <param name="pagination">Pagination parameters</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paginated result with metadata</returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Major Code Smell", "S6966:Awaitable method should be used", Justification = "CountAsync is only called for async providers")]
     public async Task<PagedCollection<TSource>> ExecutePagedQueryAsync<TSource>(
         IQueryable<TSource> query,
         IPaginationSupport? pagination = null,
@@ -70,9 +72,13 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
         pagination ??= new PaginationParams();
 
         // Get total count before pagination
-        var totalCount = await query.CountAsync(cancellationToken);
+        // Use Count() for in-memory queries (LINQ-to-Objects), CountAsync() for EF Core queries
+        int totalCount = query.Provider is IAsyncQueryProvider
+            ? await query.CountAsync(cancellationToken)
+            : query.Count();
 
         // Clamp requested dimensions
+
         var pageSize = Math.Clamp(pagination.PageSize ?? _options.DefaultPageSize, 1, _options.MaxPageSize);
 
         // calculate the last page number based of the total count and page size

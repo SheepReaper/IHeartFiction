@@ -25,16 +25,17 @@ internal sealed class GetCurrentAuthorChapterContent(
     ) : IDataShapingSupport;
 
     internal sealed record GetCurrentAuthorChapterContentResponse(
-        Ulid Id,
-        string Title,
         Ulid StoryId,
         string StoryTitle,
+        Ulid Id,
+        string Title,
+        DateTime? PublishedAt,
+        DateTime UpdatedAt,
         ObjectId ContentId,
         string Content,
         string? Note1,
         string? Note2,
-        DateTime ContentUpdatedAt,
-        DateTime UpdatedAt
+        DateTime ContentUpdatedAt
     );
 
     public async Task<Result<GetCurrentAuthorChapterContentResponse>> HandleAsync(
@@ -49,6 +50,20 @@ internal sealed class GetCurrentAuthorChapterContent(
 
         if (chapter is null) return CommonErrors.Chapter.NotFound;
 
+        var story = chapter.Story;
+
+        if  (story is null){
+            // Must be a book chapter or an error
+            var book = await context.Books
+                .Include(b => b.Story)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == chapter.BookId, cancellationToken);
+
+            if (book is null || book.Story is null) return CommonErrors.Book.NotLinkedToStory;
+
+            story = book.Story;
+        }
+
         var workBody = await storyDbContext.WorkBodies
             .AsNoTracking()
             .FirstOrDefaultAsync(wb => wb.Id == chapter.WorkBodyId, cancellationToken);
@@ -56,16 +71,17 @@ internal sealed class GetCurrentAuthorChapterContent(
         if (workBody is null) return CommonErrors.Chapter.NoContent;
 
         return new GetCurrentAuthorChapterContentResponse(
+            story.Id,
+            story.Title,
             chapter.Id,
             chapter.Title,
-            chapter.Story!.Id,
-            chapter.Story.Title,
+            chapter.PublishedAt,
+            chapter.UpdatedAt,
             workBody.Id,
             workBody.Content,
             workBody.Note1,
             workBody.Note2,
-            workBody.UpdatedAt,
-            chapter.UpdatedAt
+            workBody.UpdatedAt
         );
     }
     public static string EndpointName => nameof(GetCurrentAuthorChapterContent);

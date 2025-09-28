@@ -1996,6 +1996,99 @@
         }
       }
     },
+    "/works/{id}/publish": {
+      "post": {
+        "tags": [
+          "Story Management"
+        ],
+        "summary": "Publish Work (Story, Book, Chapter, Anthology)",
+        "description": "Makes any work publicly visible by setting its publication timestamp. If publishAll is true, recursively publishes all child works. Only owners can publish their works. Requires authentication and ownership.",
+        "operationId": "PublishWork",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishWorkBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfPublishWorkResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/stories/{id}/unpublish": {
       "post": {
         "tags": [
@@ -2734,48 +2827,114 @@
         "required": [
           "id",
           "title",
+          "chapterPublishedAt",
+          "chapterUpdatedAt",
           "contentId",
           "content",
           "note1",
           "note2",
-          "updatedAt"
+          "contentUpdatedAt"
         ],
         "type": "object",
         "properties": {
           "id": {
+            "description": "The unique identifier of the chapter.",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "The title of the chapter."
+          },
+          "chapterPublishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The date and time when the chapter was published.",
+            "format": "date-time"
+          },
+          "chapterUpdatedAt": {
+            "type": "string",
+            "description": "The date and time when the chapter metadata was last updated.",
+            "format": "date-time"
           },
           "contentId": {
+            "description": "The unique identifier for the content document.",
             "$ref": "#/components/schemas/ObjectId"
           },
           "content": {
-            "type": "string"
+            "type": "string",
+            "description": "The chapter content in markdown format."
           },
           "note1": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Optional author note about the content."
           },
           "note2": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Optional second author note."
           },
-          "updatedAt": {
+          "contentUpdatedAt": {
             "type": "string",
+            "description": "The date and time when the content was last updated.",
             "format": "date-time"
           }
-        }
+        },
+        "description": "Represents a chapter item within the book content response."
+      },
+      "BookItem": {
+        "required": [
+          "id",
+          "title",
+          "description",
+          "order",
+          "chapters"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Unique identifier for the book",
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the book"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the book"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Order of the book within the story",
+            "format": "int32"
+          },
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChapterItem"
+            },
+            "description": "Collection of chapters within the book"
+          }
+        },
+        "description": "Represents a book associated with a story."
       },
       "BookSummary": {
         "required": [
           "id",
-          "title"
+          "title",
+          "description",
+          "publishedAt"
         ],
         "type": "object",
         "properties": {
@@ -2786,14 +2945,55 @@
           "title": {
             "type": "string",
             "description": "Title of the book."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the book."
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the book was published (null if unpublished).",
+            "format": "date-time"
           }
         },
         "description": "Represents a summary of a book within a story."
       },
+      "ChapterItem": {
+        "required": [
+          "id",
+          "title",
+          "order"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Unique identifier for the chapter",
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the chapter"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Order of the chapter within the book",
+            "format": "int32"
+          }
+        },
+        "description": "Represents a chapter within a book."
+      },
       "ChapterSummary": {
         "required": [
           "id",
-          "title"
+          "title",
+          "publishedAt"
         ],
         "type": "object",
         "properties": {
@@ -2804,6 +3004,14 @@
           "title": {
             "type": "string",
             "description": "Title of the chapter."
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the chapter was published (null if unpublished).",
+            "format": "date-time"
           }
         },
         "description": "Represents a summary of a chapter within a story."
@@ -3009,13 +3217,19 @@
       "LinkedOfAddChapterToBookResponse": {
         "required": [
           "links",
-          "chapterId",
-          "chapterTitle",
-          "contentId",
           "bookId",
           "bookTitle",
+          "bookUpdatedAt",
+          "chapterId",
+          "chapterTitle",
           "chapterCreatedAt",
-          "bookUpdatedAt"
+          "chapterPublishedAt",
+          "chapterUpdatedAt",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt"
         ],
         "type": "object",
         "properties": {
@@ -3024,18 +3238,6 @@
             "items": {
               "$ref": "#/components/schemas/LinkItem"
             }
-          },
-          "chapterId": {
-            "description": "Unique identifier for the created chapter.",
-            "$ref": "#/components/schemas/Ulid"
-          },
-          "chapterTitle": {
-            "type": "string",
-            "description": "Title of the created chapter."
-          },
-          "contentId": {
-            "description": "Unique identifier for the chapter content document.",
-            "$ref": "#/components/schemas/ObjectId"
           },
           "bookId": {
             "description": "Unique identifier of the book the chapter was added to.",
@@ -3045,29 +3247,83 @@
             "type": "string",
             "description": "Title of the book."
           },
+          "bookUpdatedAt": {
+            "type": "string",
+            "description": "When the book was last updated.",
+            "format": "date-time"
+          },
+          "chapterId": {
+            "description": "Unique identifier for the created chapter.",
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "Title of the created chapter."
+          },
           "chapterCreatedAt": {
             "type": "string",
             "description": "When the chapter was created.",
             "format": "date-time"
           },
-          "bookUpdatedAt": {
+          "chapterPublishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the chapter was published (null if unpublished).",
+            "format": "date-time"
+          },
+          "chapterUpdatedAt": {
             "type": "string",
-            "description": "When the book was last updated.",
+            "description": "When the chapter was last updated.",
+            "format": "date-time"
+          },
+          "contentId": {
+            "description": "Unique identifier for the chapter content document.",
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string",
+            "description": "The content of the chapter in markdown format."
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field that can contain additional information about the chapter."
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field for additional author notes or comments."
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "description": "When the chapter content was last updated.",
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfAddChapterToStoryResponse": {
         "required": [
           "links",
-          "chapterId",
-          "chapterTitle",
-          "contentId",
           "storyId",
           "storyTitle",
+          "storyUpdatedAt",
+          "chapterId",
+          "chapterTitle",
           "chapterCreatedAt",
-          "storyUpdatedAt"
+          "chapterPublishedAt",
+          "chapterUpdatedAt",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt"
         ],
         "type": "object",
         "properties": {
@@ -3077,18 +3333,6 @@
               "$ref": "#/components/schemas/LinkItem"
             }
           },
-          "chapterId": {
-            "description": "Unique identifier for the created chapter",
-            "$ref": "#/components/schemas/Ulid"
-          },
-          "chapterTitle": {
-            "type": "string",
-            "description": "Title of the created chapter"
-          },
-          "contentId": {
-            "description": "Unique identifier for the chapter content document",
-            "$ref": "#/components/schemas/ObjectId"
-          },
           "storyId": {
             "description": "Unique identifier of the story the chapter was added to",
             "$ref": "#/components/schemas/Ulid"
@@ -3097,18 +3341,66 @@
             "type": "string",
             "description": "Title of the story"
           },
+          "storyUpdatedAt": {
+            "type": "string",
+            "description": "When the story was last updated",
+            "format": "date-time"
+          },
+          "chapterId": {
+            "description": "Unique identifier for the created chapter",
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "chapterTitle": {
+            "type": "string",
+            "description": "Title of the created chapter"
+          },
           "chapterCreatedAt": {
             "type": "string",
             "description": "When the chapter was created",
             "format": "date-time"
           },
-          "storyUpdatedAt": {
+          "chapterPublishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the chapter was published (null if unpublished)",
+            "format": "date-time"
+          },
+          "chapterUpdatedAt": {
             "type": "string",
-            "description": "When the story was last updated",
+            "description": "When the chapter was last updated",
+            "format": "date-time"
+          },
+          "contentId": {
+            "description": "Unique identifier for the chapter content document",
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content of the chapter in markdown format"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional note field associated with the chapter"
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional second note field associated with the chapter"
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "description": "When the chapter content was last updated",
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfAddTagsToStoryResponse": {
         "required": [
@@ -3159,7 +3451,7 @@
             "format": "int32"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfAuthorStoryItem": {
         "required": [
@@ -3256,7 +3548,7 @@
             "description": "Whether the story is in a valid state for operations"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfCreateBookResponse": {
         "required": [
@@ -3302,7 +3594,7 @@
             "$ref": "#/components/schemas/Ulid"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfCreateStoryResponse": {
         "required": [
@@ -3348,7 +3640,7 @@
             "description": "Display name of the story owner"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetAuthorByIdResponse": {
         "required": [
@@ -3402,7 +3694,7 @@
             "description": "Collection of works created by this author"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetChapterContentResponse": {
         "required": [
@@ -3411,6 +3703,7 @@
           "chapterTitle",
           "storyId",
           "storyTitle",
+          "bookId",
           "contentId",
           "content",
           "note1",
@@ -3441,6 +3734,10 @@
           "storyTitle": {
             "type": "string",
             "description": "Title of the parent story"
+          },
+          "bookId": {
+            "description": "Unique identifier of the parent book, if applicable",
+            "$ref": "#/components/schemas/Ulid"
           },
           "contentId": {
             "description": "Unique identifier for the content document",
@@ -3475,7 +3772,7 @@
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetCurrentAuthorBookContentResponse": {
         "required": [
@@ -3486,6 +3783,7 @@
           "storyId",
           "storyTitle",
           "chapters",
+          "publishedAt",
           "updatedAt"
         ],
         "type": "object",
@@ -3497,46 +3795,62 @@
             }
           },
           "id": {
+            "description": "Unique identifier for the book.",
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "The title of the book."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A detailed description of the book."
           },
           "storyId": {
+            "description": "The unique identifier of the parent story.",
             "$ref": "#/components/schemas/Ulid"
           },
           "storyTitle": {
-            "type": "string"
+            "type": "string",
+            "description": "The title of the parent story."
           },
           "chapters": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BookContentChapterItem"
-            }
+            },
+            "description": "Collection of chapters within the book."
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the book was published (null if unpublished).",
+            "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
+            "description": "When the book was last updated.",
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetCurrentAuthorChapterContentResponse": {
         "required": [
           "links",
-          "id",
-          "title",
           "storyId",
           "storyTitle",
+          "id",
+          "title",
+          "publishedAt",
+          "updatedAt",
           "contentId",
           "content",
           "note1",
           "note2",
-          "contentUpdatedAt",
-          "updatedAt"
+          "contentUpdatedAt"
         ],
         "type": "object",
         "properties": {
@@ -3546,17 +3860,28 @@
               "$ref": "#/components/schemas/LinkItem"
             }
           },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "storyTitle": {
+            "type": "string"
+          },
           "id": {
             "$ref": "#/components/schemas/Ulid"
           },
           "title": {
             "type": "string"
           },
-          "storyId": {
-            "$ref": "#/components/schemas/Ulid"
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           },
-          "storyTitle": {
-            "type": "string"
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "contentId": {
             "$ref": "#/components/schemas/ObjectId"
@@ -3579,13 +3904,9 @@
           "contentUpdatedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetCurrentAuthorProfileResponse": {
         "required": [
@@ -3651,7 +3972,7 @@
             "description": "Collection of works owned by the author"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetCurrentAuthorStoryContentResponse": {
         "required": [
@@ -3746,7 +4067,7 @@
             "description": "List of books within the story."
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetPublishedStoryContentResponse": {
         "required": [
@@ -3814,7 +4135,7 @@
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfGetPublishedStoryResponse": {
         "required": [
@@ -3828,12 +4149,11 @@
           "createdAt",
           "ownerId",
           "ownerName",
+          "type",
           "authors",
           "tags",
-          "hasContent",
-          "hasChapters",
-          "hasBooks",
-          "isValid"
+          "books",
+          "chapters"
         ],
         "type": "object",
         "properties": {
@@ -3885,6 +4205,10 @@
             "type": "string",
             "description": "Display name of the story owner"
           },
+          "type": {
+            "type": "string",
+            "description": "The type of the story (e.g., \"SingleBody\", \"MultiChapter\", \"MultiBook\")"
+          },
           "authors": {
             "type": "array",
             "items": {
@@ -3899,24 +4223,22 @@
             },
             "description": "Collection of tags associated with this story"
           },
-          "hasContent": {
-            "type": "boolean",
-            "description": "Whether the story has content written"
+          "books": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookItem"
+            },
+            "description": "Collection of books within this story (if applicable)"
           },
-          "hasChapters": {
-            "type": "boolean",
-            "description": "Whether the story has chapters"
-          },
-          "hasBooks": {
-            "type": "boolean",
-            "description": "Whether the story has books"
-          },
-          "isValid": {
-            "type": "boolean",
-            "description": "Whether the story data is valid"
+          "chapters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChapterItem"
+            },
+            "description": "Collection of chapters within this story (if applicable)"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfListAuthorsItem": {
         "required": [
@@ -3978,7 +4300,7 @@
             "format": "int32"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfListPublishedStoriesItem": {
         "required": [
@@ -4055,7 +4377,7 @@
             "description": "Name of the story author"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfListStoryChaptersItem": {
         "required": [
@@ -4116,7 +4438,7 @@
             "format": "int32"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfListTagsItem": {
         "required": [
@@ -4175,7 +4497,7 @@
             "description": "Formatted display string for the tag"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfPublishStoryResponse": {
         "required": [
@@ -4242,7 +4564,69 @@
             "format": "int32"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfPublishWorkResponse": {
+        "required": [
+          "links",
+          "workId",
+          "title",
+          "type",
+          "publishedAt",
+          "updatedAt",
+          "hasContent",
+          "hasChildren",
+          "childCount"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "workId": {
+            "description": "The unique identifier of the published work.",
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the published work."
+          },
+          "type": {
+            "type": "string",
+            "description": "The type of the published work."
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "The timestamp when the work was published.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "The timestamp when the work was last updated.",
+            "format": "date-time"
+          },
+          "hasContent": {
+            "type": "boolean",
+            "description": "Indicates whether the work has content."
+          },
+          "hasChildren": {
+            "type": "boolean",
+            "description": "Indicates whether the work has child works."
+          },
+          "childCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The count of child works.",
+            "format": "int32"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfRegisterAsAuthorResponse": {
         "required": [
@@ -4292,7 +4676,7 @@
             "$ref": "#/components/schemas/AuthorProfile"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUnpublishStoryResponse": {
         "required": [
@@ -4353,7 +4737,7 @@
             "format": "int32"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUpdateAuthorProfileResponse": {
         "required": [
@@ -4403,7 +4787,7 @@
             "$ref": "#/components/schemas/AuthorProfile"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUpdateBookMetadataResponse": {
         "required": [
@@ -4438,7 +4822,7 @@
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUpdateChapterContentResponse": {
         "required": [
@@ -4501,7 +4885,7 @@
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUpdateChapterMetadataResponse": {
         "required": [
@@ -4532,7 +4916,7 @@
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUpdateStoryContentResponse": {
         "required": [
@@ -4595,7 +4979,7 @@
             "format": "date-time"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfUpdateStoryMetadataResponse": {
         "required": [
@@ -4641,7 +5025,7 @@
             "description": "Display name of the story owner"
           }
         },
-        "description": "Entity wrapper that provides a Links collection to an arbitrary object"
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedPagedCollectionOfAuthorStoryItem": {
         "required": [
@@ -4657,7 +5041,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LinkItem"
-            }
+            },
+            "description": "Collection-level hypermedia links"
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4702,7 +5087,8 @@
             },
             "description": "The collection of items"
           }
-        }
+        },
+        "description": "A standard response model for a paginated collection of TData items,\r\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\r\nThe collection itself also includes a set of hypermedia links."
       },
       "LinkedPagedCollectionOfListAuthorsItem": {
         "required": [
@@ -4718,7 +5104,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LinkItem"
-            }
+            },
+            "description": "Collection-level hypermedia links"
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4763,7 +5150,8 @@
             },
             "description": "The collection of items"
           }
-        }
+        },
+        "description": "A standard response model for a paginated collection of TData items,\r\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\r\nThe collection itself also includes a set of hypermedia links."
       },
       "LinkedPagedCollectionOfListPublishedStoriesItem": {
         "required": [
@@ -4779,7 +5167,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LinkItem"
-            }
+            },
+            "description": "Collection-level hypermedia links"
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4824,7 +5213,8 @@
             },
             "description": "The collection of items"
           }
-        }
+        },
+        "description": "A standard response model for a paginated collection of TData items,\r\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\r\nThe collection itself also includes a set of hypermedia links."
       },
       "LinkedPagedCollectionOfListStoryChaptersItem": {
         "required": [
@@ -4840,7 +5230,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LinkItem"
-            }
+            },
+            "description": "Collection-level hypermedia links"
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4885,7 +5276,8 @@
             },
             "description": "The collection of items"
           }
-        }
+        },
+        "description": "A standard response model for a paginated collection of TData items,\r\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\r\nThe collection itself also includes a set of hypermedia links."
       },
       "LinkedPagedCollectionOfListTagsItem": {
         "required": [
@@ -4901,7 +5293,8 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LinkItem"
-            }
+            },
+            "description": "Collection-level hypermedia links"
           },
           "totalCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -4946,7 +5339,8 @@
             },
             "description": "The collection of items"
           }
-        }
+        },
+        "description": "A standard response model for a paginated collection of TData items,\r\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\r\nThe collection itself also includes a set of hypermedia links."
       },
       "LinkItem": {
         "required": [
@@ -5053,6 +5447,17 @@
           }
         },
         "description": "Standard RFC 7807/9457 problem details payload."
+      },
+      "PublishWorkBody": {
+        "type": "object",
+        "properties": {
+          "publishAll": {
+            "type": "boolean",
+            "description": "Indicates whether to publish all child works.",
+            "default": false
+          }
+        },
+        "description": "Request model for publishing a work."
       },
       "RegisterAsAuthorBody": {
         "required": [

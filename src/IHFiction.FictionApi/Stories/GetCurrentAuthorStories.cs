@@ -115,6 +115,8 @@ internal sealed class GetCurrentAuthorStories(
             .Include(s => s.Owner)
             .Include(s => s.Authors)
             .Include(s => s.Tags)
+            .Include(s => s.Chapters)
+            .Include(s => s.Books)
             .AsNoTracking()
             .Where(s => s.Authors.Any(a => a.Id == author.Id) || s.OwnerId == author.Id)
             .Where(s => tags == null || tags.All(t => s.Tags.Contains(t)))

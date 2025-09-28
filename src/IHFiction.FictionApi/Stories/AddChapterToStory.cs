@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -11,12 +12,11 @@ using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
+using IHFiction.SharedKernel.Markdown;
 using IHFiction.SharedKernel.Validation;
 
 using MongoDB.Bson;
-using IHFiction.SharedKernel.Markdown;
-using System.Net.Mime;
-using IHFiction.SharedKernel.Linking;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -74,21 +74,34 @@ internal sealed class AddChapterToStory(
     /// <summary>
     /// Response model for adding a new chapter to a story.
     /// </summary>
-    /// <param name="ChapterId">Unique identifier for the created chapter</param>
-    /// <param name="ChapterTitle">Title of the created chapter</param>
-    /// <param name="ContentId">Unique identifier for the chapter content document</param>
     /// <param name="StoryId">Unique identifier of the story the chapter was added to</param>
     /// <param name="StoryTitle">Title of the story</param>
-    /// <param name="ChapterCreatedAt">When the chapter was created</param>
     /// <param name="StoryUpdatedAt">When the story was last updated</param>
+    /// <param name="ChapterId">Unique identifier for the created chapter</param>
+    /// <param name="ChapterTitle">Title of the created chapter</param>
+    /// <param name="ChapterCreatedAt">When the chapter was created</param>
+    /// <param name="ChapterPublishedAt">When the chapter was published (null if unpublished)</param>
+    /// <param name="ChapterUpdatedAt">When the chapter was last updated</param>
+    /// <param name="ContentId">Unique identifier for the chapter content document</param>
+    /// <param name="Content">Content of the chapter in markdown format</param>
+    /// <param name="Note1">Optional note field associated with the chapter</param>
+    /// <param name="Note2">Optional second note field associated with the chapter</param>
+    /// <param name="ContentUpdatedAt">When the chapter content was last updated</param>
     internal sealed record AddChapterToStoryResponse(
-        Ulid ChapterId,
-        string ChapterTitle,
-        ObjectId ContentId,
         Ulid StoryId,
         string StoryTitle,
+        DateTime StoryUpdatedAt,
+        Ulid ChapterId,
+        string ChapterTitle,
         DateTime ChapterCreatedAt,
-        DateTime StoryUpdatedAt);
+        DateTime? ChapterPublishedAt,
+        DateTime ChapterUpdatedAt,
+        ObjectId ContentId,
+        string Content,
+        string? Note1,
+        string? Note2,
+        DateTime ContentUpdatedAt
+    );
 
     public async Task<Result<AddChapterToStoryResponse>> HandleAsync(
         Ulid id,
@@ -170,13 +183,20 @@ internal sealed class AddChapterToStory(
             await context.SaveChangesAsync(cancellationToken);
 
             return new AddChapterToStoryResponse(
-                chapter.Id,
-                chapter.Title,
-                workBody.Id,
                 story.Id,
                 story.Title,
+                story.UpdatedAt,
+                chapter.Id,
+                chapter.Title,
                 chapter.CreatedAt,
-                story.UpdatedAt);
+                chapter.PublishedAt,
+                chapter.UpdatedAt,
+                workBody.Id,
+                workBody.Content,
+                workBody.Note1,
+                workBody.Note2,
+                workBody.UpdatedAt
+                );
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -194,7 +214,7 @@ internal sealed class AddChapterToStory(
         var sanitized = ValidationRegexPatterns.ConsecutiveWhitespace().Replace(title.Trim(), " ");
         return sanitized;
     }
-        public static string EndpointName => nameof(AddChapterToStory);
+    public static string EndpointName => nameof(AddChapterToStory);
 
 
 

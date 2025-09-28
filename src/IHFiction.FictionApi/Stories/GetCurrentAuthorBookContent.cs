@@ -26,16 +26,41 @@ internal sealed class GetCurrentAuthorBookContent(
         string? Fields = null
     ) : IDataShapingSupport;
 
+    /// <summary>
+    /// Represents a chapter item within the book content response.
+    /// </summary>
+    /// <param name="Id">The unique identifier of the chapter.</param>
+    /// <param name="Title">The title of the chapter.</param>
+    /// <param name="ChapterPublishedAt">The date and time when the chapter was published.</param>
+    /// <param name="ChapterUpdatedAt">The date and time when the chapter metadata was last updated.</param>
+    /// <param name="ContentId">The unique identifier for the content document.</param>
+    /// <param name="Content">The chapter content in markdown format.</param>
+    /// <param name="Note1">Optional author note about the content.</param>
+    /// <param name="Note2">Optional second author note.</param>
+    /// <param name="ContentUpdatedAt">The date and time when the content was last updated.</param>
     internal sealed record BookContentChapterItem(
         Ulid Id,
         string Title,
+        DateTime? ChapterPublishedAt,
+        DateTime ChapterUpdatedAt,
         ObjectId ContentId,
         string Content,
         string? Note1,
         string? Note2,
-        DateTime UpdatedAt
+        DateTime ContentUpdatedAt
     );
 
+    /// <summary>
+    /// Response model for retrieving the content of a book owned by the current user.
+    /// </summary>
+    /// <param name="Id">Unique identifier for the book.</param>
+    /// <param name="Title">The title of the book.</param>
+    /// <param name="Description">A detailed description of the book.</param>
+    /// <param name="StoryId">The unique identifier of the parent story.</param>
+    /// <param name="StoryTitle">The title of the parent story.</param>
+    /// <param name="Chapters">Collection of chapters within the book.</param>
+    /// <param name="PublishedAt">When the book was published (null if unpublished).</param>
+    /// <param name="UpdatedAt">When the book was last updated.</param>
     internal sealed record GetCurrentAuthorBookContentResponse(
         Ulid Id,
         string Title,
@@ -43,6 +68,7 @@ internal sealed class GetCurrentAuthorBookContent(
         Ulid StoryId,
         string StoryTitle,
         IEnumerable<BookContentChapterItem> Chapters,
+        DateTime? PublishedAt,
         DateTime UpdatedAt
     );
 
@@ -78,6 +104,8 @@ internal sealed class GetCurrentAuthorBookContent(
         var chapterBodies = chapters.Join(workBodies, c => c.WorkBodyId, wb => wb.Id, (c, wb) => new BookContentChapterItem(
             c.Id,
             c.Title,
+            c.PublishedAt,
+            c.UpdatedAt,
             wb.Id,
             wb.Content,
             wb.Note1,
@@ -92,6 +120,7 @@ internal sealed class GetCurrentAuthorBookContent(
             book.Story!.Id,
             book.Story.Title,
             chapterBodies,
+            book.PublishedAt,
             book.UpdatedAt
         );
     }
@@ -100,8 +129,6 @@ internal sealed class GetCurrentAuthorBookContent(
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
-
-
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {

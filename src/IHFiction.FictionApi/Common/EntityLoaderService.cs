@@ -51,6 +51,7 @@ internal sealed class EntityLoaderService(FictionDbContext context)
             .Include(s => s.Tags)
             .Include(s => s.Chapters)
             .Include(s => s.Books)
+            .ThenInclude(b => b.Chapters)
             .AsQueryable();
 
         if (includeDeleted)

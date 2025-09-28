@@ -39,14 +39,17 @@ internal sealed class GetCurrentAuthorStoryContent(
     /// </summary>
     /// <param name="Id">Unique identifier for the chapter.</param>
     /// <param name="Title">Title of the chapter.</param>
-    internal record ChapterSummary(Ulid Id, string Title);
+    /// <param name="PublishedAt">When the chapter was published (null if unpublished).</param>
+    internal record ChapterSummary(Ulid Id, string Title, DateTime? PublishedAt);
 
     /// <summary>
     /// Represents a summary of a book within a story.
     /// </summary>
     /// <param name="Id">Unique identifier for the book.</param>
     /// <param name="Title">Title of the book.</param>
-    internal record BookSummary(Ulid Id, string Title);
+    /// <param name="Description">Description of the book.</param>
+    /// <param name="PublishedAt">When the book was published (null if unpublished).</param>
+    internal record BookSummary(Ulid Id, string Title, string Description, DateTime? PublishedAt);
 
     /// <summary>
     /// Response model for retrieving the content of a story owned by the current user.
@@ -101,7 +104,7 @@ internal sealed class GetCurrentAuthorStoryContent(
         string? note1 = null;
         string? note2 = null;
         DateTime? contentUpdatedAt = null;
-        ObjectId contentId = new();
+        ObjectId? contentId = null;
 
         if (story.WorkBodyId is not null)
         {
@@ -117,15 +120,15 @@ internal sealed class GetCurrentAuthorStoryContent(
             contentId = body.Id;
         }
 
-        var chapterSummaries = story.Chapters.Select(c => new ChapterSummary(c.Id, c.Title)).ToList();
-        var bookSummaries = story.Books.Select(b => new BookSummary(b.Id, b.Title)).ToList();
+        var chapterSummaries = story.Chapters.Select(c => new ChapterSummary(c.Id, c.Title, c.PublishedAt)).ToList();
+        var bookSummaries = story.Books.Select(b => new BookSummary(b.Id, b.Title, b.Description, b.PublishedAt)).ToList();
 
         return new GetCurrentAuthorStoryContentResponse(
             story.Id,
             story.Title,
             story.Description,
             story.IsPublished,
-            contentId,
+            contentId ?? ObjectId.Empty,
             content,
             note1,
             note2,
