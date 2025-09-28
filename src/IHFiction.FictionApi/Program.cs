@@ -232,4 +232,12 @@ app.MapScalarApiReference(o => o
 app.MapEndpoints();
 app.MapDefaultEndpoints();
 
+if (builder.Configuration["ApiBaseAddress"] is string apiBaseAddress) app.Use((context, next) =>
+{
+    context.Response.Headers.Append("Content-Security-Policy",
+        "frame-ancestors 'self'" + $" {apiBaseAddress.TrimEnd('/')}");
+
+    return next(context);
+});
+
 await app.RunAsync();

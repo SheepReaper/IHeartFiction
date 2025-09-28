@@ -12,23 +12,27 @@ internal static class ProductionConfigExtensions
 
     public static IResourceBuilder<DockerComposeEnvironmentResource> ConfigureSwarmCompose(this IDistributedApplicationBuilder builder) => builder
         .AddDockerComposeEnvironment("internal")
-        .WithDashboard(dash => dash.PublishAsDockerComposeService((_, service) =>
-        {
-            service.Networks.Add(AdminNetwork);
-
-            service.AddVolume(new()
+        // .WithComposeFile("compose.yml")
+        .WithDashboard(dash => dash
+            .WithForwardedHeaders()
+            .PublishAsDockerComposeService((_, service) =>
             {
-                Name = "dashboard-data",
-                Type = "bind",
-                Source = $"{DataPath}/dashboard",
-                Target = "/home/app/.aspnet/DataProtection-Keys"
-            });
+                service.Networks.Add(AdminNetwork);
 
-            service.Environment["ASPIRE_DASHBOARD_FILE_CONFIG_DIRECTORY"] = "/run/secrets";
-            service.Environment["DASHBOARD__OTLP__AUTHMODE"] = "ApiKey";
+                service.AddVolume(new()
+                {
+                    Name = "dashboard-data",
+                    Type = "bind",
+                    Source = $"{DataPath}/dashboard",
+                    Target = "/home/app/.aspnet/DataProtection-Keys"
+                });
 
-            service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
-        }))
+                service.Environment["ASPIRE_DASHBOARD_FILE_CONFIG_DIRECTORY"] = "/run/secrets";
+                service.Environment["ASPIRE_DASHBOARD_FORWARDEDHEADERS_ENABLED"] = "true";
+                service.Environment["DASHBOARD__OTLP__AUTHMODE"] = "ApiKey";
+
+                service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
+            }))
         .ConfigureComposeFile(file =>
         {
             file.AddNetwork(new()
@@ -43,7 +47,8 @@ internal static class ProductionConfigExtensions
             })
             .AddNetwork(new()
             {
-                Name = ContainerNetwork
+                Name = ContainerNetwork,
+                Internal = true
             });
 
             file.Secrets.Add("keycloak-conf", new() { File = $"{SecretsPath}/keycloak.conf" });
@@ -169,6 +174,9 @@ internal static class ProductionConfigExtensions
             if (config["Api:AllowedOrigins"] is string allowedOrigins)
                 service.Environment["AllowedOrigins"] = allowedOrigins;
 
+            if (config["ApiBaseAddress"] is string apiBaseAddress)
+                service.Environment["ApiBaseAddress"] = apiBaseAddress;
+
             if (config["OidcAuthority"] is string authority)
                 service.Environment["OidcAuthority"] = authority;
 
@@ -202,7 +210,7 @@ internal static class ProductionConfigExtensions
             if (config["WebClient:AllowedHosts"] is string allowedHosts)
                 service.Environment["AllowedHosts"] = allowedHosts;
 
-            if (config["WebClient:ApiBaseAddress"] is string apiBaseAddress)
+            if (config["ApiBaseAddress"] is string apiBaseAddress)
                 service.Environment["ApiBaseAddress"] = apiBaseAddress;
 
             if (config["OidcAuthority"] is string authority)
