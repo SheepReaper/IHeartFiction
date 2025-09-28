@@ -1,4 +1,5 @@
 @using Markdig
+@using static IHFiction.Data.Stories.Domain.StoryType
 @inherits CancellableComponent
 @inject StoryService StoryService
 @inject ThemeService theme
@@ -8,21 +9,12 @@
 @if (isLoading)
 {
     <div class="section">
-        <div class="container has-text-centered">
-            <span class="icon is-large">
-                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+        <div class="content has-text-centered">
+            <span class="icon is-large has-text-grey-light">
+                <i class="fas fa-file-alt fa-3x"></i>
             </span>
-            <p>Loading story...</p>
-        </div>
-    </div>
-}
-else if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="section">
-        <div class="container">
-            <div class="notification is-danger">
-                <strong>Error:</strong> @errorMessage
-            </div>
+            <h2 class="title is-4 has-text-grey">No content available</h2>
+            <p class="has-text-grey">This story doesn't have any content yet.</p>
         </div>
     </div>
 }
@@ -30,17 +22,24 @@ else if (story != null)
 {
     <div class="section">
         <div class="container">
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="notification is-danger">
+                    <button class="delete" @onclick="e => errorMessage = null"></button>
+                    @errorMessage
+                </div>
+            }
             <!-- Story Header -->
             <div class="level">
                 <div class="level-left">
                     <div class="level-item">
                         <div>
-                            <h1 class="title is-3">@story.Title</h1>
+                            <h1 class="title is-3">@story?.Title</h1>
                             <p class="subtitle is-5 has-text-grey">
-                                by @foreach (var author in story.Authors)
+                                by @foreach (var author in story?.Authors ?? [])
                                 {
-                                    <a href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
-                                    @if (author != story.Authors.Last())
+                                    <a @key="author.Id" href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
+                                    @if (author != story?.Authors.Last())
                                     {
                                         <text>, </text>
                                     }
@@ -51,7 +50,7 @@ else if (story != null)
                 </div>
                 <div class="level-right">
                     <div class="level-item">
-                        <a href="/stories/@story.Id" class="button is-light">
+                        <a href="/stories/@story?.Id" class="button is-light">
                             <span class="icon">
                                 <i class="fas fa-info-circle"></i>
                             </span>
@@ -61,23 +60,35 @@ else if (story != null)
                 </div>
             </div>
 
-            @if (story.HasChapters)
+            @switch (story?.Type)
             {
-                <!-- Multi-chapter story -->
-                @if (chapters?.Data?.Any() == true)
-                {
+                case MultiBook:
                     <div class="columns">
                         <div class="column is-narrow">
                             <aside class="menu">
-                                <p class="menu-label">Chapters</p>
+                                <p class="menu-label">Books</p>
                                 <ul class="menu-list">
-                                    @foreach (var chapter in chapters.Data.Where(c => c.PublishedAt.HasValue))
+                                    @foreach (var book in story.Books ?? [])
                                     {
-                                        <li>
-                                            <a href="/stories/@story.Id/chapters/@chapter.ChapterId"
-                                                class="@(chapter.ChapterId.ToString() == CurrentChapterId ? "is-active" : "")">
-                                                @chapter.Title
+                                        <li @key="book.Id">
+                                            <a class="@(book.Id.ToString() == CurrentBookId ? "is-active" : "")"
+                                                @onclick="e => SelectBook(book.Id.ToString())">
+                                                @book.Title
                                             </a>
+                                            @if (book.Id.ToString() == CurrentBookId && (book.Chapters?.Any() ?? false))
+                                            {
+                                                <ul>
+                                                    @foreach (var chapter in book.Chapters)
+                                                    {
+                                                        <li @key="chapter.Id">
+                                                            <a class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
+                                                                @onclick="@(e => SelectChapter(book.Id.ToString(), chapter.Id.ToString()))">
+                                                                @chapter.Title
+                                                            </a>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
                                         </li>
                                     }
                                 </ul>
@@ -86,7 +97,7 @@ else if (story != null)
                         <div class="column">
                             @if (!string.IsNullOrEmpty(CurrentChapterId))
                             {
-                                <ChapterReader ChapterId="@CurrentChapterId" StoryId="@story.Id.ToString()" />
+                                <ChapterReader ChapterId="@CurrentChapterId" />
                             }
                             else
                             {
@@ -97,69 +108,83 @@ else if (story != null)
                             }
                         </div>
                     </div>
-                }
-                else
-                {
-                    <div class="content has-text-centered">
-                        <span class="icon is-large has-text-grey-light">
-                            <i class="fas fa-book fa-3x"></i>
-                        </span>
-                        <h2 class="title is-4 has-text-grey">No chapters available</h2>
-                        <p class="has-text-grey">This story doesn't have any published chapters yet.</p>
-                    </div>
-                }
-            }
-            else
-            {
-                <!-- Single story -->
-                @if (storyContent != null)
-                {
-                    <div class="content">
-
-                        @if (!string.IsNullOrWhiteSpace(storyContent.Note1))
-                        {
-                            <div class="message is-info">
-                                <div class="message-header">
-                                    <p>Author's Notes</p>
-                                </div>
-                                <div class="message-body">
-                                    @if (!string.IsNullOrWhiteSpace(storyContent.Note1))
+                    break;
+                case MultiChapter:
+                    <div class="columns">
+                        <div class="column is-narrow">
+                            <aside class="menu">
+                                <p class="menu-label">Chapters</p>
+                                <ul class="menu-list">
+                                    @foreach (var chapter in story.Chapters)
                                     {
-                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note1, mdp))</div>
+                                        <li @key="chapter.Id">
+                                            <a href="/stories/@story.Id/chapters/@chapter.Id"
+                                                class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
+                                                @onclick="e => SelectChapter(null, chapter.Id.ToString())">
+                                                @chapter.Title
+                                            </a>
+                                        </li>
                                     }
-                                </div>
-                            </div>
-                        }
-                        <div class="box content">
-                            @((MarkupString)Markdown.ToHtml(storyContent?.Content ?? string.Empty, mdp))
+                                </ul>
+                            </aside>
                         </div>
-
-                        @if (!string.IsNullOrWhiteSpace(storyContent?.Note2))
-                        {
-                            <div class="message is-info">
-                                <div class="message-header">
-                                    <p>Author's Notes</p>
+                        <div class="column">
+                            @if (!string.IsNullOrEmpty(CurrentChapterId))
+                            {
+                                <ChapterReader ChapterId="@CurrentChapterId" />
+                            }
+                            else
+                            {
+                                <div class="content has-text-centered">
+                                    <h2 class="title is-4">Select a Chapter</h2>
+                                    <p>Choose a chapter from the menu to start reading.</p>
                                 </div>
-                                <div class="message-body">
-                                    @if (!string.IsNullOrWhiteSpace(storyContent.Note2))
-                                    {
-                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note2, mdp))</div>
-                                    }
+                            }
+                        </div>
+                    </div>
+                    break;
+                default: // SingleBody
+                    @if (storyContent != null)
+                    {
+                        <div class="content">
+                            @if (!string.IsNullOrWhiteSpace(storyContent.Note1))
+                            {
+                                <div class="message is-info">
+                                    <div class="message-header">
+                                        <p>Author's Notes</p>
+                                    </div>
+                                    <div class="message-body">
+                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note1, mdp))</div>
+                                    </div>
                                 </div>
+                            }
+                            <div class="box content">
+                                @((MarkupString)Markdown.ToHtml(storyContent?.Content ?? string.Empty, mdp))
                             </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="content has-text-centered">
-                        <span class="icon is-large has-text-grey-light">
-                            <i class="fas fa-file-alt fa-3x"></i>
-                        </span>
-                        <h2 class="title is-4 has-text-grey">No content available</h2>
-                        <p class="has-text-grey">This story doesn't have any content yet.</p>
-                    </div>
-                }
+                            @if (!string.IsNullOrWhiteSpace(storyContent?.Note2))
+                            {
+                                <div class="message is-info">
+                                    <div class="message-header">
+                                        <p>Author's Notes</p>
+                                    </div>
+                                    <div class="message-body">
+                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note2, mdp))</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="content has-text-centered">
+                            <span class="icon is-large has-text-grey-light">
+                                <i class="fas fa-file-alt fa-3x"></i>
+                            </span>
+                            <h2 class="title is-4 has-text-grey">No content available</h2>
+                            <p class="has-text-grey">This story doesn't have any content yet.</p>
+                        </div>
+                    }
+                    break;
             }
         </div>
     </div>
@@ -170,7 +195,7 @@ else if (story != null)
     [Parameter] public string? CurrentChapterId { get; set; }
 
     private LinkedOfGetPublishedStoryResponse? story;
-    private LinkedPagedCollectionOfListStoryChaptersItem? chapters;
+    private IEnumerable<ChapterItem>? chapters;
     private LinkedOfGetPublishedStoryContentResponse? storyContent;
     private bool isLoading = true;
     private string? errorMessage;
@@ -212,17 +237,33 @@ else if (story != null)
         {
             story = storyResult.Value;
 
-            if (story?.HasChapters == true)
+            if (story?.Type == MultiBook)
             {
-                // Load chapters for multi-chapter story
-                var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
-
-                if (chaptersResult.IsSuccess)
+                // Auto-select the first book and chapter if none is selected
+                if ((story.Books?.Any() ?? false) && string.IsNullOrEmpty(CurrentBookId))
                 {
-                    chapters = chaptersResult.Value;
+                    var firstBook = story.Books.First();
+                    CurrentBookId = firstBook.Id.ToString();
+                    if (firstBook.Chapters?.Any() == true)
+                    {
+                        CurrentChapterId = firstBook.Chapters.First().Id.ToString();
+                    }
+                    else
+                    {
+                        CurrentChapterId = null;
+                    }
                 }
             }
-            else if (story?.HasContent == true)
+            else if (story?.Type == MultiChapter)
+            {
+                chapters = story.Chapters;
+                // Auto-select the first chapter if none is selected
+                if (string.IsNullOrEmpty(CurrentChapterId) && chapters.Any())
+                {
+                    CurrentChapterId = chapters.First().Id;
+                }
+            }
+            else if (story?.Type == SingleBody)
             {
                 // Load content for single story
                 var contentResult = await StoryService.GetPublishedStoryContentAsync(StoryId);
@@ -251,5 +292,29 @@ else if (story != null)
         _disposed = true;
 
         return base.DisposeAsyncCore();
+    }
+    private string? CurrentBookId;
+
+    private void SelectBook(string bookId)
+    {
+        CurrentBookId = bookId;
+        // Auto-select first chapter in the book if available
+        var book = story?.Books?.FirstOrDefault(b => b.Id == bookId);
+        if (book?.Chapters?.Any() == true)
+        {
+            chapters = book.Chapters;
+            CurrentChapterId = book.Chapters.First().Id;
+        }
+        else
+        {
+            CurrentChapterId = null;
+        }
+    }
+
+    private void SelectChapter(string? bookId, string chapterId)
+    {
+        if (bookId != null)
+            CurrentBookId = bookId;
+        CurrentChapterId = chapterId;
     }
 }

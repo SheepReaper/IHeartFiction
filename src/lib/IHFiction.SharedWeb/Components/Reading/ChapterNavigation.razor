@@ -1,17 +1,16 @@
-@inject StoryService StoryService
-
-@if (chapters?.Data?.Any() == true)
+@if (Chapters.Any())
 {
-    var publishedChapters = chapters.Data.Where(c => c.PublishedAt.HasValue).OrderBy(c => c.PublishedAt).ToList();
-    var currentIndex = publishedChapters.FindIndex(c => c.ChapterId.ToString() == CurrentChapterId);
-    var previousChapter = currentIndex > 0 ? publishedChapters[currentIndex - 1] : null;
-    var nextChapter = currentIndex >= 0 && currentIndex < publishedChapters.Count - 1 ? publishedChapters[currentIndex + 1] : null;
+    var chapters = Chapters.OrderBy(c => c.Order).ToList();
+    var currentIndex = chapters.FindIndex(c => c.Id == CurrentChapterId);
+    var previousChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
+    var nextChapter = currentIndex >= 0 && currentIndex < chapters.Count - 1 ? chapters[currentIndex + 1]
+    : null;
 
     <div class="field is-grouped">
         @if (previousChapter != null)
         {
             <div class="control">
-                <a href="/stories/@StoryId/chapters/@previousChapter.ChapterId" class="button">
+                <a class="button">
                     <span class="icon">
                         <i class="fas fa-chevron-left"></i>
                     </span>
@@ -38,7 +37,7 @@
         {
             <div class="control">
                 <span class="button is-static">
-                    Chapter @(currentIndex + 1) of @publishedChapters.Count
+                    Chapter @(currentIndex + 1) of @chapters.Count
                 </span>
             </div>
         }
@@ -46,7 +45,7 @@
         @if (nextChapter != null)
         {
             <div class="control">
-                <a href="/stories/@StoryId/chapters/@nextChapter.ChapterId" class="button">
+                <a class="button">
                     @if (ShowLabels)
                     {
                         <span>Next</span>
@@ -72,33 +71,7 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
     [Parameter, EditorRequired] public string CurrentChapterId { get; set; } = null!;
+    [Parameter] public IEnumerable<ChapterItem> Chapters { get; set; } = [];
     [Parameter] public bool ShowLabels { get; set; } = false;
-
-    private LinkedPagedCollectionOfListStoryChaptersItem? chapters;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadChapters();
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (chapters == null)
-        {
-            await LoadChapters();
-        }
-    }
-
-    private async Task LoadChapters()
-    {
-        var result = await StoryService.ListStoryChaptersAsync(StoryId);
-
-        if (result.IsSuccess)
-        {
-            chapters = result.Value;
-            StateHasChanged();
-        }
-    }
 }

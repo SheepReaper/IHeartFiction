@@ -1,3 +1,4 @@
+@using static IHFiction.Data.Stories.Domain.StoryType
 @inject StoryService StoryService
 
 
@@ -32,7 +33,7 @@ else if (story != null)
                     <p class="subtitle is-4 has-text-grey">
                         by @foreach (var author in story.Authors)
                         {
-                            <a href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
+                            <a @key="author.Id" href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
                             @if (author != story.Authors.Last())
                             {
                                 <text>, </text>
@@ -50,7 +51,7 @@ else if (story != null)
                             <label class="label">Tags:</label>
                             @foreach (var tag in story.Tags)
                             {
-                                <div class="control">
+                                <div @key="tag.Value" class="control">
                                     <div class="tags has-addons">
                                         <span class="tag is-dark">@tag.Category</span>
                                         <span class="tag is-info">@tag.Value</span>
@@ -68,7 +69,7 @@ else if (story != null)
                                 <div class="field">
                                     @if (story.IsPublished)
                                     {
-                                        @if (story.HasChapters)
+                                        @if (story.Type == MultiChapter)
                                         {
                                             <a href="/stories/@story.Id/read" class="button is-primary is-fullwidth is-large">
                                                 <span class="icon">
@@ -123,11 +124,11 @@ else if (story != null)
                                         <div>
                                             <p class="heading">Type</p>
                                             <p class="title is-6">
-                                                @if (story.HasChapters)
+                                                @if (story.Type == MultiChapter)
                                                 {
                                                     <span class="tag is-info">Multi-Chapter</span>
                                                 }
-                                                else if (story.HasBooks)
+                                                else if (story.Type == MultiBook)
                                                 {
                                                     <span class="tag is-info">Multi-Book</span>
                                                 }
@@ -166,14 +167,14 @@ else if (story != null)
                 </div>
             </div>
 
-            @if (story.HasChapters && chapters?.Data?.Any() == true)
+            @if (story.Type == MultiChapter && chapters?.Data?.Any() == true)
             {
                 <div class="section">
                     <h2 class="title is-4">Chapters</h2>
                     <div class="columns is-multiline">
                         @foreach (var chapter in chapters.Data)
                         {
-                            <div class="column is-half">
+                            <div @key="chapter.ChapterId" class="column is-half">
                                 <div class="card">
                                     <div class="card-content">
                                         <h3 class="title is-6">@chapter.Title</h3>
@@ -251,7 +252,7 @@ else if (story != null)
             story = storyResult.Value;
             
             // Load chapters if the story has them
-            if (story?.HasChapters == true)
+            if (story?.Type == MultiChapter)
             {
                 var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
                 

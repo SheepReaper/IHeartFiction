@@ -1,9 +1,10 @@
 @using IHFiction.SharedKernel.Infrastructure
 @using IHFiction.SharedWeb.Services
+@using Microsoft.Extensions.Configuration
 @rendermode RenderMode.InteractiveServer
 @inherits CancellableComponent
 @inject ThemeService theme
-@inject AppVersion appVersion
+@inject IConfiguration config
 
 <!DOCTYPE html>
 
@@ -65,7 +66,18 @@
                 <LoginDisplay />
             </div>
             <div class="navbar-item">
-                <button class="button has-tooltip-bottom has-tooltip-subtle" data-tooltip="@Version" @onclick="ToggleTheme">
+                <a class="button is-info" href="@DocsUrl" target="_blank" rel="noopener noreferrer" title="API Docs">
+                    <span class="icon"><i class="fas fa-book-medical"></i></span>
+                    <span>API Docs</span>
+                </a>
+            </div>
+            <div class="navbar-item">
+                <a class="button is-light has-tooltip-bottom has-tooltip-subtle" data-tooltip="About" href="/about" title="About">
+                    <span class="icon"><i class="@CurrentCycleIcon"></i></span>
+                </a>
+            </div>
+            <div class="navbar-item">
+                <button class="button is-light has-tooltip-bottom has-tooltip-subtle" data-tooltip="Hit the lights" @onclick="ToggleTheme">
                     <span class="icon"><i class="fas fa-@themeIcon"></i></span>
                 </button>
             </div>
@@ -77,14 +89,34 @@
     private bool _isMobileMenuOpen = false;
     private string themeIcon => theme.CurrentTheme == "dark" ? "moon" : "sun";
     private bool _disposed = false;
-    private string Version => string.Format(
-        "{0}{1}",
-        appVersion.Information, 
-        string.IsNullOrEmpty(appVersion.Commit) ? string.Empty : $"+{appVersion.Commit}");
+
+    private string DocsUrl => config["ApiBaseAddress"] is string apiBaseAddress
+        ? $"{apiBaseAddress.TrimEnd('/')}/scalar/v1"
+        : "#";
+
+    private System.Threading.Timer? _iconTimer;
+    private int _iconIndex = 0;
+    private readonly (string Icon, string Name)[] _cycleIcons = new[]
+    {
+        ("fas fa-question-circle", "Help"),
+        ("fab fa-github", "GitHub"),
+        @* ("fab fa-kofi", "Ko-fi"), *@
+        ("fab fa-patreon", "Patreon"),
+        ("fas fa-mug-hot", "Buy Me a Coffee")
+    };
+
+    private string CurrentCycleIcon => _cycleIcons[_iconIndex].Icon;
 
     protected override Task OnInitializedAsync()
     {
         theme.ThemeChanged += OnThemeChanged;
+
+        // start icon rotation (every 3s)
+        _iconTimer = new System.Threading.Timer(_ =>
+        {
+            _iconIndex = (_iconIndex + 1) % _cycleIcons.Length;
+            InvokeAsync(StateHasChanged);
+        }, null, 3000, 3000);
 
         return Task.CompletedTask;
     }
@@ -117,6 +149,8 @@
         if(_disposed) return ValueTask.CompletedTask;
 
         theme.ThemeChanged -= OnThemeChanged;
+
+        _iconTimer?.Dispose();
 
         _disposed = true;
 

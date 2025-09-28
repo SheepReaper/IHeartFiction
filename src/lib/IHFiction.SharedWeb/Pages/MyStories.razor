@@ -53,17 +53,17 @@ else if (_stories != null)
                         </div>
                         <div class="dropdown-menu" id="dropdown-menu" role="menu">
                             <div class="dropdown-content">
-                                <a @onclick="() => EditStory(story.Id)" class="dropdown-item">Edit</a>
+                                <a @onclick="e => EditStory(story.Id)" class="dropdown-item">Edit</a>
                                 @if (story.IsPublished)
                                 {
-                                    <a @onclick="() => UnpublishStory(story.Id)" class="dropdown-item">Unpublish</a>
+                                    <a @onclick="e => UnpublishStory(story.Id)" class="dropdown-item">Unpublish</a>
                                 }
                                 else
                                 {
-                                    <a @onclick="() => PublishStory(story.Id)" class="dropdown-item">Publish</a>
+                                    <a @onclick="e => ShowPublishDialog(story)" class="dropdown-item">Publish</a>
                                 }
                                 <hr class="dropdown-divider">
-                                <a @onclick="() => DeleteStory(story.Id)" class="dropdown-item is-danger">Delete</a>
+                                <a @onclick="e => DeleteStory(story.Id)" class="dropdown-item is-danger">Delete</a>
                             </div>
                         </div>
                     </div>
@@ -72,11 +72,55 @@ else if (_stories != null)
         </div>
     </Virtualize>
 }
+@if (_showPublishDialog && _selectedStory != null)
+{
+    <div class="modal is-active">
+        <div class="modal-background" @onclick="CancelPublish"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Publish Story</p>
+                <button class="delete" aria-label="close" @onclick="CancelPublish"></button>
+            </header>
+            <section class="modal-card-body">
+                <p>Do you want to publish <strong>@_selectedStory.Title</strong>?</p>
+                @if (_selectedStory.HasBooks || _selectedStory.HasChapters)
+                {
+                    <div class="notification is-warning">
+                        This story has child content:
+                        <ul>
+                            @if (_selectedStory.HasBooks)
+                            {
+                                <li>Contains books</li>
+                            }
+                            @if (_selectedStory.HasChapters)
+                            {
+                                <li>Contains chapters</li>
+                            }
+                        </ul>
+                        <label class="checkbox">
+                            <input type="checkbox" @bind="_publishAll" />
+                            Publish all child content (books/chapters)
+                        </label>
+                    </div>
+                }
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-success" @onclick="ConfirmPublish">Publish</button>
+                <button class="button" @onclick="CancelPublish">Cancel</button>
+            </footer>
+        </div>
+    </div>
+}
 
 @code {
     private ICollection<LinkedOfAuthorStoryItem>? _stories;
     private bool _isLoading = true;
     private string? _errorMessage;
+
+    // Modal state
+    private bool _showPublishDialog = false;
+    private LinkedOfAuthorStoryItem? _selectedStory;
+    private bool _publishAll = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -93,11 +137,21 @@ else if (_stories != null)
         Navigation.NavigateTo($"/stories/{storyId}/edit");
     }
 
-    private async Task PublishStory(string storyId)
+    private void ShowPublishDialog(LinkedOfAuthorStoryItem story)
     {
+        _selectedStory = story;
+        _publishAll = false;
+        _showPublishDialog = true;
+    }
+
+    private async Task ConfirmPublish()
+    {
+        if (_selectedStory == null) return;
         _isLoading = true;
         _errorMessage = null;
-        var result = await StoryService.PublishStoryAsync(storyId);
+        var result = await StoryService.PublishWorkAsync(_selectedStory.Id, _publishAll);
+        _showPublishDialog = false;
+        _selectedStory = null;
         if (result.IsSuccess)
         {
             await LoadStories();
@@ -107,6 +161,12 @@ else if (_stories != null)
             _errorMessage = result.DomainError.Description;
         }
         _isLoading = false;
+    }
+
+    private void CancelPublish()
+    {
+        _showPublishDialog = false;
+        _selectedStory = null;
     }
 
     private async Task UnpublishStory(string storyId)

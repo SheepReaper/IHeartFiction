@@ -33,12 +33,28 @@
     private IJSObjectReference? _editor;
     private bool _disposed;
     private string? _lastSetMarkdown;
+    private bool _scriptsInitialized;
 
     protected override Task OnInitializedAsync()
     {
         Theme.ThemeChanged += OnThemeChanged;
 
         return Task.CompletedTask;
+    }
+
+    private async Task InitScriptsAsync()
+    {
+        _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
+        "import",
+        CancellationToken,
+        "./_content/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor.js");
+
+        _editor = await _module.InvokeConstructorAsync(
+        "BoundToast",
+        CancellationToken,
+        [Options, _dotNetObjectReference]);
+
+        _scriptsInitialized = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -49,19 +65,15 @@
             Options.Element = _editorElement;
             Options.InitialValue = Value ?? string.Empty;
 
-            _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-            "import",
-            CancellationToken,
-            "./_content/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor.js");
-
-            _editor = await _module.InvokeConstructorAsync(
-            "BoundToast",
-            CancellationToken,
-            [Options, _dotNetObjectReference]);
+            if(RendererInfo.IsInteractive)
+                await InitScriptsAsync();
         }
 
+        if (!_scriptsInitialized && RendererInfo.IsInteractive)
+            await InitScriptsAsync();
+
         // Always update the editor content if Value changes, or if editor was just created
-        if (_editor is not null && (Value != _lastSetMarkdown || firstRender))
+        if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized && RendererInfo.IsInteractive)
         {
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
@@ -73,10 +85,15 @@
         InvokeAsync(StateHasChanged);
     }
 
-    protected override Task OnParametersSetAsync()
+    protected override async Task OnParametersSetAsync()
     {
         // No-op: handled in OnAfterRenderAsync
-        return Task.CompletedTask;
+        @* return Task.CompletedTask; *@
+        if (_editor is not null && (Value != _lastSetMarkdown))
+        {
+            await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
+            _lastSetMarkdown = Value;
+        }
     }
 
     [JSInvokable]

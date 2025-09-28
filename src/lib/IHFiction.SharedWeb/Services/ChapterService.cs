@@ -1,98 +1,105 @@
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
 public class ChapterService(IFictionApiClient client)
 {
     public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
+        Ulid chapterId,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => chapterId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.GetCurrentAuthorChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+    public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         string chapterId,
         string? fields = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await client.GetCurrentAuthorChapterContentAsync(chapterId, fields, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            return ex.ToDomainError();
-        }
-    }
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(chapterId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await GetCurrentAuthorChapterContentAsync(ulid, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfGetChapterContentResponse>> GetChapterContentAsync(
+        Ulid chapterId,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => chapterId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.GetChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
     public async ValueTask<Result<LinkedOfGetChapterContentResponse>> GetChapterContentAsync(
         string chapterId,
         string? fields = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await client.GetChapterContentAsync(chapterId, fields, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            return ex.ToDomainError();
-        }
-    }
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(chapterId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await GetChapterContentAsync(ulid, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfAddChapterToStoryResponse>> AddChapterToStoryAsync(
+        Ulid storyId,
+        AddChapterToStoryBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => storyId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.AddChapterToStoryAsync(storyId.ToString(), body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfAddChapterToStoryResponse>> AddChapterToStoryAsync(
         string storyId,
         AddChapterToStoryBody body,
         string? fields = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await client.AddChapterToStoryAsync(storyId, body, fields, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            return ex.ToDomainError();
-        }
-    }
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(storyId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await AddChapterToStoryAsync(ulid, body, fields, cancellationToken);
+
+    public async ValueTask<Result> DeleteChapterAsync(
+        Ulid chapterId,
+        CancellationToken cancellationToken = default
+    ) => chapterId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.DeleteChapterAsync(chapterId.ToString(), cancellationToken).HandleApiException();
 
     public async ValueTask<Result> DeleteChapterAsync(
         string chapterId,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            await client.DeleteChapterAsync(chapterId, cancellationToken);
-            return Result.Success();
-        }
-        catch (ApiException ex)
-        {
-            return ex;
-        }
-    }
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(chapterId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await DeleteChapterAsync(ulid, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfUpdateChapterMetadataResponse>> UpdateChapterMetadataAsync(
+        Ulid chapterId,
+        UpdateChapterMetadataBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => chapterId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.UpdateChapterMetadataAsync(chapterId.ToString(), body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUpdateChapterMetadataResponse>> UpdateChapterMetadataAsync(
         string chapterId,
         UpdateChapterMetadataBody body,
         string? fields = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await client.UpdateChapterMetadataAsync(chapterId, body, fields, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            return ex.ToDomainError();
-        }
-    }
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(chapterId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await UpdateChapterMetadataAsync(ulid, body, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfUpdateChapterContentResponse>> UpdateChapterContentAsync(
+        Ulid chapterId,
+        UpdateChapterContentBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => chapterId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.UpdateChapterContentAsync(chapterId.ToString(), body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUpdateChapterContentResponse>> UpdateChapterContentAsync(
         string chapterId,
         UpdateChapterContentBody body,
         string? fields = null,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            return await client.UpdateChapterContentAsync(chapterId, body, fields, cancellationToken);
-        }
-        catch (ApiException ex)
-        {
-            return ex.ToDomainError();
-        }
-    }
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(chapterId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await UpdateChapterContentAsync(ulid, body, fields, cancellationToken);
 }

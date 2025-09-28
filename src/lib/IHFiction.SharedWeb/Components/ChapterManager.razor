@@ -1,67 +1,83 @@
 @using IHFiction.SharedWeb.Services
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.SharedWeb.Components
+@using System.Collections.ObjectModel
+@using static IHFiction.SharedWeb.Services.StoryEditorService
+@using static IHFiction.Data.Stories.Domain.StoryType
 
 @inherits CancellableComponent
 @inject StoryEditorService StoryEditorService
 
 <div class="chapter-manager">
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="notification is-danger">
+            <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
+            <strong>Error:</strong> @_errorMessage
+        </div>
+    }
     <h3 class="subtitle">Chapters</h3>
-    <nav class="pagination is-centered is-small" role="navigation" aria-label="chapters pagination" style="margin-bottom: 1.5rem;">
-        <a class="pagination-previous" @onclick="() => SelectPreviousChapter()">&lt; Previous</a>
-        <ul class="pagination-list">
-            @for (int i = 0; i < Chapters.Count; i++)
-            {
-                var chapter = Chapters[i];
+    @if (Chapters is not null)
+    {
+        <nav class="pagination is-centered is-small" role="navigation" aria-label="chapters pagination"
+            style="margin-bottom: 1.5rem;">
+            <a class="pagination-previous" @onclick="e => SelectPreviousChapter()">&lt; Previous</a>
+            <ul class="pagination-list">
+                @for (int i = 0; i < Chapters.Count; i++)
+                {
+                    var chapter = Chapters[i];
+                    <li @key="chapter.Id">
+                        <a class="pagination-link @(chapter.Id == Chapter?.Id ? "is-current" : "")"
+                            aria-label="Chapter @(i + 1)" title="@chapter.Title"
+                            @onclick="async () => await SelectChapter(chapter)">@(i + 1)</a>
+                    </li>
+                }
                 <li>
-                    <a class="pagination-link @(chapter.Id == SelectedChapter?.Id ? "is-current" : "")"
-                       aria-label="Chapter @(i + 1)" title="@chapter.Title"
-                       @onclick="async () => await SelectChapter(chapter)">@(i + 1)</a>
+                    <a class="pagination-link" aria-label="Add Chapter" @onclick="AddNewChapter">
+                        <span class="icon is-small">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                    </a>
                 </li>
-            }
-            <li>
-                <a class="pagination-link" aria-label="Add Chapter" @onclick="AddNewChapter">
-                    <span class="icon is-small">
-                        <i class="fas fa-plus"></i>
-                    </span>
-                </a>
-            </li>
-        </ul>
-        <a class="pagination-next" @onclick="() => SelectNextChapter()">Next &gt;</a>
-    </nav>
+            </ul>
+            <a class="pagination-next" @onclick="e => SelectNextChapter()">Next &gt;</a>
+        </nav>
+    }
+    else
+    {
+        <div class="has-text-centered">
+            <p>Loading chapters...</p>
+        </div>
+    }
     <div>
-        @if (SelectedChapter is not null)
+        @if (Chapter is not null)
         {
             <div class="field">
                 <label class="label">Chapter Title</label>
                 <div class="control">
-                    <input class="input" type="text" @bind="SelectedChapter.Title" @bind:event="oninput"
-                        @bind:after="StoryEditorService.NotifyStateChanged" />
+                    <input class="input" type="text" @bind="Chapter.Title" @bind:event="oninput" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Author's Notes (Start)</label>
                 <div class="control" style="height: 200px">
-                    <Editor @bind-Value="SelectedChapter.Note1"
-                        @bind-Value:after="StoryEditorService.NotifyStateChanged" />
+                    <Editor @bind-Value="Chapter.Note1" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Chapter Content</label>
                 <div class="control" style="height: 500px">
-                    <Editor @bind-Value="SelectedChapter.Content"
-                        @bind-Value:after="StoryEditorService.NotifyStateChanged" />
+                    <Editor @bind-Value="Chapter.Content" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Author's Notes (End)</label>
                 <div class="control" style="height: 200px">
-                    <Editor @bind-Value="SelectedChapter.Note2"
-                        @bind-Value:after="StoryEditorService.NotifyStateChanged" />
+                    <Editor @bind-Value="Chapter.Note2" />
                 </div>
             </div>
             <div class="field">
-                <button class="button is-danger" @onclick="() => DeleteChapter(SelectedChapter)">
+                <button class="button is-danger" @onclick="e => ShowDeleteModal(Chapter)">
                     <span class="icon is-small">
                         <i class="fas fa-trash"></i>
                     </span>
@@ -78,118 +94,175 @@
     </div>
 </div>
 
-@code {
-    [Parameter]
-    public BookEditorModel? Book { get; set; }
 
-    private ChapterEditorModel? SelectedChapter { get; set; }
-    private Ulid? _lastBookId;
+@if (_showDeleteModal && _chapterToDelete is not null)
+{
+    <div class="modal is-active">
+        <div class="modal-background" @onclick="HideDeleteModal"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Delete Chapter</p>
+                <button class="delete" aria-label="close" @onclick="HideDeleteModal"></button>
+            </header>
+            <section class="modal-card-body">
+                <p>Are you sure you want to permanently delete the chapter <strong>@_chapterToDelete.Title</strong>? This
+                    action cannot be undone.</p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger" @onclick="ConfirmDeleteChapter">Delete</button>
+                <button class="button" @onclick="HideDeleteModal">Cancel</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    private ChapterEditorModel? Chapter => StoryEditorService.CurrentChapter;
+    private string? _errorMessage;
     private bool _disposed;
 
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        StoryEditorService.OnStoryChanged += OnStoryChanged;
-        return Task.CompletedTask;
+        StoryEditorService.ChapterChanged += OnChapterChanged;
+        StoryEditorService.BookChanged += OnBookChanged;
+
+        if(StoryEditorService.CurrentChapter is not null) return;
+
+        if (StoryEditorService.CurrentStory is { StoryType: MultiChapter, Chapters.Count: > 0 } story)
+            await SelectChapter(story.Chapters[0]);
+
+        if (StoryEditorService.CurrentBook is { Chapters.Count: > 0 } book)
+            await SelectChapter(book.Chapters[0]);
     }
 
-    protected override void OnParametersSet()
-    {
-        var currentBookId = Book?.Id;
-        if (!Equals(currentBookId, _lastBookId))
-        {
-            _lastBookId = currentBookId;
-            // Auto-select the first chapter if available
-            if (Chapters.Count > 0)
-            {
-                SelectedChapter = Chapters[0];
-            }
-            else
-            {
-                SelectedChapter = null;
-            }
-            StateHasChanged();
-        }
-    }
+    @* private Task OnFirstLoad(object? sender, ChapterChangedEventArgs e){
+        if(StoryEditorService)
+    } *@
 
-    private void OnStoryChanged(object? sender, StoryChangedEventArgs e)
+    private ObservableCollection<ChapterEditorModel>? Chapters => StoryEditorService.CurrentStory?.StoryType switch
     {
-        // Auto-select the first chapter if available
-        if (Chapters.Count > 0)
-        {
-            SelectedChapter = Chapters[0];
-        }
-        else
-        {
-            SelectedChapter = null;
-        }
-        StateHasChanged();
-    }
+        MultiChapter => StoryEditorService.CurrentStory?.Chapters,
+        MultiBook => StoryEditorService.CurrentBook?.Chapters,
+        _ => null
+    };
 
-    private IList<ChapterEditorModel> Chapters
+    private async Task AddNewChapter()
     {
-        get
-        {
-            if (Book != null)
-                return Book.Chapters;
-            if (StoryEditorService.CurrentStory?.Chapters != null)
-                return StoryEditorService.CurrentStory.Chapters;
-            return new List<ChapterEditorModel>();
-        }
-    }
+        var result = await StoryEditorService.AddNewChapterAsync(CancellationToken);
 
-    private void AddNewChapter()
-    {
-        var newChapter = new ChapterEditorModel
+        if (result.IsFailure)
         {
-            Title = $"New Chapter {Chapters.Count + 1}",
-            Content = "# New Chapter"
-        };
-        Chapters.Add(newChapter);
-        SelectedChapter = newChapter;
-        StateHasChanged();
+            _errorMessage = result.DomainError?.Description ?? "Unknown error adding chapter.";
+            return;
+        }
+
+        await SelectChapter(result.Value);
     }
 
     private async Task SelectPreviousChapter()
     {
-        if (Chapters.Count == 0 || SelectedChapter == null) return;
-        var selectedIndex = Chapters.IndexOf(SelectedChapter);
-        var previousChapter = Chapters[selectedIndex == 0 ? ^1 : selectedIndex - 1];
-        await SelectChapter(previousChapter);
+        if (Chapters is null) return; // Buttons should be disabled in these cases
+        if (Chapters.Count == 0 || Chapter == null) return;
+
+        var selectedIndex = Chapters.ToList().FindIndex(c => c.Id == Chapter.Id);
+
+        if (selectedIndex == -1) return;
+
+        var previousIndex = selectedIndex == 0 ? Chapters.Count - 1 : selectedIndex - 1;
+
+        await SelectChapter(Chapters[previousIndex]);
     }
 
     private async Task SelectNextChapter()
     {
-        if (Chapters.Count == 0 || SelectedChapter == null) return;
-        var selectedIndex = Chapters.IndexOf(SelectedChapter);
-        var nextChapter = Chapters[(selectedIndex + 1) % Chapters.Count];
-        await SelectChapter(nextChapter);
+        if (Chapters is null) return; // Buttons should be disabled in these cases
+        if (Chapters.Count == 0 || Chapter == null) return;
+
+        var selectedIndex = Chapters.ToList().FindIndex(c => c.Id == Chapter.Id);
+
+        if (selectedIndex == -1) return;
+
+        var nextIndex = (selectedIndex + 1) % Chapters.Count;
+
+        await SelectChapter(Chapters[nextIndex]);
     }
 
     private async Task SelectChapter(ChapterEditorModel chapter)
     {
-        if (chapter.Content is null)
-        {
-            await StoryEditorService.LoadChapterContentAsync(chapter);
-            StateHasChanged();
-        }
-        SelectedChapter = chapter;
+        if (chapter.Id is null) return;
+
+        var result = await StoryEditorService.LoadChapterAsync(chapter.Id.Value, CancellationToken);
+
+        if (result.IsFailure) _errorMessage = result.DomainError?.Description ?? "Unknown error loading chapter.";
+
     }
 
-    private void DeleteChapter(ChapterEditorModel chapter)
+    private bool _showDeleteModal = false;
+    private ChapterEditorModel? _chapterToDelete;
+
+    private void ShowDeleteModal(ChapterEditorModel chapter)
     {
-        if (SelectedChapter?.Id == chapter.Id)
+        _chapterToDelete = chapter;
+        _showDeleteModal = true;
+    }
+
+    private void HideDeleteModal()
+    {
+        _showDeleteModal = false;
+        _chapterToDelete = null;
+    }
+
+    private async Task ConfirmDeleteChapter()
+    {
+        if (_chapterToDelete is null) return;
+        var result = await StoryEditorService.DeleteChapterAsync(_chapterToDelete, CancellationToken);
+        if (result.IsFailure)
         {
-            SelectedChapter = null;
+            _errorMessage = result.DomainError?.Description ?? "Unknown error deleting chapter.";
         }
-        Chapters.Remove(chapter);
-        StateHasChanged();
+        else
+        {
+            if (Chapters is null) return; // Should not happen, buttons should be disabled in these cases
+
+            // Remove from collection and clear selection if needed
+            var idx = Chapters.ToList().FindIndex(c => c.Id == _chapterToDelete.Id);
+            if (idx != -1)
+            {
+                Chapters.RemoveAt(idx);
+                if (Chapter?.Id == _chapterToDelete.Id)
+                {
+                    // Select next chapter if available, else clear selection
+                    if (Chapters.Count > 0)
+                        await SelectChapter(Chapters[idx % Chapters.Count]);
+                    else
+                        ClearCurrentChapter();
+                }
+            }
+        }
+        HideDeleteModal();
+    }
+
+    private void ClearCurrentChapter()
+    {
+        StoryEditorService.ClearChapter();
+    }
+
+    private void OnBookChanged(object? sender, BookChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnChapterChanged(object? sender, ChapterChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     protected override ValueTask DisposeAsyncCore()
     {
         if (_disposed) return ValueTask.CompletedTask;
-        StoryEditorService.OnStoryChanged -= OnStoryChanged;
+        StoryEditorService.ChapterChanged -= OnChapterChanged;
+        StoryEditorService.BookChanged -= OnBookChanged;
         _disposed = true;
         return base.DisposeAsyncCore();
     }

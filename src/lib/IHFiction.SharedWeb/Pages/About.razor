@@ -1,0 +1,182 @@
+@page "/about"
+
+@using IHFiction.SharedKernel.Infrastructure
+@inject AppVersion appVersion
+
+<section class="hero is-light">
+    <div class="hero-body">
+        <div class="container">
+            <h1 class="title is-2">About IHeartFiction</h1>
+            <h2 class="subtitle is-5 has-text-grey">A small, focused platform for readers and writers — built with care.
+            </h2>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container content">
+        <div class="box">
+            <h3 class="title is-4">What is this site?</h3>
+            <p>
+                IHeartFiction is a lightweight reading and publishing platform focused on simple, distraction-free
+                reading
+                and an approachable authoring experience. It started as a personal project and grew into a small tool
+                that
+                helps authors publish serialized works (single-body stories, multi-chapter stories, and multi-book
+                collections) and makes them easy to read on the web.
+            </p>
+
+            <h3 class="title is-4 mt-5">A one-person labor of love</h3>
+            <p>
+                This project is primarily the work of one developer. It's a real labor of love — designed, coded,
+                tested,
+                and maintained while juggling many other responsibilities. That means things move at my pace, features
+                are
+                added when I can, and priorities are often guided by feedback from the community.
+            </p>
+
+            <article class="notification is-primary">
+                <strong>Please know:</strong> this is a grassroots, one-person project. Your support — whether it's
+                reporting a bug, suggesting an idea, contributing code, or helping with hosting costs — makes a tangible
+                difference.
+            </article>
+
+            <h3 class="title is-4 mt-5">Why support?</h3>
+            <p>
+                Hosting, backups, and third-party services cost money. The more traffic and content the site hosts, the
+                higher
+                those costs rise. If you enjoy the site and find it useful, please consider supporting the project. Even
+                a
+                small, recurring contribution helps cover server bills and keeps the project sustainable.
+            </p>
+
+            <div class="columns is-multiline mt-4">
+                <div class="column is-4">
+                    <div class="card">
+                        <div class="card-content">
+                            <p class="title is-5">Patreon</p>
+                            <p class="subtitle is-6">Monthly sponsorship helps plan long-term hosting and improvements.
+                            </p>
+                            <a class="button is-link is-fullwidth" href="https://patreon.com/SheepReaper"
+                                target="_blank" rel="noopener noreferrer">
+                                <span class="icon"><i class="fab fa-patreon"></i></span>
+                                <span>patreon.com/SheepReaper</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="column is-4">
+                    <div class="card">
+                        <div class="card-content">
+                            <p class="title is-5">Ko‑fi</p>
+                            <p class="subtitle is-6">One-time support is great for occasional donors.</p>
+                            <a class="button is-info is-fullwidth" href="https://ko-fi.com/sheepreaper" target="_blank"
+                                rel="noopener noreferrer">
+                                <span class="icon"><i class="fas fa-coffee"></i></span>
+                                <span>ko-fi.com/sheepreaper</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="column is-4">
+                    <div class="card">
+                        <div class="card-content">
+                            <p class="title is-5">Buy Me a Coffee</p>
+                            <p class="subtitle is-6">Another easy way to chip in and keep the lights on.</p>
+                            <a class="button is-warning is-fullwidth" href="https://buymeacoffee.com/bgonza8687"
+                                target="_blank" rel="noopener noreferrer">
+                                <span class="icon"><i class="fas fa-mug-hot"></i></span>
+                                <span>buymeacoffee.com/bgonza8687</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="title is-4 mt-5">How to report bugs, request features, or discuss ideas</h3>
+            <p>
+                The best place to report bugs or suggest ideas is on GitHub. That keeps everything public, searchable,
+                and
+                trackable. Please include steps to reproduce, screenshots, and any relevant details. Links:
+            </p>
+
+            <ul>
+                <li><a href="https://github.com/SheepReaper/IHeartFiction/discussions" target="_blank"
+                        rel="noopener noreferrer">Discussions (ideas, conversations)</a></li>
+                <li><a href="https://github.com/SheepReaper/IHeartFiction/issues" target="_blank"
+                        rel="noopener noreferrer">Issues (bug reports)</a></li>
+                <li><a href="https://github.com/SheepReaper/IHeartFiction" target="_blank"
+                        rel="noopener noreferrer">Project repository</a></li>
+            </ul>
+
+            <div class="notification is-light">
+                When opening an issue, please include: a brief summary, reproduction steps, expected vs actual behavior,
+                and
+                any browser or server logs you can share (redact secrets). If you're proposing a design or workflow
+                change,
+                a short mock or example use case is extremely helpful.
+            </div>
+
+            <h3 class="title is-4 mt-5">Want to help beyond donating?</h3>
+            <p>
+                Contributions come in many forms. Here are a few ways you can help:
+            </p>
+            <ul>
+                <li><strong>Report bugs</strong> — file issues with clear steps.</li>
+                <li><strong>Share ideas</strong> — start a discussion or propose features.</li>
+                <li><strong>Contribute code</strong> — pull requests are welcome. See the repo for contribution
+                    guidelines.</li>
+                <li><strong>Help with translations</strong> — localizing the UI makes the site accessible to more
+                    readers.</li>
+                <li><strong>Run a mirror or instance</strong> — self-hosting or sponsoring an instance reduces load on
+                    the primary host.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">Community & Credits</h3>
+            <p>
+                This project would not exist without feedback from early users and the open-source ecosystem. Thank you
+                to
+                everyone who reads, tests, and shares the project.
+            </p>
+
+            <div class="columns mt-4">
+                <div class="column is-half">
+                    <h4 class="title is-6">License</h4>
+                    <p>This project is available on GitHub under the terms described in the repository.</p>
+                </div>
+                <div class="column is-half">
+                    <h4 class="title is-6">Contact</h4>
+                    <p>
+                        For project-related contact and collaboration, use the GitHub repo or open a discussion. If you
+                        need
+                        to reach me privately about support or larger sponsorship, include that request in a discussion
+                        and I will
+                        respond with contact options.
+                    </p>
+                </div>
+            </div>
+
+            <div class="level">
+                <div class="level-right">
+                    <div class="level-item">
+                        <p class="is-size-7 has-text-grey">Version: @Version</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="has-text-centered mt-6">
+                <a class="button is-primary is-large" href="https://github.com/SheepReaper/IHeartFiction"
+                    target="_blank" rel="noopener noreferrer">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>View source on GitHub</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string Version => appVersion.Information;
+}

@@ -29,7 +29,7 @@ else if (chapterContent != null)
             </div>
             <div class="level-right">
                 <div class="level-item">
-                    <ChapterNavigation StoryId="@StoryId" CurrentChapterId="@ChapterId" />
+                    <ChapterNavigation CurrentChapterId="@ChapterId" Chapters="Chapters" />
                 </div>
             </div>
         </div>
@@ -71,7 +71,7 @@ else if (chapterContent != null)
         <div class="level mt-6">
             <div class="level-left">
                 <div class="level-item">
-                    <ChapterNavigation StoryId="@StoryId" CurrentChapterId="@ChapterId" ShowLabels="true" />
+                    <ChapterNavigation CurrentChapterId="@ChapterId" Chapters="Chapters" ShowLabels="true" />
                 </div>
             </div>
             <div class="level-right">
@@ -87,7 +87,7 @@ else if (chapterContent != null)
 
 @code {
     [Parameter, EditorRequired] public string ChapterId { get; set; } = null!;
-    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+    [Parameter] public IEnumerable<ChapterItem> Chapters { get; set; } = [];
 
     private LinkedOfGetChapterContentResponse? chapterContent;
     private bool isLoading = true;

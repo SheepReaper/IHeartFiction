@@ -2,25 +2,33 @@
 @using IHFiction.SharedWeb.Services
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.SharedWeb.Components
+@using System.Collections.ObjectModel
+@using static IHFiction.SharedWeb.Services.StoryEditorService
+@using static IHFiction.Data.Stories.Domain.StoryType
 
 @inherits CancellableComponent
 @inject StoryEditorService StoryEditorService
 
 <div class="book-manager">
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="notification is-danger">
+            <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
+            <strong>Error:</strong> @_errorMessage
+        </div>
+    }
     <div class="columns">
         <div class="column">
             <h3 class="subtitle">Books</h3>
-            @if (Story is not null)
-            {
                 <nav class="pagination is-centered is-small" role="navigation" aria-label="books pagination"
                     style="margin-bottom: 1.5rem;">
-                    <a class="pagination-previous" @onclick="() => SelectPreviousBook()">&lt; Previous</a>
+                    <a class="pagination-previous" @onclick="e => SelectPreviousBook()">&lt; Previous</a>
                     <ul class="pagination-list">
-                        @for (int i = 0; i < Story.Books.Count; i++)
+                        @for (int i = 0; i < Books.Count; i++)
                         {
-                            var book = Story.Books[i];
-                            <li>
-                                <a class="pagination-link @(book.Id == SelectedBook?.Id ? "is-current" : "")"
+                            var book = Books[i];
+                            <li @key="book.Id">
+                                <a class="pagination-link @(book.Id == Book?.Id ? "is-current" : "")"
                                     aria-label="Book @(i + 1)" title="@book.Title"
                                     @onclick="async () => await SelectBook(book)">@(i + 1)</a>
                             </li>
@@ -33,27 +41,24 @@
                             </a>
                         </li>
                     </ul>
-                    <a class="pagination-next" @onclick="() => SelectNextBook()">Next &gt;</a>
+                    <a class="pagination-next" @onclick="e => SelectNextBook()">Next &gt;</a>
                 </nav>
-            }
-            @if (SelectedBook is not null)
+            @if (Book is not null)
             {
                 <div class="field">
                     <label class="label">Book Title</label>
                     <div class="control">
-                        <input class="input" type="text" @bind="SelectedBook.Title" @bind:event="oninput"
-                            @bind:after="StoryEditorService.NotifyStateChanged" />
+                        <input class="input" type="text" @bind="Book.Title" @bind:event="oninput" />
                     </div>
                 </div>
                 <div class="field">
                     <label class="label">Book Description</label>
                     <div class="control">
-                        <textarea class="textarea" @bind="SelectedBook.Description" @bind:event="oninput"
-                            @bind:after="StoryEditorService.NotifyStateChanged"></textarea>
+                        <textarea class="textarea" @bind="Book.Description" @bind:event="oninput"></textarea>
                     </div>
                 </div>
                 <div class="field">
-                    <button class="button is-danger" @onclick="() => DeleteBook(SelectedBook)">
+                    <button class="button is-danger" @onclick="e => ShowDeleteModal(Book)">
                         <span class="icon is-small">
                             <i class="fas fa-trash"></i>
                         </span>
@@ -62,7 +67,7 @@
                 </div>
                 <!-- Author's Notes fields removed: not supported for books -->
                 <hr />
-                <ChapterManager Book="SelectedBook" @key="SelectedBook?.Id" />
+                <ChapterManager />
             }
             else
             {
@@ -72,138 +77,152 @@
             }
         </div>
     </div>
+
+@if (_showDeleteModal && _bookToDelete is not null)
+{
+    <div class="modal is-active">
+        <div class="modal-background" @onclick="HideDeleteModal"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Delete Book</p>
+                <button class="delete" aria-label="close" @onclick="HideDeleteModal"></button>
+            </header>
+            <section class="modal-card-body">
+                <p>Are you sure you want to permanently delete the book <strong>@_bookToDelete.Title</strong>? This action cannot be undone.</p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger" @onclick="ConfirmDeleteBook">Delete</button>
+                <button class="button" @onclick="HideDeleteModal">Cancel</button>
+            </footer>
+        </div>
+    </div>
+}
 </div>
 
 @code {
-    private StoryEditorModel? Story => StoryEditorService.CurrentStory;
-    private BookEditorModel? SelectedBook { get; set; }
+    private BookEditorModel? Book => StoryEditorService.CurrentBook;
+    private string? _errorMessage;
     private bool _disposed;
 
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
-        StoryEditorService.OnStoryChanged += OnStoryChanged;
-        return Task.CompletedTask;
+        StoryEditorService.BookChanged += OnBookChanged;
+
+        if (StoryEditorService.CurrentBook is not null) return;
+
+        if (StoryEditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } story)
+            await SelectBook(story.Books[0]);
     }
 
-    protected override async Task OnParametersSetAsync()
-    {
-        // Auto-select the first book if available and none is selected
-        if (Story?.Books.Count > 0 && SelectedBook == null)
-        {
-            var firstBook = Story.Books[0];
-            if (firstBook.Chapters.Count == 0)
-            {
-                var result = await StoryEditorService.LoadBookChaptersAsync(firstBook);
-                if (result.IsSuccess && result.Value is BookEditorModel loadedBook)
-                {
-                    var idx = Story.Books.IndexOf(firstBook);
-                    if (idx >= 0)
-                    {
-                        Story.Books[idx] = loadedBook;
-                        SelectedBook = loadedBook;
-                    }
-                    else
-                    {
-                        SelectedBook = loadedBook;
-                    }
-                }
-                else
-                {
-                    SelectedBook = firstBook;
-                }
-            }
-            else
-            {
-                SelectedBook = firstBook;
-            }
-            StateHasChanged();
-        }
-    }
+    private ObservableCollection<BookEditorModel> Books => StoryEditorService.CurrentStory?.Books
+        ?? new ObservableCollection<BookEditorModel>();
 
-    private void OnStoryChanged(object? sender, StoryChangedEventArgs e)
+    private void OnBookChanged(object? sender, BookChangedEventArgs e)
     {
-        // Auto-select the first book if available
-        if (Story?.Books.Count > 0)
-        {
-            SelectedBook = Story.Books[0];
-        }
-        else
-        {
-            SelectedBook = null;
-        }
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task AddNewBook()
     {
-        var result = await StoryEditorService.AddNewBook();
-        if (result.IsSuccess)
+        var result = await StoryEditorService.AddNewBookAsync();
+        if (result.IsFailure)
         {
-            SelectedBook = result.Value;
+            _errorMessage = result.DomainError?.Description ?? "Unknown error adding book.";
+            return;
         }
+
+        await SelectBook(result.Value);
     }
 
     private async Task SelectBook(BookEditorModel book)
     {
-        SelectedBook = book;
-        // Load chapters and description from backend if not already loaded
-        if (book.Chapters.Count == 0)
-        {
-            var result = await StoryEditorService.LoadBookChaptersAsync(book);
-            if (result.IsSuccess && result.Value is BookEditorModel loadedBook)
-            {
-                // Update the reference in Story.Books to ensure UI binding is correct
-                var idx = Story?.Books.IndexOf(book) ?? -1;
-                if (idx >= 0 && Story != null)
-                {
-                    Story.Books[idx] = loadedBook;
-                    SelectedBook = loadedBook;
-                }
-            }
-        }
-        StateHasChanged();
+        if (book.Id is null) return;
+
+        var result = await StoryEditorService.LoadBookAsync(book.Id.Value);
+
+        if (result.IsFailure) _errorMessage = result.DomainError?.Description ?? "Unknown error loading book.";
     }
 
     private async Task SelectPreviousBook()
     {
-        if (Story == null) return;
-        if (SelectedBook == null) return;
+        if (Books.Count == 0 || Book == null) return;
 
-        var selectedIndex = Story.Books.IndexOf(SelectedBook);
-        var previousBook = Story.Books[selectedIndex == 0 ? ^1 : selectedIndex - 1];
+        var selectedIndex = Books.ToList().FindIndex(b => b.Id == Book.Id);
 
-        await SelectBook(previousBook);
+        if(selectedIndex == -1) return;
+
+        var previousIndex = selectedIndex == 0 ? Books.Count - 1 : selectedIndex - 1;
+
+        await SelectBook(Books[previousIndex]);
     }
 
     private async Task SelectNextBook()
     {
-        if (Story == null) return;
-        if (SelectedBook == null) return;
+        if (Books.Count == 0 || Book == null) return;
 
-        var selectedIndex = Story.Books.IndexOf(SelectedBook);
-        var nextBook = Story.Books[(selectedIndex + 1) % Story.Books.Count];
+        var selectedIndex = Books.ToList().FindIndex(b => b.Id == Book.Id);
 
-        await SelectBook(nextBook);
+        if(selectedIndex == -1) return;
+
+        var nextIndex = (selectedIndex + 1) % Books.Count;
+
+        await SelectBook(Books[nextIndex]);
     }
 
-    private async Task DeleteBook(BookEditorModel book)
+    private bool _showDeleteModal = false;
+    private BookEditorModel? _bookToDelete;
+
+    private void ShowDeleteModal(BookEditorModel book)
     {
-        if (SelectedBook?.Id == book.Id)
+        _bookToDelete = book;
+        _showDeleteModal = true;
+    }
+
+    private void HideDeleteModal()
+    {
+        _showDeleteModal = false;
+        _bookToDelete = null;
+    }
+
+    private async Task ConfirmDeleteBook()
+    {
+        if (_bookToDelete is null) return;
+        var result = await StoryEditorService.DeleteBookAsync(_bookToDelete);
+        if (result.IsFailure)
         {
-            SelectedBook = null;
+            _errorMessage = result.DomainError?.Description ?? "Unknown error deleting book.";
         }
-        await StoryEditorService.DeleteBook(book);
+        else
+        {
+            // Remove from collection and clear selection if needed
+            var idx = Books.ToList().FindIndex(b => b.Id == _bookToDelete.Id);
+            if (idx != -1)
+            {
+                Books.RemoveAt(idx);
+                if (Book?.Id == _bookToDelete.Id)
+                {
+                    // Select next book if available, else clear selection
+                    if (Books.Count > 0)
+                        await SelectBook(Books[idx % Books.Count]);
+                    else
+                        ClearCurrentBook();
+                }
+            }
+        }
+        HideDeleteModal();
+    }
+
+    private void ClearCurrentBook()
+    {
+        StoryEditorService.ClearBook();
     }
 
     protected override ValueTask DisposeAsyncCore()
     {
         if (_disposed) return ValueTask.CompletedTask;
-
-        StoryEditorService.OnStoryChanged -= OnStoryChanged;
-
+        StoryEditorService.BookChanged -= OnBookChanged;
         _disposed = true;
-
         return base.DisposeAsyncCore();
     }
 }

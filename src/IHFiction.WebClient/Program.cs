@@ -93,9 +93,10 @@ builder.Services.AddHttpClient<IFictionApiClient, FictionApiClient>(client =>
 
 builder.Services.AddTransient<AccountService>();
 builder.Services.AddTransient<AuthorService>();
+builder.Services.AddTransient<BookService>();
 builder.Services.AddTransient<ChapterService>();
 builder.Services.AddTransient<StoryService>();
-builder.Services.AddTransient<BookService>();
+builder.Services.AddTransient<WorkService>();
 
 // Configure global Markdown rendering options
 builder.Services.AddSingleton(new MarkdownPipelineBuilder()

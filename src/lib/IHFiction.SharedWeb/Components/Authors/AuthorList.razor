@@ -61,7 +61,7 @@
             <div class="columns is-multiline">
                 @foreach (var author in authors.Data)
                 {
-                    <div class="column is-one-third">
+                    <div @key="author.Id" class="column is-one-third">
                         <AuthorCard Author="author" />
                     </div>
                 }
@@ -79,9 +79,9 @@
                     <ul class="pagination-list">
                         @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(authors.TotalPages, currentPage + 2); i++)
                         {
-                            <li>
+                            <li @key="i">
                                 <button class="pagination-link @(i == currentPage ? "is-current" : "")" 
-                                        @onclick="() => GoToPage(i)">
+                                        @onclick="e => GoToPage(i)">
                                     @i
                                 </button>
                             </li>
