@@ -148,8 +148,9 @@ if (app.Environment.IsProduction())
     app.UseForwardedHeaders(options);
 }
 
-app.MapStaticAssets();
 app.UseAntiforgery();
+app.UseOutputCache();
+app.MapStaticAssets();
 
 app.UseAuthentication();
 app.UseAuthorization();

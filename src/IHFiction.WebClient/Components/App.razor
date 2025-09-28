@@ -23,7 +23,7 @@
 
 <body>
     <Routes @rendermode="InteractiveServer" />
-    <script src="_framework/blazor.web.js" asp-append-version="true"></script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
     <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]"></script>
     @if (Env.IsDevelopment())
     {

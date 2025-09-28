@@ -85,11 +85,7 @@ public static class Extensions
                         && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation()
-            // .AddHttpClientInstrumentation(tracing => tracing.FilterHttpRequestMessage = context => context.RequestUri is Uri uri
-            //     && !uri.AbsolutePath.StartsWith(HealthEndpointPath, StringComparison.OrdinalIgnoreCase)
-            //     && !uri.AbsolutePath.StartsWith(AlivenessEndpointPath, StringComparison.OrdinalIgnoreCase))
-            ;
+                    .AddHttpClientInstrumentation();
 
                 if (useAuthOtlpExporter)
                 {
