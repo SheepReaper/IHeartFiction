@@ -5,6 +5,7 @@
 @inherits CancellableComponent
 @inject IJSRuntime JSRuntime
 @inject ThemeService Theme
+@inject IWebHostEnvironment Env
 
 <HeadContent>
     <link href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" rel="stylesheet" />
@@ -44,10 +45,25 @@
 
     private async Task InitScriptsAsync()
     {
+        if (_disposed) return;
+
+        var scriptPath = "./_content/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor.js";
+        if (Env?.IsDevelopment() == true)
+        {
+            // Cache-bust in development so deployed/served files don't mask local edits
+            scriptPath += "?v=" + DateTime.UtcNow.Ticks;
+        }
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "Editor importing script:", scriptPath);
+        }
+        catch { /* best-effort logging */ }
+
         _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
         "import",
         CancellationToken,
-        "./_content/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor.js");
+        scriptPath);
 
         _editor = await _module.InvokeConstructorAsync(
         "BoundToast",
@@ -59,13 +75,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_disposed) return;
         if (firstRender)
         {
             _dotNetObjectReference = DotNetObjectReference.Create(this);
             Options.Element = _editorElement;
             Options.InitialValue = Value ?? string.Empty;
 
-            if(RendererInfo.IsInteractive)
+            if (RendererInfo.IsInteractive)
                 await InitScriptsAsync();
         }
 
@@ -73,8 +90,15 @@
             await InitScriptsAsync();
 
         // Always update the editor content if Value changes, or if editor was just created
-        if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized && RendererInfo.IsInteractive)
+        if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized &&
+        RendererInfo.IsInteractive)
         {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Editor.setMarkdown called", new { ValueLength = (Value ?? string.Empty).Length, LastSetLength = _lastSetMarkdown?.Length });
+            }
+            catch { }
+
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
         }
@@ -87,10 +111,17 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (_disposed) return;
         // No-op: handled in OnAfterRenderAsync
         @* return Task.CompletedTask; *@
         if (_editor is not null && (Value != _lastSetMarkdown))
         {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnParametersSetAsync setMarkdown", new { ValueLength = (Value ?? string.Empty).Length, LastSetLength = _lastSetMarkdown?.Length });
+            }
+            catch { }
+
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
         }
@@ -102,7 +133,15 @@
         try
         {
             if (_disposed) return;
+            // Record the latest editor-originated markdown so we don't push it back
+            // to the editor (calling setMarkdown) which causes the cursor to jump to the end.
+            _lastSetMarkdown = markdown;
             Value = markdown;
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new { Preview = markdown?.Length > 200 ? markdown.Substring(0, 200) + "..." : markdown });
+            }
+            catch { }
             if (ValueChanged.HasDelegate)
             {
                 await ValueChanged.InvokeAsync(Value);

@@ -1,18 +1,74 @@
+using System.Globalization;
+using System.Text;
+
 using Aspire.Hosting.Docker;
+using Aspire.Hosting.Docker.Resources.ComposeNodes;
 
 namespace IHFiction.AppHost.Extensions;
 
 internal static class ProductionConfigExtensions
 {
+    internal sealed record TraefikServiceDef(int Port = 8080, bool StickyCookie = false);
+    internal sealed record TraefikRouterDef(string Entrypoint, string Host, string[]? LimitPrefixes = null);
+
     const string AdminNetwork = "t3_proxy";
     const string ContainerNetwork = "containers";
     const string FrontEndNetwork = "ihf_proxy";
     const string DataPath = "/mnt/swarm/data/ihfiction";
     const string SecretsPath = "/mnt/swarm/config/ihfiction/secrets";
 
+    public static Service AddGracefulUpdate(this Service service)
+    {
+        service.Deploy ??= new();
+        service.Deploy.UpdateConfig = new()
+        {
+            Parallelism = "1", // BUG: this should actually be an int
+            Delay = "10s",
+            Monitor = "60s",
+            Order = "start-first",
+            // FailOnError = true // BUG: this should actually be a string
+        };
+
+        return service;
+    }
+
+    public static Service WithTraefikLabels(this Service service, string network, TraefikServiceDef serviceDef, params IEnumerable<TraefikRouterDef> routerDefs)
+    {
+        service.Deploy ??= new();
+        service.Deploy.Labels ??= [];
+
+        var key = $"ihfiction-{service.Name}";
+        var labels = service.Deploy.Labels;
+
+        labels["traefik.enable"] = "true";
+        labels["traefik.swarm.network"] = network;
+
+        labels[$"traefik.http.services.{key}.loadbalancer.server.port"] = serviceDef.Port.ToString(CultureInfo.InvariantCulture);
+
+        if (serviceDef.StickyCookie)
+            labels[$"traefik.http.services.{key}.loadbalancer.sticky.cookie"] = "{}";
+
+        foreach (var (i, def) in routerDefs.Index())
+        {
+            var suffix = i == 0 ? "" : $"-{i}";
+
+            StringBuilder ruleBuilder = new($"Host(`{def.Host}`)");
+
+            var prefixes = string.Join(" || ", def.LimitPrefixes?.Select(p => $"PathPrefix(`{p}`)") ?? []);
+
+            if (!string.IsNullOrWhiteSpace(prefixes))
+                ruleBuilder.Append(CultureInfo.InvariantCulture, $" && ({prefixes})");
+
+            labels[$"traefik.http.routers.{key}{suffix}.entrypoints"] = $"{def.Entrypoint}";
+            labels[$"traefik.http.routers.{key}{suffix}.service"] = $"{key}";
+            labels[$"traefik.http.routers.{key}{suffix}.rule"] = ruleBuilder.ToString();
+        }
+
+        return service;
+    }
+
     public static IResourceBuilder<DockerComposeEnvironmentResource> ConfigureSwarmCompose(this IDistributedApplicationBuilder builder) => builder
         .AddDockerComposeEnvironment("internal")
-        // .WithComposeFile("compose.yml")
         .WithDashboard(dash => dash
             .WithForwardedHeaders()
             .PublishAsDockerComposeService((_, service) =>
@@ -32,9 +88,17 @@ internal static class ProductionConfigExtensions
                 service.Environment["DASHBOARD__OTLP__AUTHMODE"] = "ApiKey";
 
                 service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
+
+                if(builder.Configuration["AdminEntrypoint"] is string adminEntryPoint
+                    && builder.Configuration["DashboardDomain"] is string dashboardDomain)
+                    service.WithTraefikLabels(
+                        AdminNetwork,
+                        new(18888),
+                        new TraefikRouterDef(adminEntryPoint, dashboardDomain));
             }))
         .ConfigureComposeFile(file =>
         {
+            file.Name = "ihfiction";
             file.AddNetwork(new()
             {
                 Name = FrontEndNetwork,
@@ -68,7 +132,7 @@ internal static class ProductionConfigExtensions
             {
                 service.DependsOn.Clear(); // BUG: long-format of depends on is incompatible with swarm parser, and it's ignored anyways when short-form
                 service.Expose = []; // Expose is ignored in swarm
-                service.Restart = null; // Restart policy is ignored in swarm for containers
+                service.Restart = null; // Container restart policy is ignored in swarm
             }
         })
         .WithProperties(props =>
@@ -128,12 +192,25 @@ internal static class ProductionConfigExtensions
             // Using conf file
             service.Environment.Remove("KC_BOOTSTRAP_ADMIN_PASSWORD");
 
+            service.Environment["JAVA_OPTS_APPEND"] = "-Djgroups.bind.address=match-interface:eth2";
+
             service.Networks.Add(FrontEndNetwork);
             service.Secrets.Add(new() { Source = "keycloak-conf", Target = "/opt/keycloak/conf/keycloak.conf", Mode = 0444 });
 
             service.Command = ["start"];
             service.Deploy ??= new();
             service.Deploy.Replicas = 1; // Keycloak resource builder doesn't support ReplicaAnnotation yet
+
+            var config = builder.ApplicationBuilder.Configuration;
+
+            if(config["AdminEntrypoint"] is string adminEntryPoint
+                && config["KeycloakDomain"] is string keycloakDomain
+                && config["PublicEntrypoint"] is string publicEntryPoint)
+                service.WithTraefikLabels(
+                    FrontEndNetwork,
+                    new(8080, true),
+                    new TraefikRouterDef(adminEntryPoint, keycloakDomain),
+                    new TraefikRouterDef(publicEntryPoint, keycloakDomain, ["/realms", "/resources"]));
         });
 
     public static IResourceBuilder<ProjectResource> ConfigureMigrationsForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
@@ -151,8 +228,15 @@ internal static class ProductionConfigExtensions
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
 
             service.Deploy ??= new();
-            service.Deploy.Mode = "replicated-job";
-            service.Deploy.Replicas = 1; // Replicated jobs run globally until this many successful completions
+            // service.Deploy.Mode = "replicated-job"; // Swarm bug, just keeps restarting, so do 0 and then manual
+            service.Deploy.Replicas = 0; // Replicated jobs run globally until this many successful completions
+            service.Deploy.RestartPolicy = new()
+            {
+                Condition = "none",
+                Delay = "120s",
+                MaxAttempts = 1,
+                Window = "60s"
+            };
 
             if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
                 service.Image = image.ToTaggedString();
@@ -190,6 +274,7 @@ internal static class ProductionConfigExtensions
 
             // BUG: This should be set automatically via ReplicaAnnotation
             service.Deploy.Replicas = res.GetReplicaCount();
+            service.AddGracefulUpdate();
 
             service.Networks.Add(FrontEndNetwork);
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
@@ -199,6 +284,13 @@ internal static class ProductionConfigExtensions
 
             if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
                 service.Image = image.ToTaggedString();
+
+            if (config["PublicEntrypoint"] is string publicEntryPoint
+                && config["ApiDomain"] is string apiDomain)
+                service.WithTraefikLabels(
+                    FrontEndNetwork,
+                    new(8080),
+                    new TraefikRouterDef(publicEntryPoint, apiDomain));
         });
 
     public static IResourceBuilder<ProjectResource> ConfigureWebClientForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
@@ -226,6 +318,7 @@ internal static class ProductionConfigExtensions
 
             // BUG: This should be set automatically via ReplicaAnnotation
             service.Deploy.Replicas = res.GetReplicaCount();
+            service.AddGracefulUpdate();
 
             service.Networks.Add(FrontEndNetwork);
 
@@ -235,5 +328,12 @@ internal static class ProductionConfigExtensions
 
             if (builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
                 service.Image = image.ToTaggedString();
+
+            if (config["PublicEntrypoint"] is string publicEntryPoint
+                && config["WebClientDomain"] is string webClientDomain)
+                service.WithTraefikLabels(
+                    FrontEndNetwork,
+                    new(8080),
+                    new TraefikRouterDef(publicEntryPoint, webClientDomain));
         });
 }
