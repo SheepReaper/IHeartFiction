@@ -22,7 +22,7 @@ internal static class ProductionConfigExtensions
         service.Deploy ??= new();
         service.Deploy.UpdateConfig = new()
         {
-            Parallelism = "1", // BUG: this should actually be an int
+            // Parallelism = "1", // BUG: this should actually be an int
             Delay = "10s",
             Monitor = "60s",
             Order = "start-first",
@@ -98,7 +98,6 @@ internal static class ProductionConfigExtensions
             }))
         .ConfigureComposeFile(file =>
         {
-            file.Name = "ihfiction";
             file.AddNetwork(new()
             {
                 Name = FrontEndNetwork,

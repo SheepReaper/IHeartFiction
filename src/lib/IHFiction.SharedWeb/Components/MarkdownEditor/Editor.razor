@@ -97,7 +97,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Editor.setMarkdown called", new { ValueLength = (Value ?? string.Empty).Length, LastSetLength = _lastSetMarkdown?.Length });
             }
-            catch { }
+            catch { /* best-effort logging */ }
 
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
@@ -120,7 +120,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnParametersSetAsync setMarkdown", new { ValueLength = (Value ?? string.Empty).Length, LastSetLength = _lastSetMarkdown?.Length });
             }
-            catch { }
+            catch { /* best-effort logging */ }
 
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
@@ -141,7 +141,7 @@
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new { Preview = markdown?.Length > 200 ? markdown.Substring(0, 200) + "..." : markdown });
             }
-            catch { }
+            catch { /* best-effort logging */ }
             if (ValueChanged.HasDelegate)
             {
                 await ValueChanged.InvokeAsync(Value);
