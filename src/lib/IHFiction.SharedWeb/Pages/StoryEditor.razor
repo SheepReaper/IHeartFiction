@@ -112,19 +112,19 @@ else
             <div class="field">
                 <label class="label">Author's Notes (Start)</label>
                 <div class="control" style="height: 200px">
-                    <Editor @bind-Value="EditorService.CurrentStory.Note1" />
+                    <Editor @bind-Value="EditorService.CurrentStory.Note1" CharacterLimit="5000" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Content</label>
                 <div class="control" style="height: 500px">
-                    <Editor @bind-Value="EditorService.CurrentStory.Content" />
+                    <Editor @bind-Value="EditorService.CurrentStory.Content" CharacterLimit="1000000" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Author's Notes (End)</label>
                 <div class="control" style="height: 200px">
-                    <Editor @bind-Value="EditorService.CurrentStory.Note2" />
+                    <Editor @bind-Value="EditorService.CurrentStory.Note2" CharacterLimit="5000" />
                 </div>
             </div>
             break;

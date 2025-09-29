@@ -57,11 +57,11 @@ internal sealed class AddChapterToStory(
         [property: NoHarmfulContent]
         string? Content = null,
 
-        [property: StringLength(500, ErrorMessage = "Note1 must be 500 characters or less.")]
+        [property: StringLength(5000, ErrorMessage = "Note1 must be 5000 characters or less.")]
         [property: NoHarmfulContent]
         string? Note1 = null,
 
-        [property: StringLength(500, ErrorMessage = "Note2 must be 500 characters or less.")]
+        [property: StringLength(5000, ErrorMessage = "Note2 must be 5000 characters or less.")]
         [property: NoHarmfulContent]
         string? Note2 = null);
 

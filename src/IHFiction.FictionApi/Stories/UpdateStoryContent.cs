@@ -55,11 +55,11 @@ internal sealed class UpdateStoryContent(
         [property: ValidMarkdown]
         string? Content = null,
 
-        [property: StringLength(500, ErrorMessage = "Note1 must be 500 characters or less.")]
+        [property: StringLength(5000, ErrorMessage = "Note1 must be 5000 characters or less.")]
         [property: ValidMarkdown]
         string? Note1 = null,
 
-        [property: StringLength(500, ErrorMessage = "Note2 must be 500 characters or less.")]
+        [property: StringLength(5000, ErrorMessage = "Note2 must be 5000 characters or less.")]
         [property: ValidMarkdown]
         string? Note2 = null
     );

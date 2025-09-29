@@ -2678,7 +2678,7 @@
             "description": "The content of the chapter in markdown format."
           },
           "note1": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -2687,7 +2687,7 @@
             "description": "Optional note field that can contain additional information about the chapter."
           },
           "note2": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -2724,7 +2724,7 @@
             "description": "The content of the chapter in markdown format"
           },
           "note1": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -2733,7 +2733,7 @@
             "description": "Optional note field that can contain additional information about the chapter"
           },
           "note2": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -5578,7 +5578,7 @@
             "description": "The updated content of the chapter in markdown format"
           },
           "note1": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -5587,7 +5587,7 @@
             "description": "Optional note field that can contain additional information about the chapter"
           },
           "note2": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -5629,7 +5629,7 @@
             "description": "The main content of the story in markdown format"
           },
           "note1": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",
@@ -5638,7 +5638,7 @@
             "description": "Optional note field that can contain markdown content for author notes or comments"
           },
           "note2": {
-            "maxLength": 500,
+            "maxLength": 5000,
             "minLength": 0,
             "type": [
               "null",

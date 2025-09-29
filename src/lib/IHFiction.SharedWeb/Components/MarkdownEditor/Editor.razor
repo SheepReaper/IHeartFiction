@@ -1,6 +1,8 @@
 @namespace IHFiction.SharedWeb.Components.MarkdownEditor
 @using Microsoft.AspNetCore.Hosting
 @using Microsoft.Extensions.Hosting
+@using System.Text.RegularExpressions
+@using System.Linq
 @rendermode RenderMode.InteractiveServer
 @inherits CancellableComponent
 @inject IJSRuntime JSRuntime
@@ -17,6 +19,20 @@
 </HeadContent>
 
 <div @ref="_editorElement"></div>
+
+<!-- Editor status: word count always shown; character count shown when CharacterLimit is set -->
+<div class="editor-status is-size-7 has-text-grey" aria-live="polite" role="status" style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+    <div class="word-count" title="Word count">Words: @_wordCount</div>
+    @if (CharacterLimit.HasValue)
+    {
+        var exceeded = _charCount > CharacterLimit.Value;
+        <div class="char-count" title="Character count">
+            <span class="has-text-weight-semibold @(exceeded ? "has-text-danger" : "has-text-grey-dark")">@_charCount</span>
+            <span class="has-text-grey">/</span>
+            <span class="has-text-grey">@CharacterLimit</span>
+        </div>
+    }
+</div>
 
 @code {
     [Parameter, EditorRequired]
@@ -35,12 +51,41 @@
     private bool _disposed;
     private string? _lastSetMarkdown;
     private bool _scriptsInitialized;
+    private int _wordCount;
+    private int _charCount;
 
     protected override Task OnInitializedAsync()
     {
         Theme.ThemeChanged += OnThemeChanged;
 
+        // Initialize counts from the incoming Value so the status bar shows immediately
+        RecomputeCounts(Value);
+
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Optional maximum character limit to display as a tracker. If null, character tracker is hidden.
+    /// </summary>
+    [Parameter]
+    public int? CharacterLimit { get; set; }
+
+    private void RecomputeCounts(string? markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+        {
+            _charCount = 0;
+            _wordCount = 0;
+        }
+        else
+        {
+            _charCount = markdown.Length;
+            // Split on whitespace and count non-empty tokens
+            var tokens = Regex.Split(markdown.Trim(), "\\s+");
+            _wordCount = tokens.Count(t => !string.IsNullOrWhiteSpace(t));
+        }
+
+        // Do not call StateHasChanged here; callers will trigger render as appropriate.
     }
 
     private async Task InitScriptsAsync()
@@ -90,8 +135,8 @@
             await InitScriptsAsync();
 
         // Always update the editor content if Value changes, or if editor was just created
-        if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized &&
-        RendererInfo.IsInteractive)
+    if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized &&
+    RendererInfo.IsInteractive)
         {
             try
             {
@@ -101,6 +146,8 @@
 
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
+            // Recompute counts after we've updated the editor from an external Value
+            RecomputeCounts(Value);
         }
     }
 
@@ -114,7 +161,7 @@
         if (_disposed) return;
         // No-op: handled in OnAfterRenderAsync
         @* return Task.CompletedTask; *@
-        if (_editor is not null && (Value != _lastSetMarkdown))
+    if (_editor is not null && (Value != _lastSetMarkdown))
         {
             try
             {
@@ -124,6 +171,7 @@
 
             await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
             _lastSetMarkdown = Value;
+            RecomputeCounts(Value);
         }
     }
 
@@ -137,6 +185,7 @@
             // to the editor (calling setMarkdown) which causes the cursor to jump to the end.
             _lastSetMarkdown = markdown;
             Value = markdown;
+            RecomputeCounts(markdown);
             try
             {
                 await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new { Preview = markdown?.Length > 200 ? markdown.Substring(0, 200) + "..." : markdown });

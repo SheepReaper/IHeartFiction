@@ -53,6 +53,9 @@ builder.Services
         options.ResponseType = OpenIdConnectResponseType.Code;
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.Resource = "fiction-api";
+        // options.RemoteSignOutPath;
+        // OpenIdConnectHandler
+        // OpenIdConnectOptions
 
         options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 

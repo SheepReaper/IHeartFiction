@@ -61,19 +61,19 @@
             <div class="field">
                 <label class="label">Author's Notes (Start)</label>
                 <div class="control" style="height: 200px">
-                    <Editor @bind-Value="Chapter.Note1" />
+                    <Editor @bind-Value="Chapter.Note1" CharacterLimit="5000" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Chapter Content</label>
                 <div class="control" style="height: 500px">
-                    <Editor @bind-Value="Chapter.Content" />
+                    <Editor @bind-Value="Chapter.Content" CharacterLimit="1000000" />
                 </div>
             </div>
             <div class="field">
                 <label class="label">Author's Notes (End)</label>
                 <div class="control" style="height: 200px">
-                    <Editor @bind-Value="Chapter.Note2" />
+                    <Editor @bind-Value="Chapter.Note2" CharacterLimit="5000" />
                 </div>
             </div>
             <div class="field">
