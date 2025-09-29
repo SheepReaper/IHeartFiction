@@ -1,16 +1,33 @@
 @page "/stories/new"
 @page "/stories/{StoryId}/edit"
-@attribute [Authorize(Roles = "author")]
+
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.Data.Stories.Domain
 @using System.Globalization
 @using static IHFiction.SharedWeb.Services.StoryEditorService
 @using static IHFiction.Data.Stories.Domain.StoryType
+
+@attribute [Authorize(Roles = "author")]
 @inherits CancellableComponent
 @inject StoryEditorService EditorService
 @inject NavigationManager Navigation
 
 <h1>@(EditorService.CurrentStory?.Id == default ? "Create New Story" : "Edit Story")</h1>
+
+@if (_isBusy)
+{
+    <div class="modal is-active">
+        <div class="modal-background"></div>
+        <div class="modal-content has-text-centered">
+            <div class="box">
+                <span class="icon is-large">
+                    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                </span>
+                <p class="is-size-5 mt-3">Working…</p>
+            </div>
+        </div>
+    </div>
+}
 
 @if (EditorService.CurrentStory is null)
 {
@@ -70,9 +87,9 @@ else
                                 <div class="dropdown-menu" id="dropdown-menu" role="menu">
                                     <div class="dropdown-content">
                                         @foreach (string storyType in new HashSet<string>([
-                                                                        StoryType.SingleBody,
-                                                                StoryType.MultiChapter,
-                                                                StoryType.MultiBook]).Where(IsConversionAllowed))
+                                            SingleBody,
+                                            MultiChapter,
+                                            MultiBook]).Where(IsConversionAllowed))
                                         {
                                             <a @key="storyType" class="dropdown-item"
                                                 @onclick="e => ConvertStory(storyType)">@GetLabel(storyType)</a>
@@ -91,7 +108,7 @@ else
 
     @switch (EditorService.CurrentStory.StoryType)
     {
-        case StoryType.SingleBody or StoryType.New:
+        case SingleBody or New:
             <div class="field">
                 <label class="label">Author's Notes (Start)</label>
                 <div class="control" style="height: 200px">
@@ -111,10 +128,10 @@ else
                 </div>
             </div>
             break;
-        case StoryType.MultiChapter:
+        case MultiChapter:
             <ChapterManager />
             break;
-        case StoryType.MultiBook:
+        case MultiBook:
             <BookManager />
             break;
     }
@@ -124,7 +141,7 @@ else
     <div class="field is-grouped">
         <div class="control">
             <!-- Save: always visible, enabled only if dirty -->
-            <button class="button is-info" disabled="@(!(EditorService.CurrentStory?.Dirty ?? false))"
+            <button class="button is-info" disabled="@(_isBusy || !(EditorService.CurrentStory?.Dirty ?? false))"
                 @onclick="e => Save(false)">
                 Save
             </button>
@@ -133,21 +150,21 @@ else
         {
             <div class="control">
                 <!-- Save and Publish: visible only if not published, enabled only if not published -->
-                <button class="button is-success" disabled="@(!(EditorService.CurrentStory?.Dirty ?? false))"
+                <button class="button is-success" disabled="@(_isBusy || !(EditorService.CurrentStory?.Dirty ?? false))"
                     @onclick="PublishStory">
                     Save and Publish
                 </button>
             </div>
             <div class="control">
                 <!-- Publish: visible and enabled only if not published -->
-                <button class="button is-warning" disabled="@(EditorService.CurrentStory?.Dirty ?? false)"
+                <button class="button is-warning" disabled="@(_isBusy || (EditorService.CurrentStory?.Dirty ?? false))"
                     @onclick="PublishOnly">
                     Publish
                 </button>
             </div>
         }
         <div class="control">
-            <button class="button is-light" @onclick="Cancel">Cancel</button>
+            <button class="button is-light" @onclick="Cancel" disabled="@_isBusy">Cancel</button>
         </div>
     </div>
 }
@@ -156,10 +173,13 @@ else
     [Parameter]
     public string? StoryId { get; set; }
 
-    public bool CanPublish => EditorService.CurrentStory?.IsPublished == false || EditorService.CurrentBook?.IsPublished == false || EditorService.CurrentChapter?.IsPublished == false;
+    public bool CanPublish => EditorService.CurrentStory?.IsPublished == false
+        || EditorService.CurrentBook?.IsPublished == false 
+        || EditorService.CurrentChapter?.IsPublished == false;
 
-    private string? _errorMessage;
     private bool _disposed;
+    private string? _errorMessage;
+    private bool _isBusy;
 
     protected override async Task OnInitializedAsync()
     {
@@ -238,10 +258,10 @@ else
 
         return (EditorService.CurrentStory.StoryType, targetType) switch
         {
-            (StoryType.SingleBody, StoryType.MultiChapter) => true,
-            (StoryType.MultiChapter, StoryType.SingleBody) => EditorService.CurrentStory.Chapters.Count == 1,
-            (StoryType.MultiChapter, StoryType.MultiBook) => true,
-            (StoryType.MultiBook, StoryType.MultiChapter) => EditorService.CurrentStory.Books.Count == 1,
+            (SingleBody, MultiChapter) => true,
+            (MultiChapter, SingleBody) => EditorService.CurrentStory.Chapters.Count == 1,
+            (MultiChapter, MultiBook) => true,
+            (MultiBook, MultiChapter) => EditorService.CurrentStory.Books.Count == 1,
             _ => false
         };
     }
@@ -249,41 +269,61 @@ else
     private async Task ConvertStory(string targetType)
     {
         if (!IsConversionAllowed(targetType) || EditorService.CurrentStory is null) return;
-
-        var result = await EditorService.ConvertStoryTypeAsync(targetType);
-
-        if (result.IsFailure)
-        {
-            _errorMessage = result.DomainError.Description;
-        }
+        _isBusy = true;
         StateHasChanged();
+
+        try
+        {
+            var result = await EditorService.ConvertStoryTypeAsync(targetType);
+
+            if (result.IsFailure)
+            {
+                _errorMessage = result.DomainError.Description;
+            }
+        }
+        finally
+        {
+            _isBusy = false;
+            StateHasChanged();
+        }
     }
 
     private async Task Save(bool andPublish)
     {
         if (EditorService.CurrentStory is null) return;
 
+        _isBusy = true;
         _errorMessage = null;
+        StateHasChanged();
 
-        var result = await EditorService.SaveStoryAsync();
-
-        if (result.IsFailure)
+        try
         {
-            _errorMessage = result.DomainError.Description;
-            return;
-        }
+            var result = await EditorService.SaveStoryAsync();
 
-        if (andPublish)
-        {
-            var publishResult = await EditorService.PublishStoryAsync();
-            if (publishResult.IsFailure)
+            if (result.IsFailure)
             {
-                _errorMessage = publishResult.DomainError.Description;
+                _errorMessage = result.DomainError.Description;
                 return;
             }
-        }
 
-        Navigation.NavigateTo("/my-stories");
+            if (andPublish)
+            {
+                var publishResult = await EditorService.PublishStoryAsync();
+                if (publishResult.IsFailure)
+                {
+                    _errorMessage = publishResult.DomainError.Description;
+                    return;
+                }
+            }
+
+            Navigation.NavigateTo("/my-stories");
+        }
+        finally
+        {
+            // keep busy until navigation occurs; if navigation didn't happen, clear flag
+            _isBusy = false;
+            StateHasChanged();
+        }
     }
 
     private async Task PublishStory()
@@ -294,26 +334,39 @@ else
     private async Task PublishOnly()
     {
         if (EditorService.CurrentStory is null) return;
+        _isBusy = true;
         _errorMessage = null;
-        var publishResult = await EditorService.PublishStoryAsync();
-        if (publishResult.IsFailure)
+        StateHasChanged();
+
+        try
         {
-            _errorMessage = publishResult.DomainError.Description;
-            return;
+            var publishResult = await EditorService.PublishStoryAsync();
+            if (publishResult.IsFailure)
+            {
+                _errorMessage = publishResult.DomainError.Description;
+                return;
+            }
+            Navigation.NavigateTo("/my-stories");
         }
-        Navigation.NavigateTo("/my-stories");
+        finally
+        {
+            _isBusy = false;
+            StateHasChanged();
+        }
     }
 
     private void Cancel()
     {
+        if (_isBusy) return;
+        _isBusy = true;
         Navigation.NavigateTo("/my-stories");
     }
 
     private static string GetLabel(string storyType) => storyType switch
     {
-        StoryType.SingleBody => "One-Shot",
-        StoryType.MultiChapter => "Chaptered",
-        StoryType.MultiBook => "Book-based",
+        SingleBody => "One-Shot",
+        MultiChapter => "Chaptered",
+        MultiBook => "Book-based",
         _ => "Unknown"
     };
 }

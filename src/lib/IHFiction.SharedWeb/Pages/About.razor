@@ -1,6 +1,8 @@
 @page "/about"
 
 @using IHFiction.SharedKernel.Infrastructure
+@using System.Security.Cryptography
+@using System.Text
 @inject AppVersion appVersion
 
 <section class="hero is-light">
@@ -141,6 +143,43 @@
                 everyone who reads, tests, and shares the project.
             </p>
 
+            <h3 class="title is-4 mt-5">About the maintainer</h3>
+            <div class="box">
+                <div class="columns is-vcentered">
+                    <div class="column is-three-quarters">
+                        <p>
+                            Hi — I'm Bryan (SheepReaper). I built IHeartFiction as a one-person project to demonstrate a
+                            pragmatic, production-ready web platform and cloud architecture for serving serialized
+                            fiction. The site shows practical experience with modern .NET hosting, containerized
+                            deployments, observability, and cost-conscious design.
+                        </p>
+                        <p class="mt-3">
+                            I'm actively open to new opportunities. If you'd like a hands-on engineer who understands
+                            end-to-end cloud systems, platform automation, and pragmatic product thinking, let's talk.
+                        </p>
+                        <div class="buttons mt-4">
+                            <a class="button is-primary is-outlined" href="https://www.linkedin.com/in/bryan-gonzalez-2b86ba67/" target="_blank" rel="me noopener noreferrer" title="Bryan on LinkedIn">
+                                <span class="icon"><i class="fab fa-linkedin"></i></span>
+                                <span>LinkedIn</span>
+                            </a>
+                            <a class="button is-danger is-light" href="https://www.linkedin.com/in/bryan-gonzalez-2b86ba67/" target="_blank" rel="me noopener noreferrer" title="Hire Bryan">
+                                <span class="icon"><i class="fas fa-briefcase"></i></span>
+                                <span>Hire me</span>
+                            </a>
+                            <a class="button is-dark" href="https://github.com/SheepReaper" target="_blank" rel="me noopener noreferrer" title="Bryan on GitHub">
+                                <span class="icon"><i class="fab fa-github"></i></span>
+                                <span>GitHub</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <figure class="image is-128x128">
+                            <img src="@GravatarUrl" alt="Bryan Gonzalez (SheepReaper) — maintainer and cloud engineer, open to opportunities" loading="lazy" width="128" height="128" style="border-radius: 6px;" />
+                        </figure>
+                    </div>
+                </div>
+            </div>
+
             <div class="columns mt-4">
                 <div class="column is-half">
                     <h4 class="title is-6">License</h4>
@@ -179,4 +218,24 @@
 
 @code {
     private string Version => appVersion.Information;
+
+    private static string GravatarEmail => "bgonza868@gmail.com";
+
+    private static string GravatarUrl => $"https://www.gravatar.com/avatar/{Md5Hash(GravatarEmail.Trim().ToLowerInvariant())}?s=256&d=identicon&r=g";
+
+    private static string Md5Hash(string input)
+    {
+        #pragma warning disable CA5351 // Just using it for encoding
+        using var md5 = MD5.Create();
+        #pragma warning restore CA5351
+
+        var bytes = Encoding.UTF8.GetBytes(input ?? string.Empty);
+        var hash = md5.ComputeHash(bytes);
+        var sb = new StringBuilder(hash.Length * 2);
+
+        foreach (var b in hash)
+            sb.Append(b.ToString("x2"));
+
+        return sb.ToString();
+    }
 }
