@@ -1,5 +1,6 @@
 @namespace IHFiction.SharedWeb.Components.MarkdownEditor
 @using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Http
 @using Microsoft.Extensions.Hosting
 @using System.Text.RegularExpressions
 @using System.Linq
@@ -10,18 +11,21 @@
 @inject IWebHostEnvironment Env
 
 <HeadContent>
-    <link href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" rel="stylesheet" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor.min.css"]" rel="stylesheet"
+        nonce="@nonce" />
 
     @if (Theme.CurrentTheme == "dark")
     {
-        <link href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css" rel="stylesheet" />
+        <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/theme/toastui-editor-dark.min.css"]" rel="stylesheet"
+            nonce="@nonce" />
     }
 </HeadContent>
 
 <div @ref="_editorElement"></div>
 
 <!-- Editor status: word count always shown; character count shown when CharacterLimit is set -->
-<div class="editor-status is-size-7 has-text-grey" aria-live="polite" role="status" style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
+<div class="editor-status is-size-7 has-text-grey" aria-live="polite" role="status"
+    style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
     <div class="word-count" title="Word count">Words: @_wordCount</div>
     @if (CharacterLimit.HasValue)
     {
@@ -53,6 +57,9 @@
     private bool _scriptsInitialized;
     private int _wordCount;
     private int _charCount;
+
+    [CascadingParameter]
+    public string? nonce { get; set; }
 
     protected override Task OnInitializedAsync()
     {
@@ -135,12 +142,16 @@
             await InitScriptsAsync();
 
         // Always update the editor content if Value changes, or if editor was just created
-    if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized &&
-    RendererInfo.IsInteractive)
+        if (_editor is not null && (Value != _lastSetMarkdown || firstRender) && _scriptsInitialized &&
+        RendererInfo.IsInteractive)
         {
             try
             {
-                await JSRuntime.InvokeVoidAsync("console.log", "Editor.setMarkdown called", new { ValueLength = (Value ?? string.Empty).Length, LastSetLength = _lastSetMarkdown?.Length });
+                await JSRuntime.InvokeVoidAsync("console.log", "Editor.setMarkdown called", new
+                {
+                    ValueLength = (Value ?? string.Empty).Length,
+                    LastSetLength = _lastSetMarkdown?.Length
+                });
             }
             catch { /* best-effort logging */ }
 
@@ -161,11 +172,15 @@
         if (_disposed) return;
         // No-op: handled in OnAfterRenderAsync
         @* return Task.CompletedTask; *@
-    if (_editor is not null && (Value != _lastSetMarkdown))
+        if (_editor is not null && (Value != _lastSetMarkdown))
         {
             try
             {
-                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnParametersSetAsync setMarkdown", new { ValueLength = (Value ?? string.Empty).Length, LastSetLength = _lastSetMarkdown?.Length });
+                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnParametersSetAsync setMarkdown", new
+                {
+                    ValueLength = (Value ?? string.Empty).Length,
+                    LastSetLength = _lastSetMarkdown?.Length
+                });
             }
             catch { /* best-effort logging */ }
 
@@ -188,7 +203,12 @@
             RecomputeCounts(markdown);
             try
             {
-                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new { Preview = markdown?.Length > 200 ? markdown.Substring(0, 200) + "..." : markdown });
+                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new
+                {
+                    Preview = markdown?.Length > 200
+                        ? markdown.Substring(0, 200) + "..."
+                        : markdown
+                });
             }
             catch { /* best-effort logging */ }
             if (ValueChanged.HasDelegate)

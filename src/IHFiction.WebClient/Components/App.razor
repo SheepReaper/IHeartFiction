@@ -1,4 +1,6 @@
 @using System.Diagnostics
+@using System.Security.Cryptography
+@using System.Text
 @inject IWebHostEnvironment Env
 
 <!DOCTYPE html>
@@ -12,27 +14,54 @@
         <meta name="traceparent" content="@currentActivity.Id" />
     }
     <base href="/" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-    <link href="@Assets["_content/IHFiction.SharedWeb/bulma/bulma.min.css"]" rel="stylesheet" />
-    <link href="@Assets["_content/IHFiction.SharedWeb/css/app.css"]" rel="stylesheet" />
-    <link href="@Assets["IHFiction.WebClient.styles.css"]" rel="stylesheet" />
-    <link href="@Assets["_content/IHFiction.SharedWeb/favicon.png"]" rel="icon" type="image/png" />
-    <ImportMap />
+    <link href="@Assets["_content/IHFiction.SharedWeb/font-awesome/6.4.0/css/all.min.css"]" rel="stylesheet"
+        nonce="@nonce" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/bulma/bulma.min.css"]" rel="stylesheet" nonce="@nonce" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/css/app.css"]" rel="stylesheet" nonce="@nonce" />
+    <link href="@Assets["IHFiction.WebClient.styles.css"]" rel="stylesheet" nonce="@nonce" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon.png"]" rel="icon" type="image/png" nonce="@nonce" />
+    <ImportMap integrity="@integrity" nonce="@nonce" />
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
-    <script src="@Assets["_framework/blazor.web.js"]"></script>
-    <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]"></script>
+    <CascadingValue Value="nonce">
+        <Routes @rendermode="InteractiveServer" />
+    </CascadingValue>
+    <script src="@Assets["_framework/blazor.web.js"]" nonce="@nonce"></script>
+    <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]" nonce="@nonce"></script>
     @if (Env.IsDevelopment())
     {
-        <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.js"></script>
+        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.js"]" nonce="@nonce"></script>
     }
     else
     {
-        <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.min.js"]"
+            nonce="@nonce"></script>
     }
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    private string? integrity;
+    private string? nonce;
+
+    protected override void OnInitialized()
+    {
+        var hash = Convert.ToBase64String(SHA384.HashData(new UTF8Encoding().GetBytes(HttpContext?
+        .GetEndpoint()?
+        .Metadata
+        .GetOrderedMetadata<ImportMapDefinition>()?
+        .FirstOrDefault<ImportMapDefinition>()?
+        .ToString()
+        .ReplaceLineEndings("\n") ?? string.Empty)));
+
+        integrity = $"sha384-{hash}";
+
+        nonce = HttpContext?.Items["CSPNonce"] as string;
+    }
+}

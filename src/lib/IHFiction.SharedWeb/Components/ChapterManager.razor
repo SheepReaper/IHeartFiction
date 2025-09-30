@@ -136,10 +136,6 @@
             await SelectChapter(book.Chapters[0]);
     }
 
-    @* private Task OnFirstLoad(object? sender, ChapterChangedEventArgs e){
-        if(StoryEditorService)
-    } *@
-
     private ObservableCollection<ChapterEditorModel>? Chapters => StoryEditorService.CurrentStory?.StoryType switch
     {
         MultiChapter => StoryEditorService.CurrentStory?.Chapters,
