@@ -109,18 +109,18 @@
         try
         {
             await JSRuntime.InvokeVoidAsync("console.log", "Editor importing script:", scriptPath);
+            _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import",
+            CancellationToken,
+            scriptPath);
+
+            _editor = await _module.InvokeConstructorAsync(
+            "BoundToast",
+            CancellationToken,
+            [Options, _dotNetObjectReference]);
         }
         catch { /* best-effort logging */ }
 
-        _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-        "import",
-        CancellationToken,
-        scriptPath);
-
-        _editor = await _module.InvokeConstructorAsync(
-        "BoundToast",
-        CancellationToken,
-        [Options, _dotNetObjectReference]);
 
         _scriptsInitialized = true;
     }
@@ -152,13 +152,14 @@
                     ValueLength = (Value ?? string.Empty).Length,
                     LastSetLength = _lastSetMarkdown?.Length
                 });
+
+                await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
+
+                _lastSetMarkdown = Value;
+                // Recompute counts after we've updated the editor from an external Value
+                RecomputeCounts(Value);
             }
             catch { /* best-effort logging */ }
-
-            await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
-            _lastSetMarkdown = Value;
-            // Recompute counts after we've updated the editor from an external Value
-            RecomputeCounts(Value);
         }
     }
 
@@ -181,46 +182,44 @@
                     ValueLength = (Value ?? string.Empty).Length,
                     LastSetLength = _lastSetMarkdown?.Length
                 });
+
+                await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
+                _lastSetMarkdown = Value;
+                RecomputeCounts(Value);
             }
             catch { /* best-effort logging */ }
-
-            await _editor.InvokeVoidAsync("setMarkdown", Value ?? string.Empty);
-            _lastSetMarkdown = Value;
-            RecomputeCounts(Value);
         }
     }
 
     [JSInvokable]
     public async Task OnEditorContentChanged(string markdown)
     {
+        if (_disposed) return;
+        // Record the latest editor-originated markdown so we don't push it back
+        // to the editor (calling setMarkdown) which causes the cursor to jump to the end.
+        _lastSetMarkdown = markdown;
+        Value = markdown;
+        RecomputeCounts(markdown);
         try
         {
-            if (_disposed) return;
-            // Record the latest editor-originated markdown so we don't push it back
-            // to the editor (calling setMarkdown) which causes the cursor to jump to the end.
-            _lastSetMarkdown = markdown;
-            Value = markdown;
-            RecomputeCounts(markdown);
-            try
+            await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new
             {
-                await JSRuntime.InvokeVoidAsync("console.log", "Editor.OnEditorContentChanged", new
-                {
-                    Preview = markdown?.Length > 200
-                        ? markdown.Substring(0, 200) + "..."
-                        : markdown
-                });
-            }
-            catch { /* best-effort logging */ }
+                Preview = markdown?.Length > 200
+                    ? markdown.Substring(0, 200) + "..."
+                    : markdown
+            });
+
             if (ValueChanged.HasDelegate)
             {
                 await ValueChanged.InvokeAsync(Value);
             }
+
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             await Console.Error.WriteLineAsync($"Editor.OnEditorContentChanged exception: {ex}");
-            throw;
+            @* throw; *@
         }
     }
 

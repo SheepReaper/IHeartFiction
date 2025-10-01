@@ -92,7 +92,9 @@ builder.Services.Configure<MarkdownOptions>(builder.Configuration.GetSection(Mar
 builder.AddNpgsqlDbContext<FictionDbContext>(
     "fiction-db",
     configureDbContextOptions: (options) => options
-        .UseNpgsql(options => options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
+        .UseNpgsql(options => options
+            .MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application)
+            .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
         .UseSnakeCaseNamingConvention()
         .WithDefaultInterceptors(dateTime));
 

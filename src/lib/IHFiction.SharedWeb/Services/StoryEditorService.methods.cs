@@ -566,4 +566,16 @@ public partial class StoryEditorService(
     {
         DirtyStateChanged?.Invoke(this, args);
     }
+
+    public void Reset()
+    {
+        var wasDirty = CurrentStory?.Dirty;
+
+        ClearChapter();
+        ClearBook();
+        ClearStory();
+
+        if (wasDirty == true)
+            DirtyStateChanged?.Invoke(this, new(false));
+    }
 }

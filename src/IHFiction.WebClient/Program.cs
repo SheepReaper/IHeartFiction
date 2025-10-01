@@ -165,7 +165,7 @@ if (app.Environment.IsProduction())
             default-src 'self';
             img-src data: https:;
             object-src 'none';
-            script-src 'self' 'nonce-{nonce}';
+            script-src 'self' ajax.cloudflare.com 'nonce-{nonce}';
             script-src-elem 'self' 'strict-dynamic' 'nonce-{nonce}';
             style-src-elem https: chrome-extension: 'nonce-{nonce}';
             style-src-attr 'unsafe-inline';

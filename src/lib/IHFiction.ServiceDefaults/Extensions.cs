@@ -6,7 +6,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
@@ -35,7 +37,7 @@ public static class Extensions
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
             // Turn on resilience by default
-            if(!builder.Environment.IsDevelopment())
+            if (!builder.Environment.IsDevelopment())
                 http.AddStandardResilienceHandler();
 
             // Turn on service discovery by default
@@ -52,13 +54,24 @@ public static class Extensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
+        var useAuthOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]) && builder.Environment.IsProduction();
+
         builder.Logging.AddOpenTelemetry(logging =>
         {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
-        });
+            logging.SetResourceBuilder(
+                ResourceBuilder.CreateDefault().AddService(builder.Environment.ApplicationName)
+            );
 
-        var useAuthOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]) && builder.Environment.IsProduction();
+            if (useAuthOtlpExporter)
+            {
+                if (builder.Configuration["Dashboard:Otlp:PrimaryApiKey"] is not string otlpApiKey)
+                    throw new InvalidOperationException("Dashboard:Otlp:PrimaryApiKey configuration is required");
+
+                logging.AddOtlpExporter(o => o.Headers = $"x-otlp-api-key={otlpApiKey}");
+            }
+        });
 
         builder.Services.AddOpenTelemetry()
             .WithMetrics(metrics =>
@@ -95,8 +108,8 @@ public static class Extensions
                     tracing.AddOtlpExporter(o => o.Headers = $"x-otlp-api-key={otlpApiKey}");
                 }
             });
-            
-        if(!useAuthOtlpExporter)
+
+        if (!useAuthOtlpExporter)
             builder.AddOpenTelemetryExporters();
 
         return builder;

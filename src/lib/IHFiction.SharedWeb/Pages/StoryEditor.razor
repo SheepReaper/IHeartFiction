@@ -29,6 +29,17 @@
     </div>
 }
 
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="section">
+        <div class="container">
+            <div class="notification is-danger">
+                <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
+                <strong>Error:</strong> @_errorMessage
+            </div>
+        </div>
+    </div>
+}
 @if (EditorService.CurrentStory is null)
 {
     <div class="section">
@@ -37,17 +48,6 @@
                 <i class="fas fa-spinner fa-pulse fa-2x"></i>
             </span>
             <p>Loading...</p>
-        </div>
-    </div>
-}
-else if (!string.IsNullOrEmpty(_errorMessage))
-{
-    <div class="section">
-        <div class="container">
-            <div class="notification is-danger">
-                <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
-                <strong>Error:</strong> @_errorMessage
-            </div>
         </div>
     </div>
 }
@@ -217,12 +217,6 @@ else
         }
     }
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
-    {
-        Console.WriteLine($"OnAfterRenderAsync called. FirstRender: {firstRender}");
-        return Task.CompletedTask;
-    }
-
     private void OnBookChanged(object? sender, BookChangedEventArgs e)
     {
         InvokeAsync(StateHasChanged);
@@ -321,6 +315,7 @@ else
         finally
         {
             // keep busy until navigation occurs; if navigation didn't happen, clear flag
+            EditorService.Reset();
             _isBusy = false;
             StateHasChanged();
         }
