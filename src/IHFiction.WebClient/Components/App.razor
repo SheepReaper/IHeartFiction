@@ -14,9 +14,10 @@
         <meta name="traceparent" content="@currentActivity.Id" />
     }
     <base href="/" />
-    <link href="@Assets["_content/IHFiction.SharedWeb/font-awesome/6.4.0/css/all.min.css"]" rel="stylesheet"
-        nonce="@nonce" />
-    <link href="@Assets["_content/IHFiction.SharedWeb/bulma/bulma.min.css"]" rel="stylesheet" nonce="@nonce" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/font-awesome/6.4.0/css/all.min.css"]" rel="preload" as="style"
+        onload="this.rel='stylesheet';this.onload=null;" nonce="@nonce" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/bulma/bulma.min.css"]" rel="preload" as="style"
+        onload="this.rel='stylesheet';this.onload=null;" nonce="@nonce" />
     <link href="@Assets["_content/IHFiction.SharedWeb/css/app.css"]" rel="stylesheet" nonce="@nonce" />
     <link href="@Assets["IHFiction.WebClient.styles.css"]" rel="stylesheet" nonce="@nonce" />
     <link href="@Assets["_content/IHFiction.SharedWeb/favicon.png"]" rel="icon" type="image/png" nonce="@nonce" />
