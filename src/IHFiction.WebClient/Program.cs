@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mime;
 using System.Security.Claims;
 using System.Security.Cryptography;
 
@@ -27,7 +28,6 @@ using Markdig;
 using Sidio.Sitemap.AspNetCore;
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core.Services;
-using System.Net.Mime;
 
 const string keycloakAuthenticationScheme = "Keycloak";
 
@@ -41,14 +41,14 @@ builder.Services.AddSingleton<IComponentBaseProvider, ComponentBaseProvider>();
 
 builder.Services.AddDefaultSitemapServices<HttpContextBaseUrlProvider>();
 
+builder.AddNpgsqlDbContext<FictionDbContext>(
+    "fiction-db",
+    configureDbContextOptions: (options) => options
+        .UseNpgsql(options => options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
+        .UseSnakeCaseNamingConvention());
+
 if (builder.Environment.IsProduction())
 {
-    builder.AddNpgsqlDbContext<FictionDbContext>(
-        "fiction-db",
-        configureDbContextOptions: (options) => options
-            .UseNpgsql(options => options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
-            .UseSnakeCaseNamingConvention());
-
     builder.Services.AddDataProtection()
         .PersistKeysToDbContext<FictionDbContext>()
         .SetApplicationName(builder.Environment.ApplicationName);
@@ -199,7 +199,6 @@ app.MapStaticAssets();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSitemap();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode(options => options.ContentSecurityFrameAncestorsPolicy = null) // This is set in the CSP above
@@ -221,7 +220,7 @@ app.MapGet("/robots.txt", async ctx =>
 {
     var baseUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}".TrimEnd('/');
 
-    var body = $"Sitemap: {baseUrl}/sitemap.xml\n";
+    var body = $"Sitemap: {baseUrl}/sitemap.xml\nSitemap: {baseUrl}/sitemap-dynamic.xml\n";
 
     ctx.Response.ContentType = MediaTypeNames.Text.Plain;
     ctx.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0";
@@ -230,6 +229,9 @@ app.MapGet("/robots.txt", async ctx =>
 
     await TypedResults.Text(body).ExecuteAsync(ctx);
 });
+
+app.MapStaticSitemap();
+app.MapDynamicSitemap();
 
 app.MapDefaultEndpoints();
 

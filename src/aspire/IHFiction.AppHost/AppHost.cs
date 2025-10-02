@@ -49,7 +49,7 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithHttpHealthCheck("/health")
-    .WithReference(fictionApi)
+    .WithReference(fictionDb)
     .WithReference(keycloak)
     .WithReplicas(builder.Configuration.GetValue("Containers:WebClient:ReplicaCount", 1));
 

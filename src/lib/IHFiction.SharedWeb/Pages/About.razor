@@ -2,10 +2,11 @@
 @using System.Text
 
 @using IHFiction.SharedKernel.Infrastructure
+@using Sidio.Sitemap.Core
 
 @page "/about"
 
-@attribute [Sitemap]
+@attribute [Sitemap(ChangeFrequency.Yearly, 0.5, "2025-10-02")]
 @inject AppVersion appVersion
 
 <section class="hero is-light">
