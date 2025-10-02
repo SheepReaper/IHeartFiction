@@ -22,11 +22,11 @@ internal static class ProductionConfigExtensions
         service.Deploy ??= new();
         service.Deploy.UpdateConfig = new()
         {
-            // Parallelism = "1", // BUG: this should actually be an int
+            // Parallelism = "1", // BUG: this should actually be an int [Fixed](https://github.com/dotnet/aspire/pull/11706)
             Delay = "10s",
             Monitor = "60s",
             Order = "start-first",
-            // FailOnError = true // BUG: this should actually be a string
+            // FailOnError = true // BUG: this should actually be a string [Fixed](https://github.com/dotnet/aspire/pull/11706)
         };
 
         return service;

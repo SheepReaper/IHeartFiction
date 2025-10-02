@@ -4,47 +4,19 @@ This document outlines the known limitations and challenges in the IHFiction pro
 
 ## Deployment
 
-### Docker Swarm Deployment Labels
+### Docker Swarm Deployment Labels (RESOLVED)
 
-A bug exists in the .NET Aspire SDK that prevents the correct generation of deployment labels for Docker Swarm services. When attempting to add labels to the `deploy` section of a service, Aspire incorrectly serializes them under an `additional_labels` key instead of the correct `labels` key.
+The issue in the .NET Aspire SDK that caused deployment labels to be emitted under `additional_labels` instead of `labels` has been fixed upstream. If you are running an Aspire release that includes the fix (Aspire 9.5, 9.4.3 or later), you no longer need the `docker-compose.deploy.yml` override; the generator will emit proper `deploy.labels`.
 
-This is caused by a bug in the `Aspire.Hosting.Docker.Resources.ServiceNodes.Swarm.LabelSpecs` class, which has an incorrect `YamlMember` attribute. This issue has been reported to the .NET Aspire team. ([#11197](https://github.com/dotnet/aspire/issues/11197))
+If you're running an older Aspire version, keep the documented override workaround in your deployment pipeline until you upgrade.
 
-The incorrect output looks like this:
-```yaml
-services:
-  myservice:
-    deploy:
-      additional_labels: # This is incorrect
-        foo: bar
-```
+**Reference:** Aspire PR that fixed the behaviour: https://github.com/dotnet/aspire/pull/11204
 
-**Workaround:**
+### Other Swarm schema edge-cases (upstream fixes pending)
 
-The workaround I'm using is to not define the deployment labels in the `AppHost` project. Instead, create a separate Docker Compose override file (e.g., `docker-compose.deploy.yml`) and specify the deployment labels there.
+Some schema typing issues remain upstream and may not yet be present in the stable CLI. In particular:
 
-**1. Override File (`docker-compose.deploy.yml`):**
-```yaml
-# docker-compose.deploy.yml
-services:
-  # Service name must match the name in the generated compose file
-  postgres:
-    deploy:
-      labels:
-        com.docker.compose.service: postgres
-```
-
-**2. Deployment Command:**
-Use both the Aspire-generated compose file and the override file when deploying the stack. The override file should be specified last.
-```shell
-docker stack deploy -c docker-compose.yml -c docker-compose.deploy.yml my_stack
-```
-
-This approach uses a standard Docker Compose feature to merge the configurations, resulting in a valid deployment manifest without generating incorrect files.
-
-**Update:**
-PR is out for the fix: [#11204](https://github.com/dotnet/aspire/pull/11204)
-PR Is merged and should be included in 9.5 or 9.4.3 version
+- `Parallelism` and `FailOnError` schema types were reported and fixed in the Aspire codebase (see https://github.com/dotnet/aspire/pull/11706) but those fixes may not yet be available in older stable releases. We continue to document these items and work around them in the codebase where necessary.
 
 ### Production Configuration in AppHost.cs
 

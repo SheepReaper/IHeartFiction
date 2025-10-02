@@ -214,6 +214,10 @@ dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFict
 
 **Status:** Fixed in Aspire 9.5/9.4.3 (PR #11204 merged)
 
+**Notes:** The long-form workaround previously documented in `LIMITATIONS.md` has been removed from the repo (see commit history) now that the upstream fix is merged. If you are using an older Aspire CLI, the override documented in `LIMITATIONS.md` may still be required.
+
+**Related upstream work:** Other Swarm-schema issues (for example, `Parallelism` and `FailOnError` typing mismatches) were addressed in a follow-up Aspire PR (see https://github.com/dotnet/aspire/pull/11706). Those fixes may not have propagated to all Aspire releases yet; check your Aspire CLI version if you hit related issues.
+
 ### 2. Production Configuration
 
 Production deployment uses Docker Swarm with:

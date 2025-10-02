@@ -495,3 +495,6 @@ $RECYCLE.BIN/
 
 # Production config
 appsettings.Production.json
+
+# Aspire testing
+NuGet.config

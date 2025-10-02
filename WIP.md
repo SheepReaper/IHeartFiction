@@ -10,3 +10,9 @@
 1. Paginated lists on the UI aren't tested.
 1. A bunch of cleanup items: decide whether to go ham with the try-catch blocks or rely on the global exception handler stack, delete dead code, etc.
 1. Decide wether to use nullable ObjectId in API responses. OpenApi tooling was updated to use OneOf better and now nullable object types become OneOf null and the corresponding object type. In the schema transformer i've only handled the case of non-nullable ObjectId type which works as expected, but if I use a nullable ObjectId it creates a new dynamic wrapper type (contentId) and makes the schema inconsistent. So fix the transformer or don't use nullable ObjectId.
+
+---
+
+Recent changes (dev notes):
+
+- Added a simple word/character count to the Markdown editor component. This is intentionally a raw-markdown count (no rich-text delta parsing).
