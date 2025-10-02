@@ -86,6 +86,6 @@
     </PackageVersion>
     <PackageVersion Include="xunit.v3" Version="3.1.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="NSwag.ApiDescription.Client" Version="14.5.0" />
+    <PackageVersion Include="NSwag.ApiDescription.Client" Version="14.6.1" />
   </ItemGroup>
 </Project>
