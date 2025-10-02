@@ -24,6 +24,11 @@ using Keycloak.AuthServices.Authorization;
 
 using Markdig;
 
+using Sidio.Sitemap.AspNetCore;
+using Sidio.Sitemap.Blazor;
+using Sidio.Sitemap.Core.Services;
+using System.Net.Mime;
+
 const string keycloakAuthenticationScheme = "Keycloak";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +36,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSingleton<IComponentBaseProvider, ComponentBaseProvider>();
+
+builder.Services.AddDefaultSitemapServices<HttpContextBaseUrlProvider>();
 
 if (builder.Environment.IsProduction())
 {
@@ -190,6 +199,7 @@ app.MapStaticAssets();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSitemap();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode(options => options.ContentSecurityFrameAncestorsPolicy = null) // This is set in the CSP above
@@ -198,13 +208,27 @@ app.MapRazorComponents<App>()
 app.MapGroup("authentication")
     .MapLoginAndLogout(CookieAuthenticationDefaults.AuthenticationScheme, keycloakAuthenticationScheme);
 
-app.MapPost("/csp-report", async (HttpContext ctx) =>
+app.MapPost("/csp-report", async ctx =>
 {
     using var sr = new StreamReader(ctx.Request.Body);
     var body = await sr.ReadToEndAsync();
     // write to logs or a file for review
     app.Logger.LogCspReport(body);
-    return Results.Ok();
+    await TypedResults.Ok().ExecuteAsync(ctx);
+});
+
+app.MapGet("/robots.txt", async ctx =>
+{
+    var baseUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}".TrimEnd('/');
+
+    var body = $"Sitemap: {baseUrl}/sitemap.xml\n";
+
+    ctx.Response.ContentType = MediaTypeNames.Text.Plain;
+    ctx.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0";
+    ctx.Response.Headers.Pragma = "no-cache";
+    ctx.Response.Headers.Expires = "0";
+
+    await TypedResults.Text(body).ExecuteAsync(ctx);
 });
 
 app.MapDefaultEndpoints();

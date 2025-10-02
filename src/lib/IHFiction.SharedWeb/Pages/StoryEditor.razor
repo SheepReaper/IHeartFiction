@@ -1,11 +1,12 @@
-@page "/stories/new"
-@page "/stories/{StoryId}/edit"
-
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.Data.Stories.Domain
 @using System.Globalization
+
 @using static IHFiction.SharedWeb.Services.StoryEditorService
 @using static IHFiction.Data.Stories.Domain.StoryType
+
+@page "/stories/new"
+@page "/stories/{StoryId}/edit"
 
 @attribute [Authorize(Roles = "author")]
 @inherits CancellableComponent

@@ -1,0 +1,13 @@
+@using IHFiction.SharedWeb.Components.Stories
+
+@page "/authors/{authorId}/stories"
+
+@attribute [Sitemap]
+
+<PageTitle>Stories - IHeartFiction</PageTitle>
+
+<StoryList AuthorId="@AuthorId" />
+
+@code {
+    [Parameter, EditorRequired] public string AuthorId { get; set; }
+}

@@ -1,11 +1,7 @@
-@page "/stories"
-@page "/authors/{authorId}/stories"
 @using IHFiction.SharedWeb.Components.Stories
+
+@page "/stories"
 
 <PageTitle>Stories - IHeartFiction</PageTitle>
 
-<StoryList AuthorId="@AuthorId" />
-
-@code {
-    [Parameter] public string? AuthorId { get; set; } = null;
-}
+<StoryList AuthorId="@null" />

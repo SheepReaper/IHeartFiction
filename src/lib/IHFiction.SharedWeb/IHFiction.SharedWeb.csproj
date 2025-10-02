@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="NSwag.ApiDescription.Client" />
+    <PackageReference Include="Sidio.Sitemap.Blazor" />
     <PackageReference Include="Ulid" />
   </ItemGroup>
 

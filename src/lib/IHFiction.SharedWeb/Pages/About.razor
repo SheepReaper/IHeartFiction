@@ -1,8 +1,11 @@
-@page "/about"
-
-@using IHFiction.SharedKernel.Infrastructure
 @using System.Security.Cryptography
 @using System.Text
+
+@using IHFiction.SharedKernel.Infrastructure
+
+@page "/about"
+
+@attribute [Sitemap]
 @inject AppVersion appVersion
 
 <section class="hero is-light">
