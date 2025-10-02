@@ -85,9 +85,9 @@ internal static class OpenApiExtensions
         {
             // Title and version are already set
             Contact = new() { Email = "bgonza868+fictionadmin@gmail.com", Name = "Bryan Gonzalez" },
-            Description = "i❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
+            Description = "I❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
             License = new() { Name = "MIT License", Identifier = "MIT" },
-            Summary = "I❤️HFiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
+            Summary = "I❤️Fiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
             TermsOfService = new("http://localhost") // I don't have ToS yet
         };
     };

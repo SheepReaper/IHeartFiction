@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "IHFiction.FictionApi | v1",
-    "description": "i❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
+    "description": "I❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
     "termsOfService": "http://localhost",
     "contact": {
       "name": "Bryan Gonzalez",
@@ -13,7 +13,7 @@
       "identifier": "MIT"
     },
     "version": "1.0.0",
-    "summary": "I❤️HFiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this."
+    "summary": "I❤️Fiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this."
   },
   "paths": {
     "/tags": {
