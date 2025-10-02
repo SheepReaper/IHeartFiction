@@ -167,6 +167,7 @@ if (app.Environment.IsProduction())
             object-src 'none';
             script-src 'self' 'unsafe-inline' 'nonce-{nonce}';
             script-src-elem 'self' 'nonce-{nonce}';
+            script-src-attr 'self' 'unsafe-inline';
             style-src-elem https: chrome-extension: 'self' 'nonce-{nonce}';
             style-src-attr 'self' 'unsafe-inline';
             font-src 'self' data: cdnjs.cloudflare.com www.slant.co;
