@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Mime;
 using System.Security.Claims;
-using System.Security.Cryptography;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -157,40 +156,7 @@ if (app.Environment.IsProduction())
 
     app.UseForwardedHeaders(options);
 
-    app.Use(async (context, next) =>
-    {
-        string? nonce;
-
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            var nonceBytes = new byte[32];
-            rng.GetBytes(nonceBytes);
-            nonce = Convert.ToBase64String(nonceBytes);
-        }
-
-        var policy = $@"
-            report-to /csp-report;
-            base-uri 'self';
-            default-src 'self';
-            img-src data: https:;
-            object-src 'none';
-            script-src 'self' 'unsafe-inline' 'nonce-{nonce}';
-            script-src-elem 'self' 'nonce-{nonce}';
-            script-src-attr 'self' 'unsafe-inline';
-            style-src-elem https: chrome-extension: 'self' 'nonce-{nonce}';
-            style-src-attr 'self' 'unsafe-inline';
-            font-src 'self' data: cdnjs.cloudflare.com www.slant.co;
-            connect-src 'self' http: ws: wss:;
-            upgrade-insecure-requests;
-            frame-ancestors 'self';
-        ".ReplaceLineEndings("");
-
-        context.Response.Headers.ContentSecurityPolicy = policy;
-
-        context.Items["CSPNonce"] = nonce;
-
-        await next();
-    });
+    app.UseCsp();
 }
 
 app.UseAntiforgery();
@@ -207,14 +173,7 @@ app.MapRazorComponents<App>()
 app.MapGroup("authentication")
     .MapLoginAndLogout(CookieAuthenticationDefaults.AuthenticationScheme, keycloakAuthenticationScheme);
 
-app.MapPost("/csp-report", async ctx =>
-{
-    using var sr = new StreamReader(ctx.Request.Body);
-    var body = await sr.ReadToEndAsync();
-    // write to logs or a file for review
-    app.Logger.LogCspReport(body);
-    await TypedResults.Ok().ExecuteAsync(ctx);
-});
+app.MapCspReportingEndpoint();
 
 app.MapGet("/robots.txt", async ctx =>
 {
