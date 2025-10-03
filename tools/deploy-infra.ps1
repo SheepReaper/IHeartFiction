@@ -49,7 +49,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-    [System.IO.DirectoryInfo]$Source = (Join-Path -Path (Split-Path -Parent $MyInvocation.MyCommand.Path) -ChildPath "infra"),
+    [System.IO.DirectoryInfo]$Source = (Join-Path -Path (Get-Location) -ChildPath "infra"),
 
     [Parameter(Mandatory = $true, Position = 0)]
     [ValidateNotNullOrEmpty()]
