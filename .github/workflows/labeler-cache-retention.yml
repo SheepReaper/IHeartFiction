@@ -3,6 +3,8 @@
 #
 # Regularly restore the prediction models from cache to prevent cache eviction
 name: "Labeler: Cache Retention"
+permissions:
+  contents: read
 
 # For more information about GitHub's action cache limits and eviction policy, see:
 # https://docs.github.com/actions/writing-workflows/choosing-what-your-workflow-does/caching-dependencies-to-speed-up-workflows#usage-limits-and-eviction-policy
