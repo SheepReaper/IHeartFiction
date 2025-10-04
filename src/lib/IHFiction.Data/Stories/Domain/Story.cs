@@ -1,12 +1,10 @@
-using IHFiction.Data.Infrastructure;
-
 using MongoDB.Bson;
 
 namespace IHFiction.Data.Stories.Domain;
 
-public sealed class Story : Work, IWorkBodyId
+public sealed class Story : Work
 {
-    public required string Description { get; set; }
+    public string Description { get; set; } = default!;
 
     public ObjectId? WorkBodyId { get; set; }
 

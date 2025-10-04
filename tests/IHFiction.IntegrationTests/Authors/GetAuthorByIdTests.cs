@@ -48,8 +48,8 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
             Profile = new Profile { Bio = bio }
         };
 
-        var work1 = new Story { Title = "Work 1", Description = "Test description 1", Owner = author, UpdatedAt = DateTime.UtcNow };
-        var work2 = new Story { Title = "Work 2", Description = "Test description 2", Owner = author, UpdatedAt = DateTime.UtcNow };
+        var work1 = new Story { Title = "Work 1", Description = "Test description 1", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow };
+        var work2 = new Story { Title = "Work 2", Description = "Test description 2", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow };
 
         author.Works.Add(work1);
         author.Works.Add(work2);
@@ -70,7 +70,7 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         response.DeletedAt.Should().Be(deletedAt);
         response.Profile.Should().NotBeNull();
         response.Profile.Bio.Should().Be(bio);
-        var works = response.Works;
+        var works = response.PublishedStories;
         works.Should().HaveCount(2);
         works.Should().Contain(w => w.Title == "Work 1");
         works.Should().Contain(w => w.Title == "Work 2");
@@ -146,7 +146,7 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        response.Works.Should().BeEmpty();
+        response.PublishedStories.Should().BeEmpty();
     }
 
     [Fact]
@@ -246,11 +246,11 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
 
         var works = new List<Story>
         {
-            new() { Title = "First Novel", Description = "A first novel", Owner = author, UpdatedAt = DateTime.UtcNow },
-            new() { Title = "Second Novel", Description = "A second novel", Owner = author, UpdatedAt = DateTime.UtcNow },
-            new() { Title = "Short Story Collection", Description = "A collection of short stories", Owner = author, UpdatedAt = DateTime.UtcNow },
-            new() { Title = "Poetry Book", Description = "A book of poetry", Owner = author, UpdatedAt = DateTime.UtcNow },
-            new() { Title = "Non-Fiction Work", Description = "A non-fiction work", Owner = author, UpdatedAt = DateTime.UtcNow }
+            new() { Title = "First Novel", Description = "A first novel", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow },
+            new() { Title = "Second Novel", Description = "A second novel", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow },
+            new() { Title = "Short Story Collection", Description = "A collection of short stories", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow },
+            new() { Title = "Poetry Book", Description = "A book of poetry", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow },
+            new() { Title = "Non-Fiction Work", Description = "A non-fiction work", Owner = author, UpdatedAt = DateTime.UtcNow, PublishedAt = DateTime.UtcNow }
         };
 
         foreach (var work in works)
@@ -268,9 +268,9 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        response.Works.Should().HaveCount(5);
+        response.PublishedStories.Should().HaveCount(5);
 
-        var resultWorks = response.Works;
+        var resultWorks = response.PublishedStories;
         var workTitles = resultWorks.Select(w => w.Title).ToList();
         workTitles.Should().Contain("First Novel");
         workTitles.Should().Contain("Second Novel");
@@ -300,29 +300,29 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         };
 
         // Create a story with chapters
-        var story = new Story 
-        { 
-            Title = "My Story", 
-            Description = "A story with chapters", 
-            Owner = author, 
+        var story = new Story
+        {
+            Title = "My Story",
+            Description = "A story with chapters",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
-            PublishedAt = DateTime.UtcNow 
+            PublishedAt = DateTime.UtcNow
         };
-        
-        var chapter1 = new Chapter 
-        { 
-            Title = "Chapter 1", 
-            Owner = author, 
+
+        var chapter1 = new Chapter
+        {
+            Title = "Chapter 1",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             Story = story,
             StoryId = story.Id,
             PublishedAt = DateTime.UtcNow
         };
-        
-        var chapter2 = new Chapter 
-        { 
-            Title = "Chapter 2", 
-            Owner = author, 
+
+        var chapter2 = new Chapter
+        {
+            Title = "Chapter 2",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             Story = story,
             StoryId = story.Id,
@@ -344,12 +344,12 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        
+
         // The response should only include the Story, not the Chapters
-        response.Works.Should().HaveCount(1, "only the Story should be returned, not the Chapters");
-        response.Works.Should().Contain(w => w.Title == "My Story");
-        response.Works.Should().NotContain(w => w.Title == "Chapter 1");
-        response.Works.Should().NotContain(w => w.Title == "Chapter 2");
+        response.PublishedStories.Should().HaveCount(1, "only the Story should be returned, not the Chapters");
+        response.PublishedStories.Should().Contain(w => w.Title == "My Story");
+        response.PublishedStories.Should().NotContain(w => w.Title == "Chapter 1");
+        response.PublishedStories.Should().NotContain(w => w.Title == "Chapter 2");
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
@@ -373,7 +373,7 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -383,9 +383,6 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
-
-
 }

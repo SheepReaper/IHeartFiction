@@ -5,9 +5,9 @@ namespace IHFiction.Data.Searching.Domain;
 
 public abstract class Tag : DomainUlidEntityWithTimestamp
 {
-    public required string Category { get; set; }
+    public string Category { get; set; } = default!;
     public string? Subcategory { get; set; }
-    public required string Value { get; set; }
+    public string Value { get; set; } = default!;
 
     private ICollection<Work>? _works;
     public ICollection<Work> Works => _works ??= [];

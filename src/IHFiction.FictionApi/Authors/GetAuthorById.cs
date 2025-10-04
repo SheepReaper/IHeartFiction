@@ -34,7 +34,8 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
     /// </summary>
     /// <param name="Id">Unique identifier for the work</param>
     /// <param name="Title">Title of the work</param>
-    internal sealed record AuthorWorkItem(Ulid Id, string Title);
+    /// <param name="PublishedAt">When the work was published (null if unpublished)</param>
+    internal sealed record AuthorWorkItem(Ulid Id, string Title, DateTime? PublishedAt);
 
     /// <summary>
     /// Response model for getting a specific author by their ID.
@@ -44,33 +45,44 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
     /// <param name="UpdatedAt">When the author profile was last updated</param>
     /// <param name="DeletedAt">When the author was deleted (null if not deleted)</param>
     /// <param name="Profile">Author's profile information including bio</param>
-    /// <param name="Works">Collection of works created by this author</param>
+    /// <param name="PublishedStories">Collection of works created by this author</param>
+    /// <param name="TotalStories">Total number of stories by the author</param>
     internal sealed record GetAuthorByIdResponse(
         Guid UserId,
         string Name,
         DateTime UpdatedAt,
         DateTime? DeletedAt,
         AuthorProfile Profile,
-        IEnumerable<AuthorWorkItem> Works);
+        IEnumerable<AuthorWorkItem> PublishedStories,
+        int TotalStories);
     public async Task<Result<GetAuthorByIdResponse>> HandleAsync(
         Ulid id,
         CancellationToken cancellationToken = default)
     {
         var author = await context.Authors
             .Include(a => a.Profile)
-            .Include(a => a.Works)
+            .Include(a => a.Works.Where(w => w is Story))
+            .Where(a => a.Id == id)
+            .Select(a => new GetAuthorByIdResponse(
+                a.UserId,
+                a.Name,
+                a.UpdatedAt,
+                a.DeletedAt,
+                new AuthorProfile(a.Profile.Bio),
+                a.Works.OfType<Story>()
+                    .Where(s => s.PublishedAt != null)
+                    .Select(s => new AuthorWorkItem(
+                        s.Id,
+                        s.Title,
+                        s.PublishedAt)),
+                a.Works.Count(w => w is Story)
+            ))
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
 
         return author is null
             ? CommonErrors.Author.NotFound
-            : new GetAuthorByIdResponse(
-                author.UserId,
-                author.Name,
-                author.UpdatedAt,
-                author.DeletedAt,
-                new AuthorProfile(author.Profile.Bio),
-                author.Works.OfType<Story>().Select(work => new AuthorWorkItem(work.Id, work.Title)));
+            : author;
     }
     public static string EndpointName => nameof(GetAuthorById);
 
@@ -88,11 +100,13 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
             {
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
-                return result
+                var okResult = result
                     .WithLinks([
                         linker.Create<GetAuthorById>("self", HttpMethods.Get, new { id }),
                         linker.Create<UpdateAuthorProfile>("update-profile", HttpMethods.Get, new { id })])
                     .ToOkResult(query);
+
+                return okResult;
             })
             .WithSummary("Get Author by ID")
             .WithDescription("Retrieves detailed information about a specific author by their unique identifier. " +

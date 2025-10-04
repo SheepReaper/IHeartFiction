@@ -140,7 +140,7 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
     public async Task HandleAsync_WithSpecialCharactersInBio_HandlesCorrectly()
     {
         // Arrange
-        var bioWithSpecialChars = "Bio with émojis 📚, newlines\n\r, tabs\t, and symbols <>&\"'" ;
+        var bioWithSpecialChars = "Bio with émojis 📚, newlines\n\r, tabs\t, and symbols <>&\"'";
         var author = new Author
         {
             UserId = Guid.NewGuid(),
@@ -265,7 +265,8 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
                 Title = $"Work {i:D3}",
                 Description = $"Description for work {i:D3}",
                 Owner = author,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                PublishedAt = DateTime.UtcNow.AddDays(-i) // Ensure they are published
             };
             author.Works.Add(work);
         }
@@ -280,7 +281,7 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        var works = response.Works;
+        var works = response.PublishedStories;
         works.Should().HaveCount(100);
         works.Should().Contain(w => w.Title == "Work 000");
         works.Should().Contain(w => w.Title == "Work 099");
@@ -314,7 +315,8 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
                 Title = title,
                 Description = $"Description for {title}",
                 Owner = author,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
+                PublishedAt = DateTime.UtcNow.AddDays(-1) // Ensure they are published
             };
             author.Works.Add(work);
         }
@@ -329,7 +331,7 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        var works2 = response.Works;
+        var works2 = response.PublishedStories;
         works2.Should().HaveCount(5);
         works2.Should().Contain(w => w.Title == "Work with émojis 📖");
         works2.Should().Contain(w => w.Title == "Work with symbols @#$%");
@@ -408,7 +410,7 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -418,9 +420,6 @@ public class GetAuthorByIdEdgeCaseTests : BaseIntegrationTest, IConfigureService
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
-
-
 }

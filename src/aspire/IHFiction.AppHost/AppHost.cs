@@ -49,8 +49,9 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithHttpHealthCheck("/health")
-    .WithReference(fictionDb)
-    .WithReference(keycloak)
+    .WithReference(fictionApi) // API client uses service discovery if ApiBaseAddress is not set
+    .WithReference(fictionDb) // Blazor server-side uses db directly via service discovery
+    .WithReference(keycloak) // Blazor server-side uses Keycloak directly via service discovery
     .WithReplicas(builder.Configuration.GetValue("Containers:WebClient:ReplicaCount", 1));
 
 if (builder.Environment.IsDevelopment())

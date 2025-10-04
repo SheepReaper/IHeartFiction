@@ -101,6 +101,8 @@ internal sealed class AddChapterToBook(
         DateTime ContentUpdatedAt
     );
 
+    // TODO: this need a strategy to handle the multi context transactions
+    // https://learn.microsoft.com/en-us/ef/core/saving/transactions
     public async Task<Result<AddChapterToBookResponse>> HandleAsync(
         Ulid bookId,
         AddChapterToBookBody body,
@@ -108,18 +110,20 @@ internal sealed class AddChapterToBook(
         CancellationToken cancellationToken = default)
     {
         var authorResult = await authorizationService.GetCurrentAuthorAsync(claimsPrincipal, cancellationToken);
+
         if (authorResult.IsFailure) return authorResult.DomainError;
 
         var author = authorResult.Value;
 
         var book = await context.Books
-                                .Include(b => b.Chapters)
-                                .FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
+            .Include(b => b.Chapters)
+            .Include(b => b.Authors)
+            .FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
 
         if (book is null)
             return Errors.BookNotFound;
 
-        if (book.OwnerId != author.Id)
+        if (!(book.OwnerId == author.Id || book.Authors.Any(a => a.Id == author.Id)))
             return Errors.NotBookOwner;
 
         var options = markdownOptions.Value;
@@ -135,8 +139,10 @@ internal sealed class AddChapterToBook(
 
         try
         {
+            var newWorkBodyId = ObjectId.GenerateNewId();
             var workBody = new WorkBody
             {
+                Id = newWorkBodyId,
                 Content = sanitizedContent,
                 Note1 = sanitizedNote1,
                 Note2 = sanitizedNote2,
@@ -149,14 +155,13 @@ internal sealed class AddChapterToBook(
             var chapter = new Chapter
             {
                 Title = sanitizedTitle,
-                Owner = author,
-                OwnerId = author.Id,
+                OwnerId = book.OwnerId,
                 Book = book,
-                BookId = book.Id,
                 WorkBodyId = workBody.Id
             };
 
-            chapter.Authors.Add(author);
+            foreach (var existingAuthor in book.Authors) chapter.Authors.Add(existingAuthor);
+
             book.Chapters.Add(chapter);
 
             await context.SaveChangesAsync(cancellationToken);

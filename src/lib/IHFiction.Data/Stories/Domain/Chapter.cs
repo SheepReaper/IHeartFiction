@@ -1,13 +1,10 @@
-using IHFiction.Data.Infrastructure;
-
 using MongoDB.Bson;
 
 namespace IHFiction.Data.Stories.Domain;
 
-public sealed class Chapter : Work, IWorkBodyId
+public sealed class Chapter : Work
 {
-    public ObjectId? WorkBodyId { get; set; }
-
+    public ObjectId WorkBodyId { get; set; }
     public int Order { get; set; }
 
     public Book? Book { get; set; }

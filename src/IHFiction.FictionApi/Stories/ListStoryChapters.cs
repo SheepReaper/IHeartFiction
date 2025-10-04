@@ -80,7 +80,7 @@ internal sealed class ListStoryChapters(
             c.PublishedAt,
             c.CreatedAt,
             c.UpdatedAt,
-            c.WorkBodyId != null,
+            c.WorkBodyId != default,
             0 // TODO: ContentLength - would need separate query to WorkBody collection
         ));
 

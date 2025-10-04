@@ -106,7 +106,7 @@ internal sealed class PublishWork(
         }
         else if (work is Chapter chapter)
         {
-            hasContent = chapter.WorkBodyId != null;
+            hasContent = chapter.WorkBodyId != default;
             hasChildren = false;
             childCount = 0;
         }

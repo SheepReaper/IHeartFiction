@@ -23,9 +23,10 @@ public class GetAuthorByIdServiceTests
         var updatedAt = DateTime.UtcNow;
         var deletedAt = DateTime.UtcNow.AddDays(1);
         var bio = "This is a test bio";
-        
-        var work1 = CreateTestWork("First Work");
-        var work2 = CreateTestWork("Second Work");
+
+        var work1 = CreateTestWork("First Work", true);
+        var work2 = CreateTestWork("Second Work", true);
+        var work3 = CreateTestWork("Unpublished Work", false); // Unpublished work should not appear in response
         var works = new List<Work> { work1, work2 };
 
         var author = CreateTestAuthor(userId, authorName, bio, updatedAt, deletedAt, works);
@@ -37,7 +38,8 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+            3
         );
 
         // Assert
@@ -46,9 +48,9 @@ public class GetAuthorByIdServiceTests
         response.UpdatedAt.Should().Be(updatedAt);
         response.DeletedAt.Should().Be(deletedAt);
         response.Profile.Bio.Should().Be(bio);
-        response.Works.Should().HaveCount(2);
-        response.Works.Should().Contain(w => w.Title == "First Work");
-        response.Works.Should().Contain(w => w.Title == "Second Work");
+        response.PublishedStories.Should().HaveCount(2);
+        response.PublishedStories.Should().Contain(w => w.Title == "First Work");
+        response.PublishedStories.Should().Contain(w => w.Title == "Second Work");
     }
 
     [Fact]
@@ -64,7 +66,8 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+            0
         );
 
         // Assert
@@ -84,11 +87,13 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+
+            0
         );
 
         // Assert
-        response.Works.Should().BeEmpty();
+        response.PublishedStories.Should().BeEmpty();
     }
 
     [Fact]
@@ -105,7 +110,8 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+            0
         );
 
         // Assert
@@ -131,7 +137,8 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+            0
         );
 
         // Assert
@@ -145,7 +152,7 @@ public class GetAuthorByIdServiceTests
         var works = new List<Work>();
         for (int i = 0; i < 100; i++)
         {
-            works.Add(CreateTestWork($"Work {i:D3}"));
+            works.Add(CreateTestWork($"Work {i:D3}", true));
         }
 
         var author = CreateTestAuthor(Guid.NewGuid(), "Prolific Author", "Very productive", DateTime.UtcNow, null, works);
@@ -157,15 +164,16 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+            100
         );
 
         // Assert
-        response.Works.Should().HaveCount(100);
-        response.Works.Should().Contain(w => w.Title == "Work 000");
-        response.Works.Should().Contain(w => w.Title == "Work 099");
-        response.Works.Should().OnlyContain(w => w.Id != Ulid.Empty);
-        response.Works.Should().OnlyContain(w => !string.IsNullOrEmpty(w.Title));
+        response.PublishedStories.Should().HaveCount(100);
+        response.PublishedStories.Should().Contain(w => w.Title == "Work 000");
+        response.PublishedStories.Should().Contain(w => w.Title == "Work 099");
+        response.PublishedStories.Should().OnlyContain(w => w.Id != Ulid.Empty);
+        response.PublishedStories.Should().OnlyContain(w => !string.IsNullOrEmpty(w.Title));
     }
 
     [Fact]
@@ -174,12 +182,12 @@ public class GetAuthorByIdServiceTests
         // Arrange
         var works = new List<Work>
         {
-            CreateTestWork("Work with émojis 📖"),
-            CreateTestWork("Work with symbols @#$%^&*()"),
-            CreateTestWork("Work with quotes \"'"),
-            CreateTestWork("Work with newlines\n\r"),
-            CreateTestWork("Work with tabs\t\t"),
-            CreateTestWork("Work with HTML <script>alert('test')</script>")
+            CreateTestWork("Work with émojis 📖", true),
+            CreateTestWork("Work with symbols @#$%^&*()", true),
+            CreateTestWork("Work with quotes \"'", true),
+            CreateTestWork("Work with newlines\n\r", true),
+            CreateTestWork("Work with tabs\t\t", true),
+            CreateTestWork("Work with HTML <script>alert('test')</script>", true)
         };
 
         var author = CreateTestAuthor(Guid.NewGuid(), "Special Author", "Bio", DateTime.UtcNow, null, works);
@@ -191,14 +199,15 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null)),
+            6
         );
 
         // Assert
-        response.Works.Should().HaveCount(6);
-        response.Works.Should().Contain(w => w.Title == "Work with émojis 📖");
-        response.Works.Should().Contain(w => w.Title == "Work with symbols @#$%^&*()");
-        response.Works.Should().Contain(w => w.Title == "Work with HTML <script>alert('test')</script>");
+        response.PublishedStories.Should().HaveCount(6);
+        response.PublishedStories.Should().Contain(w => w.Title == "Work with émojis 📖");
+        response.PublishedStories.Should().Contain(w => w.Title == "Work with symbols @#$%^&*()");
+        response.PublishedStories.Should().Contain(w => w.Title == "Work with HTML <script>alert('test')</script>");
     }
 
     [Fact]
@@ -211,8 +220,6 @@ public class GetAuthorByIdServiceTests
         error.Code.Should().Be("General.NotFound");
         error.Description.Should().Be("The requested resource was not found.");
     }
-
-
 
     private static Author CreateTestAuthor(Guid userId, string name, string? bio, DateTime updatedAt, DateTime? deletedAt, ICollection<Work> works)
     {
@@ -235,14 +242,15 @@ public class GetAuthorByIdServiceTests
         return author;
     }
 
-    private static TestWork CreateTestWork(string title)
+    private static TestWork CreateTestWork(string title, bool publish = false)
     {
         return new TestWork
         {
             Id = Ulid.NewUlid(),
             Title = title,
             Owner = null!, // Will be set by the test
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            PublishedAt = publish ? DateTime.UtcNow : null
         };
     }
 

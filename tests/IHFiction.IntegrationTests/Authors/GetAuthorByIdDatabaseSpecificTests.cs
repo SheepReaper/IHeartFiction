@@ -259,7 +259,8 @@ public class GetAuthorByIdDatabaseSpecificTests : BaseIntegrationTest, IConfigur
         services.AddKeyedScoped(
             nameof(GetAuthorByIdDatabaseSpecificTests),
             (sp, key) => new FictionDbContext(new DbContextOptionsBuilder<FictionDbContext>()
-                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(GetAuthorByIdDatabaseSpecificTests)}"))
+                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(GetAuthorByIdDatabaseSpecificTests)}"), options =>
+                    options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
                 .UseSnakeCaseNamingConvention()
                 .ConfigureWarnings(w => w.Log(RelationalEventId.PendingModelChangesWarning))
                 .WithDefaultInterceptors(sp.GetRequiredService<TimeProvider>())
@@ -274,7 +275,7 @@ public class GetAuthorByIdDatabaseSpecificTests : BaseIntegrationTest, IConfigur
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -284,7 +285,6 @@ public class GetAuthorByIdDatabaseSpecificTests : BaseIntegrationTest, IConfigur
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

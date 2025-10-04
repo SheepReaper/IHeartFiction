@@ -6,7 +6,7 @@ namespace IHFiction.Data.Stories.Domain;
 
 public abstract class Work : DomainUlidEntityWithTimestamp, ISoftDeletable
 {
-    public required string Title { get; set; }
+    public string Title { get; set; } = default!;
 
     public DateTime? PublishedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
@@ -19,5 +19,5 @@ public abstract class Work : DomainUlidEntityWithTimestamp, ISoftDeletable
     public ICollection<Tag> Tags => _tags ??= [];
 
     public Ulid OwnerId { get; set; }
-    public required Author Owner { get; set; }
+    public Author Owner { get; set; } = default!;
 }

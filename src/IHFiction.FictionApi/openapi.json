@@ -2808,7 +2808,8 @@
       "AuthorWorkItem": {
         "required": [
           "id",
-          "title"
+          "title",
+          "publishedAt"
         ],
         "type": "object",
         "properties": {
@@ -2819,6 +2820,14 @@
           "title": {
             "type": "string",
             "description": "Title of the work"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the work was published (null if unpublished)",
+            "format": "date-time"
           }
         },
         "description": "Represents a work (story) created by an author."
@@ -3650,7 +3659,8 @@
           "updatedAt",
           "deletedAt",
           "profile",
-          "works"
+          "publishedStories",
+          "totalStories"
         ],
         "type": "object",
         "properties": {
@@ -3686,12 +3696,21 @@
             "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/AuthorProfile"
           },
-          "works": {
+          "publishedStories": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuthorWorkItem"
             },
             "description": "Collection of works created by this author"
+          },
+          "totalStories": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of stories by the author",
+            "format": "int32"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."

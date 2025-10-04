@@ -5,6 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Reflection;
 
+using IHFiction.SharedKernel.Linking;
+
 namespace IHFiction.SharedKernel.DataShaping;
 
 public static class DataShapingService
@@ -18,6 +20,38 @@ public static class DataShapingService
     {
         ArgumentNullException.ThrowIfNull(data);
 
+        // If the root object is Linked<Inner>, flatten it so callers get inner properties at top-level
+        if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Linked<>))
+        {
+            var innerType = typeof(T).GetGenericArguments()[0];
+            var valueProp = typeof(T).GetProperty("Value");
+            var linksProp = typeof(T).GetProperty("Links");
+
+            var valueObj = valueProp?.GetValue(data);
+
+            IDictionary<string, object?> shapedInner = new ExpandoObject();
+
+            if (valueObj is not null)
+            {
+                var innerProperties = PropertiesCache.GetOrAdd(
+                    innerType,
+                    t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+
+                foreach (var innerProperty in innerProperties)
+                {
+                    shapedInner.Add(innerProperty.Name, innerProperty.GetValue(valueObj));
+                }
+            }
+
+            // add links property
+            if (linksProp is not null)
+            {
+                shapedInner.Add("links", linksProp.GetValue(data));
+            }
+
+            return (ExpandoObject)shapedInner;
+        }
+
         var fieldSet = fields?
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
@@ -28,7 +62,7 @@ public static class DataShapingService
 
         if (fieldSet.Count != 0)
         {
-            fieldSet = [.. fieldSet, ..AlwaysIncluded];
+            fieldSet = [.. fieldSet, .. AlwaysIncluded];
             propertyInfos = [.. propertyInfos.Where(p => fieldSet.Contains(p.Name))];
         }
 
@@ -36,7 +70,195 @@ public static class DataShapingService
 
         foreach (PropertyInfo property in propertyInfos)
         {
-            shapedObject.Add(property.Name, property.GetValue(data));
+            object? value = null;
+
+            // if property type is any IEnumerable<T> where T is Linked<InnerType>, project each element to ExpandoObject
+            // that glues the links property to the inner object properties
+            var enumerableInterface = property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+                ? property.PropertyType
+                : property.PropertyType.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+
+            bool handled = false;
+            if (enumerableInterface is not null)
+            {
+                var enumElementType = enumerableInterface.GetGenericArguments()[0];
+                if (enumElementType.IsGenericType && enumElementType.GetGenericTypeDefinition() == typeof(Linked<>))
+                {
+                    handled = true;
+
+                    var list = (IEnumerable<object?>?)property.GetValue(data);
+                    if (list is null)
+                    {
+                        value = null;
+                    }
+                    else
+                    {
+                        var innerType = enumElementType.GetGenericArguments()[0];
+                        var innerProperties = PropertiesCache.GetOrAdd(
+                            innerType,
+                            t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+
+                        var shapedList = new List<ExpandoObject>();
+
+                        // reflection helpers on the Linked<> wrapper
+                        var linkedValueProp = enumElementType.GetProperty("Value");
+                        var linksProperty = enumElementType.GetProperty("Links");
+
+                        foreach (var item in list)
+                        {
+                            if (item is null)
+                            {
+                                continue;
+                            }
+
+                            IDictionary<string, object?> shapedItem = new ExpandoObject();
+
+                            // extract the inner value from the Linked<> wrapper
+                            var innerObj = linkedValueProp?.GetValue(item);
+
+                            // add inner properties (if present)
+                            if (innerObj is not null)
+                            {
+                                foreach (var innerProperty in innerProperties)
+                                {
+                                    shapedItem.Add(innerProperty.Name, innerProperty.GetValue(innerObj));
+                                }
+                            }
+                            else
+                            {
+                                // if inner object is null, still create the keys with null values
+                                foreach (var innerProperty in innerProperties)
+                                {
+                                    shapedItem.Add(innerProperty.Name, null);
+                                }
+                            }
+
+                            // add links property from the Linked<> wrapper
+                            if (linksProperty is not null)
+                            {
+                                shapedItem.Add("links", linksProperty.GetValue(item));
+                            }
+
+                            shapedList.Add((ExpandoObject)shapedItem);
+                        }
+
+                        value = shapedList.AsReadOnly();
+                    }
+                }
+            }
+
+            if (!handled && property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(Linked<>))
+            {
+                var linkedValue = property.GetValue(data);
+                if (linkedValue is null)
+                {
+                    value = null;
+                }
+                else
+                {
+                    var innerType = property.PropertyType.GetGenericArguments()[0];
+                    var innerProperties = PropertiesCache.GetOrAdd(
+                        innerType,
+                        t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+
+                    IDictionary<string, object?> shapedItem = new ExpandoObject();
+
+                    // reflection helpers on the Linked<> wrapper
+                    var valueProp = property.PropertyType.GetProperty("Value");
+                    var linksProp = property.PropertyType.GetProperty("Links");
+
+                    var innerObj = valueProp?.GetValue(linkedValue);
+
+                    // add inner properties
+                    if (innerObj is not null)
+                    {
+                        foreach (var innerProperty in innerProperties)
+                        {
+                            shapedItem.Add(innerProperty.Name, innerProperty.GetValue(innerObj));
+                        }
+                    }
+                    else
+                    {
+                        foreach (var innerProperty in innerProperties)
+                        {
+                            shapedItem.Add(innerProperty.Name, null);
+                        }
+                    }
+
+                    // add links property from the Linked<> wrapper
+                    if (linksProp is not null)
+                    {
+                        shapedItem.Add("links", linksProp.GetValue(linkedValue));
+                    }
+
+                    value = (ExpandoObject)shapedItem;
+                }
+            }
+            if (!handled && property.PropertyType.IsArray && property.PropertyType.GetElementType() is { } elementType
+                && elementType.IsGenericType && elementType.GetGenericTypeDefinition() == typeof(Linked<>))
+            {
+                var array = (Array?)property.GetValue(data);
+                if (array is null)
+                {
+                    value = null;
+                }
+                else
+                {
+                    var innerType = elementType.GetGenericArguments()[0];
+                    var innerProperties = PropertiesCache.GetOrAdd(
+                        innerType,
+                        t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+
+                    var shapedList = new List<ExpandoObject>();
+
+                    var linkedValueProp = elementType.GetProperty("Value");
+                    var linksProperty = elementType.GetProperty("Links");
+
+                    foreach (var item in array)
+                    {
+                        if (item is null)
+                        {
+                            continue;
+                        }
+
+                        IDictionary<string, object?> shapedItem = new ExpandoObject();
+
+                        var innerObj = linkedValueProp?.GetValue(item);
+
+                        // add inner properties
+                        if (innerObj is not null)
+                        {
+                            foreach (var innerProperty in innerProperties)
+                            {
+                                shapedItem.Add(innerProperty.Name, innerProperty.GetValue(innerObj));
+                            }
+                        }
+                        else
+                        {
+                            foreach (var innerProperty in innerProperties)
+                            {
+                                shapedItem.Add(innerProperty.Name, null);
+                            }
+                        }
+
+                        // add links property
+                        if (linksProperty is not null)
+                        {
+                            shapedItem.Add("links", linksProperty.GetValue(item));
+                        }
+
+                        shapedList.Add((ExpandoObject)shapedItem);
+                    }
+
+                    value = shapedList.ToArray();
+                }
+            }
+            if (!handled)
+            {
+                value = property.GetValue(data);
+            }
+
+            shapedObject.Add(property.Name, value);
         }
 
         return (ExpandoObject)shapedObject;
@@ -56,7 +278,7 @@ public static class DataShapingService
 
         if (fieldSet.Count != 0)
         {
-            fieldSet = [.. fieldSet, ..AlwaysIncluded];
+            fieldSet = [.. fieldSet, .. AlwaysIncluded];
             propertyInfos = [.. propertyInfos.Where(p => fieldSet.Contains(p.Name))];
         }
 

@@ -62,7 +62,7 @@ public class GetAuthorByIdIntegrationTests : BaseIntegrationTest, IConfigureServ
         response.DeletedAt.Should().BeNull();
         response.Profile.Should().NotBeNull();
         response.Profile.Bio.Should().Be(bio);
-        response.Works.Should().BeEmpty();
+        response.PublishedStories.Should().BeEmpty();
     }
 
     [Fact]
@@ -100,20 +100,38 @@ public class GetAuthorByIdIntegrationTests : BaseIntegrationTest, IConfigureServ
             Title = "Test Story",
             Description = "A test story",
             Owner = author,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            PublishedAt = DateTime.UtcNow
         };
+
+        story.Authors.Add(author); // Ensure the author is included in the story's authors
+
+        // Book's parent story (not a direct work, only referenced by Book)
+        var bookStory = new Story
+        {
+            Title = "Book's Parent Story",
+            Description = "Parent story for the book",
+            Owner = author,
+            UpdatedAt = DateTime.UtcNow,
+            PublishedAt = DateTime.UtcNow
+        };
+
+        bookStory.Authors.Add(author); // Ensure the author is included in the book story's authors
 
         var book = new Book
         {
             Title = "Test Book",
             Description = "A test book",
             Owner = author,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            Story = bookStory,
+            PublishedAt = DateTime.UtcNow
         };
 
-        // Add works to author
-        author.Works.Add(story);
-        author.Works.Add(book);
+        book.Authors.Add(author); // Ensure the author is included in the book's authors
+
+        // Add only direct works to author (story and book)
+        _dbContext.Works.AddRange(story, book);
 
         _dbContext.Authors.Add(author);
         await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
@@ -125,10 +143,11 @@ public class GetAuthorByIdIntegrationTests : BaseIntegrationTest, IConfigureServ
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        response.Works.Should().HaveCount(2);
-        var works = response.Works;
+        response.PublishedStories.Should().HaveCount(2);
+        var works = response.PublishedStories;
         works.Should().Contain(w => w.Title == "Test Story");
-        works.Should().Contain(w => w.Title == "Test Book");
+        // The handler now returns Stories only; the book's parent Story should be present instead of the Book
+        works.Should().Contain(w => w.Title == "Book's Parent Story");
     }
 
     [Fact]
@@ -291,7 +310,7 @@ public class GetAuthorByIdIntegrationTests : BaseIntegrationTest, IConfigureServ
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -301,9 +320,6 @@ public class GetAuthorByIdIntegrationTests : BaseIntegrationTest, IConfigureServ
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
-
-
 }
