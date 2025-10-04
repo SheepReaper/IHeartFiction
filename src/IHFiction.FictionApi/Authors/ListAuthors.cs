@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.DataShaping;
@@ -78,7 +79,7 @@ internal sealed class ListAuthors(
         // Build the base query for authors with at least one published story
         var authors = context.Authors
             .Include(a => a.Profile)
-            .Where(a => a.OwnedWorks.Any(w => w.PublishedAt != null))
+            .Where(a => a.OwnedWorks.OfType<Story>().Any(w => w.PublishedAt != null))
             .AsNoTracking();
 
         // Apply search using the centralized service with multiple fields
@@ -95,8 +96,8 @@ internal sealed class ListAuthors(
                 a.Profile.Bio ?? "",
                 a.CreatedAt,
                 a.UpdatedAt,
-                a.OwnedWorks.Count,
-                a.OwnedWorks.Count(w => w.PublishedAt != null)));
+                a.OwnedWorks.OfType<Story>().Count(),
+                a.OwnedWorks.OfType<Story>().Count(w => w.PublishedAt != null)));
 
         // Execute paginated query using the centralized service
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);

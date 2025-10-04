@@ -282,6 +282,76 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         resultWorks.Should().OnlyContain(w => w.Id != Ulid.Empty);
     }
 
+    [Fact]
+    public async Task HandleAsync_WithStoryAndChapters_ReturnsOnlyStoryNotChapters()
+    {
+        // Arrange - This test validates the fix for the issue where chapters were being counted as separate works
+        var userId = Guid.NewGuid();
+        var authorName = "Test Author";
+        var bio = "Test bio";
+        var updatedAt = DateTime.UtcNow;
+
+        var author = new Author
+        {
+            UserId = userId,
+            Name = authorName,
+            UpdatedAt = updatedAt,
+            Profile = new Profile { Bio = bio }
+        };
+
+        // Create a story with chapters
+        var story = new Story 
+        { 
+            Title = "My Story", 
+            Description = "A story with chapters", 
+            Owner = author, 
+            UpdatedAt = DateTime.UtcNow,
+            PublishedAt = DateTime.UtcNow 
+        };
+        
+        var chapter1 = new Chapter 
+        { 
+            Title = "Chapter 1", 
+            Owner = author, 
+            UpdatedAt = DateTime.UtcNow,
+            Story = story,
+            StoryId = story.Id,
+            PublishedAt = DateTime.UtcNow
+        };
+        
+        var chapter2 = new Chapter 
+        { 
+            Title = "Chapter 2", 
+            Owner = author, 
+            UpdatedAt = DateTime.UtcNow,
+            Story = story,
+            StoryId = story.Id,
+            PublishedAt = DateTime.UtcNow
+        };
+
+        // Add story and chapters to author's works (simulating what the database would do)
+        author.Works.Add(story);
+        author.Works.Add(chapter1);
+        author.Works.Add(chapter2);
+
+        _dbContext.Authors.Add(author);
+        await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        // Act
+        var result = await _useCase.HandleAsync(author.Id, TestContext.Current.CancellationToken);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        var response = result.Value!;
+        
+        // The response should only include the Story, not the Chapters
+        response.Works.Should().HaveCount(1, "only the Story should be returned, not the Chapters");
+        response.Works.Should().Contain(w => w.Title == "My Story");
+        response.Works.Should().NotContain(w => w.Title == "Chapter 1");
+        response.Works.Should().NotContain(w => w.Title == "Chapter 2");
+    }
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
     public static void ConfigureServices(IServiceCollection services)
     {
