@@ -5,7 +5,7 @@ namespace IHFiction.Data.Searching.Domain;
 internal sealed class SynonymTag : Tag
 {
     public Ulid CanonicalTagId { get; set; }
-    public required CanonicalTag CanonicalTag { get; set; }
+    public CanonicalTag CanonicalTag { get; set; } = default!;
 
     [NotMapped]
     public IReadOnlyCollection<Tag> TagFamily => CanonicalTag.TagFamily;

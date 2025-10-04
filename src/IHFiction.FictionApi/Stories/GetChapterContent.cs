@@ -98,10 +98,6 @@ internal sealed class GetChapterContent(
         if (chapter.PublishedAt is null)
             return Errors.ChapterNotPublished;
 
-        // Check if chapter has content
-        if (chapter.WorkBodyId?.Timestamp == default)
-            return Errors.NoContent;
-
         // Get the content from MongoDB
         var workBody = await storyDbContext.WorkBodies
             .AsNoTracking()

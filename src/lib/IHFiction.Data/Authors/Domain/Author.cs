@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 using IHFiction.Data.Stories.Domain;
 
 namespace IHFiction.Data.Authors.Domain;
@@ -11,6 +13,11 @@ public sealed class Author : User
 
     private ICollection<Work>? _ownedWorks;
     public ICollection<Work> OwnedWorks => _ownedWorks ??= [];
+
+    // Convenience property to get only stories from Works
+    // Works must be loaded for this to work
+    [NotMapped]
+    public IEnumerable<Story> Stories => Works.OfType<Story>();
 
     public static Author FromUser(User user)
     {

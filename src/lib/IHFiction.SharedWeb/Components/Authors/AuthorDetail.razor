@@ -69,23 +69,23 @@ else if (author != null)
                         <div class="columns is-mobile">
                             <div class="column">
                                 <div class="has-text-centered">
-                                    <p class="title is-2 has-text-primary">@author.Works.Count</p>
+                                    <p class="title is-2 has-text-primary">@author.TotalStories</p>
                                     <p class="subtitle is-6">Total Stories</p>
                                 </div>
                             </div>
                             <div class="column">
                                 <div class="has-text-centered">
-                                    <p class="title is-2 has-text-success">@author.Works.Count(w => w.PublishedAt.HasValue)</p>
+                                    <p class="title is-2 has-text-success">@author.PublishedStories.Count</p>
                                     <p class="subtitle is-6">Published</p>
                                 </div>
                             </div>
                         </div>
 
-                        @if (author.Works.Any())
+                        @if (author.PublishedStories.Any())
                         {
                             <h3 class="title is-5">Stories</h3>
                             <div class="columns is-multiline">
-                                @foreach (var work in author.Works)
+                                @foreach (var work in author.PublishedStories)
                                 {
                                     <div @key="work.Id" class="column is-half">
                                         <div class="card">

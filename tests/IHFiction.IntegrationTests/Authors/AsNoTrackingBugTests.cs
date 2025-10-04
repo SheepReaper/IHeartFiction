@@ -192,7 +192,7 @@ public class AsNoTrackingBugTests : BaseIntegrationTest, IConfigureServices<AsNo
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -202,7 +202,6 @@ public class AsNoTrackingBugTests : BaseIntegrationTest, IConfigureServices<AsNo
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

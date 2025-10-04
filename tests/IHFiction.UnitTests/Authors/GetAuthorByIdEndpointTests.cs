@@ -26,7 +26,9 @@ public class GetAuthorByIdEndpointTests
             DateTime.UtcNow,
             null,
             new GetAuthorById.AuthorProfile("Test bio"),
-            []
+            [],
+
+            0
         );
 
         // Act - Simulate the endpoint handler logic for success case
@@ -66,12 +68,12 @@ public class GetAuthorByIdResponseTests
         var profile = new GetAuthorById.AuthorProfile("Test bio");
         var works = new List<GetAuthorById.AuthorWorkItem>
         {
-            new(Ulid.NewUlid(), "Work 1"),
-            new(Ulid.NewUlid(), "Work 2")
+            new(Ulid.NewUlid(), "Work 1", DateTime.Now),
+            new(Ulid.NewUlid(), "Work 2", DateTime.Now)
         };
 
         // Act
-        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, updatedAt, deletedAt, profile, works);
+        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, updatedAt, deletedAt, profile, works, 2);
 
         // Assert
         response.UserId.Should().Be(userId);
@@ -79,7 +81,7 @@ public class GetAuthorByIdResponseTests
         response.UpdatedAt.Should().Be(updatedAt);
         response.DeletedAt.Should().Be(deletedAt);
         response.Profile.Should().Be(profile);
-        response.Works.Should().BeEquivalentTo(works);
+        response.PublishedStories.Should().BeEquivalentTo(works);
     }
 
 

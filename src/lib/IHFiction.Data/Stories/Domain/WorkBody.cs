@@ -13,7 +13,7 @@ namespace IHFiction.Data.Stories.Domain;
 public sealed class WorkBody : IUpdatedAt
 {
     [BsonId]
-    public ObjectId Id { get; set; } = ObjectId.GenerateNewId();
+    public ObjectId Id { get; set; }
 
     /// <summary>
     /// Optional note field that can contain markdown content
@@ -29,7 +29,7 @@ public sealed class WorkBody : IUpdatedAt
     /// The main content of the work stored as markdown.
     /// Supports full markdown syntax including images, links, formatting, etc.
     /// </summary>
-    public required string Content { get; set; }
+    public string Content { get; set; } = default!;
 
     [ConcurrencyCheck]
     public DateTime UpdatedAt { get; set; }

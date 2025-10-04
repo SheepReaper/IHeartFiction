@@ -10,10 +10,6 @@ namespace IHFiction.UnitTests.Authors;
 /// </summary>
 public class GetAuthorByIdBehaviorTests
 {
-
-
-
-
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -31,7 +27,7 @@ public class GetAuthorByIdBehaviorTests
         var works = new List<GetAuthorById.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, updatedAt, null, profile, works);
+        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, updatedAt, null, profile, works, 0);
 
         // Assert
         response.Name.Should().Be(name);
@@ -48,7 +44,7 @@ public class GetAuthorByIdBehaviorTests
         var works = new List<GetAuthorById.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthorById.GetAuthorByIdResponse(emptyGuid, name, updatedAt, null, profile, works);
+        var response = new GetAuthorById.GetAuthorByIdResponse(emptyGuid, name, updatedAt, null, profile, works, 0);
 
         // Assert
         response.UserId.Should().Be(emptyGuid);
@@ -65,7 +61,7 @@ public class GetAuthorByIdBehaviorTests
         var works = new List<GetAuthorById.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, futureDate, null, profile, works);
+        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, futureDate, null, profile, works, 0);
 
         // Assert
         response.UpdatedAt.Should().Be(futureDate);
@@ -82,7 +78,7 @@ public class GetAuthorByIdBehaviorTests
         var works = new List<GetAuthorById.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, pastDate, null, profile, works);
+        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, pastDate, null, profile, works, 0);
 
         // Assert
         response.UpdatedAt.Should().Be(pastDate);
@@ -100,7 +96,7 @@ public class GetAuthorByIdBehaviorTests
         var works = new List<GetAuthorById.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, updatedAt, deletedAt, profile, works);
+        var response = new GetAuthorById.GetAuthorByIdResponse(userId, name, updatedAt, deletedAt, profile, works, 0);
 
         // Assert
         response.UpdatedAt.Should().Be(updatedAt);
@@ -115,7 +111,7 @@ public class GetAuthorByIdBehaviorTests
         var title = "Work with Empty ID";
 
         // Act
-        var work = new GetAuthorById.AuthorWorkItem(emptyId, title);
+        var work = new GetAuthorById.AuthorWorkItem(emptyId, title, null);
 
         // Assert
         work.Id.Should().Be(emptyId);
@@ -130,7 +126,7 @@ public class GetAuthorByIdBehaviorTests
         var title = "Work with Max ID";
 
         // Act
-        var work = new GetAuthorById.AuthorWorkItem(maxId, title);
+        var work = new GetAuthorById.AuthorWorkItem(maxId, title, null);
 
         // Assert
         work.Id.Should().Be(maxId);
@@ -153,7 +149,7 @@ public class GetAuthorByIdBehaviorTests
         var id = Ulid.NewUlid();
 
         // Act
-        var work = new GetAuthorById.AuthorWorkItem(id, title);
+        var work = new GetAuthorById.AuthorWorkItem(id, title, null);
 
         // Assert
         work.Title.Should().Be(title);
@@ -173,7 +169,8 @@ public class GetAuthorByIdBehaviorTests
             DateTime.UtcNow,
             null,
             new GetAuthorById.AuthorProfile("Bio"),
-            []
+            [],
+            0
         );
 
         // Act

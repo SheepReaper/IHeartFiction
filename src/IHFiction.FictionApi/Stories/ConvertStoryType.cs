@@ -12,9 +12,6 @@ using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.Infrastructure;
 
-using MongoDB.Bson;
-using IHFiction.Data.Infrastructure;
-
 namespace IHFiction.FictionApi.Stories;
 
 
@@ -30,6 +27,7 @@ internal sealed class ConvertStoryType(
         public static readonly DomainError InvalidConversionPath = new("ConvertStoryType.InvalidConversionPath", "The requested story type conversion is not valid.");
         public static readonly DomainError DowngradeChapterConditionNotMet = new("ConvertStoryType.DowngradeChapterConditionNotMet", "To downgrade, the story must have exactly one chapter.");
         public static readonly DomainError DowngradeBookConditionNotMet = new("ConvertStoryType.DowngradeBookConditionNotMet", "To downgrade, the story must have exactly one book.");
+        public static readonly DomainError UpgradeOneShotConditionNotMet = new("ConvertStoryType.UpgradeOneShotConditionNotMet", "To upgrade, the story must have a WorkBodyId.");
         public static readonly DomainError AlreadyAtTargetType = new("ConvertStoryType.AlreadyAtTargetType", "The story is already of the target type.");
     }
 
@@ -78,8 +76,7 @@ internal sealed class ConvertStoryType(
         var strategy = context.Database.CreateExecutionStrategy();
         var result = Result.Success();
 
-        ObjectId newWorkBodyId = ObjectId.GenerateNewId();
-        IWorkBodyId? modifiedWork = null;
+        Work? modifiedWork = null;
 
         (Func<Result> converter, Func<CancellationToken, Task<bool>> validator) logic = conversionPath switch
         {
@@ -96,15 +93,21 @@ internal sealed class ConvertStoryType(
         {
             result = converter();
 
-            if (result.IsFailure) throw new InvalidOperationException(result.DomainError.Description);
+            if (result.IsFailure) throw new InvalidOperationException("Conversion failed. Rolling back transaction.");
 
-            if (modifiedWork is not null && (modifiedWork.WorkBodyId is null || !await storyDbContext.WorkBodies.AnyAsync(wb => wb.Id == modifiedWork.WorkBodyId, ctx)))
+            if (modifiedWork is Chapter chapter)
             {
-                modifiedWork.WorkBodyId ??= newWorkBodyId;
+                // If the work body already exists in the story store, don't attempt to add it again,
+                // but continue so that relational story changes are saved below. Previously this
+                // returned early which skipped saving the relational context and resulted in no
+                // updates being persisted.
+                var exists = await storyDbContext.WorkBodies.AnyAsync(wb => wb.Id == chapter.WorkBodyId, ctx);
+                if (!exists)
+                {
+                    storyDbContext.WorkBodies.Add(new() { Id = chapter.WorkBodyId, Content = string.Empty });
 
-                storyDbContext.WorkBodies.Add(new() { Id = modifiedWork.WorkBodyId.Value, Content = string.Empty });
-
-                await storyDbContext.SaveChangesAsync(false, ctx);
+                    await storyDbContext.SaveChangesAsync(false, ctx);
+                }
             }
 
             await context.SaveChangesAsync(acceptAllChangesOnSuccess: false, ctx);
@@ -112,7 +115,7 @@ internal sealed class ConvertStoryType(
         {
             if (result.IsFailure) return false;
 
-            if (await validator.Invoke(ctx) && (modifiedWork is null || await storyDbContext.WorkBodies.AnyAsync(wb => wb.Id == modifiedWork.WorkBodyId, ctx))) return true;
+            if (await validator.Invoke(ctx) && (modifiedWork is null || (modifiedWork is Chapter chapter && await storyDbContext.WorkBodies.AnyAsync(wb => wb.Id == chapter.WorkBodyId, ctx)))) return true;
 
             result = CommonErrors.Database.SaveFailed;
 
@@ -127,11 +130,17 @@ internal sealed class ConvertStoryType(
         return result;
     }
 
-    private Result UpgradeOneShotToChaptered(Story story, out IWorkBodyId? modifiedWork)
+    private Result UpgradeOneShotToChaptered(Story story, out Work? modifiedWork)
     {
-        var chapter = new Chapter { Title = "Chapter 1", StoryId = story.Id, WorkBodyId = story.WorkBodyId, Owner = story.Owner };
+        modifiedWork = null;
+
+        if (story.WorkBodyId is null) return Errors.UpgradeOneShotConditionNotMet;
+
+        var chapter = new Chapter { Title = "Chapter 1", StoryId = story.Id, WorkBodyId = story.WorkBodyId.Value, Owner = story.Owner };
 
         story.WorkBodyId = null;
+        story.Chapters.Add(chapter);
+        context.Stories.Update(story);
         context.Chapters.Add(chapter);
 
         modifiedWork = chapter;
@@ -139,7 +148,7 @@ internal sealed class ConvertStoryType(
         return Result.Success();
     }
 
-    private Result DowngradeChapteredToOneShot(Story story, out IWorkBodyId? modifiedWork)
+    private Result DowngradeChapteredToOneShot(Story story, out Work? modifiedWork)
     {
         modifiedWork = null;
 
@@ -195,7 +204,7 @@ internal sealed class ConvertStoryType(
 
         return Result.Success();
     }
-        public static string EndpointName => nameof(ConvertStoryType);
+    public static string EndpointName => nameof(ConvertStoryType);
 
     internal sealed class Endpoint : IEndpoint
     {

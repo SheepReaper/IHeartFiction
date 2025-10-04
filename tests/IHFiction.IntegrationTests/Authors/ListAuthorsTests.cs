@@ -9,7 +9,7 @@ using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Authors;
-using IHFiction.SharedKernel.Pagination;
+using IHFiction.FictionApi.Common;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -48,29 +48,29 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         };
 
         // Create a published story with published chapters
-        var story = new Story 
-        { 
-            Title = "My Published Story", 
-            Description = "A story with chapters", 
-            Owner = author, 
+        var story = new Story
+        {
+            Title = "My Published Story",
+            Description = "A story with chapters",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             PublishedAt = DateTime.UtcNow.AddDays(-1)
         };
-        
-        var chapter1 = new Chapter 
-        { 
-            Title = "Chapter 1", 
-            Owner = author, 
+
+        var chapter1 = new Chapter
+        {
+            Title = "Chapter 1",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             Story = story,
             StoryId = story.Id,
             PublishedAt = DateTime.UtcNow.AddDays(-1)
         };
-        
-        var chapter2 = new Chapter 
-        { 
-            Title = "Chapter 2", 
-            Owner = author, 
+
+        var chapter2 = new Chapter
+        {
+            Title = "Chapter 2",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             Story = story,
             StoryId = story.Id,
@@ -93,13 +93,13 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        
+
         // Should have 1 author
         response.Data.Should().HaveCount(1);
-        
+
         var authorItem = response.Data.First();
         authorItem.Name.Should().Be(authorName);
-        
+
         // The counts should only include the Story, not the Chapters
         authorItem.TotalStories.Should().Be(1, "only the Story should be counted, not the Chapters");
         authorItem.PublishedStories.Should().Be(1, "only the published Story should be counted, not the published Chapters");
@@ -123,19 +123,19 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         };
 
         // Create an unpublished story with published chapters
-        var story = new Story 
-        { 
-            Title = "My Unpublished Story", 
-            Description = "A story with chapters", 
-            Owner = author, 
+        var story = new Story
+        {
+            Title = "My Unpublished Story",
+            Description = "A story with chapters",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             PublishedAt = null // Not published
         };
-        
-        var chapter1 = new Chapter 
-        { 
-            Title = "Chapter 1", 
-            Owner = author, 
+
+        var chapter1 = new Chapter
+        {
+            Title = "Chapter 1",
+            Owner = author,
             UpdatedAt = DateTime.UtcNow,
             Story = story,
             StoryId = story.Id,
@@ -156,7 +156,7 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
         var response = result.Value!;
-        
+
         // Author should not be included because they don't have any published Stories
         // (having published Chapters doesn't count)
         response.Data.Should().BeEmpty("author should not be included without a published Story");
@@ -183,7 +183,7 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -193,7 +193,6 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

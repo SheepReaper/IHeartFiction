@@ -13,22 +13,20 @@ using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Stories;
+using IHFiction.SharedKernel.Markdown;
 
 using MongoDB.Driver;
 
 using NSubstitute;
-using IHFiction.SharedKernel.Markdown;
 
 namespace IHFiction.IntegrationTests.Stories;
-
-
 
 /// <summary>
 /// Integration tests for UpdateStoryContent with markdown validation
 /// Tests the complete flow from use case to database with markdown content
 /// </summary>
 // [Collection(nameof(StoriesTestCollection))]
-public class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConfigureServices<UpdateStoryContentMarkdownTests>, IAsyncLifetime
+public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConfigureServices<UpdateStoryContentMarkdownTests>, IAsyncLifetime
 {
     private readonly FictionDbContext _dbContext;
     private readonly StoryDbContext _storyDbContext;
@@ -306,7 +304,7 @@ public class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConfigureSe
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting databases
         await _dbContext.Database.CloseConnectionAsync();
@@ -318,7 +316,6 @@ public class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConfigureSe
         await _dbContext.DisposeAsync();
         await _storyDbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

@@ -295,7 +295,7 @@ public class AuthorInterceptorTests : BaseIntegrationTest, IConfigureServices<Au
         }
     }
 
-    public override async ValueTask DisposeAsync()
+    protected override async ValueTask DisposeAsyncCore()
     {
         // Close all connections before deleting database
         await _dbContext.Database.CloseConnectionAsync();
@@ -305,9 +305,6 @@ public class AuthorInterceptorTests : BaseIntegrationTest, IConfigureServices<Au
 
         await _dbContext.DisposeAsync();
 
-        await base.DisposeAsync();
-        GC.SuppressFinalize(this);
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
-
-
 }

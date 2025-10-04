@@ -112,14 +112,11 @@ internal sealed class AddChapterToStory(
         // Authorize story access using centralized authorization service
         var authResult = await authorizationService.AuthorizeStoryAccessAsync(
             id, claimsPrincipal, StoryAccessLevel.Edit, includeDeleted: false, cancellationToken);
-        if (authResult.IsFailure) return authResult.DomainError;
 
-        var authorizationResult = authResult.Value;
-        var author = authorizationResult.Author;
+        if (authResult.IsFailure) return authResult.DomainError;
 
         // Reload story with additional data needed for chapter creation
         var story = await context.Stories
-            .Include(s => s.Owner)
             .Include(s => s.Authors)
             .Include(s => s.Chapters)
             .Include(s => s.Books)
@@ -150,9 +147,12 @@ internal sealed class AddChapterToStory(
 
         try
         {
+            var newWorkBodyId = ObjectId.GenerateNewId();
+
             // Create the chapter content first
             var workBody = new WorkBody
             {
+                Id = newWorkBodyId,
                 Content = sanitizedContent,
                 Note1 = sanitizedNote1,
                 Note2 = sanitizedNote2,
@@ -160,21 +160,20 @@ internal sealed class AddChapterToStory(
             };
 
             storyDbContext.WorkBodies.Add(workBody);
+
             await storyDbContext.SaveChangesAsync(cancellationToken);
 
             // Create the chapter
             var chapter = new Chapter
             {
                 Title = sanitizedTitle,
-                Owner = author,
-                OwnerId = author.Id,
+                OwnerId = story.OwnerId,
                 Story = story,
-                StoryId = story.Id,
-                WorkBodyId = workBody.Id
+                WorkBodyId = newWorkBodyId
             };
 
-            // Add the author as a collaborator on the chapter
-            chapter.Authors.Add(author);
+            // Add the author and owner as collaborators on the chapter
+            foreach (var existingAuthor in story.Authors) chapter.Authors.Add(existingAuthor);
 
             // Add the chapter to the story
             story.Chapters.Add(chapter);
