@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.DataShaping;
@@ -68,8 +69,8 @@ internal sealed class GetCurrentAuthorProfile(
             author.GravatarEmail,
             author.UpdatedAt,
             new CurrentAuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new CurrentAuthorWork(work.Id, work.Title)),
-            author.OwnedWorks.Select(work => new CurrentAuthorWork(work.Id, work.Title)));
+            author.Works.OfType<Story>().Select(work => new CurrentAuthorWork(work.Id, work.Title)),
+            author.OwnedWorks.OfType<Story>().Select(work => new CurrentAuthorWork(work.Id, work.Title)));
     }
         public static string EndpointName => nameof(GetCurrentAuthorProfile);
 

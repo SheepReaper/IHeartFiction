@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.DataShaping;
@@ -69,7 +70,7 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
                 author.UpdatedAt,
                 author.DeletedAt,
                 new AuthorProfile(author.Profile.Bio),
-                author.Works.Select(work => new AuthorWorkItem(work.Id, work.Title)));
+                author.Works.OfType<Story>().Select(work => new AuthorWorkItem(work.Id, work.Title)));
     }
     public static string EndpointName => nameof(GetAuthorById);
 
