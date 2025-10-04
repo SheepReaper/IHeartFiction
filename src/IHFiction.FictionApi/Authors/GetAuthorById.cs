@@ -34,7 +34,8 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
     /// </summary>
     /// <param name="Id">Unique identifier for the work</param>
     /// <param name="Title">Title of the work</param>
-    internal sealed record AuthorWorkItem(Ulid Id, string Title);
+    /// <param name="PublishedAt">When the work was published (null if unpublished)</param>
+    internal sealed record AuthorWorkItem(Ulid Id, string Title, DateTime? PublishedAt);
 
     /// <summary>
     /// Response model for getting a specific author by their ID.
@@ -58,7 +59,7 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
     {
         var author = await context.Authors
             .Include(a => a.Profile)
-            .Include(a => a.Works)
+            .Include(a => a.Works.Where(w => w is Story))
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
@@ -70,7 +71,8 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
                 author.UpdatedAt,
                 author.DeletedAt,
                 new AuthorProfile(author.Profile.Bio),
-                author.Works.OfType<Story>().Select(work => new AuthorWorkItem(work.Id, work.Title)));
+                author.Works.OfType<Story>()
+                    .Select(work => new AuthorWorkItem(work.Id, work.Title, work.PublishedAt)));
     }
     public static string EndpointName => nameof(GetAuthorById);
 

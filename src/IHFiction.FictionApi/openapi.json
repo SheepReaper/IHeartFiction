@@ -2808,7 +2808,8 @@
       "AuthorWorkItem": {
         "required": [
           "id",
-          "title"
+          "title",
+          "publishedAt"
         ],
         "type": "object",
         "properties": {
@@ -2819,6 +2820,14 @@
           "title": {
             "type": "string",
             "description": "Title of the work"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the work was published (null if unpublished)",
+            "format": "date-time"
           }
         },
         "description": "Represents a work (story) created by an author."

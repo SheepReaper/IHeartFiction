@@ -37,7 +37,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
@@ -64,7 +64,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
@@ -84,7 +84,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
@@ -105,7 +105,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
@@ -131,7 +131,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
@@ -157,7 +157,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
@@ -191,7 +191,7 @@ public class GetAuthorByIdServiceTests
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthorById.AuthorProfile(author.Profile.Bio),
-            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title))
+            author.Works.Select(work => new GetAuthorById.AuthorWorkItem(work.Id, work.Title, null))
         );
 
         // Assert
