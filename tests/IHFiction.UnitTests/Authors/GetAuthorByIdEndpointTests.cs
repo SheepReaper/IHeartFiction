@@ -66,8 +66,8 @@ public class GetAuthorByIdResponseTests
         var profile = new GetAuthorById.AuthorProfile("Test bio");
         var works = new List<GetAuthorById.AuthorWorkItem>
         {
-            new(Ulid.NewUlid(), "Work 1"),
-            new(Ulid.NewUlid(), "Work 2")
+            new(Ulid.NewUlid(), "Work 1", null),
+            new(Ulid.NewUlid(), "Work 2", null)
         };
 
         // Act

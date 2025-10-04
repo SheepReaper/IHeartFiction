@@ -115,7 +115,7 @@ public class GetAuthorByIdBehaviorTests
         var title = "Work with Empty ID";
 
         // Act
-        var work = new GetAuthorById.AuthorWorkItem(emptyId, title);
+        var work = new GetAuthorById.AuthorWorkItem(emptyId, title, null);
 
         // Assert
         work.Id.Should().Be(emptyId);
@@ -130,7 +130,7 @@ public class GetAuthorByIdBehaviorTests
         var title = "Work with Max ID";
 
         // Act
-        var work = new GetAuthorById.AuthorWorkItem(maxId, title);
+        var work = new GetAuthorById.AuthorWorkItem(maxId, title, null);
 
         // Assert
         work.Id.Should().Be(maxId);
@@ -153,7 +153,7 @@ public class GetAuthorByIdBehaviorTests
         var id = Ulid.NewUlid();
 
         // Act
-        var work = new GetAuthorById.AuthorWorkItem(id, title);
+        var work = new GetAuthorById.AuthorWorkItem(id, title, null);
 
         // Assert
         work.Title.Should().Be(title);
