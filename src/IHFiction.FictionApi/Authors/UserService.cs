@@ -120,7 +120,6 @@ internal sealed class UserService(FictionDbContext context)
     internal async Task<Result<Author>> GetAuthorAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var author = await context.Authors
-            // .Include(a => a.Profile)
             .Where(a => a.UserId == userId)
             .SingleOrDefaultAsync(cancellationToken);
 
@@ -130,7 +129,6 @@ internal sealed class UserService(FictionDbContext context)
     internal async Task<Result<Author>> GetAuthorAsync(Ulid id, CancellationToken cancellationToken = default)
     {
         var author = await context.Authors
-            // .Include(a => a.Profile)
             .SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
 
         return author is null ? Errors.AuthorNotFound : author;

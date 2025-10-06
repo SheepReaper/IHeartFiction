@@ -78,9 +78,7 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         };
 
         // Add story and chapters to author's owned works (simulating what the database would do)
-        author.OwnedWorks.Add(story);
-        author.OwnedWorks.Add(chapter1);
-        author.OwnedWorks.Add(chapter2);
+        author.Works.Add(story);
 
         _dbContext.Authors.Add(author);
         await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);

@@ -31,9 +31,7 @@ public record PagedCollection<TData>(
 public interface ICollectionPagedLinked<TData> : ICollectionPaged<Linked<TData>>, ILinks;
 
 /// <summary>
-/// A standard response model for a paginated collection of <typeparamref name="TData"/> items,
-/// where each item is wrapped in a <see cref="Linked{T}"/> to include hypermedia links.
-/// The collection itself also includes a set of hypermedia links.
+/// A paginated collection response of <typeparamref name="TData"/> items with hypermedia links.
 /// </summary>
 /// <typeparam name="TData">The type of items in the collection</typeparam>
 /// <param name="Data">The collection of items for the current page</param>

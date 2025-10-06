@@ -79,7 +79,8 @@ internal sealed class ListAuthors(
         // Build the base query for authors with at least one published story
         var authors = context.Authors
             .Include(a => a.Profile)
-            .Where(a => a.OwnedWorks.OfType<Story>().Any(w => w.PublishedAt != null))
+            .Include(a => a.Works)
+            .Where(a => a.Works.Any(w => w is Story && w.PublishedAt != null))
             .AsNoTracking();
 
         // Apply search using the centralized service with multiple fields
@@ -96,8 +97,8 @@ internal sealed class ListAuthors(
                 a.Profile.Bio ?? "",
                 a.CreatedAt,
                 a.UpdatedAt,
-                a.OwnedWorks.OfType<Story>().Count(),
-                a.OwnedWorks.OfType<Story>().Count(w => w.PublishedAt != null)));
+                a.Works.Count(w => w is Story),
+                a.Works.Count(w => w is Story && w.PublishedAt != null)));
 
         // Execute paginated query using the centralized service
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
