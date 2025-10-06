@@ -75,7 +75,7 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
                         w.Id,
                         w.Title,
                         w.PublishedAt)),
-                a.Works.Count
+                a.Works.Count(w => w is Story)
             ))
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
