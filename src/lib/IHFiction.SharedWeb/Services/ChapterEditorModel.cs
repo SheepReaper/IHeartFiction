@@ -15,6 +15,7 @@ public class ChapterEditorModel : INotifyPropertyChanged
     private bool _suppressDirty = true;
 
     public Ulid? Id { get; init; }
+    public int Order { get; set; }
     public ObjectId? ContentId { get; init; }
     public DateTime? ContentUpdatedAt { get; init; }
     public DateTime? ChapterUpdatedAt { get; init; }
@@ -88,10 +89,12 @@ public class ChapterEditorModel : INotifyPropertyChanged
         string? note1,
         string? note2,
         DateTime? contentUpdatedAt,
+        int order = 0,
         bool isPublished = false
     )
     {
         Id = chapterId;
+        Order = order;
         Title = title;
         ChapterUpdatedAt = chapterUpdatedAt;
         ContentId = contentId;
@@ -117,6 +120,7 @@ public class ChapterEditorModel : INotifyPropertyChanged
         string? note1,
         string? note2,
         DateTime? contentUpdatedAt,
+        int order = 0,
         bool isPublished = false
     ) => new(
         chapterId,
@@ -127,13 +131,14 @@ public class ChapterEditorModel : INotifyPropertyChanged
         note1,
         note2,
         contentUpdatedAt,
+        order,
         isPublished
     )
     {
         _suppressDirty = false
     };
 
-    public static ChapterEditorModel Create() => new(null, null, null, null, null, null, null, null, false)
+    public static ChapterEditorModel Create() => new(null, null, null, null, null, null, null, null, 0, false)
     {
         _suppressDirty = false
     };

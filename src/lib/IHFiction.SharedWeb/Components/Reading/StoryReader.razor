@@ -1,4 +1,5 @@
 @using Markdig
+@using System.Linq
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inherits CancellableComponent
 @inject StoryService StoryService
@@ -68,28 +69,31 @@ else if (story != null)
                             <aside class="menu">
                                 <p class="menu-label">Books</p>
                                 <ul class="menu-list">
-                                    @foreach (var book in story.Books ?? [])
+                                    @if (story.Books?.Any() ?? false)
                                     {
-                                        <li @key="book.Id">
-                                            <a class="@(book.Id.ToString() == CurrentBookId ? "is-active" : "")"
-                                                @onclick="e => SelectBook(book.Id.ToString())">
-                                                @book.Title
-                                            </a>
-                                            @if (book.Id.ToString() == CurrentBookId && (book.Chapters?.Any() ?? false))
-                                            {
-                                                <ul>
-                                                    @foreach (var chapter in book.Chapters)
-                                                    {
-                                                        <li @key="chapter.Id">
-                                                            <a class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
-                                                                @onclick="@(e => SelectChapter(book.Id.ToString(), chapter.Id.ToString()))">
-                                                                @chapter.Title
-                                                            </a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            }
-                                        </li>
+                                        foreach (var book in story.Books.OrderBy(b => b.Order))
+                                        {
+                                            <li @key="book.Id">
+                                                <a class="@(book.Id.ToString() == CurrentBookId ? "is-active" : "")"
+                                                    @onclick="e => SelectBook(book.Id.ToString())">
+                                                    @book.Title
+                                                </a>
+                                                @if (book.Id.ToString() == CurrentBookId && (book.Chapters?.Any() ?? false))
+                                                {
+                                                    <ul>
+                                                        @foreach (var chapter in book.Chapters.OrderBy(c => c.Order))
+                                                        {
+                                                            <li @key="chapter.Id">
+                                                                <a class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
+                                                                    @onclick="@(e => SelectChapter(book.Id.ToString(), chapter.Id.ToString()))">
+                                                                    @chapter.Title
+                                                                </a>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </li>
+                                        }
                                     }
                                 </ul>
                             </aside>
@@ -115,15 +119,18 @@ else if (story != null)
                             <aside class="menu">
                                 <p class="menu-label">Chapters</p>
                                 <ul class="menu-list">
-                                    @foreach (var chapter in story.Chapters)
+                                    @if (story.Chapters?.Any() ?? false)
                                     {
-                                        <li @key="chapter.Id">
-                                            <a href="/stories/@story.Id/chapters/@chapter.Id"
-                                                class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
-                                                @onclick="e => SelectChapter(null, chapter.Id.ToString())">
-                                                @chapter.Title
-                                            </a>
-                                        </li>
+                                        foreach (var chapter in story.Chapters.OrderBy(c => c.Order))
+                                        {
+                                            <li @key="chapter.Id">
+                                                <a href="/stories/@story.Id/chapters/@chapter.Id"
+                                                    class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
+                                                    @onclick="e => SelectChapter(null, chapter.Id.ToString())">
+                                                    @chapter.Title
+                                                </a>
+                                            </li>
+                                        }
                                     }
                                 </ul>
                             </aside>
@@ -239,14 +246,14 @@ else if (story != null)
 
             if (story?.Type == MultiBook)
             {
-                // Auto-select the first book and chapter if none is selected
+                // Auto-select the first book and chapter by Order if none is selected
                 if ((story.Books?.Any() ?? false) && string.IsNullOrEmpty(CurrentBookId))
                 {
-                    var firstBook = story.Books.First();
+                    var firstBook = story.Books.OrderBy(b => b.Order).First();
                     CurrentBookId = firstBook.Id.ToString();
                     if (firstBook.Chapters?.Any() == true)
                     {
-                        CurrentChapterId = firstBook.Chapters.First().Id.ToString();
+                        CurrentChapterId = firstBook.Chapters.OrderBy(c => c.Order).First().Id.ToString();
                     }
                     else
                     {
@@ -256,11 +263,11 @@ else if (story != null)
             }
             else if (story?.Type == MultiChapter)
             {
-                chapters = story.Chapters;
-                // Auto-select the first chapter if none is selected
-                if (string.IsNullOrEmpty(CurrentChapterId) && chapters.Any())
+                chapters = story.Chapters?.OrderBy(c => c.Order).ToList();
+                // Auto-select the first chapter by Order if none is selected
+                if (string.IsNullOrEmpty(CurrentChapterId) && (chapters?.Any() ?? false))
                 {
-                    CurrentChapterId = chapters.First().Id;
+                    CurrentChapterId = chapters!.First().Id.ToString();
                 }
             }
             else if (story?.Type == SingleBody)
@@ -298,12 +305,12 @@ else if (story != null)
     private void SelectBook(string bookId)
     {
         CurrentBookId = bookId;
-        // Auto-select first chapter in the book if available
-        var book = story?.Books?.FirstOrDefault(b => b.Id == bookId);
+        // Auto-select first chapter in the book (by Order) if available
+        var book = story?.Books?.FirstOrDefault(b => b.Id.ToString() == bookId);
         if (book?.Chapters?.Any() == true)
         {
-            chapters = book.Chapters;
-            CurrentChapterId = book.Chapters.First().Id;
+            chapters = book.Chapters.OrderBy(c => c.Order).ToList();
+            CurrentChapterId = book.Chapters.OrderBy(c => c.Order).First().Id.ToString();
         }
         else
         {

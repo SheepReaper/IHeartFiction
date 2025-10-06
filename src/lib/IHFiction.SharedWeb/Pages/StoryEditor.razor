@@ -2,6 +2,7 @@
 @using IHFiction.Data.Stories.Domain
 @using System.Globalization
 
+@using System.Linq
 @using static IHFiction.SharedWeb.Services.StoryEditorService
 @using static IHFiction.Data.Stories.Domain.StoryType
 
@@ -199,22 +200,31 @@ else
             EditorService.CreateNewStory(SingleBody);
         }
 
-        if (EditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } bookStory
-        && bookStory.Books[0].Id is { } bookId && bookId != default)
+        if (EditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } bookStory)
         {
-            var bookResult = await EditorService.LoadBookAsync(bookId);
-
-            if (bookResult.IsSuccess && bookResult.Value.Chapters.Count > 0 && bookResult.Value.Chapters[0].Id is { } bookChapterId
-            && bookChapterId != default)
+            var firstBook = bookStory.Books.OrderBy(b => b.Order).FirstOrDefault();
+            if (firstBook?.Id is { } bookId && bookId != default)
             {
-                await EditorService.LoadChapterAsync(bookChapterId, CancellationToken);
+                var bookResult = await EditorService.LoadBookAsync(bookId);
+
+                if (bookResult.IsSuccess && bookResult.Value.Chapters.Count > 0)
+                {
+                    var firstChapter = bookResult.Value.Chapters.OrderBy(c => c.Order).FirstOrDefault();
+                    if (firstChapter?.Id is { } bookChapterId && bookChapterId != default)
+                    {
+                        await EditorService.LoadChapterAsync(bookChapterId, CancellationToken);
+                    }
+                }
             }
         }
 
-        if (EditorService.CurrentStory is { StoryType: MultiChapter, Chapters.Count: > 0 } chapterStory
-        && chapterStory.Chapters[0].Id is { } storyChapterId && storyChapterId != default)
+        if (EditorService.CurrentStory is { StoryType: MultiChapter, Chapters.Count: > 0 } chapterStory)
         {
-            await EditorService.LoadChapterAsync(storyChapterId, CancellationToken);
+            var firstChapter = chapterStory.Chapters.OrderBy(c => c.Order).FirstOrDefault();
+            if (firstChapter?.Id is { } storyChapterId && storyChapterId != default)
+            {
+                await EditorService.LoadChapterAsync(storyChapterId, CancellationToken);
+            }
         }
     }
 

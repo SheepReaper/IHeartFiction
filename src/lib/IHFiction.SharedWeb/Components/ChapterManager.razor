@@ -2,6 +2,7 @@
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.SharedWeb.Components
 @using System.Collections.ObjectModel
+@using System.Linq
 @using static IHFiction.SharedWeb.Services.StoryEditorService
 @using static IHFiction.Data.Stories.Domain.StoryType
 
@@ -23,9 +24,12 @@
             style="margin-bottom: 1.5rem;">
             <a class="pagination-previous" @onclick="e => SelectPreviousChapter()">&lt; Previous</a>
             <ul class="pagination-list">
-                @for (int i = 0; i < Chapters.Count; i++)
+                @{
+                    var _sortedChaps = GetSortedChapters();
+                }
+                @for (int i = 0; i < _sortedChaps.Count; i++)
                 {
-                    var chapter = Chapters[i];
+                    var chapter = _sortedChaps[i];
                     <li @key="chapter.Id">
                         <a class="pagination-link @(chapter.Id == Chapter?.Id ? "is-current" : "")"
                             aria-label="Chapter @(i + 1)" title="@chapter.Title"
@@ -127,13 +131,11 @@
         StoryEditorService.ChapterChanged += OnChapterChanged;
         StoryEditorService.BookChanged += OnBookChanged;
 
-        if(StoryEditorService.CurrentChapter is not null) return;
+        if (StoryEditorService.CurrentChapter is not null) return;
 
-        if (StoryEditorService.CurrentStory is { StoryType: MultiChapter, Chapters.Count: > 0 } story)
-            await SelectChapter(story.Chapters[0]);
-
-        if (StoryEditorService.CurrentBook is { Chapters.Count: > 0 } book)
-            await SelectChapter(book.Chapters[0]);
+        var _sorted = GetSortedChapters();
+        if (_sorted.Count > 0)
+            await SelectChapter(_sorted[0]);
     }
 
     private ObservableCollection<ChapterEditorModel>? Chapters => StoryEditorService.CurrentStory?.StoryType switch
@@ -142,6 +144,16 @@
         MultiBook => StoryEditorService.CurrentBook?.Chapters,
         _ => null
     };
+
+    // Provide a stable, order-sorted view for rendering and navigation
+    private List<ChapterEditorModel> GetSortedChapters()
+    {
+        if (Chapters is null) return new List<ChapterEditorModel>();
+
+        List<ChapterEditorModel> list = Chapters.OrderBy(c => c.Order).ThenBy(c => c.Title,
+        StringComparer.InvariantCulture).ToList();
+        return list;
+    }
 
     private async Task AddNewChapter()
     {
@@ -159,29 +171,31 @@
     private async Task SelectPreviousChapter()
     {
         if (Chapters is null) return; // Buttons should be disabled in these cases
-        if (Chapters.Count == 0 || Chapter == null) return;
+        var _list = GetSortedChapters();
+        if (_list.Count == 0 || Chapter == null) return;
 
-        var selectedIndex = Chapters.ToList().FindIndex(c => c.Id == Chapter.Id);
+        var selectedIndex = _list.FindIndex(c => c.Id == Chapter.Id);
 
         if (selectedIndex == -1) return;
 
-        var previousIndex = selectedIndex == 0 ? Chapters.Count - 1 : selectedIndex - 1;
+        var previousIndex = selectedIndex == 0 ? _list.Count - 1 : selectedIndex - 1;
 
-        await SelectChapter(Chapters[previousIndex]);
+        await SelectChapter(_list[previousIndex]);
     }
 
     private async Task SelectNextChapter()
     {
         if (Chapters is null) return; // Buttons should be disabled in these cases
-        if (Chapters.Count == 0 || Chapter == null) return;
+        var _list2 = GetSortedChapters();
+        if (_list2.Count == 0 || Chapter == null) return;
 
-        var selectedIndex = Chapters.ToList().FindIndex(c => c.Id == Chapter.Id);
+        var selectedIndex = _list2.FindIndex(c => c.Id == Chapter.Id);
 
         if (selectedIndex == -1) return;
 
-        var nextIndex = (selectedIndex + 1) % Chapters.Count;
+        var nextIndex = (selectedIndex + 1) % _list2.Count;
 
-        await SelectChapter(Chapters[nextIndex]);
+        await SelectChapter(_list2[nextIndex]);
     }
 
     private async Task SelectChapter(ChapterEditorModel chapter)
@@ -222,15 +236,22 @@
             if (Chapters is null) return; // Should not happen, buttons should be disabled in these cases
 
             // Remove from collection and clear selection if needed
-            var idx = Chapters.ToList().FindIndex(c => c.Id == _chapterToDelete.Id);
-            if (idx != -1)
+            var _sorted2 = GetSortedChapters();
+            var sortedIdx = _sorted2.FindIndex(c => c.Id == _chapterToDelete.Id);
+            if (sortedIdx != -1)
             {
-                Chapters.RemoveAt(idx);
+                var underlyingIdx = Chapters.ToList().FindIndex(c => c.Id == _chapterToDelete.Id);
+                if (underlyingIdx != -1)
+                {
+                    Chapters.RemoveAt(underlyingIdx);
+                }
+
                 if (Chapter?.Id == _chapterToDelete.Id)
                 {
                     // Select next chapter if available, else clear selection
-                    if (Chapters.Count > 0)
-                        await SelectChapter(Chapters[idx % Chapters.Count]);
+                    var refreshed = GetSortedChapters();
+                    if (refreshed.Count > 0)
+                        await SelectChapter(refreshed[sortedIdx % refreshed.Count]);
                     else
                         ClearCurrentChapter();
                 }

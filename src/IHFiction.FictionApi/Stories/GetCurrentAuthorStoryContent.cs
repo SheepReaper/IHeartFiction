@@ -39,17 +39,19 @@ internal sealed class GetCurrentAuthorStoryContent(
     /// </summary>
     /// <param name="Id">Unique identifier for the chapter.</param>
     /// <param name="Title">Title of the chapter.</param>
+    /// <param name="Order">The display order of the chapter within the story.</param>
     /// <param name="PublishedAt">When the chapter was published (null if unpublished).</param>
-    internal record ChapterSummary(Ulid Id, string Title, DateTime? PublishedAt);
+    internal record ChapterSummary(Ulid Id, string Title, int Order, DateTime? PublishedAt);
 
     /// <summary>
     /// Represents a summary of a book within a story.
     /// </summary>
     /// <param name="Id">Unique identifier for the book.</param>
     /// <param name="Title">Title of the book.</param>
+    /// <param name="Order">The display order of the book within the story.</param>
     /// <param name="Description">Description of the book.</param>
     /// <param name="PublishedAt">When the book was published (null if unpublished).</param>
-    internal record BookSummary(Ulid Id, string Title, string Description, DateTime? PublishedAt);
+    internal record BookSummary(Ulid Id, string Title, string Description, int Order, DateTime? PublishedAt);
 
     /// <summary>
     /// Response model for retrieving the content of a story owned by the current user.
@@ -120,8 +122,8 @@ internal sealed class GetCurrentAuthorStoryContent(
             contentId = body.Id;
         }
 
-        var chapterSummaries = story.Chapters.Select(c => new ChapterSummary(c.Id, c.Title, c.PublishedAt)).ToList();
-        var bookSummaries = story.Books.Select(b => new BookSummary(b.Id, b.Title, b.Description, b.PublishedAt)).ToList();
+        var chapterSummaries = story.Chapters.Select(c => new ChapterSummary(c.Id, c.Title, c.Order, c.PublishedAt)).ToList();
+        var bookSummaries = story.Books.Select(b => new BookSummary(b.Id, b.Title, b.Description, b.Order, b.PublishedAt)).ToList();
 
         return new GetCurrentAuthorStoryContentResponse(
             story.Id,

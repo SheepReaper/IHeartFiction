@@ -37,6 +37,7 @@ internal sealed class ListStoryChapters(
     /// </summary>
     /// <param name="ChapterId">Unique identifier for the chapter</param>
     /// <param name="Title">Title of the chapter</param>
+    /// <param name="Order">Order of the chapter within the story</param>
     /// <param name="PublishedAt">When the chapter was published (null if unpublished)</param>
     /// <param name="CreatedAt">When the chapter was created</param>
     /// <param name="UpdatedAt">When the chapter was last updated</param>
@@ -45,6 +46,7 @@ internal sealed class ListStoryChapters(
     internal sealed record ListStoryChaptersItem(
         Ulid ChapterId,
         string Title,
+        int Order,
         DateTime? PublishedAt,
         DateTime CreatedAt,
         DateTime UpdatedAt,
@@ -77,6 +79,7 @@ internal sealed class ListStoryChapters(
         var chapterItems = chaptersQuery.Select(c => new ListStoryChaptersItem(
             c.Id,
             c.Title,
+            c.Order,
             c.PublishedAt,
             c.CreatedAt,
             c.UpdatedAt,

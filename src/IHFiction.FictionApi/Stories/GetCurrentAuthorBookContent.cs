@@ -31,6 +31,7 @@ internal sealed class GetCurrentAuthorBookContent(
     /// </summary>
     /// <param name="Id">The unique identifier of the chapter.</param>
     /// <param name="Title">The title of the chapter.</param>
+    /// <param name="Order">The display order of the chapter.</param>
     /// <param name="ChapterPublishedAt">The date and time when the chapter was published.</param>
     /// <param name="ChapterUpdatedAt">The date and time when the chapter metadata was last updated.</param>
     /// <param name="ContentId">The unique identifier for the content document.</param>
@@ -41,6 +42,7 @@ internal sealed class GetCurrentAuthorBookContent(
     internal sealed record BookContentChapterItem(
         Ulid Id,
         string Title,
+        int Order,
         DateTime? ChapterPublishedAt,
         DateTime ChapterUpdatedAt,
         ObjectId ContentId,
@@ -56,6 +58,7 @@ internal sealed class GetCurrentAuthorBookContent(
     /// <param name="Id">Unique identifier for the book.</param>
     /// <param name="Title">The title of the book.</param>
     /// <param name="Description">A detailed description of the book.</param>
+    /// <param name="Order">The display order of the book within the story.</param>
     /// <param name="StoryId">The unique identifier of the parent story.</param>
     /// <param name="StoryTitle">The title of the parent story.</param>
     /// <param name="Chapters">Collection of chapters within the book.</param>
@@ -65,6 +68,7 @@ internal sealed class GetCurrentAuthorBookContent(
         Ulid Id,
         string Title,
         string Description,
+        int Order,
         Ulid StoryId,
         string StoryTitle,
         IEnumerable<BookContentChapterItem> Chapters,
@@ -104,6 +108,7 @@ internal sealed class GetCurrentAuthorBookContent(
         var chapterBodies = chapters.Join(workBodies, c => c.WorkBodyId, wb => wb.Id, (c, wb) => new BookContentChapterItem(
             c.Id,
             c.Title,
+            c.Order,
             c.PublishedAt,
             c.UpdatedAt,
             wb.Id,
@@ -117,6 +122,7 @@ internal sealed class GetCurrentAuthorBookContent(
             book.Id,
             book.Title,
             book.Description ?? string.Empty,
+            book.Order,
             book.Story!.Id,
             book.Story.Title,
             chapterBodies,

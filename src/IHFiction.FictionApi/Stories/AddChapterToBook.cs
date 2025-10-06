@@ -160,6 +160,9 @@ internal sealed class AddChapterToBook(
                 WorkBodyId = workBody.Id
             };
 
+            // Assign ordering: new chapter should be placed after existing chapters in the book
+            chapter.Order = book.Chapters.Select(c => c.Order).DefaultIfEmpty(-1).Max() + 1;
+
             foreach (var existingAuthor in book.Authors) chapter.Authors.Add(existingAuthor);
 
             book.Chapters.Add(chapter);

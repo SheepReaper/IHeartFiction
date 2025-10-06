@@ -37,6 +37,7 @@ public partial class StoryEditorService(
             Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture),
             apiResult.Title,
             apiResult.Description,
+            CurrentStory.Books.Count,
             false
         );
 
@@ -75,6 +76,7 @@ public partial class StoryEditorService(
             apiResult.Note1,
             apiResult.Note2,
             apiResult.ContentUpdatedAt.UtcDateTime,
+            CurrentStory.Chapters.Count,
             apiResult.ChapterPublishedAt.HasValue
         );
 
@@ -103,6 +105,7 @@ public partial class StoryEditorService(
             apiResult.Note1,
             apiResult.Note2,
             apiResult.ContentUpdatedAt.UtcDateTime,
+            CurrentBook.Chapters.Count,
             apiResult.ChapterPublishedAt.HasValue
         );
 
@@ -168,6 +171,7 @@ public partial class StoryEditorService(
             apiResult.Note1,
             apiResult.Note2,
             apiResult.ContentUpdatedAt.UtcDateTime,
+            apiResult.Order,
             apiResult.PublishedAt.HasValue
         );
 
@@ -202,6 +206,7 @@ public partial class StoryEditorService(
             apiResult.Note1,
             apiResult.Note2,
             apiResult.ContentUpdatedAt.UtcDateTime,
+            apiResult.Order,
             apiResult.PublishedAt.HasValue
         );
 
@@ -231,6 +236,7 @@ public partial class StoryEditorService(
             Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture),
             apiResult.Title,
             apiResult.Description,
+            apiResult.Order,
             apiResult.PublishedAt.HasValue
         );
 
@@ -247,6 +253,7 @@ public partial class StoryEditorService(
                     chapSummary.Note1,
                     chapSummary.Note2,
                     chapSummary.ContentUpdatedAt.UtcDateTime,
+                    chapSummary.Order,
                     chapSummary.ChapterPublishedAt.HasValue
                 ));
             }
@@ -307,6 +314,7 @@ public partial class StoryEditorService(
                         Ulid.Parse(bookSummary.Id, CultureInfo.InvariantCulture),
                         bookSummary.Title,
                         bookSummary.Description,
+                        bookSummary.Order,
                         bookSummary.PublishedAt.HasValue
                     ));
                 }
@@ -322,6 +330,7 @@ public partial class StoryEditorService(
                         null,
                         null,
                         null,
+                        chapterSummary.Order,
                         false
                     ));
                 }

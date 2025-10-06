@@ -24,6 +24,7 @@ public class ListStoryChaptersTests
         var item = new ListStoryChapters.ListStoryChaptersItem(
             chapterId,
             "Chapter 1: The Beginning",
+            0,    // Order
             publishedAt,
             createdAt,
             updatedAt,
@@ -52,6 +53,7 @@ public class ListStoryChaptersTests
         var item = new ListStoryChapters.ListStoryChaptersItem(
             chapterId,
             "Draft Chapter",
+            0,    // Order
             null, // Not published
             createdAt,
             updatedAt,
@@ -74,8 +76,8 @@ public class ListStoryChaptersTests
         // Arrange
         var chapters = new List<ListStoryChapters.ListStoryChaptersItem>
         {
-            new(Ulid.NewUlid(), "Chapter 1", DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, true, 1000),
-            new(Ulid.NewUlid(), "Chapter 2", DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, false, 0) // Published chapters only
+            new(Ulid.NewUlid(), "Chapter 1", 0, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, true, 1000),
+            new(Ulid.NewUlid(), "Chapter 2", 1, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, false, 0) // Published chapters only
         };
 
         // Act
@@ -93,7 +95,7 @@ public class ListStoryChaptersTests
         // Arrange
         var chapters = new List<ListStoryChapters.ListStoryChaptersItem>
         {
-            new(Ulid.NewUlid(), "Chapter 1", DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, true, 1000)
+            new(Ulid.NewUlid(), "Chapter 1", 0, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, true, 1000)
         };
 
         // Act

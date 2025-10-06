@@ -2836,6 +2836,7 @@
         "required": [
           "id",
           "title",
+          "order",
           "chapterPublishedAt",
           "chapterUpdatedAt",
           "contentId",
@@ -2853,6 +2854,15 @@
           "title": {
             "type": "string",
             "description": "The title of the chapter."
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The display order of the chapter.",
+            "format": "int32"
           },
           "chapterPublishedAt": {
             "type": [
@@ -2943,6 +2953,7 @@
           "id",
           "title",
           "description",
+          "order",
           "publishedAt"
         ],
         "type": "object",
@@ -2958,6 +2969,15 @@
           "description": {
             "type": "string",
             "description": "Description of the book."
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The display order of the book within the story.",
+            "format": "int32"
           },
           "publishedAt": {
             "type": [
@@ -3002,6 +3022,7 @@
         "required": [
           "id",
           "title",
+          "order",
           "publishedAt"
         ],
         "type": "object",
@@ -3013,6 +3034,15 @@
           "title": {
             "type": "string",
             "description": "Title of the chapter."
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The display order of the chapter within the story.",
+            "format": "int32"
           },
           "publishedAt": {
             "type": [
@@ -3799,6 +3829,7 @@
           "id",
           "title",
           "description",
+          "order",
           "storyId",
           "storyTitle",
           "chapters",
@@ -3824,6 +3855,15 @@
           "description": {
             "type": "string",
             "description": "A detailed description of the book."
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The display order of the book within the story.",
+            "format": "int32"
           },
           "storyId": {
             "description": "The unique identifier of the parent story.",
@@ -3863,6 +3903,7 @@
           "storyTitle",
           "id",
           "title",
+          "order",
           "publishedAt",
           "updatedAt",
           "contentId",
@@ -3890,6 +3931,14 @@
           },
           "title": {
             "type": "string"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           },
           "publishedAt": {
             "type": [
@@ -4403,6 +4452,7 @@
           "links",
           "chapterId",
           "title",
+          "order",
           "publishedAt",
           "createdAt",
           "updatedAt",
@@ -4424,6 +4474,15 @@
           "title": {
             "type": "string",
             "description": "Title of the chapter"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Order of the chapter within the story",
+            "format": "int32"
           },
           "publishedAt": {
             "type": [

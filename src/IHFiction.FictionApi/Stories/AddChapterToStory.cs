@@ -172,6 +172,9 @@ internal sealed class AddChapterToStory(
                 WorkBodyId = newWorkBodyId
             };
 
+            // Assign ordering: new chapter should be placed after existing chapters
+            chapter.Order = story.Chapters.Select(c => c.Order).DefaultIfEmpty(-1).Max() + 1;
+
             // Add the author and owner as collaborators on the chapter
             foreach (var existingAuthor in story.Authors) chapter.Authors.Add(existingAuthor);
 

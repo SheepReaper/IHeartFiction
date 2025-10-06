@@ -24,9 +24,10 @@
                     style="margin-bottom: 1.5rem;">
                     <a class="pagination-previous" @onclick="e => SelectPreviousBook()">&lt; Previous</a>
                     <ul class="pagination-list">
-                        @for (int i = 0; i < Books.Count; i++)
+                        @{ var _sortedBooks = GetSortedBooks(); }
+                        @for (int i = 0; i < _sortedBooks.Count; i++)
                         {
-                            var book = Books[i];
+                            var book = _sortedBooks[i];
                             <li @key="book.Id">
                                 <a class="pagination-link @(book.Id == Book?.Id ? "is-current" : "")"
                                     aria-label="Book @(i + 1)" title="@book.Title"
@@ -111,12 +112,21 @@
 
         if (StoryEditorService.CurrentBook is not null) return;
 
-        if (StoryEditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } story)
-            await SelectBook(story.Books[0]);
+        if (StoryEditorService.CurrentStory is { StoryType: MultiBook })
+        {
+            var _initList = GetSortedBooks();
+            if (_initList.Count > 0) await SelectBook(_initList[0]);
+        }
     }
 
     private ObservableCollection<BookEditorModel> Books => StoryEditorService.CurrentStory?.Books
         ?? new ObservableCollection<BookEditorModel>();
+
+    // Provide a stable, order-sorted view for rendering and navigation
+    private List<BookEditorModel> GetSortedBooks()
+        => Books is null
+            ? new List<BookEditorModel>()
+            : Books.OrderBy(b => b.Order).ThenBy(b => b.Title, StringComparer.InvariantCulture).ToList();
 
     private void OnBookChanged(object? sender, BookChangedEventArgs e)
     {
@@ -148,26 +158,28 @@
     {
         if (Books.Count == 0 || Book == null) return;
 
-        var selectedIndex = Books.ToList().FindIndex(b => b.Id == Book.Id);
+        var _list = GetSortedBooks();
+        var selectedIndex = _list.FindIndex(b => b.Id == Book.Id);
 
         if(selectedIndex == -1) return;
 
-        var previousIndex = selectedIndex == 0 ? Books.Count - 1 : selectedIndex - 1;
+        var previousIndex = selectedIndex == 0 ? _list.Count - 1 : selectedIndex - 1;
 
-        await SelectBook(Books[previousIndex]);
+        await SelectBook(_list[previousIndex]);
     }
 
     private async Task SelectNextBook()
     {
         if (Books.Count == 0 || Book == null) return;
 
-        var selectedIndex = Books.ToList().FindIndex(b => b.Id == Book.Id);
+        var _list2 = GetSortedBooks();
+        var selectedIndex = _list2.FindIndex(b => b.Id == Book.Id);
 
-        if(selectedIndex == -1) return;
+        if (selectedIndex == -1) return;
 
-        var nextIndex = (selectedIndex + 1) % Books.Count;
+        var nextIndex = (selectedIndex + 1) % _list2.Count;
 
-        await SelectBook(Books[nextIndex]);
+        await SelectBook(_list2[nextIndex]);
     }
 
     private bool _showDeleteModal = false;
@@ -195,16 +207,22 @@
         }
         else
         {
-            // Remove from collection and clear selection if needed
-            var idx = Books.ToList().FindIndex(b => b.Id == _bookToDelete.Id);
-            if (idx != -1)
+            // Remove from underlying collection and update selection using sorted view
+            var _fresh = GetSortedBooks();
+            var sortedIdx = _fresh.FindIndex(b => b.Id == _bookToDelete.Id);
+            if (sortedIdx != -1)
             {
-                Books.RemoveAt(idx);
+                var underlyingIdx = Books.ToList().FindIndex(b => b.Id == _bookToDelete.Id);
+                if (underlyingIdx != -1)
+                {
+                    Books.RemoveAt(underlyingIdx);
+                }
+
                 if (Book?.Id == _bookToDelete.Id)
                 {
-                    // Select next book if available, else clear selection
-                    if (Books.Count > 0)
-                        await SelectBook(Books[idx % Books.Count]);
+                    var refreshed = GetSortedBooks();
+                    if (refreshed.Count > 0)
+                        await SelectBook(refreshed[sortedIdx % refreshed.Count]);
                     else
                         ClearCurrentBook();
                 }

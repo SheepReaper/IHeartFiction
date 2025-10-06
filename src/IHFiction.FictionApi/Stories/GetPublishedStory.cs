@@ -124,11 +124,36 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             story.OwnerId,
             story.Owner.Name,
             storyType,
-            story.Authors.Select(a => new StoryAuthor(a.Id, a.Name)),
-            story.Tags.Select(t => new StoryTag(t.Category, t.Subcategory, t.Value)),
-            story.Books.Where(b => b.IsPublished).Select(b => new BookItem(b.Id, b.Title, b.Description, b.Order, b.Chapters.Where(c => c.IsPublished).Select(c => new ChapterItem(c.Id, c.Title, c.Order)))),
-            story.Chapters.Where(c => c.BookId == null && c.IsPublished).Select(c => new ChapterItem(c.Id, c.Title, c.Order))
+            story.Authors
+                .Select(a => new StoryAuthor(a.Id, a.Name))
+                .OrderBy(a => a.Id, new OwnerFirst(story.OwnerId))
+                .ThenBy(a => a.Id),
+            story.Tags
+                .OrderBy(t => t.Value)
+                .Select(t => new StoryTag(t.Category, t.Subcategory, t.Value)),
+            story.Books
+                .Where(b => b.IsPublished)
+                .OrderBy(b => b.Order)
+                .Select(b => new BookItem(b.Id, b.Title, b.Description, b.Order, b.Chapters
+                    .Where(c => c.IsPublished)
+                    .OrderBy(c => c.Order)
+                    .Select(c => new ChapterItem(c.Id, c.Title, c.Order)))),
+            story.Chapters
+                .Where(c => c.BookId == null && c.IsPublished)
+                .OrderBy(c => c.Order)
+                .Select(c => new ChapterItem(c.Id, c.Title, c.Order))
             );
+    }
+
+
+    private sealed class OwnerFirst(Ulid ownerId): Comparer<Ulid>
+    {
+        public override int Compare(Ulid x, Ulid y) => (x, y) switch
+        {
+            { } when x == ownerId && y != ownerId => -1,
+            { } when x != ownerId && y == ownerId => 1,
+            _ => 0
+        };
     }
 
     public static string EndpointName => nameof(GetPublishedStory);

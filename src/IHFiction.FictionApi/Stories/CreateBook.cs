@@ -110,6 +110,9 @@ internal sealed class CreateBook(
             StoryId = story.Id
         };
 
+        // Assign ordering: new book should be placed after existing books
+        book.Order = story.Books.Select(b => b.Order).DefaultIfEmpty(-1).Max() + 1;
+
         // Ensure owner/creator is in Authors
         if (!book.Authors.Any(a => a.Id == author.Id))
         {
@@ -133,7 +136,6 @@ internal sealed class CreateBook(
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
-
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {

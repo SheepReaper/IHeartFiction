@@ -167,50 +167,82 @@ else if (story != null)
                 </div>
             </div>
 
-            @if (story.Type == MultiChapter && chapters?.Data?.Any() == true)
+            @if (story.Type == MultiChapter && ((story.Chapters?.Any() ?? false) || (chapters?.Data?.Any() ?? false)))
             {
                 <div class="section">
                     <h2 class="title is-4">Chapters</h2>
                     <div class="columns is-multiline">
-                        @foreach (var chapter in chapters.Data)
+                        @if (story.Chapters?.Any() ?? false)
                         {
-                            <div @key="chapter.ChapterId" class="column is-half">
-                                <div class="card">
-                                    <div class="card-content">
-                                        <h3 class="title is-6">@chapter.Title</h3>
-                                        <p class="subtitle is-7 has-text-grey">
-                                            @if (chapter.PublishedAt.HasValue)
-                                            {
-                                                <text>Published @chapter.PublishedAt.Value.ToString("MMM dd, yyyy")</text>
-                                            }
-                                            else
-                                            {
-                                                <text>Draft</text>
-                                            }
-                                        </p>
-                                    </div>
-                                    <footer class="card-footer">
-                                        @if (chapter.PublishedAt.HasValue)
-                                        {
-                                            <a href="/stories/@story.Id/chapters/@chapter.ChapterId" class="card-footer-item">
+                            @foreach (var chapter in story.Chapters.OrderBy(c => c.Order))
+                            {
+                                var cid = chapter.Id.ToString();
+                                <div @key="chapter.Id" class="column is-half">
+                                    <div class="card">
+                                        <div class="card-content">
+                                            <h3 class="title is-6">@chapter.Title</h3>
+                                            <p class="subtitle is-7 has-text-grey">
+                                                @if (chapter is { })
+                                                {
+                                                    <text>Order: @chapter.Order</text>
+                                                }
+                                            </p>
+                                        </div>
+                                        <footer class="card-footer">
+                                                <a href="/stories/@StoryIdString/chapters/@cid" class="card-footer-item">
                                                 <span class="icon">
                                                     <i class="fas fa-book-open"></i>
                                                 </span>
                                                 <span>Read</span>
                                             </a>
-                                        }
-                                        else
-                                        {
-                                            <span class="card-footer-item has-text-grey">
-                                                <span class="icon">
-                                                    <i class="fas fa-clock"></i>
-                                                </span>
-                                                <span>Not Available</span>
-                                            </span>
-                                        }
-                                    </footer>
+                                        </footer>
+                                    </div>
                                 </div>
-                            </div>
+                            }
+                        }
+                        else if (chapters?.Data?.Any() ?? false)
+                        {
+                            @foreach (var chapter in chapters.Data)
+                            {
+                                var cid = chapter.ChapterId.ToString();
+                                <div @key="chapter.ChapterId" class="column is-half">
+                                    <div class="card">
+                                        <div class="card-content">
+                                            <h3 class="title is-6">@chapter.Title</h3>
+                                            <p class="subtitle is-7 has-text-grey">
+                                                @if (chapter.PublishedAt.HasValue)
+                                                {
+                                                    <text>Published @chapter.PublishedAt.Value.ToString("MMM dd, yyyy")</text>
+                                                }
+                                                else
+                                                {
+                                                    <text>Draft</text>
+                                                }
+                                            </p>
+                                        </div>
+                                        <footer class="card-footer">
+                                            @if (chapter.PublishedAt.HasValue)
+                                            {
+                                                    <a href="/stories/@StoryIdString/chapters/@cid" class="card-footer-item">
+                                                    <span class="icon">
+                                                        <i class="fas fa-book-open"></i>
+                                                    </span>
+                                                    <span>Read</span>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="card-footer-item has-text-grey">
+                                                    <span class="icon">
+                                                        <i class="fas fa-clock"></i>
+                                                    </span>
+                                                    <span>Not Available</span>
+                                                </span>
+                                            }
+                                        </footer>
+                                    </div>
+                                </div>
+                            }
                         }
                     </div>
                 </div>
@@ -226,6 +258,9 @@ else if (story != null)
     private LinkedPagedCollectionOfListStoryChaptersItem? chapters;
     private bool isLoading = true;
     private string? errorMessage;
+
+    // Helper to provide a non-null story id string for markup
+    private string StoryIdString => story?.Id.ToString() ?? string.Empty;
 
     protected override async Task OnInitializedAsync()
     {

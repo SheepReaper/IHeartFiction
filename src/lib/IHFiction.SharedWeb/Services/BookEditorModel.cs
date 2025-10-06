@@ -14,6 +14,7 @@ public class BookEditorModel : INotifyPropertyChanged
     private bool _suppressDirty = true;
 
     public Ulid? Id { get; set; }
+    public int Order { get; set; }
     public ObservableCollection<ChapterEditorModel> Chapters { get; } = [];
     public bool IsPublished { get; set; }
 
@@ -61,9 +62,10 @@ public class BookEditorModel : INotifyPropertyChanged
         OnPropertyChanged();
     }
 
-    private BookEditorModel(Ulid? id, string? title, string? description, bool isPublished)
+    private BookEditorModel(Ulid? id, string? title, string? description, int order, bool isPublished)
     {
         Id = id;
+        Order = order;
         Title = title;
         Description = description;
         IsPublished = isPublished;
@@ -92,9 +94,10 @@ public class BookEditorModel : INotifyPropertyChanged
         Ulid id,
         string? title,
         string? description,
-        bool isPublished) => new(id, title, description, isPublished) { _suppressDirty = false };
+        int order = 0,
+        bool isPublished = false) => new(id, title, description, order, isPublished) { _suppressDirty = false };
 
-    public static BookEditorModel Create() => new(null, null, null, false) { _suppressDirty = false };
+    public static BookEditorModel Create() => new(null, null, null, 0, false) { _suppressDirty = false };
 
     public IAsyncDisposable SuppressDirty() => new SuppressDirtyContext(this);
 
