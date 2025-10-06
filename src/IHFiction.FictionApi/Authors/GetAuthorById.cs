@@ -61,7 +61,7 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
     {
         var author = await context.Authors
             .Include(a => a.Profile)
-            .Include(a => a.Works.Where(w => w is Story))
+            .Include(a => a.Works)
             .Where(a => a.Id == id)
             .Select(a => new GetAuthorByIdResponse(
                 a.UserId,
@@ -69,13 +69,13 @@ internal sealed class GetAuthorById(FictionDbContext context) : IUseCase, INameE
                 a.UpdatedAt,
                 a.DeletedAt,
                 new AuthorProfile(a.Profile.Bio),
-                a.Works.OfType<Story>()
-                    .Where(s => s.PublishedAt != null)
-                    .Select(s => new AuthorWorkItem(
-                        s.Id,
-                        s.Title,
-                        s.PublishedAt)),
-                a.Works.Count(w => w is Story)
+                a.Works
+                    .Where(w => w is Story && w.PublishedAt != null)
+                    .Select(w => new AuthorWorkItem(
+                        w.Id,
+                        w.Title,
+                        w.PublishedAt)),
+                a.Works.Count
             ))
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);

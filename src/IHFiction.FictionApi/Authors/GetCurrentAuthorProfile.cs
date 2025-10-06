@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
+using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
@@ -11,7 +12,8 @@ using IHFiction.SharedKernel.Linking;
 namespace IHFiction.FictionApi.Authors;
 
 internal sealed class GetCurrentAuthorProfile(
-    AuthorizationService authorizationService) : IUseCase, INameEndpoint<GetCurrentAuthorProfile>
+    AuthorizationService authorizationService,
+    FictionDbContext context) : IUseCase, INameEndpoint<GetCurrentAuthorProfile>
 {
     internal sealed record Query(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
@@ -58,9 +60,16 @@ internal sealed class GetCurrentAuthorProfile(
     {
         // Get the current author using the centralized authorization service
         var authorResult = await authorizationService.GetCurrentAuthorAsync(claimsPrincipal, cancellationToken);
+
         if (authorResult.IsFailure) return authorResult.DomainError;
 
-        var author = authorResult.Value;
+        var entry = context.Entry(authorResult.Value);
+
+        var author = entry.Entity;
+
+        var works = entry.Collection(a => a.Works).Query().Where(w => w is Story);
+
+        var ownedWorks = works.Where(w => w.OwnerId == author.Id);
 
         return new GetCurrentAuthorProfileResponse(
             author.Id,
@@ -69,10 +78,10 @@ internal sealed class GetCurrentAuthorProfile(
             author.GravatarEmail,
             author.UpdatedAt,
             new CurrentAuthorProfile(author.Profile.Bio),
-            author.Works.OfType<Story>().Select(work => new CurrentAuthorWork(work.Id, work.Title)),
-            author.OwnedWorks.OfType<Story>().Select(work => new CurrentAuthorWork(work.Id, work.Title)));
+            works.Select(work => new CurrentAuthorWork(work.Id, work.Title)),
+            ownedWorks.Select(work => new CurrentAuthorWork(work.Id, work.Title)));
     }
-        public static string EndpointName => nameof(GetCurrentAuthorProfile);
+    public static string EndpointName => nameof(GetCurrentAuthorProfile);
 
     internal sealed class Endpoint : IEndpoint
     {

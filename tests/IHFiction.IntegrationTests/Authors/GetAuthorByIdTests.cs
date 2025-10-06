@@ -70,6 +70,7 @@ public class GetAuthorByIdTests : BaseIntegrationTest, IConfigureServices<GetAut
         response.DeletedAt.Should().Be(deletedAt);
         response.Profile.Should().NotBeNull();
         response.Profile.Bio.Should().Be(bio);
+        response.TotalStories.Should().Be(2);
         var works = response.PublishedStories;
         works.Should().HaveCount(2);
         works.Should().Contain(w => w.Title == "Work 1");

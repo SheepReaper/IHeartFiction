@@ -34,7 +34,7 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
     /// Standardizes the author retrieval pattern used across multiple endpoints.
     /// </summary>
     public async Task<Result<Author>> GetCurrentAuthorAsync(
-        ClaimsPrincipal claimsPrincipal, 
+        ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken = default)
     {
         var authorResult = await userService.GetAuthorAsync(claimsPrincipal, cancellationToken);
@@ -46,8 +46,8 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
     /// Centralizes the story authorization pattern used in UpdateStoryMetadata, DeleteStory, etc.
     /// </summary>
     public async Task<Result<StoryAuthorizationResult>> AuthorizeStoryAccessAsync(
-        Ulid storyId, 
-        ClaimsPrincipal claimsPrincipal, 
+        Ulid storyId,
+        ClaimsPrincipal claimsPrincipal,
         StoryAccessLevel requiredAccess,
         bool includeDeleted = false,
         CancellationToken cancellationToken = default)
@@ -138,7 +138,11 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
         if (authorResult.IsFailure) return authorResult.DomainError;
 
         var author = authorResult.Value;
-        var query = context.Books.Include(b => b.Owner).Include(b => b.Authors).Include(b => b.Story).AsQueryable();
+        var query = context.Books
+            .Include(b => b.Owner)
+            .Include(b => b.Authors)
+            .Include(b => b.Story)
+            .AsQueryable();
 
         if (includeDeleted) query = query.IgnoreQueryFilters();
 
@@ -148,15 +152,15 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
         if (book.Story is null) return Errors.StoryNotFound;
 
         var storyPermissions = CalculateStoryPermissions(book.Story, author);
-        
+
         return !storyPermissions.HasAccess(requiredAccess)
-          ? (Result<BookAuthorizationResult>)(requiredAccess switch
+          ? (requiredAccess switch
           {
               StoryAccessLevel.Delete or StoryAccessLevel.Publish => Errors.OwnerOnlyOperation,
               StoryAccessLevel.Edit => Errors.CollaboratorRequired,
               _ => Errors.InsufficientPermissions
           })
-          : (Result<BookAuthorizationResult>)new BookAuthorizationResult(book, author, storyPermissions);
+          : new BookAuthorizationResult(book, author, storyPermissions);
     }
 
     /// <summary>
@@ -166,7 +170,7 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
     {
         var isOwner = story.OwnerId == author.Id;
         var isCollaborator = story.Authors.Any(a => a.Id == author.Id);
-        
+
         return new StoryPermissions(
           IsOwner: isOwner,
           IsCollaborator: isCollaborator,

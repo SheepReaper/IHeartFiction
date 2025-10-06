@@ -5107,7 +5107,7 @@
             "description": "The collection of items"
           }
         },
-        "description": "A standard response model for a paginated collection of TData items,\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\nThe collection itself also includes a set of hypermedia links."
+        "description": "A paginated collection response of TData items with hypermedia links."
       },
       "LinkedPagedCollectionOfListAuthorsItem": {
         "required": [
@@ -5170,7 +5170,7 @@
             "description": "The collection of items"
           }
         },
-        "description": "A standard response model for a paginated collection of TData items,\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\nThe collection itself also includes a set of hypermedia links."
+        "description": "A paginated collection response of TData items with hypermedia links."
       },
       "LinkedPagedCollectionOfListPublishedStoriesItem": {
         "required": [
@@ -5233,7 +5233,7 @@
             "description": "The collection of items"
           }
         },
-        "description": "A standard response model for a paginated collection of TData items,\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\nThe collection itself also includes a set of hypermedia links."
+        "description": "A paginated collection response of TData items with hypermedia links."
       },
       "LinkedPagedCollectionOfListStoryChaptersItem": {
         "required": [
@@ -5296,7 +5296,7 @@
             "description": "The collection of items"
           }
         },
-        "description": "A standard response model for a paginated collection of TData items,\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\nThe collection itself also includes a set of hypermedia links."
+        "description": "A paginated collection response of TData items with hypermedia links."
       },
       "LinkedPagedCollectionOfListTagsItem": {
         "required": [
@@ -5359,7 +5359,7 @@
             "description": "The collection of items"
           }
         },
-        "description": "A standard response model for a paginated collection of TData items,\nwhere each item is wrapped in a Linked&lt;T&gt; to include hypermedia links.\nThe collection itself also includes a set of hypermedia links."
+        "description": "A paginated collection response of TData items with hypermedia links."
       },
       "LinkItem": {
         "required": [
