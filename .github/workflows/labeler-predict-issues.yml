@@ -26,13 +26,13 @@ env:
 
   LABEL_PREFIX: "area-"
   THRESHOLD: 0.40
-  # DEFAULT_LABEL: "needs-area-label"
+  DEFAULT_LABEL: "needs-area-label"
   EXCLUDED_AUTHORS: "" # Comma-separated list of authors to exclude from training data
 
 jobs:
   predict-issue-label:
-    # Do not automatically run the workflow on forks outside the 'dotnet' org
-    if: ${{ github.event_name == 'workflow_dispatch' || github.repository_owner == 'dotnet' }}
+    # Do not automatically run the workflow on forks outside the 'SheepReaper' org
+    if: ${{ github.event_name == 'workflow_dispatch' || github.repository_owner == 'SheepReaper' }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -50,11 +50,11 @@ jobs:
         if: ${{ steps.restore-model.outputs.cache-hit == 'true' }}
         uses: dotnet/issue-labeler/predict@46125e85e6a568dc712f358c39f35317366f5eed # v2.0.0
         with:
-          pulls: false
+          pulls: ""
           issues: ${{ inputs.issues || github.event.issue.number }}
           label_prefix: ${{ env.LABEL_PREFIX }}
           threshold: ${{ env.THRESHOLD }}
-          # default_label: ${{ env.DEFAULT_LABEL }}
+          default_label: ${{ env.DEFAULT_LABEL }}
           excluded_authors: ${{ env.EXCLUDED_AUTHORS }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
