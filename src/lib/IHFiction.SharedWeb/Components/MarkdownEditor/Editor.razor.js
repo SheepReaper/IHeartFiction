@@ -4,10 +4,22 @@ export class BoundToast {
     constructor(options, dotNetObjectReference) {
         this.dotNetObjectReference = dotNetObjectReference;
 
+        // Debounce change events so very large single-paste payloads don't immediately
+        // get sent over SignalR/Blazor server and cause disconnects.
+        // We wait a short time after the last change before sending the content to .NET.
+        this._changeTimer = null;
+        const DEBOUNCE_MS = 250;
+
         options.events = {
             change: () => {
                 const markdown = this.editor.getMarkdown();
-                dotNetObjectReference.invokeMethodAsync('OnEditorContentChanged', markdown);
+                if (this._changeTimer) clearTimeout(this._changeTimer);
+                this._changeTimer = setTimeout(() => {
+                    // fire-and-forget the interop call
+                    dotNetObjectReference.invokeMethodAsync('OnEditorContentChanged', markdown).catch(() => {
+                        // swallow; .NET side logs errors separately
+                    });
+                }, DEBOUNCE_MS);
             }
         };
         options.hooks = {

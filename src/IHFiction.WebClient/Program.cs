@@ -88,7 +88,13 @@ builder.Services.AddScoped<StoryEditorService>();
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        // HACK: Increase the maximum message size to handle large pastes in the content editor
+        // This should be revisited to use chunking from the client side
+        options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB
+    });
 
 builder.Services.AddOutputCache();
 
