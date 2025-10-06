@@ -296,6 +296,8 @@ internal static class ProductionConfigExtensions
         .WithEndpoint("http", e => e.TargetPort = 8080)
         .PublishAsDockerComposeService((res, service) =>
         {
+            service.Environment.Remove("ConnectionStrings__fiction-db");
+            
             var config = builder.ApplicationBuilder.Configuration;
 
             if (config["WebClient:AllowedHosts"] is string allowedHosts)
