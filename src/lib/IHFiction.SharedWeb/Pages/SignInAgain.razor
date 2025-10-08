@@ -1,0 +1,72 @@
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+
+@page "/sign-in-again"
+
+@inject NavigationManager Navigation
+
+<div class="sign-in-again box">
+    <h1 class="title is-4">Sign in required</h1>
+
+    @switch (Reason)
+    {
+        case "verified-from-external-window":
+            <div>
+                <p class="content">Thank you — your email has been verified. Please sign in again to continue using the application.</p>
+            </div>
+            break;
+
+        case null:
+            <div>
+                <p class="content">The application requires you to sign in again.</p>
+            </div>
+            break;
+
+        default:
+            <div>
+                <p class="content">The application requires you to sign in again for the following reason:</p>
+                <blockquote class="notification is-light">@Reason</blockquote>
+            </div>
+            break;
+    }
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Reason { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(ReturnUrl))
+        {
+            try
+            {
+                // Resolve the return URL to an absolute URI using the NavigationManager helper
+                var current = new Uri(Navigation.Uri);
+                var resolved = Navigation.ToAbsoluteUri(ReturnUrl);
+
+                // Compare only the path portion (ignore query and fragment) to avoid
+                // false mismatches when ReturnUrl is a fragment or contains query params.
+                var currentPath = current.GetComponents(UriComponents.Path, UriFormat.Unescaped);
+                var resolvedPath = resolved.GetComponents(UriComponents.Path, UriFormat.Unescaped);
+
+                // Normalize empty paths to '/'
+                if (string.IsNullOrEmpty(currentPath)) currentPath = "/";
+                if (string.IsNullOrEmpty(resolvedPath)) resolvedPath = "/";
+
+                if (string.Equals(currentPath, resolvedPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    Navigation.NavigateTo("/", true);
+                }
+            }
+            catch
+            {
+                // best-effort: if parsing fails, avoid throwing during initialization
+            }
+        }
+    }
+}

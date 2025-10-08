@@ -39,14 +39,14 @@ public static class SitemapExtensions
         // Author Detail Pages /authors/{authorId}
         // Author Stories /authors/{authorId}/stories
         foreach (var author in db.Authors
-            .Include(a => a.Works)
-            .Where(a => a.Works.Any(w => w.PublishedAt != null))
+            .Where(a => a.Works.Any(w => w is Story && w.PublishedAt != null))
             .AsNoTracking()
             .Select(a => new
             {
                 a.Id,
                 a.UpdatedAt,
-                Stories = a.Works.OfType<Story>()
+                Stories = a.Works
+                    .Where(w => w is Story && w.PublishedAt != null)
                     .OrderByDescending(w => w.UpdatedAt)
                     .Take(1)
             }))

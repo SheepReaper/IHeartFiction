@@ -35,6 +35,10 @@
 </AuthorizeView>
 
 @code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
     private bool _loading;
 
     private void OnSignUpClick() => OnLoginClick();
@@ -43,13 +47,13 @@
     {
         _loading = true;
         LoaderService.Show();
-        Navigation.NavigateTo($"authentication/login?returnUrl={Navigation.Uri}", forceLoad: true);
+        Navigation.NavigateTo($"authentication/login?returnUrl={ReturnUrl ?? Navigation.Uri}", forceLoad: true);
     }
 
     private void OnLogoutClick()
     {
         _loading = true;
         LoaderService.Show();
-        Navigation.NavigateTo($"authentication/logout?returnUrl={Navigation.Uri}", forceLoad: true);
+        Navigation.NavigateTo($"authentication/logout", forceLoad: true);
     }
 }
