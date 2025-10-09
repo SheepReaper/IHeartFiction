@@ -45,7 +45,7 @@ else if (chapterContent != null)
                 <div class="message-body">
                     @if (!string.IsNullOrWhiteSpace(chapterContent.Note1))
                     {
-                        <p>@chapterContent.Note1</p>
+                        @((MarkupString)Markdown.ToHtml(chapterContent.Note1, mdp))
                     }
                 </div>
             </div>
@@ -64,7 +64,7 @@ else if (chapterContent != null)
                 <div class="message-body">
                     @if (!string.IsNullOrWhiteSpace(chapterContent.Note2))
                     {
-                        <p>@chapterContent.Note2</p>
+                        @((MarkupString)Markdown.ToHtml(chapterContent.Note2, mdp))
                     }
                 </div>
             </div>
