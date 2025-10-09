@@ -195,6 +195,8 @@ app.MapGet("/robots.txt", async ctx =>
     await TypedResults.Text(body).ExecuteAsync(ctx);
 });
 
+app.MapMethods("/uptime", [HttpMethods.Head, HttpMethods.Get], () => Results.Ok());
+
 app.MapStaticSitemap();
 app.MapDynamicSitemap();
 
