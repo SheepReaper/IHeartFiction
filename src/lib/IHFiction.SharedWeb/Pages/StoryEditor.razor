@@ -1,3 +1,4 @@
+@using IHFiction.SharedKernel.Infrastructure
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.Data.Stories.Domain
 @using System.Globalization
@@ -89,9 +90,9 @@ else
                                 <div class="dropdown-menu" id="dropdown-menu" role="menu">
                                     <div class="dropdown-content">
                                         @foreach (string storyType in new HashSet<string>([
-                                            SingleBody,
-                                            MultiChapter,
-                                            MultiBook]).Where(IsConversionAllowed))
+                                                                        SingleBody,
+                                                                MultiChapter,
+                                                                MultiBook]).Where(IsConversionAllowed))
                                         {
                                             <a @key="storyType" class="dropdown-item"
                                                 @onclick="e => ConvertStory(storyType)">@GetLabel(storyType)</a>
@@ -176,8 +177,8 @@ else
     public string? StoryId { get; set; }
 
     public bool CanPublish => EditorService.CurrentStory?.IsPublished == false
-        || EditorService.CurrentBook?.IsPublished == false 
-        || EditorService.CurrentChapter?.IsPublished == false;
+    || EditorService.CurrentBook?.IsPublished == false
+    || EditorService.CurrentChapter?.IsPublished == false;
 
     private bool _disposed;
     private string? _errorMessage;
@@ -189,10 +190,20 @@ else
         EditorService.DirtyStateChanged += OnDirtyStateChanged;
         EditorService.BookChanged += OnBookChanged;
 
-        if (Ulid.TryParse(StoryId, out var storyId) && EditorService.CurrentStory?.Id != storyId)
+        var result = await LoadStory();
+
+        if (result.IsFailure) _errorMessage = result.DomainError.Description;
+    }
+
+    private async Task<Result> LoadStory()
+    {
+        DomainError? _error = default;
+
+        if (StoryId is not null && Ulid.TryParse(StoryId, out var storyId))
         {
             var result = await EditorService.LoadStoryAsync(storyId, CancellationToken);
-            if (result.IsFailure) _errorMessage = result.DomainError.Description;
+
+            if (result.IsFailure) _error = result.DomainError;
         }
         else
         {
@@ -200,32 +211,52 @@ else
             EditorService.CreateNewStory(SingleBody);
         }
 
-        if (EditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } bookStory)
+        if (_error is null && EditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } bookStory)
         {
-            var firstBook = bookStory.Books.OrderBy(b => b.Order).FirstOrDefault();
+            var firstBook = bookStory.Books
+            .OrderBy(b => b.Order)
+            .FirstOrDefault();
+
             if (firstBook?.Id is { } bookId && bookId != default)
             {
-                var bookResult = await EditorService.LoadBookAsync(bookId);
+                var result = await EditorService.LoadBookAsync(bookId);
 
-                if (bookResult.IsSuccess && bookResult.Value.Chapters.Count > 0)
+                if (result.IsFailure) _error = result.DomainError;
+
+                if (_error is null && result.Value!.Chapters.Count > 0)
                 {
-                    var firstChapter = bookResult.Value.Chapters.OrderBy(c => c.Order).FirstOrDefault();
+                    var firstChapter = result.Value.Chapters
+                    .OrderBy(c => c.Order)
+                    .FirstOrDefault();
+
                     if (firstChapter?.Id is { } bookChapterId && bookChapterId != default)
                     {
-                        await EditorService.LoadChapterAsync(bookChapterId, CancellationToken);
+                        var bookChapterResult = await EditorService
+                        .LoadChapterAsync(bookChapterId, CancellationToken);
+
+                        if (bookChapterResult.IsFailure) _error = bookChapterResult.DomainError;
                     }
                 }
             }
         }
 
-        if (EditorService.CurrentStory is { StoryType: MultiChapter, Chapters.Count: > 0 } chapterStory)
+        if (_error is null && EditorService.CurrentStory is { StoryType: MultiChapter, Chapters.Count: > 0 } chapterStory)
         {
-            var firstChapter = chapterStory.Chapters.OrderBy(c => c.Order).FirstOrDefault();
+            var firstChapter = chapterStory.Chapters
+            .OrderBy(c => c.Order)
+            .FirstOrDefault();
+
             if (firstChapter?.Id is { } storyChapterId && storyChapterId != default)
             {
-                await EditorService.LoadChapterAsync(storyChapterId, CancellationToken);
+                var storyChapterResult = await EditorService.LoadChapterAsync(storyChapterId, CancellationToken);
+
+                if (storyChapterResult.IsFailure) _error = storyChapterResult.DomainError;
             }
         }
+
+        if(_error is not null) _errorMessage = _error.Description;
+
+        return _error is null ? Result.Success() : Result.Failure(_error);
     }
 
     private void OnBookChanged(object? sender, BookChangedEventArgs e)
@@ -274,23 +305,20 @@ else
     private async Task ConvertStory(string targetType)
     {
         if (!IsConversionAllowed(targetType) || EditorService.CurrentStory is null) return;
+
         _isBusy = true;
+
         StateHasChanged();
 
-        try
-        {
-            var result = await EditorService.ConvertStoryTypeAsync(targetType);
+        var result = await EditorService.ConvertStoryTypeAsync(targetType);
 
-            if (result.IsFailure)
-            {
-                _errorMessage = result.DomainError.Description;
-            }
-        }
-        finally
-        {
-            _isBusy = false;
-            StateHasChanged();
-        }
+        if (result.IsSuccess) result = await LoadStory();
+
+        if (result.IsFailure) _errorMessage = result.DomainError.Description;
+
+        _isBusy = false;
+
+        StateHasChanged();
     }
 
     private async Task Save(bool andPublish)
@@ -299,37 +327,23 @@ else
 
         _isBusy = true;
         _errorMessage = null;
+
         StateHasChanged();
 
-        try
-        {
-            var result = await EditorService.SaveStoryAsync();
+        var result = await EditorService.SaveStoryAsync();
 
-            if (result.IsFailure)
-            {
-                _errorMessage = result.DomainError.Description;
-                return;
-            }
+        if (result.IsSuccess && andPublish) result = await EditorService.PublishStoryAsync();
 
-            if (andPublish)
-            {
-                var publishResult = await EditorService.PublishStoryAsync();
-                if (publishResult.IsFailure)
-                {
-                    _errorMessage = publishResult.DomainError.Description;
-                    return;
-                }
-            }
+        if (result.IsFailure) _errorMessage = result.DomainError.Description;
 
-            Navigation.NavigateTo("/my-stories");
-        }
-        finally
-        {
-            // keep busy until navigation occurs; if navigation didn't happen, clear flag
-            EditorService.Reset();
-            _isBusy = false;
-            StateHasChanged();
-        }
+        else Navigation.NavigateTo("/my-stories");
+
+        // keep busy until navigation occurs; if navigation didn't happen, clear flag
+        if (result.IsSuccess) EditorService.Reset();
+
+        _isBusy = false;
+
+        StateHasChanged();
     }
 
     private async Task PublishStory()
@@ -340,25 +354,21 @@ else
     private async Task PublishOnly()
     {
         if (EditorService.CurrentStory is null) return;
+
         _isBusy = true;
         _errorMessage = null;
+
         StateHasChanged();
 
-        try
-        {
-            var publishResult = await EditorService.PublishStoryAsync();
-            if (publishResult.IsFailure)
-            {
-                _errorMessage = publishResult.DomainError.Description;
-                return;
-            }
-            Navigation.NavigateTo("/my-stories");
-        }
-        finally
-        {
-            _isBusy = false;
-            StateHasChanged();
-        }
+        var publishResult = await EditorService.PublishStoryAsync();
+
+        if (publishResult.IsFailure) _errorMessage = publishResult.DomainError.Description;
+
+        else Navigation.NavigateTo("/my-stories");
+
+        _isBusy = false;
+
+        StateHasChanged();
     }
 
     private void Cancel()

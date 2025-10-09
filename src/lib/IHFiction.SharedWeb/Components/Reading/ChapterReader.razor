@@ -20,6 +20,8 @@ else if (!string.IsNullOrEmpty(errorMessage))
 }
 else if (chapterContent != null)
 {
+    <PageTitle>@PageTitle</PageTitle>
+
     <div class="content">
         <div class="level">
             <div class="level-left">
@@ -88,6 +90,11 @@ else if (chapterContent != null)
 @code {
     [Parameter, EditorRequired] public string ChapterId { get; set; } = null!;
     [Parameter] public IEnumerable<ChapterItem> Chapters { get; set; } = [];
+
+    public string PageTitle => string.Join(" - ", new[] {
+        chapterContent?.StoryTitle,
+        chapterContent?.BookTitle,
+        chapterContent?.ChapterTitle }.Where(s => !string.IsNullOrWhiteSpace(s))) ?? "Reading - I❤️Fiction";
 
     private LinkedOfGetChapterContentResponse? chapterContent;
     private bool isLoading = true;

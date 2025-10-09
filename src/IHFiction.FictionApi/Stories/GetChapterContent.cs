@@ -50,6 +50,7 @@ internal sealed class GetChapterContent(
     /// <param name="StoryId">Unique identifier of the parent story</param>
     /// <param name="StoryTitle">Title of the parent story</param>
     /// <param name="BookId">Unique identifier of the parent book, if applicable</param>
+    /// <param name="BookTitle">Title of the parent book, if applicable</param>
     /// <param name="ContentId">Unique identifier for the content document</param>
     /// <param name="Content">The chapter content in markdown format</param>
     /// <param name="Note1">Optional author note about the content</param>
@@ -62,6 +63,7 @@ internal sealed class GetChapterContent(
         Ulid StoryId,
         string StoryTitle,
         Ulid BookId,
+        string? BookTitle,
         ObjectId ContentId,
         string Content,
         string? Note1,
@@ -113,6 +115,7 @@ internal sealed class GetChapterContent(
                 story.Id,
                 story.Title,
                 chapter.BookId ?? Ulid.Empty,
+                chapter.Book?.Title,
                 workBody.Id,
                 workBody.Content,
                 workBody.Note1,
@@ -125,7 +128,6 @@ internal sealed class GetChapterContent(
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
-
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {

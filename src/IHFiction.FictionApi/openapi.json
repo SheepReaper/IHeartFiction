@@ -3753,6 +3753,7 @@
           "storyId",
           "storyTitle",
           "bookId",
+          "bookTitle",
           "contentId",
           "content",
           "note1",
@@ -3787,6 +3788,13 @@
           "bookId": {
             "description": "Unique identifier of the parent book, if applicable",
             "$ref": "#/components/schemas/Ulid"
+          },
+          "bookTitle": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Title of the parent book, if applicable"
           },
           "contentId": {
             "description": "Unique identifier for the content document",
