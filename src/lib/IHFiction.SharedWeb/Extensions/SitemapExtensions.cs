@@ -19,7 +19,7 @@ public static class SitemapExtensions
 {
     public static IApplicationBuilder MapStaticSitemap(this IApplicationBuilder builder) => builder.UseSitemap();
 
-    public static RouteHandlerBuilder MapDynamicSitemap(this IEndpointRouteBuilder builder) => builder.MapGet("/sitemap-dynamic.xml", async (HttpContext ctx, [FromServices] FictionDbContext db) =>
+    public static RouteHandlerBuilder MapDynamicSitemap(this IEndpointRouteBuilder builder) => builder.MapGet("/sitemap-dynamic.xml", async (HttpContext ctx, [FromServices] FictionDbContext db, TimeProvider dt) =>
     {
         var baseUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}".TrimEnd('/');
 
@@ -35,6 +35,9 @@ public static class SitemapExtensions
 
             urlset.Add(url);
         }
+
+        // Authors List /authors
+        AddUrl("/authors", dt.GetUtcNow());
 
         // Author Detail Pages /authors/{authorId}
         // Author Stories /authors/{authorId}/stories
@@ -54,6 +57,9 @@ public static class SitemapExtensions
             AddUrl($"/authors/{author.Id}", author.UpdatedAt);
             AddUrl($"/authors/{author.Id}/stories", author.Stories.First().UpdatedAt);
         }
+
+        // Stories List /stories
+        AddUrl("/stories", dt.GetUtcNow());
 
         // Story Detail /stories/{storyId}
         // Story Read /stories/{storyId}/read
