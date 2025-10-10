@@ -9,18 +9,29 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="apple-mobile-web-app-title" content="I❤️Fiction" />
+
     @if (Activity.Current is { } currentActivity)
     {
         <meta name="traceparent" content="@currentActivity.Id" />
     }
+
     <base href="/" />
+
     <link href="@Assets["_content/IHFiction.SharedWeb/font-awesome/6.4.0/css/all.min.css"]" rel="preload" as="style"
         onload="this.rel='stylesheet';this.onload=null;" nonce="@nonce" />
     <link href="@Assets["_content/IHFiction.SharedWeb/bulma/bulma.min.css"]" rel="preload" as="style"
         onload="this.rel='stylesheet';this.onload=null;" nonce="@nonce" />
     <link href="@Assets["_content/IHFiction.SharedWeb/css/app.css"]" rel="stylesheet" nonce="@nonce" />
     <link href="@Assets["IHFiction.WebClient.styles.css"]" rel="stylesheet" nonce="@nonce" />
-    <link href="@Assets["_content/IHFiction.SharedWeb/favicon.svg"]" rel="icon" type="image/svg+xml" nonce="@nonce" />
+
+    <!-- Favicon -->
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon/favicon.svg"]" rel="icon" type="image/svg+xml" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon/favicon-96x96.png"]" rel="icon" type="image/png" sizes="96x96" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon/favicon.ico"]" rel="shortcut icon" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon/apple-touch-icon.png"]" rel="apple-touch-icon" sizes="180x180" />
+    <link href="@Assets["_content/IHFiction.SharedWeb/favicon/site.webmanifest"]" rel="manifest" />
+
     <ImportMap integrity="@integrity" nonce="@nonce" />
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
