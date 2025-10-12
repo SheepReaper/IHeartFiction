@@ -96,7 +96,7 @@ else if (chapterContent != null)
         chapterContent?.BookTitle,
         chapterContent?.ChapterTitle }.Where(s => !string.IsNullOrWhiteSpace(s))) ?? "Reading - I❤️Fiction";
 
-    private LinkedOfGetChapterContentResponse? chapterContent;
+    private LinkedOfGetPublishedChapterContentResponse? chapterContent;
     private bool isLoading = true;
     private string? errorMessage;
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -8,12 +9,12 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
-using System.Net.Mime;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -21,7 +22,7 @@ internal sealed class ListPublishedStories(
     FictionDbContext context,
     IPaginationService paginator) : IUseCase, INameEndpoint<ListPublishedStories>
 {
-    internal sealed record Query(
+    internal sealed record ListPublishedStoriesQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
         int? Page = null,
 
@@ -81,7 +82,7 @@ internal sealed class ListPublishedStories(
         string AuthorName);
 
     public async Task<Result<PagedCollection<ListPublishedStoriesItem>>> HandleAsync(
-        Query query,
+        ListPublishedStoriesQuery query,
         ListPublishedStoriesBody body,
         CancellationToken cancellationToken = default)
     {
@@ -127,7 +128,7 @@ internal sealed class ListPublishedStories(
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapGet("stories/published", async (
-                [AsParameters] Query query,
+                [AsParameters] ListPublishedStoriesQuery query,
                 [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ListPublishedStoriesBody? body,
                 ListPublishedStories useCase,
                 CancellationToken cancellationToken) =>

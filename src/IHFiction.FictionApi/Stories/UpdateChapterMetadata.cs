@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -7,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
-using IHFiction.SharedKernel.Validation;
 using IHFiction.SharedKernel.Linking;
-using System.Net.Mime;
+using IHFiction.SharedKernel.Validation;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -38,7 +39,7 @@ internal sealed class UpdateChapterMetadata(
         string Title
     );
 
-    internal sealed record Query(
+    internal sealed record UpdateChapterMetadataQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateChapterMetadataResponse>]
         string? Fields = null
@@ -111,12 +112,11 @@ internal sealed class UpdateChapterMetadata(
     {
         public string Name => EndpointName;
 
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPut("chapters/{id:ulid}", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] UpdateChapterMetadataQuery query,
                 [FromBody] UpdateChapterMetadataBody body,
                 UpdateChapterMetadata useCase,
                 ClaimsPrincipal claimsPrincipal,

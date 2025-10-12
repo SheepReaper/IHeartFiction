@@ -38,14 +38,14 @@ public class StoryService(IFictionApiClient client)
         : await ConvertStoryTypeAsync(ulid, body, cancellationToken);
 
 
-    public async ValueTask<Result<LinkedPagedCollectionOfListStoryChaptersItem>> ListStoryChaptersAsync(
+    public async ValueTask<Result<LinkedPagedCollectionOfListPublishedStoryChaptersItem>> ListStoryChaptersAsync(
         Ulid storyId,
         string? fields = null,
         CancellationToken cancellationToken = default) => storyId == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.ListStoryChaptersAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
+            : await client.ListPublishedStoryChaptersAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedPagedCollectionOfListStoryChaptersItem>> ListStoryChaptersAsync(
+    public async ValueTask<Result<LinkedPagedCollectionOfListPublishedStoryChaptersItem>> ListStoryChaptersAsync(
         string storyId,
         string? fields = null,
         CancellationToken cancellationToken = default)
@@ -54,7 +54,7 @@ public class StoryService(IFictionApiClient client)
             : await ListStoryChaptersAsync(ulid, fields, cancellationToken);
 
 
-    public async ValueTask<Result<LinkedOfGetPublishedStoryResponse>> GetStoryByIdAsync(
+    public async ValueTask<Result<LinkedOfGetPublishedStoryResponse>> GetStoryAsync(
         Ulid storyId,
         string? fields = null,
         CancellationToken cancellationToken = default
@@ -62,13 +62,13 @@ public class StoryService(IFictionApiClient client)
             ? DomainError.EmptyUlid
             : await client.GetPublishedStoryAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfGetPublishedStoryResponse>> GetStoryByIdAsync(
+    public async ValueTask<Result<LinkedOfGetPublishedStoryResponse>> GetStoryAsync(
         string storyId,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => !Ulid.TryParse(storyId, out var ulid)
         ? DomainError.InvalidUlid
-        : await GetStoryByIdAsync(ulid, fields, cancellationToken);
+        : await GetStoryAsync(ulid, fields, cancellationToken);
 
 
     public async ValueTask<Result<LinkedOfGetPublishedStoryContentResponse>> GetPublishedStoryContentAsync(
@@ -98,34 +98,14 @@ public class StoryService(IFictionApiClient client)
     ) => await client.ListPublishedStoriesAsync(page, pageSize, search, sort, fields, body, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedPagedCollectionOfAuthorStoryItem>> GetCurrentAuthorStoriesAsync(
-        GetCurrentAuthorStoriesBody body,
+        GetOwnStoriesBody body,
         int? pageSize = null,
         int? page = null,
         string? search = null,
         string? sort = null,
         string? fields = null,
         CancellationToken cancellationToken = default
-    ) => await client.GetCurrentAuthorStoriesAsync(pageSize, page, search, sort, fields, body, cancellationToken).HandleApiException();
-
-    public async ValueTask<Result<LinkedOfPublishStoryResponse>> PublishStoryAsync(
-        Ulid id,
-        string? fields = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        return id == Ulid.Empty
-            ? (Result<LinkedOfPublishStoryResponse>)DomainError.EmptyUlid
-            : await client.PublishStoryAsync(id.ToString(), fields, cancellationToken).HandleApiException();
-    }
-
-    public async ValueTask<Result<LinkedOfPublishStoryResponse>> PublishStoryAsync(
-        string id,
-        string? fields = null,
-        CancellationToken cancellationToken = default
-    ) => !Ulid.TryParse(id, out var ulid)
-        ? DomainError.InvalidUlid
-        : await PublishStoryAsync(ulid, fields, cancellationToken);
-
+    ) => await client.GetOwnStoriesAsync(pageSize, page, search, sort, fields, body, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUnpublishStoryResponse>> UnpublishStoryAsync(
         Ulid id,

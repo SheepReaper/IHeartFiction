@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
-using IHFiction.FictionApi.Authors;
+using IHFiction.FictionApi.Common;
 
 namespace IHFiction.IntegrationTests.Authors;
 

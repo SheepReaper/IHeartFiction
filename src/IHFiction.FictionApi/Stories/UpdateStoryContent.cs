@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -7,16 +8,15 @@ using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Markdown;
 
 using MongoDB.Bson;
-using IHFiction.SharedKernel.Linking;
-using System.Net.Mime;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -64,7 +64,7 @@ internal sealed class UpdateStoryContent(
         string? Note2 = null
     );
 
-    internal sealed record Query(
+    internal sealed record UpdateStoryContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateStoryContentResponse>]
         string? Fields = null
@@ -203,13 +203,11 @@ internal sealed class UpdateStoryContent(
     {
         public string Name => EndpointName;
 
-
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPut("stories/{id:ulid}/content", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] UpdateStoryContentQuery query,
                 [FromBody] UpdateStoryContentBody body,
                 UpdateStoryContent useCase,
                 ClaimsPrincipal claimsPrincipal,

@@ -15,7 +15,7 @@ public class AddChapterToStoryTests
     public void AddChapterToStoryRequest_WithValidData_IsValid()
     {
         // Arrange
-        var request = new AddChapterToStory.AddChapterToStoryBody(
+        var request = new CreateStoryChapter.CreateStoryChapterBody(
             Title: "Chapter 1: The Beginning",
             Content: "This is the chapter content.",
             Note1: "Author's note",
@@ -33,7 +33,7 @@ public class AddChapterToStoryTests
     public void AddChapterToStoryRequest_WithMinimalData_IsValid()
     {
         // Arrange
-        var request = new AddChapterToStory.AddChapterToStoryBody(
+        var request = new CreateStoryChapter.CreateStoryChapterBody(
             Title: "Chapter Title",
             Content: "X"); // Minimum 1 character
 
@@ -49,7 +49,7 @@ public class AddChapterToStoryTests
     public void AddChapterToStoryRequest_WithEmptyTitle_FailsValidation()
     {
         // Arrange
-        var request = new AddChapterToStory.AddChapterToStoryBody(
+        var request = new CreateStoryChapter.CreateStoryChapterBody(
             Title: "",
             Content: "Valid content");
 
@@ -65,7 +65,7 @@ public class AddChapterToStoryTests
     public void AddChapterToStoryRequest_WithEmptyContent_FailsValidation()
     {
         // Arrange
-        var request = new AddChapterToStory.AddChapterToStoryBody(
+        var request = new CreateStoryChapter.CreateStoryChapterBody(
             Title: "Valid Title",
             Content: "");
 
@@ -82,7 +82,7 @@ public class AddChapterToStoryTests
     {
         // Arrange
         var longTitle = new string('a', 201); // Exceeds 200 character limit
-        var request = new AddChapterToStory.AddChapterToStoryBody(
+        var request = new CreateStoryChapter.CreateStoryChapterBody(
             Title: longTitle,
             Content: "Valid content");
 
@@ -98,7 +98,7 @@ public class AddChapterToStoryTests
     public void AddChapterToStoryRequest_WithHarmfulContentInTitle_FailsValidation()
     {
         // Arrange
-        var request = new AddChapterToStory.AddChapterToStoryBody(
+        var request = new CreateStoryChapter.CreateStoryChapterBody(
             Title: "<script>alert('xss')</script>",
             Content: "Valid content");
 
@@ -127,7 +127,7 @@ public class AddChapterToStoryTests
         var contentPublishedAt = DateTime.UtcNow;
 
         // Act
-        var response = new AddChapterToStory.AddChapterToStoryResponse(
+        var response = new CreateStoryChapter.CreateStoryChapterResponse(
             storyId,
             "Test Story",
             storyUpdatedAt,

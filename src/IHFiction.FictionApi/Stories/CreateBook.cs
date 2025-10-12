@@ -9,6 +9,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -50,7 +51,7 @@ internal sealed class CreateBook(
         string? Description = null
     );
 
-    internal sealed record Query(
+    internal sealed record CreateBookQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<CreateBookResponse>]
         string? Fields = null
@@ -141,7 +142,7 @@ internal sealed class CreateBook(
         {
             return builder.MapPost("stories/{id:ulid}/books", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] CreateBookQuery query,
                 [FromBody] CreateBookBody body,
                 CreateBook useCase,
                 ClaimsPrincipal claimsPrincipal,

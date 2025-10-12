@@ -2,18 +2,19 @@ using System.ComponentModel.DataAnnotations;
 
 using Microsoft.AspNetCore.Mvc;
 
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
-using IHFiction.Data.Stories.Domain;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUseCase, INameEndpoint<GetPublishedStory>
 {
-    internal sealed record Query(
+    internal sealed record GetPublishedStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetPublishedStoryResponse>]
         string? Fields = null
@@ -162,12 +163,11 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     {
         public string Name => EndpointName;
 
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapGet("stories/{id:ulid}", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] GetPublishedStoryQuery query,
                 GetPublishedStory useCase,
                 CancellationToken cancellationToken) =>
             {

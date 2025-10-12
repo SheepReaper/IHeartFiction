@@ -4,14 +4,14 @@ namespace IHFiction.SharedWeb.Services;
 
 public class AuthorService(IFictionApiClient client)
 {
-    public async ValueTask<Result<LinkedOfGetAuthorByIdResponse>> GetAuthorByIdAsync(
+    public async ValueTask<Result<LinkedOfGetAuthorResponse>> GetAuthorAsync(
         string authorId,
         string? fields = null,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            return await client.GetAuthorByIdAsync(authorId, fields, cancellationToken);
+            return await client.GetAuthorAsync(authorId, fields, cancellationToken);
         }
         catch (ApiException ex)
         {

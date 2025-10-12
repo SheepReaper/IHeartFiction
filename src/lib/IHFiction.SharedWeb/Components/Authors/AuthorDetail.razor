@@ -118,7 +118,7 @@ else if (author != null)
 @code {
     [Parameter, EditorRequired] public string AuthorId { get; set; } = null!;
 
-    private LinkedOfGetAuthorByIdResponse? author;
+    private LinkedOfGetAuthorResponse? author;
     private bool isLoading = true;
     private string? errorMessage;
 
@@ -140,7 +140,7 @@ else if (author != null)
         isLoading = true;
         errorMessage = null;
 
-        var result = await AuthorService.GetAuthorByIdAsync(AuthorId);
+        var result = await AuthorService.GetAuthorAsync(AuthorId);
 
         if (result.IsSuccess)
         {

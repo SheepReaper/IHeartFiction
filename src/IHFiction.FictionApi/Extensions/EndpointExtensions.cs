@@ -2,7 +2,7 @@ using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Infrastructure;
 
 namespace IHFiction.FictionApi.Extensions;
 

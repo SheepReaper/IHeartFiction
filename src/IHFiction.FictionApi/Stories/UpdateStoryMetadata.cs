@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -7,13 +8,13 @@ using Microsoft.EntityFrameworkCore;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Validation;
 
 using Error = IHFiction.SharedKernel.Infrastructure.DomainError;
-using IHFiction.SharedKernel.Linking;
-using System.Net.Mime;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -51,7 +52,7 @@ internal sealed class UpdateStoryMetadata(
         string? Description = null
     );
 
-    internal sealed record Query(
+    internal sealed record UpdateStoryMetadataQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateStoryMetadataResponse>]
         string? Fields = null
@@ -138,7 +139,7 @@ internal sealed class UpdateStoryMetadata(
         {
             return builder.MapPut("stories/{id:ulid}", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] UpdateStoryMetadataQuery query,
                 [FromBody] UpdateStoryMetadataBody body,
                 UpdateStoryMetadata useCase,
                 ClaimsPrincipal claimsPrincipal,

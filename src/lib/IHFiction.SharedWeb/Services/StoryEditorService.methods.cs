@@ -60,7 +60,7 @@ public partial class StoryEditorService(
     {
         if (CurrentStory?.Id is null) return Result.Failure<ChapterEditorModel>(Errors.NoStoryId);
 
-        var newChapter = new AddChapterToStoryBody { Title = $"New Chapter {CurrentStory.Chapters.Count + 1}", Content = "# New Chapter" };
+        var newChapter = new CreateStoryChapterBody { Title = $"New Chapter {CurrentStory.Chapters.Count + 1}", Content = "# New Chapter" };
         var result = await chapterService.AddChapterToStoryAsync(CurrentStory.Id.Value, newChapter, null, cancellationToken);
 
         if (result.IsFailure) return result.DomainError;
@@ -89,7 +89,7 @@ public partial class StoryEditorService(
     {
         if (CurrentBook?.Id is null) return Result.Failure<ChapterEditorModel>(Errors.NoBookId);
 
-        var newChapter = new AddChapterToBookBody { Title = $"New Chapter {CurrentBook.Chapters.Count + 1}", Content = "# New Chapter" };
+        var newChapter = new CreateBookChapterBody { Title = $"New Chapter {CurrentBook.Chapters.Count + 1}", Content = "# New Chapter" };
         var result = await bookService.AddChapterToBookAsync(CurrentBook.Id.Value, newChapter, null, cancellationToken);
 
         if (result.IsFailure) return result.DomainError;

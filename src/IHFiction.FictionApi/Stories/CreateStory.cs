@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -8,13 +9,13 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Validation;
 
 using Error = IHFiction.SharedKernel.Infrastructure.DomainError;
-using System.Net.Mime;
-using IHFiction.SharedKernel.Linking;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -57,7 +58,7 @@ internal sealed class CreateStory(
         string? StoryType = StoryType.SingleBody
     );
 
-    internal sealed record Query(
+    internal sealed record CreateStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<CreateStoryResponse>]
         string? Fields = null
@@ -145,7 +146,7 @@ internal sealed class CreateStory(
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPost("stories", async (
-                [AsParameters] Query query,
+                [AsParameters] CreateStoryQuery query,
                 [FromBody] CreateStoryBody body,
                 CreateStory useCase,
                 ClaimsPrincipal claimsPrincipal,

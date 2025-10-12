@@ -9,7 +9,7 @@ using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Authors;
-using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Infrastructure;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -84,7 +84,7 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
-        var query = new ListAuthors.Query();
+        var query = new ListAuthors.ListAuthorsQuery();
         var result = await _useCase.HandleAsync(query, TestContext.Current.CancellationToken);
 
         // Assert
@@ -147,7 +147,7 @@ public class ListAuthorsTests : BaseIntegrationTest, IConfigureServices<ListAuth
         await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
-        var query = new ListAuthors.Query();
+        var query = new ListAuthors.ListAuthorsQuery();
         var result = await _useCase.HandleAsync(query, TestContext.Current.CancellationToken);
 
         // Assert

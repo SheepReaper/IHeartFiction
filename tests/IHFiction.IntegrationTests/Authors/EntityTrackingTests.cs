@@ -9,6 +9,7 @@ using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Account;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -92,12 +93,12 @@ public class EntityTrackingTests : BaseIntegrationTest, IConfigureServices<Entit
             new Claim(ClaimTypes.Name, "testuser")
         ], "test"));
 
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             "Updated bio through complete workflow test."
         );
 
         // Act - Execute the complete update workflow
-        var useCase = new UpdateAuthorProfile(_dbContext, authService);
+        var useCase = new UpdateOwnAuthorProfile(_dbContext, authService);
         var result = await useCase.HandleAsync(updateRequest, claims, TestContext.Current.CancellationToken);
 
         // Assert

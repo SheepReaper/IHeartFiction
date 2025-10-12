@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -34,7 +34,7 @@ internal sealed class PublishStory(
         public static readonly DomainError OnlyOwnerCanPublish = new("PublishStory.OnlyOwnerCanPublish", "Only the story owner can publish the story.");
     }
 
-    internal sealed record Query(
+    internal sealed record PublishStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<PublishStoryResponse>]
         string? Fields = null
@@ -130,12 +130,11 @@ internal sealed class PublishStory(
     {
         public string Name => EndpointName;
 
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPost("stories/{id:ulid}/publish", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] PublishStoryQuery query,
                 PublishStory useCase,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>

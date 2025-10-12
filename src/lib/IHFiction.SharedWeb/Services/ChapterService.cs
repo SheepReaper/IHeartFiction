@@ -5,14 +5,14 @@ namespace IHFiction.SharedWeb.Services;
 
 public class ChapterService(IFictionApiClient client)
 {
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         Ulid chapterId,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetCurrentAuthorChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
+        : await client.GetOwnChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+    public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         string chapterId,
         string? fields = null,
         CancellationToken cancellationToken = default
@@ -20,14 +20,14 @@ public class ChapterService(IFictionApiClient client)
         ? DomainError.InvalidUlid
         : await GetCurrentAuthorChapterContentAsync(ulid, fields, cancellationToken);
 
-    public async ValueTask<Result<LinkedOfGetChapterContentResponse>> GetChapterContentAsync(
+    public async ValueTask<Result<LinkedOfGetPublishedChapterContentResponse>> GetChapterContentAsync(
         Ulid chapterId,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
-    public async ValueTask<Result<LinkedOfGetChapterContentResponse>> GetChapterContentAsync(
+        : await client.GetPublishedChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+    public async ValueTask<Result<LinkedOfGetPublishedChapterContentResponse>> GetChapterContentAsync(
         string chapterId,
         string? fields = null,
         CancellationToken cancellationToken = default
@@ -35,18 +35,18 @@ public class ChapterService(IFictionApiClient client)
         ? DomainError.InvalidUlid
         : await GetChapterContentAsync(ulid, fields, cancellationToken);
 
-    public async ValueTask<Result<LinkedOfAddChapterToStoryResponse>> AddChapterToStoryAsync(
+    public async ValueTask<Result<LinkedOfCreateStoryChapterResponse>> AddChapterToStoryAsync(
         Ulid storyId,
-        AddChapterToStoryBody body,
+        CreateStoryChapterBody body,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => storyId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.AddChapterToStoryAsync(storyId.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.CreateStoryChapterAsync(storyId.ToString(), body, fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfAddChapterToStoryResponse>> AddChapterToStoryAsync(
+    public async ValueTask<Result<LinkedOfCreateStoryChapterResponse>> AddChapterToStoryAsync(
         string storyId,
-        AddChapterToStoryBody body,
+        CreateStoryChapterBody body,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => !Ulid.TryParse(storyId, out var ulid)

@@ -6,11 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
-using IHFiction.SharedKernel.Linking;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -18,7 +19,7 @@ internal sealed class GetPublishedStoryContent(
     StoryDbContext storyDbContext,
     EntityLoaderService entityLoader) : IUseCase, INameEndpoint<GetPublishedStoryContent>
 {
-    internal sealed record Query(
+    internal sealed record GetPublishedStoryContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetPublishedStoryContentResponse>]
         string? Fields = null
@@ -106,13 +107,11 @@ internal sealed class GetPublishedStoryContent(
     {
         public string Name => EndpointName;
 
-
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapGet("stories/{id:ulid}/content", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] GetPublishedStoryContentQuery query,
                 GetPublishedStoryContent useCase,
                 CancellationToken cancellationToken) =>
             {

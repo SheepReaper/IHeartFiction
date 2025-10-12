@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -6,12 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Searching.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
-using System.Net.Mime;
 using IHFiction.SharedKernel.Linking;
 
 namespace IHFiction.FictionApi.Stories;
@@ -46,7 +46,7 @@ internal sealed class AddTagsToStory(
         string Tags
     );
 
-    internal sealed record Query(
+    internal sealed record AddTagsToStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<AddTagsToStoryResponse>]
         string? Fields = null
@@ -232,12 +232,11 @@ internal sealed class AddTagsToStory(
     {
         public string Name => EndpointName;
 
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPost("stories/{id:ulid}/tags", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] AddTagsToStoryQuery query,
                 [FromBody] AddTagsToStoryBody body,
                 AddTagsToStory useCase,
                 ClaimsPrincipal claimsPrincipal,

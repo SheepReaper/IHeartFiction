@@ -238,7 +238,7 @@ else if (story != null)
         isLoading = true;
         errorMessage = null;
 
-        var storyResult = await StoryService.GetStoryByIdAsync(StoryId);
+        var storyResult = await StoryService.GetStoryAsync(StoryId);
 
         if (storyResult.IsSuccess)
         {

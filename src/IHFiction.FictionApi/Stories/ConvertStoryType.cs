@@ -10,6 +10,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Infrastructure;
 
 namespace IHFiction.FictionApi.Stories;
@@ -209,7 +210,6 @@ internal sealed class ConvertStoryType(
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
-
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {

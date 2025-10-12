@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-using IHFiction.FictionApi.Authors;
+using IHFiction.FictionApi.Common;
 
 namespace IHFiction.FictionApi.Extensions;
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -8,12 +9,12 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Searching.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
-using System.Net.Mime;
 
 namespace IHFiction.FictionApi.Tags;
 
@@ -42,7 +43,7 @@ internal sealed class ListTags(
         string? Category = null
     );
 
-    internal sealed record Query(
+    internal sealed record ListTagsQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
         int? Page = 1,
 
@@ -95,7 +96,7 @@ internal sealed class ListTags(
         string DisplayFormat);
 
     public async Task<Result<PagedCollection<ListTagsItem>>> HandleAsync(
-        Query query,
+        ListTagsQuery query,
         ListTagsBody body,
         CancellationToken cancellationToken = default)
     {
@@ -142,7 +143,7 @@ internal sealed class ListTags(
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapGet("tags", async (
-                [AsParameters] Query query,
+                [AsParameters] ListTagsQuery query,
                 [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ListTagsBody? body,
                 ListTags useCase,
                 CancellationToken cancellationToken) =>

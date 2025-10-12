@@ -207,7 +207,7 @@ else if (_stories != null)
     {
         _isLoading = true;
         _errorMessage = null;
-        var result = await StoryService.GetCurrentAuthorStoriesAsync(new GetCurrentAuthorStoriesBody());
+        var result = await StoryService.GetCurrentAuthorStoriesAsync(new GetOwnStoriesBody());
         if (result.IsSuccess)
         {
             _stories = result.Value.Data;

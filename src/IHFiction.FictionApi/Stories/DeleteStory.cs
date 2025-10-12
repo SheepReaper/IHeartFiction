@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Infrastructure;
 
 using Error = IHFiction.SharedKernel.Infrastructure.DomainError;
@@ -72,7 +73,6 @@ internal sealed class DeleteStory(
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
-
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {

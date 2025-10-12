@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.SharedKernel.Infrastructure;
 
 namespace IHFiction.FictionApi.Common;

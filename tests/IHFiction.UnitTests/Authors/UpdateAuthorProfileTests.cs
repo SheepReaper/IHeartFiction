@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
-using IHFiction.FictionApi.Authors;
+using IHFiction.FictionApi.Account;
+
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.Validation;
@@ -17,7 +18,7 @@ public class UpdateAuthorProfileTests
     public void UpdateAuthorProfileRequest_WithValidBio_PassesValidation()
     {
         // Arrange
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             Bio: "This is a valid bio with meaningful content."
         );
 
@@ -34,7 +35,7 @@ public class UpdateAuthorProfileTests
     {
         // Arrange
         var longBio = new string('a', 2001); // Exceeds 2000 character limit
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             Bio: longBio
         );
 
@@ -50,7 +51,7 @@ public class UpdateAuthorProfileTests
     public void UpdateAuthorProfileRequest_Bio_HasCorrectValidationAttributes()
     {
         // Arrange
-        var requestType = typeof(UpdateAuthorProfile.UpdateAuthorProfileBody);
+        var requestType = typeof(UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody);
         var bioProperty = requestType.GetProperty("Bio");
 
         // Act
@@ -77,7 +78,7 @@ public class UpdateAuthorProfileTests
     public void UpdateAuthorProfileRequest_WithNullBio_PassesValidation()
     {
         // Arrange
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             Bio: null
         );
 
@@ -93,7 +94,7 @@ public class UpdateAuthorProfileTests
     public void UpdateAuthorProfileRequest_WithEmptyBio_FailsValidation()
     {
         // Arrange
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             Bio: ""
         );
 
@@ -110,7 +111,7 @@ public class UpdateAuthorProfileTests
     {
         // Arrange
         var shortBio = "Short"; // Less than 10 characters
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(shortBio);
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(shortBio);
 
         // Act
         var isValid = request.IsValid(out var errors);
@@ -125,7 +126,7 @@ public class UpdateAuthorProfileTests
     {
         // Arrange
         var bioWithExcessiveWhitespace = "This bio has      too many spaces in a row.";
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(bioWithExcessiveWhitespace);
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(bioWithExcessiveWhitespace);
 
         // Act
         var isValid = request.IsValid(out var errors);
@@ -142,7 +143,7 @@ public class UpdateAuthorProfileTests
     public void UpdateAuthorProfileRequest_WithValidBios_PassesValidation(string validBio)
     {
         // Arrange
-        var request = new UpdateAuthorProfile.UpdateAuthorProfileBody(validBio);
+        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(validBio);
 
         // Act
         var isValid = request.IsValid(out var errors);
@@ -157,9 +158,9 @@ public class UpdateAuthorProfileTests
     {
         // Arrange
         var bio = "Test bio content";
-        var request1 = new UpdateAuthorProfile.UpdateAuthorProfileBody(bio);
-        var request2 = new UpdateAuthorProfile.UpdateAuthorProfileBody(bio);
-        var request3 = new UpdateAuthorProfile.UpdateAuthorProfileBody("Different bio");
+        var request1 = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(bio);
+        var request2 = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(bio);
+        var request3 = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody("Different bio");
 
         // Act & Assert
         Assert.Equal(request1, request2);

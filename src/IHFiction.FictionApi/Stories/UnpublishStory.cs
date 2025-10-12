@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -32,7 +32,7 @@ internal sealed class UnpublishStory(
         public static readonly DomainError OnlyOwnerCanUnpublish = new("UnpublishStory.OnlyOwnerCanUnpublish", "Only the story owner can unpublish the story.");
     }
 
-    internal sealed record Query(
+    internal sealed record UnpublishStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UnpublishStoryResponse>]
         string? Fields = null
@@ -121,13 +121,11 @@ internal sealed class UnpublishStory(
     {
         public string Name => EndpointName;
 
-
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPost("stories/{id:ulid}/unpublish", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] UnpublishStoryQuery query,
                 UnpublishStory useCase,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>

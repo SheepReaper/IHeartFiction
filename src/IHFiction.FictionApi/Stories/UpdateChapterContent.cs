@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Mvc;
@@ -8,14 +9,14 @@ using Microsoft.Extensions.Options;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Markdown;
 using IHFiction.SharedKernel.Validation;
 
 using MongoDB.Bson;
-using IHFiction.SharedKernel.Linking;
-using System.Net.Mime;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -58,7 +59,7 @@ internal sealed class UpdateChapterContent(
         string? Note2 = null
     );
 
-    internal sealed record Query(
+    internal sealed record UpdateChapterContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateChapterContentResponse>]
         string? Fields = null
@@ -153,12 +154,11 @@ internal sealed class UpdateChapterContent(
     {
         public string Name => EndpointName;
 
-
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPut("chapters/{id:ulid}/content", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] UpdateChapterContentQuery query,
                 [FromBody] UpdateChapterContentBody body,
                 UpdateChapterContent useCase,
                 ClaimsPrincipal claimsPrincipal,

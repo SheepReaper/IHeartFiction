@@ -5,15 +5,15 @@ namespace IHFiction.SharedWeb.Services;
 
 public class BookService(IFictionApiClient client)
 {
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorBookContentResponse>> GetCurrentAuthorBookContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnBookContentResponse>> GetCurrentAuthorBookContentAsync(
         Ulid bookId,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => bookId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetCurrentAuthorBookContentAsync(bookId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetOwnBookContentAsync(bookId.ToString(), fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorBookContentResponse>> GetCurrentAuthorBookContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnBookContentResponse>> GetCurrentAuthorBookContentAsync(
         string bookId,
         string? fields = null,
         CancellationToken cancellationToken = default
@@ -37,18 +37,18 @@ public class BookService(IFictionApiClient client)
         ? DomainError.InvalidUlid
         : await UpdateBookMetadataAsync(ulid, body, cancellationToken);
 
-    public async ValueTask<Result<LinkedOfAddChapterToBookResponse>> AddChapterToBookAsync(
+    public async ValueTask<Result<LinkedOfCreateBookChapterResponse>> AddChapterToBookAsync(
         Ulid bookId,
-        AddChapterToBookBody body,
+        CreateBookChapterBody body,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => bookId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.AddChapterToBookAsync(bookId.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.CreateBookChapterAsync(bookId.ToString(), body, fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfAddChapterToBookResponse>> AddChapterToBookAsync(
+    public async ValueTask<Result<LinkedOfCreateBookChapterResponse>> AddChapterToBookAsync(
         string bookId,
-        AddChapterToBookBody body,
+        CreateBookChapterBody body,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => !Ulid.TryParse(bookId, out var ulid)

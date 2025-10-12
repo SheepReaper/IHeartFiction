@@ -11,23 +11,23 @@ public class AccountService(IFictionApiClient client)
         CancellationToken cancellationToken = default) => await client.RegisterAsAuthorAsync(body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedPagedCollectionOfAuthorStoryItem>> GetCurrentAuthorStoriesAsync(
-        GetCurrentAuthorStoriesBody body,
+        GetOwnStoriesBody body,
         int? pageSize = null,
         int? page = null,
         string? search = null,
         string? sort = null,
         string? fields = null,
-        CancellationToken cancellationToken = default) => await client.GetCurrentAuthorStoriesAsync(pageSize, page, search, sort, fields, body, cancellationToken).HandleApiException();
+        CancellationToken cancellationToken = default) => await client.GetOwnStoriesAsync(pageSize, page, search, sort, fields, body, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorStoryContentResponse>> GetCurrentAuthorStoryContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnStoryContentResponse>> GetCurrentAuthorStoryContentAsync(
         Ulid storyId,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => storyId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetCurrentAuthorStoryContentAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetOwnStoryContentAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorStoryContentResponse>> GetCurrentAuthorStoryContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnStoryContentResponse>> GetCurrentAuthorStoryContentAsync(
         string storyId,
         string? fields = null,
         CancellationToken cancellationToken = default
@@ -35,15 +35,15 @@ public class AccountService(IFictionApiClient client)
         ? DomainError.InvalidUlid
         : await GetCurrentAuthorStoryContentAsync(ulid, fields, cancellationToken);
 
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         Ulid chapterId,
         string? fields = null,
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetCurrentAuthorChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetOwnChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
 
-    public async ValueTask<Result<LinkedOfGetCurrentAuthorChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
+    public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         string chapterId,
         string? fields = null,
         CancellationToken cancellationToken = default

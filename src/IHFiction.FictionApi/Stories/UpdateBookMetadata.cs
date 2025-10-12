@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -52,7 +53,7 @@ internal sealed class UpdateBookMetadata(
         DateTime UpdatedAt
     );
 
-    internal sealed record Query(
+    internal sealed record UpdateBookMetadataQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateBookMetadataResponse>]
         string? Fields = null
@@ -123,7 +124,7 @@ internal sealed class UpdateBookMetadata(
         {
             return builder.MapPut("books/{id:ulid}", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] UpdateBookMetadataQuery query,
                 [FromBody] UpdateBookMetadataBody body,
                 UpdateBookMetadata useCase,
                 ClaimsPrincipal claimsPrincipal,

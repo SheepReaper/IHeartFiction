@@ -12,6 +12,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Account;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -37,7 +38,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         var testUserId = Guid.NewGuid();
         var testAuthor = await CreateTestAuthorAsync(testUserId, "Test Author", "Original bio content for testing.");
 
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             "Updated bio with new content that meets all validation requirements."
         );
 
@@ -52,7 +53,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         // Act
         var userService = new UserService(_dbContext);
         var authService = new AuthorizationService(_dbContext, userService);
-        var useCase = new UpdateAuthorProfile(_dbContext, authService);
+        var useCase = new UpdateOwnAuthorProfile(_dbContext, authService);
         var result = await useCase.HandleAsync(updateRequest, claims, TestContext.Current.CancellationToken);
 
         // Assert
@@ -77,7 +78,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
     public async Task UpdateAuthorProfile_WithUnauthorizedUser_Returns401()
     {
         // Arrange
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             "This should not be allowed without authentication."
         );
 
@@ -93,7 +94,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
     {
         // Arrange
         var nonExistentUserId = Guid.NewGuid();
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             "This user does not exist in the system."
         );
 
@@ -105,7 +106,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         // Act
         var userService = new UserService(_dbContext);
         var authService = new AuthorizationService(_dbContext, userService);
-        var useCase = new UpdateAuthorProfile(_dbContext, authService);
+        var useCase = new UpdateOwnAuthorProfile(_dbContext, authService);
 
         var result = await useCase.HandleAsync(updateRequest, claims, TestContext.Current.CancellationToken);
 
@@ -122,7 +123,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         await CreateTestAuthorAsync(testUserId, "Test Author", "Original bio content.");
 
         // Bio that's too short (less than 10 characters)
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody("Short");
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody("Short");
 
         var claims = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, testUserId.ToString()),
@@ -145,7 +146,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         var testUserId = Guid.NewGuid();
         await CreateTestAuthorAsync(testUserId, "Test Author", "Original bio to be cleared.");
 
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(null);
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(null);
 
         var claims = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, testUserId.ToString()),
@@ -155,7 +156,7 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         // Act
         var userService = new UserService(_dbContext);
         var authService = new AuthorizationService(_dbContext, userService);
-        var useCase = new UpdateAuthorProfile(_dbContext, authService);
+        var useCase = new UpdateOwnAuthorProfile(_dbContext, authService);
 
         var result = await useCase.HandleAsync(updateRequest, claims, TestContext.Current.CancellationToken);
 
@@ -191,7 +192,7 @@ I'm a **fantasy writer** who loves creating *magical worlds*.
 
 Visit my [website](https://example.com) for more info!";
 
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(markdownBio);
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(markdownBio);
 
         var claims = new ClaimsPrincipal(new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, testUserId.ToString()),
@@ -201,7 +202,7 @@ Visit my [website](https://example.com) for more info!";
         // Act
         var userService = new UserService(_dbContext);
         var authService = new AuthorizationService(_dbContext, userService);
-        var useCase = new UpdateAuthorProfile(_dbContext, authService);
+        var useCase = new UpdateOwnAuthorProfile(_dbContext, authService);
 
         var result = await useCase.HandleAsync(updateRequest, claims, TestContext.Current.CancellationToken);
 
@@ -257,7 +258,7 @@ Visit my [website](https://example.com) for more info!";
         var testUserId = Guid.NewGuid();
         var originalAuthor = await CreateTestAuthorAsync(testUserId, "Test Author", "Original bio.");
 
-        var updateRequest = new UpdateAuthorProfile.UpdateAuthorProfileBody(
+        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
             "Updated bio for response structure test."
         );
 
@@ -272,7 +273,7 @@ Visit my [website](https://example.com) for more info!";
         // Act
         var userService = new UserService(_dbContext);
         var authService = new AuthorizationService(_dbContext, userService);
-        var useCase = new UpdateAuthorProfile(_dbContext, authService);
+        var useCase = new UpdateOwnAuthorProfile(_dbContext, authService);
 
         var result = await useCase.HandleAsync(updateRequest, claims, TestContext.Current.CancellationToken);
 

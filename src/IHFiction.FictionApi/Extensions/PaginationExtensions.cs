@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Filtering;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;

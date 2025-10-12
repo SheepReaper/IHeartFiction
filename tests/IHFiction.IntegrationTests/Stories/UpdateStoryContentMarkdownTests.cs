@@ -10,7 +10,6 @@ using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Markdown;
@@ -18,6 +17,7 @@ using IHFiction.SharedKernel.Markdown;
 using MongoDB.Driver;
 
 using NSubstitute;
+using IHFiction.FictionApi.Common;
 
 namespace IHFiction.IntegrationTests.Stories;
 

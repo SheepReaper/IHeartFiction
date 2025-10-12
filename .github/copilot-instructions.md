@@ -268,7 +268,7 @@ Blazor Web App in **Interactive Server mode** with typed HTTP client generated f
 
 ### Testing Patterns
 
-**Unit Tests:** Service-based approach without DbContext mocking (see `tests/IHFiction.UnitTests/Authors/GetAuthorByIdServiceTests.cs`)
+**Unit Tests:** Service-based approach without DbContext mocking (see `tests/IHFiction.UnitTests/Authors/GetAuthorServiceTests.cs`)
 
 **Integration Tests:** Use Testcontainers for real database instances.
 

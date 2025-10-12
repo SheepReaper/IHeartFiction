@@ -6,10 +6,10 @@ namespace IHFiction.UnitTests.Stories;
 /// Unit tests for PublishStory functionality
 /// Tests response model construction and error codes
 /// </summary>
-public class PublishStoryTests
+public class PublishWorkTests
 {
     [Fact]
-    public void PublishStoryResponse_CanBeCreated()
+    public void PublishWorkResponse_CanBeCreated()
     {
         // Arrange
         var storyId = Ulid.NewUlid();
@@ -17,7 +17,7 @@ public class PublishStoryTests
         var updatedAt = DateTime.UtcNow.AddMinutes(1);
 
         // Act
-        var response = new PublishStory.PublishStoryResponse(
+        var response = new PublishWork.PublishWorkResponse(
             storyId,
             "Test Story",
             "A test story description",
@@ -25,19 +25,17 @@ public class PublishStoryTests
             updatedAt,
             true,  // HasContent
             false, // HasChapters
-            false, // HasBooks
             0);    // ChapterCount
 
         // Assert
-        Assert.Equal(storyId, response.StoryId);
+        Assert.Equal(storyId, response.WorkId);
         Assert.Equal("Test Story", response.Title);
-        Assert.Equal("A test story description", response.Description);
+        Assert.Equal("A test story description", response.Type);
         Assert.Equal(publishedAt, response.PublishedAt);
         Assert.Equal(updatedAt, response.UpdatedAt);
         Assert.True(response.HasContent);
-        Assert.False(response.HasChapters);
-        Assert.False(response.HasBooks);
-        Assert.Equal(0, response.ChapterCount);
+        Assert.False(response.HasChildren);
+        Assert.Equal(0, response.ChildCount);
     }
 
     [Fact]
@@ -49,7 +47,7 @@ public class PublishStoryTests
         var updatedAt = DateTime.UtcNow.AddMinutes(1);
 
         // Act
-        var response = new PublishStory.PublishStoryResponse(
+        var response = new PublishWork.PublishWorkResponse(
             storyId,
             "Chapter-based Story",
             "A story with chapters",
@@ -57,14 +55,12 @@ public class PublishStoryTests
             updatedAt,
             false, // HasContent
             true,  // HasChapters
-            false, // HasBooks
             5);    // ChapterCount
 
         // Assert
         Assert.False(response.HasContent);
-        Assert.True(response.HasChapters);
-        Assert.False(response.HasBooks);
-        Assert.Equal(5, response.ChapterCount);
+        Assert.True(response.HasChildren);
+        Assert.Equal(5, response.ChildCount);
     }
 
     [Fact]
@@ -76,7 +72,7 @@ public class PublishStoryTests
         var updatedAt = DateTime.UtcNow.AddMinutes(1);
 
         // Act
-        var response = new PublishStory.PublishStoryResponse(
+        var response = new PublishWork.PublishWorkResponse(
             storyId,
             "Series Story",
             "A story series with books",
@@ -84,14 +80,12 @@ public class PublishStoryTests
             updatedAt,
             false, // HasContent
             false, // HasChapters
-            true,  // HasBooks
             0);    // ChapterCount (books have their own chapters)
 
         // Assert
         Assert.False(response.HasContent);
-        Assert.False(response.HasChapters);
-        Assert.True(response.HasBooks);
-        Assert.Equal(0, response.ChapterCount);
+        Assert.False(response.HasChildren);
+        Assert.Equal(0, response.ChildCount);
     }
 
 

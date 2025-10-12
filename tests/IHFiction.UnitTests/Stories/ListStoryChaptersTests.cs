@@ -21,7 +21,7 @@ public class ListStoryChaptersTests
         var updatedAt = DateTime.UtcNow;
 
         // Act
-        var item = new ListStoryChapters.ListStoryChaptersItem(
+        var item = new ListPublishedStoryChapters.ListPublishedStoryChaptersItem(
             chapterId,
             "Chapter 1: The Beginning",
             0,    // Order
@@ -50,7 +50,7 @@ public class ListStoryChaptersTests
         var updatedAt = DateTime.UtcNow;
 
         // Act
-        var item = new ListStoryChapters.ListStoryChaptersItem(
+        var item = new ListPublishedStoryChapters.ListPublishedStoryChaptersItem(
             chapterId,
             "Draft Chapter",
             0,    // Order
@@ -74,14 +74,14 @@ public class ListStoryChaptersTests
     public void CollectionResponse_WithMultipleChapters_CanBeCreated()
     {
         // Arrange
-        var chapters = new List<ListStoryChapters.ListStoryChaptersItem>
+        var chapters = new List<ListPublishedStoryChapters.ListPublishedStoryChaptersItem>
         {
             new(Ulid.NewUlid(), "Chapter 1", 0, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, true, 1000),
             new(Ulid.NewUlid(), "Chapter 2", 1, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, false, 0) // Published chapters only
         };
 
         // Act
-        var response = new CollectionResponse<ListStoryChapters.ListStoryChaptersItem>(chapters.AsQueryable());
+        var response = new CollectionResponse<ListPublishedStoryChapters.ListPublishedStoryChaptersItem>(chapters.AsQueryable());
 
         // Assert
         Assert.Equal(2, response.Data.Count());
@@ -93,13 +93,13 @@ public class ListStoryChaptersTests
     public void CollectionResponse_WithSingleChapter_CanBeCreated()
     {
         // Arrange
-        var chapters = new List<ListStoryChapters.ListStoryChaptersItem>
+        var chapters = new List<ListPublishedStoryChapters.ListPublishedStoryChaptersItem>
         {
             new(Ulid.NewUlid(), "Chapter 1", 0, DateTime.UtcNow, DateTime.UtcNow, DateTime.UtcNow, true, 1000)
         };
 
         // Act
-        var response = new CollectionResponse<ListStoryChapters.ListStoryChaptersItem>(chapters.AsQueryable());
+        var response = new CollectionResponse<ListPublishedStoryChapters.ListPublishedStoryChaptersItem>(chapters.AsQueryable());
 
         // Assert
         Assert.Single(response.Data);

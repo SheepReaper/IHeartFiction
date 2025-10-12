@@ -255,7 +255,7 @@ else if (story != null)
     [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
 
     private LinkedOfGetPublishedStoryResponse? story;
-    private LinkedPagedCollectionOfListStoryChaptersItem? chapters;
+    private LinkedPagedCollectionOfListPublishedStoryChaptersItem? chapters;
     private bool isLoading = true;
     private string? errorMessage;
 
@@ -280,7 +280,7 @@ else if (story != null)
         isLoading = true;
         errorMessage = null;
 
-        var storyResult = await StoryService.GetStoryByIdAsync(StoryId);
+        var storyResult = await StoryService.GetStoryAsync(StoryId);
 
         if (storyResult.IsSuccess)
         {

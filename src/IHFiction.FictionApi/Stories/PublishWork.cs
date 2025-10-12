@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -32,7 +32,7 @@ internal sealed class PublishWork(
         public static readonly DomainError OnlyOwnerCanPublish = new("PublishWork.OnlyOwnerCanPublish", "Only the work owner can publish the work.");
     }
 
-    internal sealed record Query(
+    internal sealed record PublishWorkQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<PublishWorkResponse>]
         string? Fields = null
@@ -177,11 +177,12 @@ internal sealed class PublishWork(
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
+        
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapPost("works/{id:ulid}/publish", async (
                 [FromRoute] Ulid id,
-                [AsParameters] Query query,
+                [AsParameters] PublishWorkQuery query,
                 [FromBody] PublishWorkBody body,
                 PublishWork useCase,
                 ClaimsPrincipal claimsPrincipal,

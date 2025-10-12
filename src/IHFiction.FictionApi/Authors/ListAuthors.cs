@@ -8,6 +8,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -29,7 +30,7 @@ internal sealed class ListAuthors(
     /// <param name="Search">Optional search term to filter authors by name or biography.</param>
     /// <param name="Sort">Optional field to sort results by. Defaults to "name".</param>
     /// <param name="Fields">Optional comma-separated list of fields to include in the response.</param>
-    internal sealed record Query(
+    internal sealed record ListAuthorsQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
         int? Page = null,
 
@@ -73,7 +74,7 @@ internal sealed class ListAuthors(
         int PublishedStories);
 
     public async Task<Result<PagedCollection<ListAuthorsItem>>> HandleAsync(
-        Query query,
+        ListAuthorsQuery query,
         CancellationToken cancellationToken = default)
     {
         // Build the base query for authors with at least one published story
@@ -112,7 +113,7 @@ internal sealed class ListAuthors(
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapGet("authors", async (
-                [AsParameters] Query query,
+                [AsParameters] ListAuthorsQuery query,
                 ListAuthors useCase,
                 LinkService linker,
                 CancellationToken cancellationToken) =>
@@ -123,7 +124,7 @@ internal sealed class ListAuthors(
                         linker,
                         Name,
                         a => new(a, new List<LinkItem>() {
-                            linker.Create<GetAuthorById>("self", HttpMethods.Get, new{ a.Id })}),
+                            linker.Create<GetAuthor>("self", HttpMethods.Get, new{ a.Id })}),
                         query);
 
                 return result.ToOkResult(query);
