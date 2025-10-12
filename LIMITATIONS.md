@@ -33,3 +33,98 @@ The `AppHost.cs` file contains several configurations that are specific to a pro
 *   **HTTP-Only Endpoints:** The HTTPS endpoints for the API and web client are removed, and the HTTP endpoints are set to port 8080. This is done to work with an external reverse proxy that handles TLS termination.
 
 *   **Container Image Registry:** The container image names are prefixed with a container registry specified in the configuration. This needs to be configured for the target deployment environment.
+
+## API Framework Limitations
+
+### .NET 10 Minimal API Content Negotiation
+
+.NET 10's Minimal APIs have significant limitations regarding content negotiation that directly impact HATEOAS (Hypermedia as the Engine of Application State) implementations and custom media type support.
+
+#### Core Design Philosophy and Limitation
+
+Minimal APIs were designed with a "convention over configuration" philosophy that assumes JSON-first responses. The framework **lacks built-in content negotiation** - a fundamental limitation that prevents automatic response format selection based on client `Accept` headers.
+
+**Key Issues:**
+- No automatic `Accept` header parsing for response format selection
+- Response serialization is hardcoded to use the configured `JsonSerializerOptions`
+- Cannot conditionally return different response models based on requested content type
+
+#### `.Produces<T>()` and `.Accepts<T>()` Behavior
+
+The `.Produces<T>()` and `.Accepts<T>()` methods are **documentation-only** and do not enable runtime content negotiation:
+
+- `.Produces<T>()` generates OpenAPI metadata but doesn't affect response behavior
+- `.Accepts<T>()` documents request body types but doesn't enable automatic parsing
+- These methods only support **single content types per call** (typically `application/json`)
+
+**HATEOAS Challenge:**
+You cannot specify multiple content types like:
+```csharp
+.Produces<StoryResponse>("application/json")
+.Produces<Linked<StoryResponse>>("application/vnd.iheartfiction.hateoas+json")
+```
+
+#### OpenAPI Generation Limitations
+
+The OpenAPI generator does not support multiple response schemas per endpoint based on content type. All responses are hardcoded to `application/json` in the generated specification, regardless of actual runtime behavior.
+
+**GitHub Issue:** [dotnet/aspnetcore#56177](https://github.com/dotnet/aspnetcore/issues/56177) tracks this limitation.
+
+#### Current Project Decision
+
+Due to these limitations, this project has adopted a **universal HATEOAS approach** where all API responses include hypermedia links by default, rather than requiring clients to opt-in via specific `Accept` headers. This eliminates the content negotiation problem entirely while providing consistent hypermedia support.
+
+This decision may be revisited as the framework evolves and better content negotiation support becomes available.
+
+#### Alternative Approaches (If Content Negotiation Needed)
+
+**Manual Content Negotiation:**
+```csharp
+public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
+{
+    return builder.MapGet("/stories/{id}", async (
+        HttpContext context,
+        [FromRoute] Ulid id,
+        GetStoryUseCase useCase) =>
+    {
+        var result = await useCase.HandleAsync(id);
+        
+        var acceptHeader = context.Request.Headers.Accept.ToString();
+        
+        if (acceptHeader.Contains("application/vnd.iheartfiction.hateoas+json"))
+        {
+            return Results.Ok(result.ToLinked()); // HATEOAS-enhanced
+        }
+        
+        return Results.Ok(result.Value); // Plain response
+    })
+    .Produces<StoryResponse>("application/json")
+    .Produces<Linked<StoryResponse>>("application/vnd.iheartfiction.hateoas+json"); // Documentation only
+}
+```
+
+**Separate Endpoints:**
+```csharp
+// Standard endpoint
+builder.MapGet("/stories/{id}", standardHandler)
+    .Produces<StoryResponse>();
+
+// HATEOAS endpoint  
+builder.MapGet("/stories/{id}/hateoas", hateoasHandler)
+    .Produces<Linked<StoryResponse>>();
+```
+
+#### Performance and AOT Implications
+
+**AOT Compatibility:** Manual content negotiation doesn't require reflection and remains AOT-compatible. `HttpContext.Request.Headers.Accept` access is AOT-safe.
+
+**Performance:** String parsing of `Accept` headers has minimal overhead and can be optimized with `ReadOnlySpan<char>` operations.
+
+#### Framework Evolution Outlook
+
+Microsoft has acknowledged this limitation. Potential future solutions being discussed include:
+- Enhanced `.Produces()` overloads with content type parameters
+- Built-in content negotiation middleware for Minimal APIs  
+- Improved OpenAPI generation supporting multiple response schemas per endpoint
+
+Until these improvements are available, manual content negotiation or architectural decisions (like universal HATEOAS) remain the primary solutions.

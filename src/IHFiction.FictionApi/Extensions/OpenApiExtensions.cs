@@ -1,5 +1,3 @@
-using System.Reflection;
-
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OpenApi;
@@ -24,7 +22,10 @@ internal static class OpenApiExtensions
 
         document.Security ??= [];
 
-        if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider" && options.ConfigurationManager is not null)
+        // Skip OAuth2 configuration when running under API description server during build
+        var isApiDescriptionServer = Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);
+
+        if (!isApiDescriptionServer && options.ConfigurationManager is not null)
         {
             var oidcConfig = await options.ConfigurationManager.GetConfigurationAsync(cancellationToken);
 
@@ -256,17 +257,20 @@ internal static class OpenApiExtensions
             .AddSchemaTransformer(SchemaTransformer)
             .AddOperationTransformer(OperationTransformer));
 
-        return Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider"
+        // Skip cloudflare OpenAPI document when running under API description server
+        var isApiDescriptionServer = Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);
+
+        return isApiDescriptionServer
             ? services
             : services.AddOpenApi("cloudflare", options =>
         {
-            options.OpenApiVersion = OpenApiSpecVersion.OpenApi2_0;
+            options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
 
             options
                 .AddDocumentTransformer(CreatePrimaryDocumentTransformer(oidcScheme))
                 .AddDocumentTransformer((doc, ctx, ct) =>
                 {
-                    if(ctx.ApplicationServices.GetService<IConfiguration>()?["ApiBaseAddress"] is string apiBaseAddress)
+                    if (ctx.ApplicationServices.GetService<IConfiguration>()?["ApiBaseAddress"] is string apiBaseAddress)
                         doc.Servers = [new() { Url = apiBaseAddress.TrimEnd('/') }];
 
                     return Task.CompletedTask;

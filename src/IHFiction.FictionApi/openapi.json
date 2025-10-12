@@ -16,15 +16,388 @@
     "summary": "I❤️Fiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this."
   },
   "paths": {
-    "/tags": {
+    "/me/author": {
       "get": {
         "tags": [
-          "Tag Discovery"
+          "Current User"
         ],
-        "summary": "List Tags",
-        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
-        "operationId": "ListTags",
+        "summary": "Get Current Author Profile",
+        "description": "Retrieves the profile information and works for the currently authenticated author. Returns the author's personal information, biography, and lists of both collaborative and owned works. This endpoint requires authentication and author registration.",
+        "operationId": "GetOwnAuthorProfile",
         "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetOwnAuthorProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Register as Author",
+        "description": "Registers the currently authenticated user as an author, enabling them to create and manage stories. This process creates an author profile, assigns the author role in the identity system, and sets up the necessary permissions for content creation. This endpoint requires authentication but not existing author status.",
+        "operationId": "RegisterAsAuthor",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAsAuthorBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfRegisterAsAuthorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Update Author Profile",
+        "description": "Updates the profile information for the currently authenticated author. Allows modification of the author's biography and other profile details. The biography supports markdown formatting and is subject to content validation. This endpoint requires authentication and author registration.",
+        "operationId": "UpdateOwnAuthorProfile",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOwnAuthorProfileBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateOwnAuthorProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/books/{id}/content": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get My Book Content",
+        "description": "Retrieves the content of a book owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
+        "operationId": "GetOwnBookContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetOwnBookContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/chapters/{id}/content": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get My Chapter Content",
+        "description": "Retrieves the content of a chapter owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
+        "operationId": "GetOwnChapterContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetOwnChapterContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/stories": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get Current Author Stories",
+        "description": "Retrieves a paginated list of stories associated with the current authenticated author. Includes both owned stories and stories where the author is a collaborator. Supports filtering by publication status, ownership, tags, and search terms. Stories can be sorted by various fields. Requires authentication and author registration.",
+        "operationId": "GetOwnStories",
+        "parameters": [
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "50"
+          },
           {
             "name": "Page",
             "in": "query",
@@ -37,27 +410,9 @@
                 "integer",
                 "string"
               ],
-              "format": "int32",
-              "default": 1
+              "format": "int32"
             },
             "example": "1"
-          },
-          {
-            "name": "PageSize",
-            "in": "query",
-            "description": "Number of items to return per page",
-            "schema": {
-              "maximum": 200,
-              "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32",
-              "default": 50
-            },
-            "example": "50"
           },
           {
             "name": "Q",
@@ -75,10 +430,7 @@
             "in": "query",
             "description": "Comma-separated list of fields and sort directions to sort results by",
             "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string",
-              "default": "category"
+              "type": "string"
             },
             "example": "name asc, createdAt desc"
           },
@@ -103,7 +455,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/components/schemas/ListTagsBody"
+                    "$ref": "#/components/schemas/GetOwnStoriesBody"
                   }
                 ]
               }
@@ -121,12 +473,268 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListTagsItem"
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfAuthorStoryItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/stories/{id}/content": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get My Story Content",
+        "description": "Retrieves the content of a story owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
+        "operationId": "GetOwnStoryContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetOwnStoryContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authors/{id}": {
+      "get": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "Get Author by ID",
+        "description": "Retrieves detailed information about a specific author by their unique identifier. Returns the author's profile information and a list of their works. This is a public endpoint that does not require authentication.",
+        "operationId": "GetAuthor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetAuthorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authors": {
+      "get": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "List Authors",
+        "description": "Retrieves a paginated list of all authors who have published at least one story. Supports searching by author name or biography content. Authors can be sorted by name, creation date, or last update date. This is a public endpoint that does not require authentication.",
+        "operationId": "ListAuthors",
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "1-indexed page number for pagination",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "1"
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            },
+            "example": "50"
+          },
+          {
+            "name": "Q",
+            "in": "query",
+            "description": "Simple string to find in supported object fields.",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 2,
+              "type": "string"
+            },
+            "example": "my_term"
+          },
+          {
+            "name": "Sort",
+            "in": "query",
+            "description": "Comma-separated list of fields and sort directions to sort results by",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": "name"
+            },
+            "example": "name asc, createdAt desc"
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListAuthorsItem"
                 }
               }
             }
@@ -1923,77 +2531,14 @@
         }
       }
     },
-    "/authors/{id}": {
+    "/tags": {
       "get": {
         "tags": [
-          "Author Discovery"
+          "Tag Discovery"
         ],
-        "summary": "Get Author by ID",
-        "description": "Retrieves detailed information about a specific author by their unique identifier. Returns the author's profile information and a list of their works. This is a public endpoint that does not require authentication.",
-        "operationId": "GetAuthor",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Ulid"
-            }
-          },
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfGetAuthorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/authors": {
-      "get": {
-        "tags": [
-          "Author Discovery"
-        ],
-        "summary": "List Authors",
-        "description": "Retrieves a paginated list of all authors who have published at least one story. Supports searching by author name or biography content. Authors can be sorted by name, creation date, or last update date. This is a public endpoint that does not require authentication.",
-        "operationId": "ListAuthors",
+        "summary": "List Tags",
+        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
+        "operationId": "ListTags",
         "parameters": [
           {
             "name": "Page",
@@ -2007,7 +2552,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 1
             },
             "example": "1"
           },
@@ -2016,473 +2562,17 @@
             "in": "query",
             "description": "Number of items to return per page",
             "schema": {
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "pattern": "^-?(?:0|[1-9]\\d*)$",
               "type": [
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 50
             },
             "example": "50"
-          },
-          {
-            "name": "Q",
-            "in": "query",
-            "description": "Simple string to find in supported object fields.",
-            "schema": {
-              "maxLength": 100,
-              "minLength": 2,
-              "type": "string"
-            },
-            "example": "my_term"
-          },
-          {
-            "name": "Sort",
-            "in": "query",
-            "description": "Comma-separated list of fields and sort directions to sort results by",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string",
-              "default": "name"
-            },
-            "example": "name asc, createdAt desc"
-          },
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListAuthorsItem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/author": {
-      "get": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Get Current Author Profile",
-        "description": "Retrieves the profile information and works for the currently authenticated author. Returns the author's personal information, biography, and lists of both collaborative and owned works. This endpoint requires authentication and author registration.",
-        "operationId": "GetOwnAuthorProfile",
-        "parameters": [
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfGetOwnAuthorProfileResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Register as Author",
-        "description": "Registers the currently authenticated user as an author, enabling them to create and manage stories. This process creates an author profile, assigns the author role in the identity system, and sets up the necessary permissions for content creation. This endpoint requires authentication but not existing author status.",
-        "operationId": "RegisterAsAuthor",
-        "parameters": [
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterAsAuthorBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfRegisterAsAuthorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Update Author Profile",
-        "description": "Updates the profile information for the currently authenticated author. Allows modification of the author's biography and other profile details. The biography supports markdown formatting and is subject to content validation. This endpoint requires authentication and author registration.",
-        "operationId": "UpdateOwnAuthorProfile",
-        "parameters": [
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateOwnAuthorProfileBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfUpdateOwnAuthorProfileResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/books/{id}/content": {
-      "get": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Get My Book Content",
-        "description": "Retrieves the content of a book owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
-        "operationId": "GetOwnBookContent",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Ulid"
-            }
-          },
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfGetOwnBookContentResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/chapters/{id}/content": {
-      "get": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Get My Chapter Content",
-        "description": "Retrieves the content of a chapter owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
-        "operationId": "GetOwnChapterContent",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Ulid"
-            }
-          },
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfGetOwnChapterContentResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/stories": {
-      "get": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Get Current Author Stories",
-        "description": "Retrieves a paginated list of stories associated with the current authenticated author. Includes both owned stories and stories where the author is a collaborator. Supports filtering by publication status, ownership, tags, and search terms. Stories can be sorted by various fields. Requires authentication and author registration.",
-        "operationId": "GetOwnStories",
-        "parameters": [
-          {
-            "name": "PageSize",
-            "in": "query",
-            "description": "Number of items to return per page",
-            "schema": {
-              "maximum": 100,
-              "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            },
-            "example": "50"
-          },
-          {
-            "name": "Page",
-            "in": "query",
-            "description": "1-indexed page number for pagination",
-            "schema": {
-              "maximum": 2147483647,
-              "minimum": 1,
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            },
-            "example": "1"
           },
           {
             "name": "Q",
@@ -2500,7 +2590,10 @@
             "in": "query",
             "description": "Comma-separated list of fields and sort directions to sort results by",
             "schema": {
-              "type": "string"
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": "category"
             },
             "example": "name asc, createdAt desc"
           },
@@ -2525,7 +2618,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/components/schemas/GetOwnStoriesBody"
+                    "$ref": "#/components/schemas/ListTagsBody"
                   }
                 ]
               }
@@ -2543,105 +2636,12 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LinkedPagedCollectionOfAuthorStoryItem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/stories/{id}/content": {
-      "get": {
-        "tags": [
-          "Current User"
-        ],
-        "summary": "Get My Story Content",
-        "description": "Retrieves the content of a story owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
-        "operationId": "GetOwnStoryContent",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Ulid"
-            }
-          },
-          {
-            "name": "Fields",
-            "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
-            "schema": {
-              "maxLength": 50,
-              "minLength": 0,
-              "type": "string"
-            },
-            "example": "name,createdAt"
-          }
-        ],
-        "responses": {
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LinkedOfGetOwnStoryContentResponse"
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfListTagsItem"
                 }
               }
             }
@@ -5816,7 +5816,10 @@
   ],
   "tags": [
     {
-      "name": "Tag Discovery"
+      "name": "Current User"
+    },
+    {
+      "name": "Author Discovery"
     },
     {
       "name": "Story Management"
@@ -5825,10 +5828,7 @@
       "name": "Story Discovery"
     },
     {
-      "name": "Author Discovery"
-    },
-    {
-      "name": "Current User"
+      "name": "Tag Discovery"
     }
   ]
 }

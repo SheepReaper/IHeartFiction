@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Reflection;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -51,19 +51,27 @@ builder.Services.Configure<RouteOptions>(options => options.ConstraintMap.Add("u
 
 builder.Services.AddHttpContextAccessor();
 
-// Configure JSON serialization
+// Configure JSON serialization for AOT compatibility
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.WriteIndented = builder.Environment.IsDevelopment();
 
+    // Add custom converters (these work with AOT)
     options.SerializerOptions.Converters.Add(new UlidJsonConverter());
     options.SerializerOptions.Converters.Add(new ObjectIdJsonConverter());
     options.SerializerOptions.Converters.Add(new LinkedConverterFactory());
+
+    // Use source-generated JSON context for AOT compatibility
+    // Combine with default resolver to support types not yet in the context
+    options.SerializerOptions.TypeInfoResolverChain.Insert(0, FictionApiJsonSerializerContext.Default);
+
+    if (builder.Environment.IsDevelopment())
+        options.SerializerOptions.TypeInfoResolverChain.Add(new DefaultJsonTypeInfoResolver());
 });
 
-if (Assembly.GetEntryAssembly()?.GetName().Name != "GetDocument.Insider" && builder.Environment.IsProduction())
+if (!Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase) && builder.Environment.IsProduction())
 {
     builder.Services.AddDataProtection()
         .PersistKeysToDbContext<FictionDbContext>()
@@ -138,7 +146,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 
-        if (builder.Environment.IsDevelopment() || Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider")
+        if (builder.Environment.IsDevelopment() || Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase))
             options.RequireHttpsMetadata = false;
 
         else if (builder.Configuration["OidcAuthority"] is string authority)
