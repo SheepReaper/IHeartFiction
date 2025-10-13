@@ -32,6 +32,10 @@ static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocumen
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
+// Slim builder disables https support, add it back in development
+if (builder.Environment.IsDevelopment())
+    builder.WebHost.UseKestrelHttpsConfiguration();
+
 // Initialize shared services
 TimeProvider dateTime = TimeProvider.System;
 

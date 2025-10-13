@@ -14,6 +14,8 @@ namespace IHFiction.FictionApi.Extensions;
 
 internal static class OpenApiExtensions
 {
+    private static Type CreateLinkedType(Type innerType) => typeof(Linked<>).MakeGenericType(innerType);
+
     private static Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task> CreatePrimaryDocumentTransformer(string? oidcScheme) => async (document, context, cancellationToken) =>
     {
         var options = context.ApplicationServices
@@ -97,7 +99,7 @@ internal static class OpenApiExtensions
     {
         var t = context.JsonTypeInfo.Type;
 
-        if (t == typeof(Ulid) || t == typeof(Ulid?))
+        if (t == typeof(Ulid) || Nullable.GetUnderlyingType(t) == typeof(Ulid))
         {
             schema.Type = JsonSchemaType.Null | JsonSchemaType.String;
             schema.Description = "Universally Unique Lexicographically Sortable Identifier";
@@ -105,7 +107,7 @@ internal static class OpenApiExtensions
             schema.Example = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
         }
 
-        if (t == typeof(ObjectId) || t == typeof(ObjectId?))
+        if (t == typeof(ObjectId) || Nullable.GetUnderlyingType(t) == typeof(ObjectId))
         {
             schema.Type = JsonSchemaType.Null | JsonSchemaType.String;
             schema.Description = "MongoDB ObjectID";
@@ -161,7 +163,7 @@ internal static class OpenApiExtensions
             if (schema.Properties?.TryGetValue(dataName, out var data) == true
                 && data is OpenApiSchema ds && ds.Items is null)
             {
-                var linkedItem = typeof(Linked<>).MakeGenericType(t.GetGenericArguments()[0]);
+                var linkedItem = CreateLinkedType(t.GetGenericArguments()[0]);
                 var li = await context.GetOrCreateSchemaAsync(linkedItem, null, ct);
 
                 ds.Items = li is { DynamicRef: not null } lir
