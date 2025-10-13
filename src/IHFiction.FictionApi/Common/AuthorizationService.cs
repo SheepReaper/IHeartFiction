@@ -57,14 +57,14 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
 
         var author = authorResult.Value;
 
-        // Load story with related data
-        var query = context.Stories
-            .Include(s => s.Owner)
-            .Include(s => s.Authors)
-            .AsQueryable();
+        IQueryable<Story> query = context.Stories;
 
         if (includeDeleted)
             query = query.IgnoreQueryFilters();
+
+        // Load story with related data
+        query = query
+            .Include(s => s.Authors);
 
         var story = await query.FirstOrDefaultAsync(s => s.Id == storyId, cancellationToken);
 
@@ -102,14 +102,14 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
 
         var author = authorResult.Value;
 
-        // Load chapter with related data
-        var query = context.Chapters
-            .Include(c => c.Owner)
-            .Include(c => c.Authors)
-            .AsQueryable();
+        IQueryable<Chapter> query = context.Chapters;
 
         if (includeDeleted)
             query = query.IgnoreQueryFilters();
+
+        // Load chapter with related data
+        query = query
+            .Include(c => c.Authors);
 
         var chapter = await query.FirstOrDefaultAsync(c => c.Id == chapterId, cancellationToken);
 
@@ -137,13 +137,15 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
         if (authorResult.IsFailure) return authorResult.DomainError;
 
         var author = authorResult.Value;
-        var query = context.Books
-            .Include(b => b.Owner)
-            .Include(b => b.Authors)
-            .Include(b => b.Story)
-            .AsQueryable();
 
-        if (includeDeleted) query = query.IgnoreQueryFilters();
+        IQueryable<Book> query = context.Books;
+
+        if (includeDeleted) query = context.Books.IgnoreQueryFilters();
+
+        // TODO: test if loading is necessary
+        query = query
+            .Include(b => b.Authors)
+            .Include(b => b.Story);
 
         var book = await query.FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
 

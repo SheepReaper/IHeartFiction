@@ -21,16 +21,17 @@ internal sealed class EntityLoaderService(FictionDbContext context)
         bool asNoTracking = false,
         CancellationToken cancellationToken = default)
     {
-        var query = context.Stories
-            .Include(s => s.Owner)
-            .Include(s => s.Authors)
-            .AsQueryable();
+        IQueryable<Story> query = context.Stories;
 
         if (includeDeleted)
             query = query.IgnoreQueryFilters();
 
         if (asNoTracking)
             query = query.AsNoTracking();
+
+        query = query
+            .Include(s => s.Owner)
+            .Include(s => s.Authors);
 
         return await query.FirstOrDefaultAsync(s => s.Id == storyId, cancellationToken);
     }
@@ -45,20 +46,21 @@ internal sealed class EntityLoaderService(FictionDbContext context)
         bool asNoTracking = false,
         CancellationToken cancellationToken = default)
     {
-        var query = context.Stories
-            .Include(s => s.Owner)
-            .Include(s => s.Authors)
-            .Include(s => s.Tags)
-            .Include(s => s.Chapters)
-            .Include(s => s.Books)
-            .ThenInclude(b => b.Chapters)
-            .AsQueryable();
+        IQueryable<Story> query = context.Stories;
 
         if (includeDeleted)
             query = query.IgnoreQueryFilters();
 
         if (asNoTracking)
             query = query.AsNoTracking();
+
+        query = query
+            .Include(s => s.Owner)
+            .Include(s => s.Authors)
+            .Include(s => s.Tags)
+            .Include(s => s.Chapters)
+            .Include(s => s.Books)
+            .ThenInclude(b => b.Chapters);
 
         return await query.FirstOrDefaultAsync(s => s.Id == storyId, cancellationToken);
     }

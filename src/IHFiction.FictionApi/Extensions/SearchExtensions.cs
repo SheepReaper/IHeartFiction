@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 using IHFiction.FictionApi.Common;
@@ -26,6 +27,7 @@ internal static class SearchExtensions
         ISearchSupport request,
         params Expression<Func<T, string?>>[] selectors) => DoSearch(source, request.Search, selectors, caseInsensitive: true);
 
+    [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "string.ToUpper is not generic")]
     private static IQueryable<T> DoSearch<T>(
         this IQueryable<T> source,
         string? searchTerm,

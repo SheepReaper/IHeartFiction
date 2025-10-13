@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Infrastructure;
 
 using Error = IHFiction.SharedKernel.Infrastructure.DomainError;
@@ -25,7 +26,11 @@ internal sealed record ClientRepresentation(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("clientId")] string? ClientId);
 
-internal sealed class KeycloakAdminService(IOptions<KeycloakAdminClientOptions> options, IHttpClientFactory httpClientFactory, TimeProvider dt)
+internal sealed class KeycloakAdminService(
+    IOptions<KeycloakAdminClientOptions> options,
+    IHttpClientFactory httpClientFactory,
+    TimeProvider dt,
+    FictionApiJsonSerializerContext serializerContext)
 {
     internal static class Errors
     {
@@ -77,7 +82,7 @@ internal sealed class KeycloakAdminService(IOptions<KeycloakAdminClientOptions> 
 
         try
         {
-            var token = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(content);
+            var token = JsonSerializer.Deserialize(content, serializerContext.DictionaryStringJsonElement);
 
             if (token is null) return Error.Deserialization;
 
@@ -127,7 +132,7 @@ internal sealed class KeycloakAdminService(IOptions<KeycloakAdminClientOptions> 
 
         try
         {
-            var content = JsonSerializer.Serialize(new[] { role });
+            var content = JsonSerializer.Serialize([role], serializerContext.RoleRepresentationArray);
 
             using var body = new StringContent(
                 content,
@@ -161,7 +166,7 @@ internal sealed class KeycloakAdminService(IOptions<KeycloakAdminClientOptions> 
 
         if (!response.IsSuccessStatusCode) return Errors.GetReource;
 
-        var client = await response.Content.ReadFromJsonAsync<ClientRepresentation[]>(cancellationToken: cancellationToken);
+        var client = await response.Content.ReadFromJsonAsync(serializerContext.ClientRepresentationArray, cancellationToken);
 
         return client is null ? Error.Deserialization : client[0];
     }
@@ -191,7 +196,7 @@ internal sealed class KeycloakAdminService(IOptions<KeycloakAdminClientOptions> 
 
         if (!roleResponse.IsSuccessStatusCode) return clientId is null ? Errors.GetRealmRole : Errors.GetResourceRole;
 
-        var response = await roleResponse.Content.ReadFromJsonAsync<RoleRepresentation>(cancellationToken: cancellationToken);
+        var response = await roleResponse.Content.ReadFromJsonAsync(serializerContext.RoleRepresentation, cancellationToken);
 
         return response is null ? Error.Deserialization : response;
     }

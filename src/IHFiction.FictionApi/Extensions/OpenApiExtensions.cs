@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
-using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
-using IHFiction.SharedKernel.Pagination;
 
 using MongoDB.Bson;
 
@@ -14,8 +12,6 @@ namespace IHFiction.FictionApi.Extensions;
 
 internal static class OpenApiExtensions
 {
-    private static Type CreateLinkedType(Type innerType) => typeof(Linked<>).MakeGenericType(innerType);
-
     private static Func<OpenApiDocument, OpenApiDocumentTransformerContext, CancellationToken, Task> CreatePrimaryDocumentTransformer(string? oidcScheme) => async (document, context, cancellationToken) =>
     {
         var options = context.ApplicationServices
@@ -154,22 +150,6 @@ internal static class OpenApiExtensions
             arr.Items = item is { DynamicRef: not null } r
                 ? new OpenApiSchema { DynamicRef = r.DynamicRef }
                 : item;
-        }
-
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(LinkedPagedCollection<>))
-        {
-            var dataName = context.JsonTypeInfo.Options.PropertyNamingPolicy?.ConvertName(nameof(ICollectionResponse<>.Data)) ?? nameof(ICollectionResponse<>.Data);
-
-            if (schema.Properties?.TryGetValue(dataName, out var data) == true
-                && data is OpenApiSchema ds && ds.Items is null)
-            {
-                var linkedItem = CreateLinkedType(t.GetGenericArguments()[0]);
-                var li = await context.GetOrCreateSchemaAsync(linkedItem, null, ct);
-
-                ds.Items = li is { DynamicRef: not null } lir
-                    ? new OpenApiSchema { DynamicRef = lir.DynamicRef }
-                    : li;
-            }
         }
 
         if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Linked<>))

@@ -1,7 +1,9 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Authors;
+using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
 using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.Linking;
@@ -10,7 +12,13 @@ using IHFiction.SharedKernel.Pagination;
 namespace IHFiction.FictionApi.Infrastructure;
 
 
+// Keycloak
+[JsonSerializable(typeof(ClientRepresentation[]))]
+[JsonSerializable(typeof(RoleRepresentation[]))]
+
+
 // Common
+[JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 [JsonSerializable(typeof(Ulid))]
 
 

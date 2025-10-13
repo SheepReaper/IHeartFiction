@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 using Microsoft.AspNetCore.Mvc;
 
+using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -12,7 +13,7 @@ using IHFiction.SharedKernel.Pagination;
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class ListPublishedStoryChapters(
-    EntityLoaderService entityLoader,
+    FictionDbContext fictionDb,
     IPaginationService paginator) : IUseCase, INameEndpoint<ListPublishedStoryChapters>
 {
     internal static class Errors
@@ -58,11 +59,7 @@ internal sealed class ListPublishedStoryChapters(
         Ulid id,
         CancellationToken cancellationToken = default)
     {
-        // Note: Basic validation is now handled automatically by .NET 10's AddValidation()
-        // Business logic validation for allowed sort fields is handled in the endpoint
-
-        // Load the story with full details using the centralized entity loader
-        var story = await entityLoader.LoadStoryWithFullDetailsAsync(id, asNoTracking: true, cancellationToken: cancellationToken);
+        var story = await fictionDb.Stories.FindAsync([id], cancellationToken);
 
         if (story is null)
             return Errors.StoryNotFound;
@@ -72,7 +69,8 @@ internal sealed class ListPublishedStoryChapters(
             return Errors.StoryNotPublished;
 
         // Build chapter query - only show published chapters for public access
-        var chaptersQuery = story.Chapters.AsQueryable()
+        var chaptersQuery = fictionDb.Chapters
+            .Where(c => c.StoryId == id)
             .Where(c => c.PublishedAt != null)
             .OrderBy(c => c.PublishedAt);
 

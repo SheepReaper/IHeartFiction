@@ -172,22 +172,4 @@ internal static class ResponseMappingService
             ? Results.NoContent() 
             : MapErrorToHttpResult(result.DomainError);
     }
-
-    /// <summary>
-    /// Creates a custom success response with specific status code.
-    /// Used when you need a non-standard success response.
-    /// </summary>
-    public static IResult CustomSuccessResult<T>(
-        Result<T> result, 
-        int statusCode, 
-        Func<T, object>? responseMapper = null)
-    {
-        if (result.IsSuccess)
-        {
-            var responseData = responseMapper?.Invoke(result.Value) ?? result.Value;
-            return Results.Json(responseData, statusCode: statusCode);
-        }
-
-        return MapErrorToHttpResult(result.DomainError);
-    }
 }

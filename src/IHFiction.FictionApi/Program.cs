@@ -96,6 +96,7 @@ if (builder.Environment.IsProduction())
 
 // Configure shared infrastructure services
 builder.Services.AddSingleton(dateTime);
+builder.Services.AddSingleton(FictionApiJsonSerializerContext.Default);
 builder.Services.Configure<MarkdownOptions>(builder.Configuration.GetSection(MarkdownOptions.SectionName));
 
 // Configure database connections

@@ -23,12 +23,12 @@
     <!-- Enabled Implicitly with PublishAot -->
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
 
   <!-- AOT Incremental features -->
   <PropertyGroup>
     <!-- Enabled Implicitly with PublishAot -->
-    <!-- <EnableAotAnalyzer>true</EnableAotAnalyzer> -->
     <!-- <EnableTrimAnalyzer>true</EnableTrimAnalyzer> -->
     <!-- <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer> -->
   </PropertyGroup>
