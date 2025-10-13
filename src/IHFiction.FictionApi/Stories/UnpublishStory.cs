@@ -35,7 +35,7 @@ internal sealed class UnpublishStory(
     internal sealed record UnpublishStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UnpublishStoryResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

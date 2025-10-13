@@ -17,7 +17,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     internal sealed record GetPublishedStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetPublishedStoryResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

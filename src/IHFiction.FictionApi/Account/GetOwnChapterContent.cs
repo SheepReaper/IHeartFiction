@@ -22,7 +22,7 @@ internal sealed class GetOwnChapterContent(
     internal sealed record GetOwnChapterContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetOwnChapterContentResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     internal sealed record GetOwnChapterContentResponse(

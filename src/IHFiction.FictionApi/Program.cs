@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -68,9 +67,6 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     // Use source-generated JSON context for AOT compatibility
     // Combine with default resolver to support types not yet in the context
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, FictionApiJsonSerializerContext.Default);
-
-    if (builder.Environment.IsDevelopment())
-        options.SerializerOptions.TypeInfoResolverChain.Add(new DefaultJsonTypeInfoResolver());
 });
 
 if (!IsBuildEnvironment() && builder.Environment.IsProduction())

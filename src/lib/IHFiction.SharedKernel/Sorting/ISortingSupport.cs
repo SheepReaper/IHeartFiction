@@ -12,5 +12,5 @@ public interface ISortingSupport
     /// Defaults to implementation-specific value if not specified.
     /// </summary>
     /// <example>name</example>
-    string? Sort { get; }
+    string Sort { get; }
 }

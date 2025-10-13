@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+
 using IHFiction.SharedKernel.Infrastructure;
 
 namespace IHFiction.FictionApi.Extensions;
@@ -13,6 +15,18 @@ internal static class ErrorExtensions
 
         return Results.Problem(
             statusCode: GetStatusCode(error.Code),
+            // detail: error.Description,
+            extensions: extensions);
+    }
+
+    public static ProblemHttpResult ToProblemDetailsTypedResult(this DomainError error)
+    {
+        var extensions = new Dictionary<string, object?>()
+            {
+                {"domainError", new{error.Code, error.Description}}
+            };
+
+        return TypedResults.Problem(statusCode: GetStatusCode(error.Code),
             // detail: error.Description,
             extensions: extensions);
     }

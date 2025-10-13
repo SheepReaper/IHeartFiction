@@ -56,7 +56,7 @@ internal sealed class UpdateBookMetadata(
     internal sealed record UpdateBookMetadataQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateBookMetadataResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     public async Task<Result<UpdateBookMetadataResponse>> HandleAsync(

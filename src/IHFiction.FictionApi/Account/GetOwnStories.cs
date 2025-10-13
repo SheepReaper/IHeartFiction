@@ -42,17 +42,17 @@ internal sealed class GetOwnStories(
 
     internal sealed record GetOwnStoriesQuery(
         [property: Range(1, 100, ErrorMessage = "Page size must be between 1 and 100.")]
-        int? PageSize = null,
+        int PageSize = 10,
         [property: Range(1, int.MaxValue, ErrorMessage = "Page number must be greater than 0.")]
-        int? Page = null,
+        int Page = 1,
         [property: StringLength(100, ErrorMessage = "Search query must be 100 characters or less.")]
         [property: NoHarmfulContent]
         [property: FromQuery(Name = "Q")]
-        string? Search = null,
-        string? Sort = null,
+        string Search = "",
+        string Sort = "",
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<AuthorStoryItem>]
-        string? Fields = null
+        string Fields = ""
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [

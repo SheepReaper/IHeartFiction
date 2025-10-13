@@ -22,8 +22,6 @@ public class GetOwnStoriesTests
         // Assert
         Assert.True(isValid);
         Assert.Empty(errors);
-        Assert.Null(request.PageSize); // Defaults are applied in business logic, not in request object
-        Assert.Null(request.Page); // Defaults are applied in business logic, not in request object
         Assert.Null(request.Sort); // Default sort is applied in business logic
     }
 

@@ -44,14 +44,13 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
 
         configureOptions?.Invoke(pOptions);
 
-
-        page = Math.Clamp(page ?? pOptions.DefaultPage, 1, int.MaxValue);
-        pageSize = Math.Clamp(pageSize ?? pOptions.DefaultPageSize, 1, pOptions.MaxPageSize);
+        var boundPage = Math.Clamp(page ?? pOptions.DefaultPage, 1, int.MaxValue);
+        var boundPageSize = Math.Clamp(pageSize ?? pOptions.DefaultPageSize, 1, pOptions.MaxPageSize);
 
         // Validate against maximum page size
         return pageSize > pOptions.MaxPageSize
             ? throw new ArgumentException($"Page size {pageSize} exceeds maximum allowed size of {pOptions.MaxPageSize}.")
-            : new PaginationParams(page, pageSize);
+            : new PaginationParams(boundPage, boundPageSize);
     }
 
     /// <summary>
@@ -79,12 +78,12 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
 
         // Clamp requested dimensions
 
-        var pageSize = Math.Clamp(pagination.PageSize ?? _options.DefaultPageSize, 1, _options.MaxPageSize);
+        var pageSize = Math.Clamp(pagination.PageSize, 1, _options.MaxPageSize);
 
         // calculate the last page number based of the total count and page size
         var lastPageIndex = totalCount / pageSize;
 
-        var page = Math.Clamp(pagination.Page ?? _options.DefaultPage, 1, lastPageIndex + 1);
+        var page = Math.Clamp(pagination.Page, 1, lastPageIndex + 1);
 
         return query.ToPagedResult(totalCount, page, pageSize);
     }
@@ -95,5 +94,5 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
 /// All properties are non-nullable since defaults are handled by PaginationOptions.
 /// </summary>
 internal record PaginationParams(
-    int? Page = null,
-    int? PageSize = null) : IPaginationSupport;
+    int Page = 1,
+    int PageSize = 50) : IPaginationSupport;

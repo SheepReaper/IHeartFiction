@@ -24,7 +24,7 @@ internal sealed class GetOwnStoryContent(
     internal sealed record GetOwnStoryContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetOwnStoryContentResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     internal static class Errors

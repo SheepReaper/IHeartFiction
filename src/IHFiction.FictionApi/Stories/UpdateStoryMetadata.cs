@@ -55,7 +55,7 @@ internal sealed class UpdateStoryMetadata(
     internal sealed record UpdateStoryMetadataQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateStoryMetadataResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

@@ -22,7 +22,7 @@ internal sealed class GetPublishedStoryContent(
     internal sealed record GetPublishedStoryContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetPublishedStoryContentResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     internal static class Errors

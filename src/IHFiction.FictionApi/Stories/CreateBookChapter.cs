@@ -67,7 +67,7 @@ internal sealed class CreateBookChapter(
     internal sealed record CreateBookChapterQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<CreateBookChapterResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

@@ -20,7 +20,7 @@ internal sealed class GetOwnAuthorProfile(
     internal sealed record GetOwnAuthorProfileQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetOwnAuthorProfileResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

@@ -45,30 +45,22 @@ internal sealed class ListTags(
 
     internal sealed record ListTagsQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
-        int? Page = 1,
+        int Page = 1,
 
         [property: Range(1, 200, ErrorMessage = "Page size must be between 1 and 200.")]
-        int? PageSize = 50,
+        int PageSize = 50,
 
         [property: FromQuery(Name = "Q")]
         [property: StringLength(100, ErrorMessage = "Search term must be 100 characters or less.")]
-        string? Search = null,
+        string Search = "",
 
-
+        [property: StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
         string Sort = "category",
 
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListTagsItem>]
-        string? Fields = null
-    ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport
-    {
-        /// <summary>
-        /// Optional filter to show tags from a specific category only.
-        /// </summary>
-        /// <example>lol,me,you,them</example>
-        [StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
-        public string? Sort { get; set; } = Sort;
-    };
+        string Fields = ""
+    ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [
         new(nameof(Tag.Category)),

@@ -22,7 +22,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetAuthorResponse>]
         [property: DataMember(IsRequired = false)]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

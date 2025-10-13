@@ -61,7 +61,7 @@ internal sealed class CreateStory(
     internal sealed record CreateStoryQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<CreateStoryResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

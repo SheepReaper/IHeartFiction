@@ -30,7 +30,7 @@ internal sealed class ListPublishedStoryChapters(
     internal sealed record ListPublishedStoryChaptersQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListPublishedStoryChaptersItem>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

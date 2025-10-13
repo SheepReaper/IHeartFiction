@@ -40,7 +40,7 @@ internal sealed class GetPublishedChapterContent(
     internal sealed record GetPublishedChapterContentQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetPublishedChapterContentResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

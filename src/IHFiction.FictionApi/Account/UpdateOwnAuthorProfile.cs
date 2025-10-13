@@ -33,7 +33,7 @@ internal sealed class UpdateOwnAuthorProfile(
     internal sealed record UpdateOwnAuthorProfileQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UpdateOwnAuthorProfileResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

@@ -12,8 +12,25 @@
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(RuntimeIdentifier)' != '$(HostRuntimeIdentifier)' Or '$(ContainerRuntimeIdentifier)' != '$(HostRuntimeIdentifier)' ">
+  <PropertyGroup
+    Condition=" '$(RuntimeIdentifier)' != '$(HostRuntimeIdentifier)' Or '$(ContainerRuntimeIdentifier)' != '$(HostRuntimeIdentifier)' ">
     <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+  </PropertyGroup>
+  
+  <!-- AOT features -->
+  <PropertyGroup>
+    <!-- <PublishAot>true</PublishAot> -->
+    <!-- Enabled Implicitly with PublishAot -->
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
+  </PropertyGroup>
+
+  <!-- AOT Incremental features -->
+  <PropertyGroup>
+    <!-- Enabled Implicitly with PublishAot -->
+    <!-- <EnableAotAnalyzer>true</EnableAotAnalyzer> -->
+    <!-- <EnableTrimAnalyzer>true</EnableTrimAnalyzer> -->
+    <!-- <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer> -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,9 +58,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" 
-                      OutputItemType="Analyzer" 
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj"
+      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

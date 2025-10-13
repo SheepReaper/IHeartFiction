@@ -32,7 +32,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -105,7 +106,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -168,7 +170,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -251,7 +254,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -324,7 +328,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -394,7 +399,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 10
             },
             "example": "50"
           },
@@ -410,7 +416,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 1
             },
             "example": "1"
           },
@@ -421,7 +428,8 @@
             "schema": {
               "maxLength": 100,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "my_term"
           },
@@ -430,7 +438,8 @@
             "in": "query",
             "description": "Comma-separated list of fields and sort directions to sort results by",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name asc, createdAt desc"
           },
@@ -441,7 +450,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -530,7 +540,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -603,7 +614,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -663,7 +675,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 1
             },
             "example": "1"
           },
@@ -679,7 +692,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 30
             },
             "example": "50"
           },
@@ -690,7 +704,8 @@
             "schema": {
               "maxLength": 100,
               "minLength": 2,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "my_term"
           },
@@ -713,7 +728,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -766,7 +782,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -941,7 +958,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1044,7 +1062,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1139,7 +1158,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1232,7 +1252,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1333,7 +1354,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1459,7 +1481,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1557,6 +1580,9 @@
           }
         ],
         "responses": {
+          "204": {
+            "description": "No Content"
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -1586,9 +1612,6 @@
                 }
               }
             }
-          },
-          "204": {
-            "description": "No Content"
           }
         }
       },
@@ -1615,7 +1638,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1666,7 +1690,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1769,7 +1794,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1830,7 +1856,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1923,7 +1950,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -1984,7 +2012,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -2074,7 +2103,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 1
             },
             "example": "1"
           },
@@ -2090,7 +2120,8 @@
                 "integer",
                 "string"
               ],
-              "format": "int32"
+              "format": "int32",
+              "default": 50
             },
             "example": "50"
           },
@@ -2101,7 +2132,8 @@
             "schema": {
               "maxLength": 100,
               "minLength": 2,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "my_term"
           },
@@ -2124,7 +2156,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -2193,7 +2226,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -2276,7 +2310,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -2369,7 +2404,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -2452,7 +2488,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }
@@ -2581,7 +2618,8 @@
             "schema": {
               "maxLength": 100,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "my_term"
           },
@@ -2604,7 +2642,8 @@
             "schema": {
               "maxLength": 50,
               "minLength": 0,
-              "type": "string"
+              "type": "string",
+              "default": ""
             },
             "example": "name,createdAt"
           }

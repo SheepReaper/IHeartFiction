@@ -17,19 +17,12 @@ namespace IHFiction.FictionApi.Extensions;
 internal static class PaginationExtensions
 {
     public static IServiceCollection AddPagination(this IServiceCollection services, Action<PaginationOptions>? configureOptions = null) =>
-        AddPagination<PaginationOptions, PaginationService>(services, PaginationOptions.SectionName, configureOptions);
+        AddPagination(services, PaginationOptions.SectionName, configureOptions);
 
-    public static IServiceCollection AddPagination(this IServiceCollection services, string sectionName, Action<PaginationOptions>? configureOptions = null) =>
-        AddPagination<PaginationOptions, PaginationService>(services, sectionName, configureOptions);
-
-    public static IServiceCollection AddPagination<TConfig, TService>(this IServiceCollection services, string? sectionName = null, Action<TConfig>? configureOptions = null) where TService : class, IPaginationService where TConfig : class
+    public static IServiceCollection AddPagination(this IServiceCollection services, string sectionName, Action<PaginationOptions>? configureOptions = null)
     {
-        var builder = services.AddOptions<TConfig>();
-
-        if (sectionName is not null)
-        {
-            builder.BindConfiguration(sectionName);
-        }
+        var builder = services.AddOptions<PaginationOptions>();
+        builder.BindConfiguration(sectionName);
 
         if (configureOptions is not null)
         {
@@ -40,7 +33,7 @@ internal static class PaginationExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        services.TryAddSingleton<IPaginationService, TService>();
+        services.TryAddSingleton<IPaginationService, PaginationService>();
 
         return services;
     }

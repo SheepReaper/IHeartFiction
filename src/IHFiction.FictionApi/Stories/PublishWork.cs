@@ -35,7 +35,7 @@ internal sealed class PublishWork(
     internal sealed record PublishWorkQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<PublishWorkResponse>]
-        string? Fields = null
+        string Fields = ""
     ) : IDataShapingSupport;
 
     /// <summary>

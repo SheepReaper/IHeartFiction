@@ -32,21 +32,21 @@ internal sealed class ListAuthors(
     /// <param name="Fields">Optional comma-separated list of fields to include in the response.</param>
     internal sealed record ListAuthorsQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
-        int? Page = null,
+        int Page = 1,
 
         [property: Range(1, 100, ErrorMessage = "Page size must be between 1 and 100.")]
-        int? PageSize = null,
+        int PageSize = 30,
 
         [property: FromQuery(Name = "Q")]
         [property: StringLength(100, MinimumLength = 2, ErrorMessage = "Search term must be between 2 and 100 characters.")]
-        string? Search = null,
+        string Search = "",
 
         [property: StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
-        string? Sort = "name",
+        string Sort = "name",
 
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListAuthorsItem>]
-        string? Fields = null
+        string Fields = ""
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [
