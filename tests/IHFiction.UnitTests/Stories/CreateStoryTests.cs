@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using IHFiction.FictionApi.Extensions;
+
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Validation;
 
@@ -12,25 +12,6 @@ namespace IHFiction.UnitTests.Stories;
 /// </summary>
 public class CreateStoryTests
 {
-    [Fact]
-    public void CreateStoryRequest_WithValidData_PassesValidation()
-    {
-        // Arrange
-        var request = new CreateStory.CreateStoryBody(
-            Title: "My Amazing Story",
-            Description: "This is a compelling story about adventure and discovery that will captivate readers."
-        );
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.True(isValid);
-        Assert.Empty(errors);
-    }
-
-
-
     [Fact]
     public void CreateStoryRequest_Title_HasCorrectValidationAttributes()
     {

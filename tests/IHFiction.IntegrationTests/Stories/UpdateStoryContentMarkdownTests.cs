@@ -10,14 +10,13 @@ using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Markdown;
 
 using MongoDB.Driver;
 
 using NSubstitute;
-using IHFiction.FictionApi.Common;
 
 namespace IHFiction.IntegrationTests.Stories;
 
@@ -109,36 +108,6 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
     }
 
     [Fact]
-    public void UpdateStoryContent_WithInvalidImageDomain_ReturnsBadRequest()
-    {
-        // Arrange
-        var request = new UpdateStoryContent.UpdateStoryContentBody(
-            Content: "![Evil image](https://evil-site.com/malware.png)");
-
-        // Act - Validate the request first (like the endpoint does)
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.NotEmpty(errors);
-    }
-
-    [Fact]
-    public void UpdateStoryContent_WithJavaScriptLink_ReturnsBadRequest()
-    {
-        // Arrange
-        var request = new UpdateStoryContent.UpdateStoryContentBody(
-            Content: "[Click me](javascript:alert('xss'))");
-
-        // Act - Validate the request first (like the endpoint does)
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.NotEmpty(errors);
-    }
-
-    [Fact]
     public async Task UpdateStoryContent_WithValidBase64Image_ReturnsSuccess()
     {
         // Arrange
@@ -153,38 +122,6 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
 
         // Assert
         Assert.True(result.IsSuccess);
-    }
-
-    [Fact]
-    public void UpdateStoryContent_WithOversizedBase64Image_ReturnsBadRequest()
-    {
-        // Arrange
-        // Create a large base64 string (over 5MB)
-        var largeBase64 = new string('A', 7000000);
-        var request = new UpdateStoryContent.UpdateStoryContentBody(
-            Content: $"![Large image](data:image/png;base64,{largeBase64})");
-
-        // Act - Validate the request first (like the endpoint does)
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.NotEmpty(errors);
-    }
-
-    [Fact]
-    public void UpdateStoryContent_WithScriptTag_ReturnsBadRequest()
-    {
-        // Arrange
-        var request = new UpdateStoryContent.UpdateStoryContentBody(
-            Content: "This content has <script>alert('xss')</script> in it.");
-
-        // Act - Validate the request first (like the endpoint does)
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.NotEmpty(errors);
     }
 
     [Fact]

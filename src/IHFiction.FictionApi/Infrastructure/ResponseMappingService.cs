@@ -40,20 +40,6 @@ internal static class ResponseMappingService
     }
 
     /// <summary>
-    /// Maps a domain result to a Created HTTP result with route-based location.
-    /// Standardizes the creation response pattern for endpoints with route names.
-    /// </summary>
-    public static IResult CreatedAtRouteResult<T>(
-        Result<T> result, 
-        string routeName, 
-        Func<T, object> routeValuesFactory)
-        where T : class
-    {
-        return MapToHttpResult(result, value => 
-            Results.CreatedAtRoute(routeName, routeValuesFactory(value), value));
-    }
-
-    /// <summary>
     /// Maps a domain error to an appropriate HTTP result.
     /// Provides consistent error response format across all endpoints.
     /// </summary>

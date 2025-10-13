@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 using Microsoft.Extensions.Options;
 
 using IHFiction.FictionApi.Common;
@@ -19,7 +21,7 @@ internal static class KeycloakRealmAdminClientExtensions
     private const string DefaultRealm = "master";
 
     // Make for generic
-    public static IServiceCollection AddKeycloakRealmAdminClient<TService>(
+    public static IServiceCollection AddKeycloakRealmAdminClient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
         this IServiceCollection services,
         string keycloakHostUri,
         string clientId,
@@ -28,7 +30,7 @@ internal static class KeycloakRealmAdminClientExtensions
     ) where TService : class => services.AddKeycloakRealmAdminClient<TService>(new Uri(keycloakHostUri), clientId, realm, configureOptions);
 
     // Make for generic
-    public static IServiceCollection AddKeycloakRealmAdminClient<TService>(
+    public static IServiceCollection AddKeycloakRealmAdminClient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
         this IServiceCollection services,
         Uri keycloakHostUri,
         string clientId,
@@ -42,7 +44,7 @@ internal static class KeycloakRealmAdminClientExtensions
         configureOptions?.Invoke(options);
     });
 
-    public static IServiceCollection AddKeycloakRealmAdminClient<TService>(
+    public static IServiceCollection AddKeycloakRealmAdminClient<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TService>(
         this IServiceCollection services,
         Action<KeycloakAdminClientOptions> configureOptions
     ) where TService : class
@@ -72,7 +74,8 @@ internal static class KeycloakRealmAdminClientExtensions
         string realm
     ) => AddKeycloakRealmAdminClient<KeycloakAdminService>(services, GetServerUri(serviceName), clientId, realm);
 
-    private static string GetServerUri(string serviceName) {
+    private static string GetServerUri(string serviceName)
+    {
         return $"https+http://{serviceName}";
     }
 }

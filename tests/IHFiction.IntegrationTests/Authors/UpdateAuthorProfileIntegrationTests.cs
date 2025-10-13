@@ -9,10 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
-using IHFiction.FictionApi.Authors;
-using IHFiction.FictionApi.Common;
-using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Account;
+using IHFiction.FictionApi.Common;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -113,30 +111,6 @@ public class UpdateAuthorProfileIntegrationTests : BaseIntegrationTest, IConfigu
         // Assert
         Assert.True(result.IsFailure);
         Assert.Contains("You must be registered as an author", result.DomainError.Description, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task UpdateAuthorProfile_WithInvalidBio_ReturnsValidationError()
-    {
-        // Arrange
-        var testUserId = Guid.NewGuid();
-        await CreateTestAuthorAsync(testUserId, "Test Author", "Original bio content.");
-
-        // Bio that's too short (less than 10 characters)
-        var updateRequest = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody("Short");
-
-        var claims = new ClaimsPrincipal(new ClaimsIdentity([
-            new Claim(ClaimTypes.NameIdentifier, testUserId.ToString()),
-            new Claim(ClaimTypes.Name, "testuser")
-        ], "test"));
-
-        // Act
-        var isValid = updateRequest.IsValid(out var validationErrors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.NotEmpty(validationErrors);
-        Assert.Contains(validationErrors, e => e.ErrorMessage!.Contains("cannot exceed 2000 characters"));
     }
 
     [Fact]

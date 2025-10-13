@@ -52,7 +52,8 @@ builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 builder.Services.AddExceptionHandler<BadHttpRequestExceptionHandler>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.Configure<RouteOptions>(options => options.ConstraintMap.Add("ulid", typeof(UlidRouteConstraint)));
+builder.Services.AddRoutingCore()
+    .Configure<RouteOptions>(options => options.SetParameterPolicy<UlidRouteConstraint>("ulid"));
 
 builder.Services.AddHttpContextAccessor();
 

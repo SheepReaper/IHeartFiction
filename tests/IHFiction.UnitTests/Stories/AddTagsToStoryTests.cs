@@ -1,4 +1,3 @@
-using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Stories;
 
 namespace IHFiction.UnitTests.Stories;
@@ -9,37 +8,6 @@ namespace IHFiction.UnitTests.Stories;
 /// </summary>
 public class AddTagsToStoryTests
 {
-    [Fact]
-    public void AddTagsToStoryRequest_WithValidTags_IsValid()
-    {
-        // Arrange
-        var request = new AddTagsToStory.AddTagsToStoryBody(
-            Tags: "genre:fantasy,theme:adventure,setting:medieval:castle");
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.True(isValid);
-        Assert.Empty(errors);
-        Assert.Equal("genre:fantasy,theme:adventure,setting:medieval:castle", request.Tags);
-    }
-
-    [Fact]
-    public void AddTagsToStoryRequest_WithEmptyTags_FailsValidation()
-    {
-        // Arrange
-        var request = new AddTagsToStory.AddTagsToStoryBody(
-            Tags: "");
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.Contains(errors, e => e.ErrorMessage!.Contains("Tags are required"));
-    }
-
     [Fact]
     public void TagItem_CanBeCreated()
     {

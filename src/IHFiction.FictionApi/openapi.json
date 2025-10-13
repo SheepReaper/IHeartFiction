@@ -2729,6 +2729,7 @@
         "type": "object",
         "properties": {
           "tags": {
+            "maxLength": 50,
             "minLength": 1,
             "type": "string",
             "description": "List of tag strings to add to the story"

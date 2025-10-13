@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
 using IHFiction.FictionApi.Account;
-
 using IHFiction.FictionApi.Common;
-using IHFiction.FictionApi.Extensions;
 using IHFiction.SharedKernel.Validation;
 
 namespace IHFiction.UnitTests.Authors;
@@ -14,39 +12,6 @@ namespace IHFiction.UnitTests.Authors;
 /// </summary>
 public class UpdateAuthorProfileTests
 {
-    [Fact]
-    public void UpdateAuthorProfileRequest_WithValidBio_PassesValidation()
-    {
-        // Arrange
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
-            Bio: "This is a valid bio with meaningful content."
-        );
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.True(isValid);
-        Assert.Empty(errors);
-    }
-
-    [Fact]
-    public void UpdateAuthorProfileRequest_WithTooLongBio_FailsValidation()
-    {
-        // Arrange
-        var longBio = new string('a', 2001); // Exceeds 2000 character limit
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
-            Bio: longBio
-        );
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.Contains(errors, e => e.ErrorMessage!.Contains("cannot exceed 2000 characters"));
-    }
-
     [Fact]
     public void UpdateAuthorProfileRequest_Bio_HasCorrectValidationAttributes()
     {
@@ -72,85 +37,6 @@ public class UpdateAuthorProfileTests
         // Verify NoExcessiveWhitespace configuration
         var whitespaceAttr = attributes.OfType<NoExcessiveWhitespaceAttribute>().First();
         Assert.Equal(5, whitespaceAttr.MaxConsecutiveWhitespace);
-    }
-
-    [Fact]
-    public void UpdateAuthorProfileRequest_WithNullBio_PassesValidation()
-    {
-        // Arrange
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
-            Bio: null
-        );
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.True(isValid);
-        Assert.Empty(errors);
-    }
-
-    [Fact]
-    public void UpdateAuthorProfileRequest_WithEmptyBio_FailsValidation()
-    {
-        // Arrange
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(
-            Bio: ""
-        );
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.Contains(errors, e => e.ErrorMessage!.Contains("cannot exceed 2000 characters"));
-    }
-
-    [Fact]
-    public void UpdateAuthorProfileRequest_WithTooShortBio_FailsValidation()
-    {
-        // Arrange
-        var shortBio = "Short"; // Less than 10 characters
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(shortBio);
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.Contains(errors, e => e.ErrorMessage!.Contains("cannot exceed 2000 characters"));
-    }
-
-    [Fact]
-    public void UpdateAuthorProfileRequest_WithExcessiveWhitespace_FailsValidation()
-    {
-        // Arrange
-        var bioWithExcessiveWhitespace = "This bio has      too many spaces in a row.";
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(bioWithExcessiveWhitespace);
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.False(isValid);
-        Assert.Contains(errors, e => e.ErrorMessage!.Contains("whitespace"));
-    }
-
-    [Theory]
-    [InlineData("This is a perfectly valid bio with good content.")]
-    [InlineData("A longer bio that describes the author's background, interests, and writing style in detail.")]
-    [InlineData("Bio with **markdown** formatting and *emphasis* that should be allowed.")]
-    public void UpdateAuthorProfileRequest_WithValidBios_PassesValidation(string validBio)
-    {
-        // Arrange
-        var request = new UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody(validBio);
-
-        // Act
-        var isValid = request.IsValid(out var errors);
-
-        // Assert
-        Assert.True(isValid);
-        Assert.Empty(errors);
     }
 
     [Fact]

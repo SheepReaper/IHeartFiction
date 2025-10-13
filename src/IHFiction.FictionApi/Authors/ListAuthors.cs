@@ -124,7 +124,8 @@ internal sealed class ListAuthors(
                         linker,
                         Name,
                         a => new(a, new List<LinkItem>() {
-                            linker.Create<GetAuthor>("self", HttpMethods.Get, new{ a.Id })}),
+                            linker.Create<GetAuthor>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", a.Id.ToString()) })
+                        }),
                         query);
 
                 return result.ToOkResult(query);

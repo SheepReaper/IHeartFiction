@@ -8,14 +8,14 @@ internal sealed class LinkService(LinkGenerator linkGenerator, IHttpContextAcces
         string endpointName,
         string rel,
         string? method = null,
-        object? values = null)
+        IEnumerable<KeyValuePair<string, string?>>? values = null)
     {
         ArgumentNullException.ThrowIfNull(httpContextAccessor.HttpContext);
 
         var href = linkGenerator.GetUriByName(
            httpContextAccessor.HttpContext,
            endpointName,
-           values);
+           new RouteValueDictionary(values));
 
         return new LinkItem(
             href ?? throw new ArgumentException("Link generation failed due to uri generation parameters"),
@@ -26,5 +26,5 @@ internal sealed class LinkService(LinkGenerator linkGenerator, IHttpContextAcces
     public LinkItem Create<TUseCase>(
         string rel,
         string? method = null,
-        object? values = null) where TUseCase : INameEndpoint<TUseCase> => Create(TUseCase.EndpointName, rel, method, values);
+        IEnumerable<KeyValuePair<string, string?>>? values = null) where TUseCase : INameEndpoint<TUseCase> => Create(TUseCase.EndpointName, rel, method, values);
 }

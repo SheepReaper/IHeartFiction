@@ -22,16 +22,10 @@ internal static class PaginationExtensions
     public static IServiceCollection AddPagination(this IServiceCollection services, string sectionName, Action<PaginationOptions>? configureOptions = null)
     {
         var builder = services.AddOptions<PaginationOptions>();
+
         builder.BindConfiguration(sectionName);
 
-        if (configureOptions is not null)
-        {
-            builder.Configure(configureOptions);
-        }
-
-        builder
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+        if (configureOptions is not null) builder.Configure(configureOptions);
 
         services.TryAddSingleton<IPaginationService, PaginationService>();
 
@@ -116,7 +110,7 @@ internal static class PaginationExtensions
     )
     {
         return sourceResult.IsFailure
-            ? sourceResult.DomainError! 
+            ? sourceResult.DomainError!
             : new Linked<T>(sourceResult.Value, links ?? []);
     }
 
@@ -140,20 +134,20 @@ internal static class PaginationExtensions
         if (queryParams is ISearchSupport se) values.Add(nameof(ISearchSupport.Search), se.Search);
         if (queryParams is ISortingSupport so) values.Add(nameof(ISortingSupport.Sort), so.Sort);
 
-        List<LinkItem> links = [linker.Create(endpointName, "self", values: valuesObj.Clone())];
+        List<LinkItem> links = [linker.Create(endpointName, "self", values: values.Select(e => new KeyValuePair<string, string?>(e.Key, e.Value?.ToString())))];
 
         if (pagedCollection.PageSize * pagedCollection.CurrentPage < pagedCollection.TotalCount)
         {
             values[nameof(IPaginationSupport.Page)] = pagedCollection.CurrentPage + 1;
 
-            links.Add(linker.Create(endpointName, "next-page", values: valuesObj.Clone()));
+            links.Add(linker.Create(endpointName, "next-page", values: values.Select(e => new KeyValuePair<string, string?>(e.Key, e.Value?.ToString()))));
         }
 
         if (pagedCollection.CurrentPage > 1)
         {
             values[nameof(IPaginationSupport.Page)] = pagedCollection.CurrentPage - 1;
 
-            links.Add(linker.Create(endpointName, "previous-page", values: values));
+            links.Add(linker.Create(endpointName, "previous-page", values: values.Select(e => new KeyValuePair<string, string?>(e.Key, e.Value?.ToString()))));
         }
 
         if (extraCollectionLinks is not null)

@@ -28,6 +28,8 @@ internal static class SearchExtensions
         params Expression<Func<T, string?>>[] selectors) => DoSearch(source, request.Search, selectors, caseInsensitive: true);
 
     [UnconditionalSuppressMessage("AOT", "IL3050:Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.", Justification = "string.ToUpper is not generic")]
+    [UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "string.ToUpper won't be trimmed")]
+
     private static IQueryable<T> DoSearch<T>(
         this IQueryable<T> source,
         string? searchTerm,

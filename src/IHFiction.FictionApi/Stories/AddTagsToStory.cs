@@ -42,7 +42,7 @@ internal sealed class AddTagsToStory(
     /// <param name="Tags">List of tag strings to add to the story</param>
     internal sealed record AddTagsToStoryBody(
         [property: Required(ErrorMessage = "Tags are required.")]
-        [property: MinLength(1, ErrorMessage = "At least one tag must be provided.")]
+        [property: StringLength(50, MinimumLength = 1, ErrorMessage = "At least one tag must be provided.")]
         string Tags
     );
 

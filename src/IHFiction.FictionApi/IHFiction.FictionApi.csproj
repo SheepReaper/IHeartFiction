@@ -24,12 +24,12 @@
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
   <!-- AOT Incremental features -->
   <PropertyGroup>
     <!-- Enabled Implicitly with PublishAot -->
-    <!-- <EnableTrimAnalyzer>true</EnableTrimAnalyzer> -->
     <!-- <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer> -->
   </PropertyGroup>
 

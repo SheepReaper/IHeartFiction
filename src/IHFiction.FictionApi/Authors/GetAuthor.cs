@@ -91,7 +91,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
-        
+
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
             return builder.MapGet("authors/{id:ulid}", async (
@@ -105,8 +105,9 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
 
                 var okResult = result
                     .WithLinks([
-                        linker.Create<GetAuthor>("self", HttpMethods.Get, new { id }),
-                        linker.Create<UpdateOwnAuthorProfile>("update-profile", HttpMethods.Get, new { id })])
+                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())]),
+                        linker.Create<UpdateOwnAuthorProfile>("update-profile", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())])
+                    ])
                     .ToOkResult(query);
 
                 return okResult;

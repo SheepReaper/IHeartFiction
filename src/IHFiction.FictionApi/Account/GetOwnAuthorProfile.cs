@@ -102,7 +102,8 @@ internal sealed class GetOwnAuthorProfile(
 
                 return result
                     .WithLinks([
-                        linker.Create<GetAuthor>("self", HttpMethods.Get, new{ result.Value!.Id })
+                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", result.IsSuccess ? result.Value.Id.ToString() : null)]),
+                        linker.Create<UpdateOwnAuthorProfile>("update-profile", HttpMethods.Put),
                     ]).ToOkResult(query);
             })
             .WithSummary("Get Current Author Profile")
