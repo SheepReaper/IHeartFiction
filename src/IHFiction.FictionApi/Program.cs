@@ -29,7 +29,9 @@ using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
 using Scalar.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
+static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);
+
+var builder = WebApplication.CreateSlimBuilder(args);
 
 // Initialize shared services
 TimeProvider dateTime = TimeProvider.System;
@@ -71,7 +73,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
         options.SerializerOptions.TypeInfoResolverChain.Add(new DefaultJsonTypeInfoResolver());
 });
 
-if (!Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase) && builder.Environment.IsProduction())
+if (!IsBuildEnvironment() && builder.Environment.IsProduction())
 {
     builder.Services.AddDataProtection()
         .PersistKeysToDbContext<FictionDbContext>()
@@ -146,7 +148,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 
-        if (builder.Environment.IsDevelopment() || Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase))
+        if (builder.Environment.IsDevelopment() || IsBuildEnvironment())
             options.RequireHttpsMetadata = false;
 
         else if (builder.Configuration["OidcAuthority"] is string authority)
@@ -195,7 +197,6 @@ var app = builder.Build();
 // Configure middleware pipeline
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseHttpsRedirection();
 
 if (app.Environment.IsProduction())
 {
@@ -222,6 +223,12 @@ if (app.Environment.IsProduction())
 
     app.UseForwardedHeaders(options);
     app.UseCors();
+}
+else
+{
+    // In production we use a reverse proxy that handles TLS termination
+    // Not normally needed in development, but Keycloak may behave strangely without additional configuration
+    app.UseHttpsRedirection();
 }
 
 // Configure authentication and authorization

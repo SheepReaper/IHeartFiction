@@ -212,7 +212,7 @@ dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFict
 
 **Workaround:** See `LIMITATIONS.md` for docker-compose override approach.
 
-**Status:** Fixed in Aspire 9.5/9.4.3 (PR #11204 merged)
+**Status:** Fixed in Aspire 9.5/9.4.3 (PR https://github.com/dotnet/aspire/pull/11204 merged)
 
 **Notes:** The long-form workaround previously documented in `LIMITATIONS.md` has been removed from the repo (see commit history) now that the upstream fix is merged. If you are using an older Aspire CLI, the override documented in `LIMITATIONS.md` may still be required.
 
