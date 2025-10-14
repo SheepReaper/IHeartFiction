@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -13,11 +14,12 @@ using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Account;
 
 internal sealed class GetOwnBookContent(
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     FictionDbContext context,
     AuthorizationService authorizationService) : IUseCase, INameEndpoint<GetOwnBookContent>
 {
@@ -101,12 +103,9 @@ internal sealed class GetOwnBookContent(
         // Materialize chapters and join in-memory to avoid EF Core translation issues
         var chapters = book.Chapters.ToList();
         var workBodyIds = chapters.Select(c => c.WorkBodyId).ToList();
-        var workBodies = await storyDbContext.WorkBodies
-            .Where(wb => workBodyIds.Contains(wb.Id))
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
+        var cursor = workBodies.Find(wb => workBodyIds.Contains(wb.Id)).ToEnumerable(cancellationToken);
 
-        var chapterBodies = chapters.Join(workBodies, c => c.WorkBodyId, wb => wb.Id, (c, wb) => new BookContentChapterItem(
+        var chapterBodies = chapters.Join(cursor, c => c.WorkBodyId, wb => wb.Id, (c, wb) => new BookContentChapterItem(
             c.Id,
             c.Title,
             c.Order,

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
@@ -27,6 +28,9 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
 using Scalar.AspNetCore;
+using IHFiction.Data.Stories.Domain;
+
+[assembly: DbContext(typeof(FictionDbContext))]
 
 static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);
 
@@ -121,9 +125,10 @@ builder.AddMongoDBClient("stories-db",
         ))
 );
 
-builder.Services.AddDbContextFactory<StoryDbContext>((services, options) => options
-    .UseMongoDB(services.GetRequiredService<IMongoClient>(), "stories-db")
-    .UseSnakeCaseNamingConvention());
+builder.Services.AddSingleton(services => services
+    .GetRequiredService<IMongoClient>()
+    .GetDatabase("stories-db")
+    .GetCollection<WorkBody>("works"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddKeycloakJwtBearer("keycloak", realm: "fiction", JwtBearerDefaults.AuthenticationScheme, options =>
@@ -238,16 +243,20 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapOpenApi();
 
+#pragma warning disable S3878 // Arrays should not be created for params parameters
+
 app.MapScalarApiReference(o => o
-    .AddPreferredSecuritySchemes("OAuth2")
+    .AddPreferredSecuritySchemes(["OAuth2"])
     .AddHttpAuthentication("JWT", scheme => scheme
         .WithDescription("JWT with fiction-api audience."))
     .AddAuthorizationCodeFlow("OAuth2", flow => flow
         .WithClientId("fiction-api-docs")
-        .WithSelectedScopes("fiction_api"))
+        .WithSelectedScopes(["fiction_api"]))
     .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl));
+#pragma warning restore S3878 // Arrays should not be created for params parameters
 
 // Map endpoints
+
 app.MapEndpoints();
 app.MapDefaultEndpoints();
 

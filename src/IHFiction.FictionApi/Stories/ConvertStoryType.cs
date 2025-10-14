@@ -13,12 +13,14 @@ using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Infrastructure;
 
+using MongoDB.Driver;
+
 namespace IHFiction.FictionApi.Stories;
 
 
 internal sealed class ConvertStoryType(
     FictionDbContext context,
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     EntityLoaderService entityLoader,
     AuthorizationService authorizationService) : IUseCase, INameEndpoint<ConvertStoryType>
 {
@@ -30,6 +32,7 @@ internal sealed class ConvertStoryType(
         public static readonly DomainError DowngradeBookConditionNotMet = new("ConvertStoryType.DowngradeBookConditionNotMet", "To downgrade, the story must have exactly one book.");
         public static readonly DomainError UpgradeOneShotConditionNotMet = new("ConvertStoryType.UpgradeOneShotConditionNotMet", "To upgrade, the story must have a WorkBodyId.");
         public static readonly DomainError AlreadyAtTargetType = new("ConvertStoryType.AlreadyAtTargetType", "The story is already of the target type.");
+        public static readonly DomainError CommitWorkBodyFailed = new("ConvertStoryType.CommitWorkBodyFailed", "Failed to ensure work body exists in the story store.");
     }
 
     /// <summary>
@@ -102,12 +105,16 @@ internal sealed class ConvertStoryType(
                 // but continue so that relational story changes are saved below. Previously this
                 // returned early which skipped saving the relational context and resulted in no
                 // updates being persisted.
-                var exists = await storyDbContext.WorkBodies.AnyAsync(wb => wb.Id == chapter.WorkBodyId, ctx);
-                if (!exists)
-                {
-                    storyDbContext.WorkBodies.Add(new() { Id = chapter.WorkBodyId, Content = string.Empty });
+                var r = await workBodies.UpdateOneAsync(
+                    wb => wb.Id == chapter.WorkBodyId,
+                    Builders<WorkBody>.Update.SetOnInsert(wb => wb.Content, string.Empty),
+                    new UpdateOptions { IsUpsert = true },
+                    ctx);
 
-                    await storyDbContext.SaveChangesAsync(false, ctx);
+                if (!(r.IsAcknowledged && (r.MatchedCount > 0 || r.ModifiedCount > 0)))
+                {
+                    result = Errors.CommitWorkBodyFailed;
+                    throw new InvalidOperationException("Failed to ensure work body exists. Rolling back transaction.");
                 }
             }
 
@@ -116,7 +123,7 @@ internal sealed class ConvertStoryType(
         {
             if (result.IsFailure) return false;
 
-            if (await validator.Invoke(ctx) && (modifiedWork is null || (modifiedWork is Chapter chapter && await storyDbContext.WorkBodies.AnyAsync(wb => wb.Id == chapter.WorkBodyId, ctx)))) return true;
+            if (await validator.Invoke(ctx) && (modifiedWork is null || (modifiedWork is Chapter chapter && await workBodies.Find(wb => wb.Id == chapter.WorkBodyId).AnyAsync(ctx)))) return true;
 
             result = CommonErrors.Database.SaveFailed;
 
@@ -126,7 +133,6 @@ internal sealed class ConvertStoryType(
         if (result.IsFailure) return result;
 
         context.ChangeTracker.AcceptAllChanges();
-        storyDbContext.ChangeTracker.AcceptAllChanges();
 
         return result;
     }

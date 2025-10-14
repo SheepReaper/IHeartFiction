@@ -4,7 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -13,11 +13,12 @@ using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Account;
 
 internal sealed class GetOwnStoryContent(
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     EntityLoaderService entityLoader,
     AuthorizationService authorizationService) : IUseCase, INameEndpoint<GetOwnStoryContent>
 {
@@ -111,7 +112,7 @@ internal sealed class GetOwnStoryContent(
 
         if (story.WorkBodyId is not null)
         {
-            var body = await storyDbContext.WorkBodies.FirstOrDefaultAsync(b => b.Id == story.WorkBodyId, cancellationToken);
+            var body = await workBodies.Find(wb => wb.Id == story.WorkBodyId).FirstOrDefaultAsync(cancellationToken);
 
             if (body is null)
                 return Errors.ContentNotFound;

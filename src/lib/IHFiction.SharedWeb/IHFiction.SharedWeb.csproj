@@ -23,6 +23,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="Npgsql.DependencyInjection" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="NSwag.ApiDescription.Client" />
     <PackageReference Include="Sidio.Sitemap.Blazor" />
     <PackageReference Include="Ulid" />

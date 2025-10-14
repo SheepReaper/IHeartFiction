@@ -10,27 +10,12 @@
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
-  </PropertyGroup>
-
-  <PropertyGroup
-    Condition=" '$(RuntimeIdentifier)' != '$(HostRuntimeIdentifier)' Or '$(ContainerRuntimeIdentifier)' != '$(HostRuntimeIdentifier)' ">
-    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
-  </PropertyGroup>
-  
-  <!-- AOT features -->
-  <PropertyGroup>
     <!-- <PublishAot>true</PublishAot> -->
-    <!-- Enabled Implicitly with PublishAot -->
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
-    <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
-    <EnableAotAnalyzer>true</EnableAotAnalyzer>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 
-  <!-- AOT Incremental features -->
-  <PropertyGroup>
-    <!-- Enabled Implicitly with PublishAot -->
-    <!-- <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer> -->
+  <PropertyGroup Condition=" '$(RuntimeIdentifier)' != '$(HostRuntimeIdentifier)' Or '$(ContainerRuntimeIdentifier)' != '$(HostRuntimeIdentifier)' ">
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
   </PropertyGroup>
 
   <ItemGroup>
@@ -41,13 +26,19 @@
     <PackageReference Include="Keycloak.AuthServices.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.DynamicLinq" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.DependencyInjection" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Scalar.AspNetCore" />
   </ItemGroup>
 
@@ -58,8 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj"
-      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

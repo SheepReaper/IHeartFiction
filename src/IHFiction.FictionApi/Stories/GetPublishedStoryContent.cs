@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -12,11 +12,12 @@ using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class GetPublishedStoryContent(
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     EntityLoaderService entityLoader) : IUseCase, INameEndpoint<GetPublishedStoryContent>
 {
     internal sealed record GetPublishedStoryContentQuery(
@@ -84,9 +85,7 @@ internal sealed class GetPublishedStoryContent(
             return Errors.NoContent;
 
         // Get the content from MongoDB
-        var workBody = await storyDbContext.WorkBodies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(wb => wb.Id == story.WorkBodyId, cancellationToken);
+        var workBody = await workBodies.Find(wb => wb.Id == story.WorkBodyId).FirstOrDefaultAsync(cancellationToken);
 
         return workBody is null
             ? Errors.ContentNotFound

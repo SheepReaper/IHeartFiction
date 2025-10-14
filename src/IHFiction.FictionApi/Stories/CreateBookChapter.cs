@@ -18,12 +18,13 @@ using IHFiction.SharedKernel.Markdown;
 using IHFiction.SharedKernel.Validation;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class CreateBookChapter(
     FictionDbContext context,
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     AuthorizationService authorizationService,
     TimeProvider dateTimeProvider,
     IOptions<MarkdownOptions> markdownOptions,
@@ -150,19 +151,17 @@ internal sealed class CreateBookChapter(
                 UpdatedAt = dateTimeProvider.GetUtcNow().UtcDateTime
             };
 
-            storyDbContext.WorkBodies.Add(workBody);
-            await storyDbContext.SaveChangesAsync(cancellationToken);
+            await workBodies.InsertOneAsync(workBody, cancellationToken: cancellationToken);
 
-            var chapter = new Chapter
+            Chapter chapter = new()
             {
                 Title = sanitizedTitle,
                 OwnerId = book.OwnerId,
                 Book = book,
-                WorkBodyId = workBody.Id
+                WorkBodyId = workBody.Id,
+                // Assign ordering: new chapter should be placed after existing chapters in the book
+                Order = book.Chapters.Select(c => c.Order).DefaultIfEmpty(-1).Max() + 1
             };
-
-            // Assign ordering: new chapter should be placed after existing chapters in the book
-            chapter.Order = book.Chapters.Select(c => c.Order).DefaultIfEmpty(-1).Max() + 1;
 
             foreach (var existingAuthor in book.Authors) chapter.Authors.Add(existingAuthor);
 

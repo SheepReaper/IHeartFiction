@@ -128,3 +128,67 @@ Microsoft has acknowledged this limitation. Potential future solutions being dis
 - Improved OpenAPI generation supporting multiple response schemas per endpoint
 
 Until these improvements are available, manual content negotiation or architectural decisions (like universal HATEOAS) remain the primary solutions.
+
+### MongoDB.EntityFrameworkCore Package Compatibility Issues
+
+The `MongoDB.EntityFrameworkCore` package presents significant compatibility challenges when upgrading to .NET 10 and pursuing AOT compatibility.
+
+#### EF Core 10 Compatibility Problems
+
+While the package **partially works** with EF Core 10, several critical issues emerge:
+
+**Missing Method Implementations:**
+- Discriminator property methods are missing, causing runtime errors
+- This occurs even with simple, non-polymorphic models that shouldn't require discriminators
+- Error manifests despite having only a single model type stored in MongoDB
+
+**LINQ Async Method Gaps:**
+- Standard EF Core async methods (like `ToListAsync()`, `FirstOrDefaultAsync()`) are not implemented
+- The underlying MongoDB driver lacks these EF Core-style async method implementations
+- Forces inconsistent data access patterns between SQL (PostgreSQL) and NoSQL (MongoDB) contexts
+
+#### Current Workaround Strategy
+
+**Bypass EF Core Abstraction:**
+```csharp
+// Instead of EF Core style:
+var stories = await context.Stories.Where(s => s.UserId == userId).ToListAsync();
+
+// Must use MongoDB driver directly:
+var stories = await collection.Find(s => s.UserId == userId).ToListAsync();
+```
+
+**Package Dependency Issue:**
+The package must remain installed solely for the `ObjectIdJsonConverter`, which is required for:
+- Serializing MongoDB `ObjectId` types stored in PostgreSQL as strings
+- Maintaining consistent JSON serialization across the application
+- Cross-database referential integrity between PostgreSQL and MongoDB entities
+
+#### AOT Compatibility Impact
+
+This situation complicates AOT preparation:
+- Cannot achieve full EF Core API consistency across data contexts
+- Mixed data access patterns increase complexity and maintenance burden
+- Package dependency exists primarily for JSON converter utility rather than actual EF Core functionality
+
+#### Future Resolution Path
+
+**Upgrade Dependency:**
+- Waiting for MongoDB.EntityFrameworkCore to officially support EF Core 10
+- Will require refactoring back to EF Core-style APIs once compatibility is restored
+- Need to maintain two data access patterns until then
+
+**Alternative Considered:**
+- Custom `ObjectIdJsonConverter` implementation to eliminate package dependency
+- Would allow complete removal of problematic package
+- Deferred due to additional development complexity
+
+#### Impact on Architecture
+
+This limitation forces **inconsistent data access patterns** across the application:
+- PostgreSQL contexts use standard EF Core APIs and patterns  
+- MongoDB contexts bypass EF Core and use native driver methods directly
+- Complicates repository patterns and unit testing strategies
+- Requires team knowledge of both EF Core and MongoDB driver APIs
+
+This inconsistency will persist until the MongoDB.EntityFrameworkCore package receives proper EF Core 10 support and comprehensive async method implementations.

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -12,6 +13,7 @@ using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -20,7 +22,7 @@ namespace IHFiction.FictionApi.Stories;
 /// This endpoint allows anyone to read published chapter content without authentication.
 /// </summary>
 internal sealed class GetPublishedChapterContent(
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     FictionDbContext context) : IUseCase, INameEndpoint<GetPublishedChapterContent>
 {
     internal static class Errors
@@ -102,9 +104,10 @@ internal sealed class GetPublishedChapterContent(
             return Errors.ChapterNotPublished;
 
         // Get the content from MongoDB
-        var workBody = await storyDbContext.WorkBodies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(wb => wb.Id == chapter.WorkBodyId, cancellationToken);
+        var cursor = await workBodies
+            .FindAsync(wb => wb.Id == chapter.WorkBodyId, cancellationToken: cancellationToken);
+
+        var workBody = await cursor.FirstOrDefaultAsync(cancellationToken);
 
         var story = chapter.Story ?? bookStory!.Story!;
 

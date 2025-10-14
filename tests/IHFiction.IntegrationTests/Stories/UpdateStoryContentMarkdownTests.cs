@@ -28,17 +28,18 @@ namespace IHFiction.IntegrationTests.Stories;
 public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConfigureServices<UpdateStoryContentMarkdownTests>, IAsyncLifetime
 {
     private readonly FictionDbContext _dbContext;
-    private readonly StoryDbContext _storyDbContext;
+    private readonly IMongoCollection<WorkBody> _workBodies;
     private readonly UserService _userService;
     private readonly TimeProvider _dateTimeProvider;
     private readonly IOptions<MarkdownOptions> _markdownOptions;
     private readonly IHostEnvironment _environment;
     private readonly UpdateStoryContent _useCase;
+    private bool _disposed;
 
     public UpdateStoryContentMarkdownTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
         _dbContext = _scope.ServiceProvider.GetKeyedService<FictionDbContext>(nameof(UpdateStoryContentMarkdownTests)) ?? throw new Exception("DbContext not found");
-        _storyDbContext = _scope.ServiceProvider.GetKeyedService<StoryDbContext>(nameof(UpdateStoryContentMarkdownTests)) ?? throw new Exception("DbContext not found");
+        _workBodies = _scope.ServiceProvider.GetKeyedService<IMongoCollection<WorkBody>>(nameof(UpdateStoryContentMarkdownTests)) ?? throw new Exception("WorkBodies collection not found");
 
         // Create mock dependencies
         _userService = new UserService(_dbContext); // Use real UserService with test context
@@ -59,7 +60,7 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
 
         _useCase = new UpdateStoryContent(
             _dbContext,
-            _storyDbContext,
+            _workBodies,
             _userService,
             _dateTimeProvider,
             _markdownOptions,
@@ -228,9 +229,9 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
 
         services.AddKeyedScoped(
             nameof(UpdateStoryContentMarkdownTests),
-            (sp, key) => new StoryDbContext(new DbContextOptionsBuilder<StoryDbContext>()
-                .UseMongoDB(sp.GetRequiredService<IMongoClient>(), $"test_stories_{nameof(UpdateStoryContentMarkdownTests)}")
-                .Options));
+            (sp, key) => sp.GetRequiredService<IMongoClient>()
+                .GetDatabase($"test_stories_{nameof(UpdateStoryContentMarkdownTests)}")
+                .GetCollection<WorkBody>("works"));
     }
 
     public async ValueTask InitializeAsync()
@@ -243,15 +244,18 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
 
     protected override async ValueTask DisposeAsyncCore()
     {
+        if (_disposed) return;
+
         // Close all connections before deleting databases
         await _dbContext.Database.CloseConnectionAsync();
 
         // Use EnsureDeletedAsync for proper async database deletion
         await _dbContext.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
-        await _storyDbContext.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
+        await _workBodies.Database.Client.DropDatabaseAsync(_workBodies.Database.DatabaseNamespace.DatabaseName, TestContext.Current.CancellationToken);
 
         await _dbContext.DisposeAsync();
-        await _storyDbContext.DisposeAsync();
+
+        _disposed = true;
 
         await base.DisposeAsyncCore().ConfigureAwait(false);
     }

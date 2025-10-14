@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -17,12 +18,13 @@ using IHFiction.SharedKernel.Markdown;
 using IHFiction.SharedKernel.Validation;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class UpdateChapterContent(
     FictionDbContext context,
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     AuthorizationService authorizationService,
     TimeProvider dateTimeProvider,
     IOptions<MarkdownOptions> markdownOptions,
@@ -94,7 +96,11 @@ internal sealed class UpdateChapterContent(
     {
         // Authorize chapter access using centralized authorization service
         var authResult = await authorizationService.AuthorizeChapterAccessAsync(
-            id, claimsPrincipal, StoryAccessLevel.Edit, cancellationToken: cancellationToken);
+            id,
+            claimsPrincipal,
+            StoryAccessLevel.Edit,
+            cancellationToken: cancellationToken);
+
         if (authResult.IsFailure) return authResult.DomainError;
 
         var authorizationResult = authResult.Value;
@@ -112,31 +118,26 @@ internal sealed class UpdateChapterContent(
         {
             var now = dateTimeProvider.GetUtcNow().UtcDateTime;
 
-            // Get the existing content from MongoDB
-            var workBody = await storyDbContext.WorkBodies
-                .FirstOrDefaultAsync(wb => wb.Id == chapter.WorkBodyId, cancellationToken);
+            var r = await workBodies.UpdateOneAsync(wb => wb.Id == chapter.WorkBodyId, Builders<WorkBody>.Update
+                .Set(wb => wb.Content, sanitizedContent)
+                .Set(wb => wb.Note1, sanitizedNote1)
+                .Set(wb => wb.Note2, sanitizedNote2)
+                .Set(wb => wb.UpdatedAt, now), cancellationToken: cancellationToken);
 
-            if (workBody is null)
-                return Errors.ContentNotFound;
-
-            // Update the content
-            workBody.Content = sanitizedContent;
-            workBody.Note1 = sanitizedNote1;
-            workBody.Note2 = sanitizedNote2;
-            workBody.UpdatedAt = now;
+            if (r is { ModifiedCount: 0 })
+                throw new DbUpdateException("Failed to update chapter content in the database.");
 
             // Save changes to both databases
-            await storyDbContext.SaveChangesAsync(cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
 
             return new UpdateChapterContentResponse(
                 chapter.Id,
                 chapter.Title,
-                workBody.Id,
-                workBody.Content,
-                workBody.Note1,
-                workBody.Note2,
-                workBody.UpdatedAt,
+                chapter.WorkBodyId,
+                sanitizedContent,
+                sanitizedNote1,
+                sanitizedNote2,
+                now,
                 chapter.UpdatedAt);
         }
         catch (DbUpdateConcurrencyException)

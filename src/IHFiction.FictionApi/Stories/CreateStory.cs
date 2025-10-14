@@ -15,13 +15,15 @@ using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Validation;
 
+using MongoDB.Driver;
+
 using Error = IHFiction.SharedKernel.Infrastructure.DomainError;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class CreateStory(
     FictionDbContext context,
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     AuthorizationService authorizationService) : IUseCase, INameEndpoint<CreateStory>
 {
     internal static class Errors
@@ -116,7 +118,7 @@ internal sealed class CreateStory(
         if (body.StoryType == StoryType.SingleBody)
         {
             var workBody = new WorkBody() { Content = string.Empty };
-            storyDbContext.WorkBodies.Add(workBody);
+            await workBodies.InsertOneAsync(workBody, cancellationToken: cancellationToken);
             story.WorkBodyId = workBody.Id;
         }
 
@@ -125,7 +127,6 @@ internal sealed class CreateStory(
 
         // Save the story - exceptions will be handled by global exception handling
         context.Stories.Add(story);
-        await storyDbContext.SaveChangesAsync(cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
         return new CreateStoryResponse(

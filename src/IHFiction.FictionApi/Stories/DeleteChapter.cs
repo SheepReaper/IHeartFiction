@@ -4,16 +4,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Infrastructure;
 
+using MongoDB.Driver;
+
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class DeleteChapter(
     FictionDbContext context,
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     AuthorizationService authorizationService) : IUseCase, INameEndpoint<DeleteChapter>
 {
     internal static class Errors
@@ -41,14 +44,11 @@ internal sealed class DeleteChapter(
         {
             context.Chapters.Remove(chapter);
 
-            var workBody = await storyDbContext.WorkBodies.FirstOrDefaultAsync(wb => wb.Id == workBodyId, cancellationToken);
-            if (workBody is not null)
-            {
-                storyDbContext.WorkBodies.Remove(workBody);
-            }
+            // TODO: Implement distributed transaction
+
+            await workBodies.FindOneAndDeleteAsync(wb => wb.Id == workBodyId, cancellationToken: cancellationToken);
 
             await context.SaveChangesAsync(cancellationToken);
-            await storyDbContext.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
         }

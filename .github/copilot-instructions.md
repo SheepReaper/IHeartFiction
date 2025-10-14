@@ -152,7 +152,6 @@ After the first run, you MUST configure Keycloak secrets:
 - **API:** `src/IHFiction.FictionApi/Program.cs` - Minimal API endpoints
 - **Web:** `src/IHFiction.WebClient/Program.cs` - Blazor app configuration
 - **Data:** `src/lib/IHFiction.Data/Contexts/FictionDbContext.cs` - PostgreSQL context
-- **Data:** `src/lib/IHFiction.Data/Contexts/StoryDbContext.cs` - MongoDB context
 
 ### Database Migrations
 

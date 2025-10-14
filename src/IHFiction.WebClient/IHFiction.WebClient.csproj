@@ -15,5 +15,8 @@
     <PackageReference Include="Aspire.Keycloak.Authentication" />
     <PackageReference Include="Keycloak.AuthServices.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+    <PackageReference Include="Npgsql.DependencyInjection" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
   </ItemGroup>
 </Project>

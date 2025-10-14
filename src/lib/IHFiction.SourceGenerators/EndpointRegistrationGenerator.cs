@@ -162,7 +162,7 @@ public class EndpointRegistrationGenerator : IIncrementalGenerator
 
         foreach (var ns in allNamespaces)
         {
-            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"using {ns};");
+            sb.AppendLine($"using {ns};");
         }
         sb.AppendLine();
 
@@ -183,7 +183,7 @@ public class EndpointRegistrationGenerator : IIncrementalGenerator
 
         foreach (var endpoint in endpoints.OrderBy(e => e.FullName))
         {
-            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"        services.TryAddEnumerable(ServiceDescriptor.Transient<IEndpoint, {endpoint.FullName}>());");
+            sb.AppendLine($"        services.TryAddEnumerable(ServiceDescriptor.Transient<IEndpoint, {endpoint.FullName}>());");
         }
 
         // sb.AppendLine("        return services;");
@@ -202,7 +202,7 @@ public class EndpointRegistrationGenerator : IIncrementalGenerator
 
         foreach (var useCase in useCases.OrderBy(u => u.FullName))
         {
-            sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"        services.AddScoped<{useCase.FullName}>();");
+            sb.AppendLine($"        services.AddScoped<{useCase.FullName}>();");
         }
 
         // sb.AppendLine("        return services;");

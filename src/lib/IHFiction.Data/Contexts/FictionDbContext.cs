@@ -1,13 +1,13 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Infrastructure;
+using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
 
 using MongoDB.Bson;
 using MongoDB.EntityFrameworkCore.Storage.ValueConversion;
-using IHFiction.Data.Searching.Domain;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 
 namespace IHFiction.Data.Contexts;
 

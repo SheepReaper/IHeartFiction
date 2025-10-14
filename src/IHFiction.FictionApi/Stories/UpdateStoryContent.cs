@@ -17,12 +17,13 @@ using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Markdown;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class UpdateStoryContent(
     FictionDbContext context,
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     UserService userService,
     TimeProvider dateTimeProvider,
     IOptions<MarkdownOptions> markdownOptions,
@@ -133,57 +134,36 @@ internal sealed class UpdateStoryContent(
         var sanitizedNote1 = MarkdownSanitizer.SanitizeNote(body.Note1, options, isDevelopment);
         var sanitizedNote2 = MarkdownSanitizer.SanitizeNote(body.Note2, options, isDevelopment);
 
+        // TODO: This needs a strategy to handle the multi-context transactions
         try
         {
             var now = dateTimeProvider.GetUtcNow().UtcDateTime;
-            WorkBody workBody;
 
-            if (story.HasContent)
-            {
-                // Update existing content
-                var existingWorkBody = await storyDbContext.WorkBodies
-                    .FirstOrDefaultAsync(wb => wb.Id == story.WorkBodyId, cancellationToken);
+            ObjectId workBodyId = story.WorkBodyId ?? ObjectId.Empty;
 
-                if (existingWorkBody is null)
-                    return Errors.ContentNotFound;
+            var r = await workBodies.UpdateOneAsync(wb => wb.Id == story.WorkBodyId, Builders<WorkBody>.Update
+                .Set(wb => wb.Content, sanitizedContent)
+                .Set(wb => wb.Note1, sanitizedNote1)
+                .Set(wb => wb.Note2, sanitizedNote2)
+                .Set(wb => wb.UpdatedAt, now), new UpdateOptions { IsUpsert = true }, cancellationToken: cancellationToken);
 
-                workBody = existingWorkBody;
+            if (r is { IsAcknowledged: true, UpsertedId: not null })
+                workBodyId = r.UpsertedId.AsObjectId;
 
-                workBody.Content = sanitizedContent;
-                workBody.Note1 = sanitizedNote1;
-                workBody.Note2 = sanitizedNote2;
-                workBody.UpdatedAt = now;
-            }
-            else
-            {
-                // Create new content
-                workBody = new WorkBody
-                {
-                    Content = sanitizedContent,
-                    Note1 = sanitizedNote1,
-                    Note2 = sanitizedNote2,
-                    UpdatedAt = now
-                };
-
-                storyDbContext.WorkBodies.Add(workBody);
-                await storyDbContext.SaveChangesAsync(cancellationToken);
-
-                // Update story with the new WorkBodyId
-                story.WorkBodyId = workBody.Id;
-            }
+            if (r is { ModifiedCount: 0 })
+                throw new DbUpdateException("Failed to update story content in the database.");
 
             // Save changes to both databases
-            await storyDbContext.SaveChangesAsync(cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
 
             return new UpdateStoryContentResponse(
                 story.Id,
                 story.Title,
-                workBody.Id,
-                workBody.Content,
-                workBody.Note1,
-                workBody.Note2,
-                workBody.UpdatedAt,
+                workBodyId,
+                sanitizedContent,
+                sanitizedNote1,
+                sanitizedNote2,
+                now,
                 story.UpdatedAt);
         }
         catch (DbUpdateConcurrencyException)
@@ -196,8 +176,6 @@ internal sealed class UpdateStoryContent(
         }
     }
     public static string EndpointName => nameof(UpdateStoryContent);
-
-
 
     internal sealed class Endpoint : IEndpoint
     {

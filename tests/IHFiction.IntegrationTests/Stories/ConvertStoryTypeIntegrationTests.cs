@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
 
@@ -16,14 +15,15 @@ namespace IHFiction.IntegrationTests.Stories;
 public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, IConfigureServices<ConvertStoryTypeIntegrationTests>, IAsyncLifetime
 {
     private readonly FictionDbContext _dbContext;
-    private readonly StoryDbContext _storyDbContext;
+    private readonly IMongoCollection<WorkBody> _workBodies;
     private readonly EntityLoaderService _entityLoader;
     private readonly ConvertStoryType _useCase;
+    private bool _disposed;
 
     public ConvertStoryTypeIntegrationTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
         _dbContext = _scope.ServiceProvider.GetKeyedService<FictionDbContext>(nameof(ConvertStoryTypeIntegrationTests)) ?? throw new Exception("DbContext not found");
-        _storyDbContext = _scope.ServiceProvider.GetKeyedService<StoryDbContext>(nameof(ConvertStoryTypeIntegrationTests)) ?? throw new Exception("StoryDbContext not found");
+        _workBodies = _scope.ServiceProvider.GetKeyedService<IMongoCollection<WorkBody>>(nameof(ConvertStoryTypeIntegrationTests)) ?? throw new Exception("WorkBodies collection not found");
 
         _entityLoader = new EntityLoaderService(_dbContext);
 
@@ -31,7 +31,7 @@ public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, ICon
         var userService = new UserService(_dbContext);
         var authorization = new AuthorizationService(_dbContext, userService);
 
-        _useCase = new ConvertStoryType(_dbContext, _storyDbContext, _entityLoader, authorization);
+        _useCase = new ConvertStoryType(_dbContext, _workBodies, _entityLoader, authorization);
     }
 
     [Fact]
@@ -56,8 +56,7 @@ public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, ICon
         await _dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Add WorkBody into story DB
-        _storyDbContext.WorkBodies.Add(new WorkBody { Id = workBodyId, Content = "Original content" });
-        await _storyDbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await _workBodies.InsertOneAsync(new WorkBody { Id = workBodyId, Content = "Original content" }, cancellationToken: TestContext.Current.CancellationToken);
 
         // Build a ClaimsPrincipal for the author so authorization resolves
         var claims = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
@@ -83,7 +82,7 @@ public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, ICon
         Assert.Equal(workBodyId, chapter.WorkBodyId);
 
         // Verify story DB still contains the work body
-        var wb = await _storyDbContext.WorkBodies.FirstOrDefaultAsync(w => w.Id == workBodyId, TestContext.Current.CancellationToken);
+        var wb = await _workBodies.Find(w => w.Id == workBodyId).FirstOrDefaultAsync(TestContext.Current.CancellationToken);
         Assert.NotNull(wb);
     }
 
@@ -99,9 +98,9 @@ public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, ICon
 
         services.AddKeyedScoped(
             nameof(ConvertStoryTypeIntegrationTests),
-            (sp, key) => new StoryDbContext(new DbContextOptionsBuilder<StoryDbContext>()
-                .UseMongoDB(sp.GetRequiredService<IMongoClient>(), $"test_stories_{nameof(ConvertStoryTypeIntegrationTests)}")
-                .Options));
+            (sp, key) => sp.GetRequiredService<IMongoClient>()
+                .GetDatabase($"test_stories_{nameof(ConvertStoryTypeIntegrationTests)}")
+                .GetCollection<WorkBody>("works"));
     }
 
     public async ValueTask InitializeAsync()
@@ -114,10 +113,16 @@ public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, ICon
 
     protected override async ValueTask DisposeAsyncCore()
     {
+        if (_disposed) return;
+
         // Close connections and drop databases
         await _dbContext.Database.CloseConnectionAsync();
-        await _dbContext.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
-        await _storyDbContext.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
+        await _dbContext.Database.EnsureDeletedAsync();
+        await _workBodies.Database.Client.DropDatabaseAsync(_workBodies.Database.DatabaseNamespace.DatabaseName);
+
+        await _dbContext.DisposeAsync();
+
+        _disposed = true;
 
         await base.DisposeAsyncCore().ConfigureAwait(false);
     }

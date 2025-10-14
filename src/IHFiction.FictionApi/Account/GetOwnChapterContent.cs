@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -12,11 +13,12 @@ using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace IHFiction.FictionApi.Account;
 
 internal sealed class GetOwnChapterContent(
-    StoryDbContext storyDbContext,
+    IMongoCollection<WorkBody> workBodies,
     FictionDbContext context) : IUseCase, INameEndpoint<GetOwnChapterContent>
 {
     internal sealed record GetOwnChapterContentQuery(
@@ -66,9 +68,7 @@ internal sealed class GetOwnChapterContent(
             story = book.Story;
         }
 
-        var workBody = await storyDbContext.WorkBodies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(wb => wb.Id == chapter.WorkBodyId, cancellationToken);
+        var workBody = await workBodies.Find(wb => wb.Id == chapter.WorkBodyId).FirstOrDefaultAsync(cancellationToken);
 
         if (workBody is null) return CommonErrors.Chapter.NoContent;
 

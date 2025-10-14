@@ -5,7 +5,6 @@ using FluentAssertions;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Infrastructure;
@@ -14,7 +13,7 @@ using MongoDB.Bson;
 
 namespace IHFiction.UnitTests.Stories;
 
-public class ConvertStoryTypeTests
+public class ConvertStoryTypeTests(MongoDbFixture mongoDbFixture) : IClassFixture<MongoDbFixture>
 {
     [Fact]
     public void UpgradeOneShotToChaptered_MovesWorkBodyIdToNewChapter()
@@ -24,12 +23,9 @@ public class ConvertStoryTypeTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        var storyOptions = new DbContextOptionsBuilder<StoryDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-
         using var fictionContext = new FictionDbContext(fictionOptions);
-        using var storyContext = new StoryDbContext(storyOptions);
+
+        var workBodies = mongoDbFixture.Client.GetDatabase("unit-test").GetCollection<WorkBody>("works");
 
         // create author and story with an existing WorkBodyId
         var author = new Author { Id = Ulid.NewUlid(), Name = "Author" };
@@ -55,7 +51,7 @@ public class ConvertStoryTypeTests
         var userService = new UserService(fictionContext);
         var authorization = new AuthorizationService(fictionContext, userService);
 
-        var useCase = new ConvertStoryType(fictionContext, storyContext, entityLoader, authorization);
+        var useCase = new ConvertStoryType(fictionContext, workBodies, entityLoader, authorization);
 
         // Use reflection to call the private UpgradeOneShotToChaptered method
         var method = typeof(ConvertStoryType).GetMethod("UpgradeOneShotToChaptered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
