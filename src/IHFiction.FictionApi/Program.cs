@@ -126,8 +126,7 @@ builder.AddMongoDBClient("stories-db",
 );
 
 builder.Services.AddSingleton(services => services
-    .GetRequiredService<IMongoClient>()
-    .GetDatabase("stories-db")
+    .GetRequiredService<IMongoDatabase>()
     .GetCollection<WorkBody>("works"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
