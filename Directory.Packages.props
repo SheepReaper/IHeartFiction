@@ -16,7 +16,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
-    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.0-rc.1" />
+    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.0-rc.2" />
     <!-- Pin FluentAssertions due to their licensing change in v8 -->
     <PackageVersion Include="FluentAssertions" Version="[7.2.0,8.0.0)" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="2.4.1">
