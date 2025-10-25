@@ -69,7 +69,7 @@
     <PackageVersion Include="Mongo2Go" Version="4.1.0" />
     <PackageVersion Include="MongoDB.Bson" Version="3.5.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.5.0" />
-    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="9.0.2" />
+    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="9.0.3" />
     <PackageVersion Include="Npgsql" Version="10.0.0-rc.1" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.0-rc.1" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-rc.2" />
