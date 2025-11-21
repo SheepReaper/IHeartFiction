@@ -14,6 +14,7 @@ using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Markdown;
 
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 using NSubstitute;
@@ -185,7 +186,7 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
         Assert.Equal(storyId, ((dynamic)result.Value!).StoryId);
     }
 
-    private async Task<(Ulid storyId, Ulid authorId, ClaimsPrincipal claimsPrincipal)> CreateTestStoryAsync()
+    private async Task<(Ulid storyId, Ulid authorId, ClaimsPrincipal claimsPrincipal)> CreateTestStoryAsync(ObjectId? workBodyId = null)
     {
         var userId = Guid.NewGuid();
         var author = new Author
@@ -202,15 +203,18 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
             OwnerId = author.Id
         };
 
+        if (workBodyId.HasValue)
+            story.WorkBodyId = workBodyId.Value;
+
         _dbContext.Authors.Add(author);
         _dbContext.Stories.Add(story);
         await _dbContext.SaveChangesAsync();
 
         // Create ClaimsPrincipal for the test user
-        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(new[]
-        {
+        var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity(
+        [
             new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-        }));
+        ]));
 
         return (story.Id, author.Id, claimsPrincipal);
     }

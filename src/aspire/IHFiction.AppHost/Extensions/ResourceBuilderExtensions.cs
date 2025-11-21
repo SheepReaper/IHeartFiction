@@ -1,111 +1,93 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text;
 
-using Aspire.Hosting.Publishing;
+using Microsoft.Extensions.Logging;
+
+using Aspire.Hosting.Pipelines;
 
 namespace IHFiction.AppHost.Extensions;
 
-#pragma warning disable ASPIRECOMPUTE001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-#pragma warning disable ASPIREPUBLISHERS001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-internal static class ResourceBuilderExtensions
+#pragma warning disable ASPIREPIPELINES001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+internal static partial class ResourceBuilderExtensions
 {
-    private static IPublishingStep? s_deployStep;
-    private static ConcurrentBag<string>? s_pendingPushes;
-    private static volatile bool s_stepFailed;
-    private static readonly SemaphoreSlim DeployStepLock = new(1, 1);
+    private static readonly SemaphoreSlim PushSemaphore = new(1, 1);
+
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Information,
+        Message = "Pushing image to registry for resource '{resourceName}'")]
+
+    public static partial void LogPushStart(this ILogger logger, string resourceName);
 
     public static IResourceBuilder<TResource> PushToRegistry<TResource>(
-        this IResourceBuilder<TResource> builder,
-        bool build = false
-    ) where TResource : IComputeResource
+        this IResourceBuilder<TResource> builder
+    ) where TResource : IComputeResource => builder.WithPipelineStepFactory(ctx => new()
     {
-        if (!builder.Resource.TryGetLastAnnotation<IProjectMetadata>(out var projectMetadata))
-            throw new InvalidOperationException($"Resource '{builder.Resource.Name}' does not have project metadata annotation.");
-
-        if (!builder.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
-            throw new InvalidOperationException($"Resource '{builder.Resource.Name}' does not have container image annotation.");
-
-        StringBuilder args = new(string.Join(' ',
-            $"publish \"{projectMetadata.ProjectPath}\"",
-            "--configuration Release",
-            "-t:PublishContainer",
-            $"-p:ContainerRepository={image.Image}",
-            $"-p:ContainerRegistry={image.Registry}"));
-
-        if (!build) args.Append(" --no-build");
-
-        return builder.WithAnnotation<DeployingCallbackAnnotation>(new(async ctx =>
+        Name = $"registry-push-{ctx.Resource.Name}",
+        RequiredBySteps = [WellKnownPipelineSteps.Publish],
+        DependsOnSteps = [WellKnownPipelineSteps.Build],
+        Action = async stepCtx =>
         {
-            if (s_stepFailed) return;
+            await PushSemaphore.WaitAsync(stepCtx.CancellationToken).ConfigureAwait(false);
 
-            if (s_deployStep is null)
+            try
             {
-                await DeployStepLock.WaitAsync(ctx.CancellationToken).ConfigureAwait(false);
+                stepCtx.Logger.LogPushStart(ctx.Resource.Name);
 
-                try
+                if (!ctx.Resource.TryGetLastAnnotation<IProjectMetadata>(out var projectMetadata))
                 {
-                    if (s_deployStep is null)
+                    await stepCtx.ReportingStep.FailAsync(
+                        $"Resource '{ctx.Resource.Name}' does not have project metadata annotation.",
+                        stepCtx.CancellationToken).ConfigureAwait(false);
+
+                    return;
+                }
+
+                if (!ctx.Resource.TryGetLastAnnotation<ContainerImageAnnotation>(out var image))
+                {
+                    await stepCtx.ReportingStep.FailAsync(
+                        $"Resource '{ctx.Resource.Name}' does not have container image annotation.",
+                        stepCtx.CancellationToken).ConfigureAwait(false);
+
+                    return;
+                }
+
+                StringBuilder args = new(string.Join(' ',
+                    $"publish \"{projectMetadata.ProjectPath}\"",
+                    "--configuration Release",
+                    "--no-build",
+                    "-t:PublishContainer",
+                    $"-p:ContainerRepository={image.Image}",
+                    $"-p:ContainerRegistry={image.Registry}"));
+
+                using Process process = new()
+                {
+                    StartInfo = new()
                     {
-                        s_deployStep = await ctx.ActivityReporter.CreateStepAsync(
-                            $"Pushing container images to registry",
-                            ctx.CancellationToken).ConfigureAwait(false);
-
-                        s_pendingPushes = [.. ctx.Model.GetProjectResources()
-                            .OfType<IComputeResource>()
-                            .Where(r => r.HasAnnotationOfType<DeployingCallbackAnnotation>())
-                            .Select(r => r.Name)];
+                        Arguments = args.ToString(),
+                        FileName = "dotnet"
                     }
-                }
-                finally
-                {
-                    DeployStepLock.Release();
-                }
-            }
+                };
 
-            var task = await s_deployStep.CreateTaskAsync(
-                $"Pushing {image.Image} to {image.Registry}",
-                ctx.CancellationToken).ConfigureAwait(false);
+                process.Start();
 
-            using Process process = new()
-            {
-                StartInfo = new()
-                {
-                    Arguments = args.ToString(),
-                    FileName = "dotnet"
-                }
-            };
+                if (!process.HasExited)
+                    await process.WaitForExitAsync(stepCtx.CancellationToken).ConfigureAwait(false);
 
-            process.Start();
-
-            if (!process.HasExited)
-                await process.WaitForExitAsync(ctx.CancellationToken).ConfigureAwait(false);
-
-            if (process.ExitCode != 0)
-            {
-                s_stepFailed = true;
-
-                await task.FailAsync(
+                if (process.ExitCode != 0) await stepCtx.ReportingStep.FailAsync(
                     $"Failed to push {image.Image} to {image.Registry}",
-                    ctx.CancellationToken).ConfigureAwait(false);
+                    stepCtx.CancellationToken).ConfigureAwait(false);
 
-                await s_deployStep.FailAsync(
-                    $"Failed to push all images to registry",
-                    ctx.CancellationToken).ConfigureAwait(false);
+                else await stepCtx.ReportingStep.SucceedAsync(
+                    $"Successfully pushed {image.Image} to {image.Registry}",
+                    stepCtx.CancellationToken).ConfigureAwait(false);
             }
-
-            s_pendingPushes?.TryTake(out _);
-
-            await task.SucceedAsync(
-                $"Successfully pushed {image.Image} to {image.Registry}",
-                ctx.CancellationToken).ConfigureAwait(false);
-
-            if (s_pendingPushes is not { Count: > 0 } && !s_stepFailed)
-                await s_deployStep.SucceedAsync(
-                    $"Successfully pushed all images to registry",
-                    ctx.CancellationToken).ConfigureAwait(false);
-        }));
-    }
+            finally
+            {
+                PushSemaphore.Release();
+            }
+        }
+    });
 
     public static IResourceBuilder<TResource> WithImageRegistry<TResource>(this IResourceBuilder<TResource> builder) where TResource : IComputeResource
     {
@@ -123,5 +105,5 @@ internal static class ResourceBuilderExtensions
     }
 
     public static string ToTaggedString(this ContainerImageAnnotation image) => $"{image.Registry}/{image.Image}:{image.Tag}";
-    public static string ToSha256String(this ContainerImageAnnotation image) => $"{image.Registry}/{image.Image}@sha256:{image.SHA256}";
+    // public static string ToSha256String(this ContainerImageAnnotation image) => $"{image.Registry}/{image.Image}@sha256:{image.SHA256}";
 }

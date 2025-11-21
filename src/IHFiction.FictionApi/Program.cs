@@ -242,17 +242,19 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapOpenApi();
 
-#pragma warning disable S3878 // Arrays should not be created for params parameters
-
-app.MapScalarApiReference(o => o
-    .AddPreferredSecuritySchemes(["OAuth2"])
-    .AddHttpAuthentication("JWT", scheme => scheme
+app.MapScalarApiReference(o =>
+{
+    // Initialize authentication if needed
+    o.Authentication ??= new();
+    o.Authentication.PreferredSecuritySchemes = ["OAuth2"];
+    
+    o.AddHttpAuthentication("JWT", scheme => scheme
         .WithDescription("JWT with fiction-api audience."))
     .AddAuthorizationCodeFlow("OAuth2", flow => flow
         .WithClientId("fiction-api-docs")
-        .WithSelectedScopes(["fiction_api"]))
-    .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl));
-#pragma warning restore S3878 // Arrays should not be created for params parameters
+        .WithSelectedScopes("fiction_api"))
+    .WithDefaultHttpClient(ScalarTarget.Shell, ScalarClient.Curl);
+});
 
 // Map endpoints
 

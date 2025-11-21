@@ -139,7 +139,8 @@ internal sealed class UpdateStoryContent(
         {
             var now = dateTimeProvider.GetUtcNow().UtcDateTime;
 
-            ObjectId workBodyId = story.WorkBodyId ?? ObjectId.Empty;
+            if (story.WorkBodyId == null || story.WorkBodyId == ObjectId.Empty)
+                story.WorkBodyId = ObjectId.GenerateNewId();
 
             var r = await workBodies.UpdateOneAsync(wb => wb.Id == story.WorkBodyId, Builders<WorkBody>.Update
                 .Set(wb => wb.Content, sanitizedContent)
@@ -147,10 +148,7 @@ internal sealed class UpdateStoryContent(
                 .Set(wb => wb.Note2, sanitizedNote2)
                 .Set(wb => wb.UpdatedAt, now), new UpdateOptions { IsUpsert = true }, cancellationToken: cancellationToken);
 
-            if (r is { IsAcknowledged: true, UpsertedId: not null })
-                workBodyId = r.UpsertedId.AsObjectId;
-
-            if (r is { ModifiedCount: 0 })
+            if (!r.IsAcknowledged)
                 throw new DbUpdateException("Failed to update story content in the database.");
 
             // Save changes to both databases
@@ -159,7 +157,7 @@ internal sealed class UpdateStoryContent(
             return new UpdateStoryContentResponse(
                 story.Id,
                 story.Title,
-                workBodyId,
+                story.WorkBodyId.Value,
                 sanitizedContent,
                 sanitizedNote1,
                 sanitizedNote2,
