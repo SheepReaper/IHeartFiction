@@ -36,7 +36,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="9.7.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.DynamicLinq" Version="10.7.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0-rc.2.25502.107" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tasks" Version="10.0.0">
