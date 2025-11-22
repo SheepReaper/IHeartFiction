@@ -25,7 +25,7 @@ public class ConvertStoryTypeTests(MongoDbFixture mongoDbFixture) : IClassFixtur
 
         using var fictionContext = new FictionDbContext(fictionOptions);
 
-        var workBodies = mongoDbFixture.Client.GetDatabase("unit-test").GetCollection<WorkBody>("works");
+        var workBodies = mongoDbFixture.Client!.GetDatabase("unit-test").GetCollection<WorkBody>("works");
 
         // create author and story with an existing WorkBodyId
         var author = new Author { Id = Ulid.NewUlid(), Name = "Author" };
