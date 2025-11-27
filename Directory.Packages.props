@@ -6,8 +6,8 @@
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.Docker" Version="13.0.0-preview.1.25560.3" />
     <PackageVersion Include="Aspire.Hosting.KeyCloak" Version="13.0.0-preview.1.25560.3" />
-    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.0.0" />
-    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
+    <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.0.1" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.0.1" />
     <PackageVersion Include="Aspire.KeyCloak.Authentication" Version="13.0.0-preview.1.25560.3" />
     <PackageVersion Include="Aspire.MongoDB.Driver.v3" Version="9.5.2" />
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.5.2" />
