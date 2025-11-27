@@ -1,6 +1,6 @@
 <?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
 
-<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
+<Project Sdk="Aspire.AppHost.Sdk/13.0.1">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>c6f7845b-4507-4b76-9d66-de04efbd8180</UserSecretsId>
