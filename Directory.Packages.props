@@ -82,7 +82,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.11.6" />
     <PackageVersion Include="Sidio.Sitemap.Blazor" Version="1.2.0" />
-    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.16.1.129956">
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.17.0.131074">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
