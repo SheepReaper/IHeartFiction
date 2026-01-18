@@ -65,7 +65,7 @@
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.2.0" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="18.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
-    <PackageVersion Include="Microsoft.OpenApi" Version="[2.4.2,3.0.0)" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="[2.4.3,3.0.0)" />
     <PackageVersion Include="Mongo2Go" Version="4.1.0" />
     <PackageVersion Include="MongoDB.Bson" Version="3.6.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.6.0" />
