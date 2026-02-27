@@ -198,6 +198,9 @@ builder.Services.AddUseCases();
 // Register endpoints
 builder.Services.AddEndpoints();
 
+builder.Services.AddRequestTimeouts();
+builder.Services.AddOutputCache();
+
 var app = builder.Build();
 
 // Configure middleware pipeline
@@ -236,6 +239,9 @@ else
     // Not normally needed in development, but Keycloak may behave strangely without additional configuration
     app.UseHttpsRedirection();
 }
+
+app.UseRequestTimeouts();
+app.UseOutputCache();
 
 // Configure authentication and authorization
 app.UseAuthentication();

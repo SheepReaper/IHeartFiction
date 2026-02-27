@@ -4,9 +4,6 @@
   <PropertyGroup>
     <DocumentationFile>bin/$(Configuration)/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
     <LangVersion>preview</LangVersion>
-    <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
-    <ContainerRuntimeIdentifiers>linux-x64;linux-arm64</ContainerRuntimeIdentifiers>
-    <ContainerImageFormat>OCI</ContainerImageFormat>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
@@ -49,7 +46,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference 
+      Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj"
+      OutputItemType="Analyzer" 
+      ReferenceOutputAssembly="false"
+      GlobalPropertiesToRemove="RuntimeIdentifiers;RuntimeIdentifier" />
   </ItemGroup>
 
   <ItemGroup>

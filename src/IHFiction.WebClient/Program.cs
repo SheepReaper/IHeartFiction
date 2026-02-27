@@ -96,6 +96,7 @@ builder.Services.AddRazorComponents()
         options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB
     });
 
+builder.Services.AddRequestTimeouts();
 builder.Services.AddOutputCache();
 
 builder.Services.AddTransient<AuthenticationHandler>();
@@ -166,6 +167,7 @@ if (app.Environment.IsProduction())
 }
 
 app.UseAntiforgery();
+app.UseRequestTimeouts();
 app.UseOutputCache();
 app.MapStaticAssets();
 

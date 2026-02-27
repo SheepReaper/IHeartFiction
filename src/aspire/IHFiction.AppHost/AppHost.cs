@@ -1,3 +1,7 @@
+#pragma warning disable ASPIRECOMPUTE003 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable ASPIREDOCKERFILEBUILDER001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+#pragma warning disable ASPIREPROBES001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
@@ -39,16 +43,18 @@ var migrations = builder.AddProject<Projects.IHFiction_MigrationService>("migrat
     .WaitFor(storiesDb);
 
 var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
+    .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
     .WithReference(keycloak)
     .WithReference(fictionDb)
     .WithReference(storiesDb)
     .WaitFor(storiesDb)
     .WaitFor(fictionDb)
-    .WithHttpHealthCheck("/health")
+    .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
     .WithReplicas(builder.Configuration.GetValue("Containers:Api:ReplicaCount", 1));
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
-    .WithHttpHealthCheck("/health")
+    .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
+    .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
     .WithReference(fictionApi) // API client uses service discovery if ApiBaseAddress is not set
     .WithReference(fictionDb) // Blazor server-side uses db directly via service discovery
     .WithReference(keycloak) // Blazor server-side uses Keycloak directly via service discovery
@@ -82,22 +88,27 @@ if (!builder.Environment.IsDevelopment())
 
 if (builder.Environment.IsProduction())
 {
+    var registryUri = builder.AddParameter("RegistryUri");
+    var repository = builder.AddParameter("Repository");
+
+    var registry = builder.AddContainerRegistry("registry", registryUri, repository);
+
     builder.ConfigureSwarmCompose();
 
     postgres.ConfigureForSwarm();
     mongo.ConfigureForSwarm();
     keycloak.ConfigureForSwarm();
 
-    migrations.WithImageRegistry()
-        .PushToRegistry()
+    migrations
+        .WithContainerRegistry(registry)
         .ConfigureMigrationsForSwarm();
 
-    fictionApi.WithImageRegistry()
-        .PushToRegistry()
+    fictionApi
+        .WithContainerRegistry(registry)
         .ConfigureFictionApiForSwarm();
 
-    webClient.WithImageRegistry()
-        .PushToRegistry()
+    webClient
+        .WithContainerRegistry(registry)
         .ConfigureWebClientForSwarm();
 }
 
