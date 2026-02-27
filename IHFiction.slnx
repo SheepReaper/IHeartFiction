@@ -1,0 +1,26 @@
+<?xml-model href="https://github.com/microsoft/vs-solutionpersistence/blob/main/src/Microsoft.VisualStudio.SolutionPersistence/Serializer/Xml/Slnx.xsd"?>
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/IHFiction.FictionApi/IHFiction.FictionApi.csproj" />
+    <Project Path="src/IHFiction.WebClient/IHFiction.WebClient.csproj" />
+  </Folder>
+  <Folder Name="/src/aspire/">
+    <Project Path="src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj" />
+    <Project Path="src/aspire/IHFiction.MigrationService/IHFiction.MigrationService.csproj" />
+  </Folder>
+  <Folder Name="/src/lib/">
+    <Project Path="src/lib/IHFiction.Data/IHFiction.Data.csproj" />
+    <Project Path="src/lib/IHFiction.ServiceDefaults/IHFiction.ServiceDefaults.csproj" />
+    <Project Path="src/lib/IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />
+    <Project Path="src/lib/IHFiction.SharedWeb/IHFiction.SharedWeb.csproj" />
+    <Project Path="src/lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IHFiction.IntegrationTests/IHFiction.IntegrationTests.csproj" />
+    <Project Path="tests/IHFiction.UnitTests/IHFiction.UnitTests.csproj" />
+  </Folder>
+</Solution>
