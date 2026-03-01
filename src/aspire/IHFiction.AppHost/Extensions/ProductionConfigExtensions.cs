@@ -215,7 +215,7 @@ internal static class ProductionConfigExtensions
 
     public static IResourceBuilder<ProjectResource> ConfigureFictionApiForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
         .WithCommonOptions()
-        .WithDockerHealthcheck()
+        .WithDockerHealthcheck(configureOptions: options => options.StartIntervalSeconds = 15)
         .WithEndpoint("http", e => e.TargetPort = 8080)
         .PublishAsDockerComposeService((res, service) =>
         {
