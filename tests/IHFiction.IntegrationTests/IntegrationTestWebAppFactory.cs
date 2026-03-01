@@ -20,16 +20,14 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
 {
     const string PgContainerName = "ihfiction-postgres-tests";
     const string MongoContainerName = "ihfiction-mongo-tests";
-    private readonly PostgreSqlContainer _pgContainer = new PostgreSqlBuilder()
-        .WithImage("library/postgres:17.4")
+    private readonly PostgreSqlContainer _pgContainer = new PostgreSqlBuilder("library/postgres:17.4")
         .WithDatabase("fiction-db")
         .WithName(PgContainerName)
         .WithReuse(false)
         .WithLabel("reuse-id", PgContainerName) // Explicit name for reuse
         .Build();
 
-    private readonly MongoDbContainer _mongoContainer = new MongoDbBuilder()
-        .WithImage("library/mongo:8.0")
+    private readonly MongoDbContainer _mongoContainer = new MongoDbBuilder("library/mongo:8.0")
         .WithName(MongoContainerName)
         .WithReuse(false)
         .WithLabel("reuse-id", MongoContainerName) // Explicit name for reuse

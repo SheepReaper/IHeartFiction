@@ -16,8 +16,7 @@ public sealed class MongoDbFixture : IAsyncLifetime
         try
         {
             // Create and start MongoDB container with replica set for transactions
-            _container = new MongoDbBuilder()
-                .WithImage("mongo:7.0")
+            _container = new MongoDbBuilder("mongo:7.0")
                 .WithUsername("root")
                 .WithPassword("password")
                 .WithReplicaSet("rs0") // Enable replica set for transactions

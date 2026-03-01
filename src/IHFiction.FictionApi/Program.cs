@@ -32,6 +32,8 @@ using IHFiction.Data.Stories.Domain;
 
 [assembly: DbContext(typeof(FictionDbContext))]
 
+AppContext.SetSwitch("Npgsql.EnableGss", false);
+
 static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);
 
 var builder = WebApplication.CreateSlimBuilder(args);
