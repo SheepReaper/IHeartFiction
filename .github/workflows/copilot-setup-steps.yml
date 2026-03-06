@@ -15,7 +15,7 @@ jobs:
     steps:
       # For MCP servers like nuget's
       - name: Install .NET 10.x
-        uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
           dotnet-version: 10.x
           dotnet-quality: preview
