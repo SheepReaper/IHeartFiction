@@ -11,7 +11,7 @@
     <PackageVersion Include="Aspire.KeyCloak.Authentication" Version="13.1.2-preview.1.26125.13" />
     <PackageVersion Include="Aspire.MongoDB.Driver.v3" Version="9.5.2" />
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.1.2" />
-    <PackageVersion Include="coverlet.collector" Version="6.0.4">
+    <PackageVersion Include="coverlet.collector" Version="8.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
