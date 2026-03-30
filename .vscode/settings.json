@@ -1,4 +1,7 @@
 {
     "postman.settings.dotenv-detection-notification-visibility": false,
-    "dotnet.defaultSolution": "IHFiction.slnx"
+    "dotnet.defaultSolution": "IHFiction.slnx",
+    "chat.tools.terminal.autoApprove": {
+        "dotnet outdated": true
+    }
 }
