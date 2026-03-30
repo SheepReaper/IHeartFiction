@@ -5,10 +5,10 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Aspire.Hosting.Docker" Version="13.2.0" />
-    <PackageVersion Include="Aspire.Hosting.KeyCloak" Version="13.1.2-preview.1.26125.13" />
+    <PackageVersion Include="Aspire.Hosting.KeyCloak" Version="13.2.0-preview.1.26170.3" />
     <PackageVersion Include="Aspire.Hosting.MongoDB" Version="13.2.0" />
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.2.0" />
-    <PackageVersion Include="Aspire.KeyCloak.Authentication" Version="13.1.2-preview.1.26125.13" />
+    <PackageVersion Include="Aspire.KeyCloak.Authentication" Version="13.2.0-preview.1.26170.3" />
     <PackageVersion Include="Aspire.MongoDB.Driver.v3" Version="9.5.2" />
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.2.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4">
@@ -69,7 +69,7 @@
     <PackageVersion Include="Mongo2Go" Version="4.1.0" />
     <PackageVersion Include="MongoDB.Bson" Version="3.7.1" />
     <PackageVersion Include="MongoDB.Driver" Version="3.7.1" />
-    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="9.1.1" />
+    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
@@ -80,9 +80,9 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.13.15" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.13.17" />
     <PackageVersion Include="Sidio.Sitemap.Blazor" Version="1.3.0" />
-    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.21.0.135717">
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.22.0.136894">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>

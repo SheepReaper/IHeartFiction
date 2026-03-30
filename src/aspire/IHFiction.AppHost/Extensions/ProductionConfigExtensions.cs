@@ -18,7 +18,6 @@ internal static class ProductionConfigExtensions
         {
             context.ImageFormat = ContainerImageFormat.Oci;
             context.TargetPlatform = ContainerTargetPlatform.AllLinux;
-            // context.TargetPlatform = ContainerTargetPlatform.LinuxAmd64;
         });
 
     const string AdminNetwork = "t3_proxy";

@@ -19,9 +19,8 @@ var keycloakAdminClientSecret = builder.AddParameter(
 
 var postgres = builder.AddPostgres("postgres")
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithPgAdmin(options => options
-        .WithImageTag("9.8")
-        .WithLifetime(ContainerLifetime.Persistent));
+    .WithPgWeb(options => options
+        .WithHostPort(8081));
 
 var mongo = builder.AddMongoDB("mongo")
     .WithLifetime(ContainerLifetime.Persistent)
