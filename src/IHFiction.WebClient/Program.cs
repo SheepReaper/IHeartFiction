@@ -24,7 +24,6 @@ using Keycloak.AuthServices.Authorization;
 
 using Markdig;
 
-using Sidio.Sitemap.AspNetCore;
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core.Services;
 

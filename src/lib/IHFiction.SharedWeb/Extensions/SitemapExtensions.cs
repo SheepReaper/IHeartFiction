@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 
 using Sidio.Sitemap.Blazor;
-using IHFiction.Data.Stories.Domain;
 
 namespace IHFiction.SharedWeb.Extensions;
 

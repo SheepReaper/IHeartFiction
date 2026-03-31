@@ -15,5 +15,6 @@
     <PackageReference Include="Npgsql.DependencyInjection" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="Sidio.Sitemap.Blazor" />
   </ItemGroup>
 </Project>
