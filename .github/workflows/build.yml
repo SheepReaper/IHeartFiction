@@ -38,7 +38,7 @@ jobs:
         run: dotnet build --configuration Debug
         
       - name: Test
-        run: dotnet test -c ${{ matrix.config }} --logger "GitHubActions;report-warnings=false"
+        run: dotnet test -c ${{ matrix.config }} --logger "GitHubActions;report-warnings=false" --package GitHubActionsTestLogger
         shell: bash
 
       - id: analyze_tag

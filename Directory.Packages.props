@@ -18,10 +18,6 @@
     <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
     <!-- Pin FluentAssertions due to their licensing change in v8 -->
     <PackageVersion Include="FluentAssertions" Version="[7.2.2,8.0.0)" />
-    <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.2">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageVersion>
     <PackageVersion Include="Keycloak.AuthServices.Authorization" Version="2.9.0" />
     <PackageVersion Include="Markdig" Version="1.1.2" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.5" />
