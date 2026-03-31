@@ -1,6 +1,0 @@
-{
-  "appHostPath": "../src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj",
-  "features": {
-    "deployCommandEnabled": "true"
-  }
-}

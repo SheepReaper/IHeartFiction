@@ -16,6 +16,7 @@ using Cysharp.Serialization.Json;
 using IHFiction.Data;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Infrastructure;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -28,7 +29,6 @@ using MongoDB.Driver;
 using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
 using Scalar.AspNetCore;
-using IHFiction.Data.Stories.Domain;
 
 [assembly: DbContext(typeof(FictionDbContext))]
 

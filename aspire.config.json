@@ -1,0 +1,8 @@
+{
+  "appHost": {
+    "path": "src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj"
+  },
+  "features": {
+    "defaultWatchEnabled": "true"
+  }
+}
