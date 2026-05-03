@@ -22,7 +22,6 @@ internal static class ProductionConfigExtensions
 
     const string AdminNetwork = "t3_proxy";
     const string ContainerNetwork = "containers";
-    const string FrontEndNetwork = "ihf_proxy";
     const string DataPath = "/mnt/swarm/data/ihfiction";
     const string SecretsPath = "/mnt/swarm/config/ihfiction/secrets";
 
@@ -59,18 +58,13 @@ internal static class ProductionConfigExtensions
         {
             file.AddNetwork(new()
             {
-                Name = FrontEndNetwork,
-                External = true
-            })
-            .AddNetwork(new()
-            {
                 Name = AdminNetwork,
                 External = true
             })
             .AddNetwork(new()
             {
                 Name = ContainerNetwork,
-                Internal = true
+                Internal = false
             });
 
             file.Secrets.Add("keycloak-conf", new() { File = $"{SecretsPath}/keycloak.conf" });
@@ -158,7 +152,6 @@ internal static class ProductionConfigExtensions
 
             service.Environment["JAVA_OPTS_APPEND"] = "-Djgroups.bind.address=match-interface:eth2";
 
-            service.Networks.Add(FrontEndNetwork);
             service.Secrets.Add(new() { Source = "keycloak-conf", Target = "/opt/keycloak/conf/keycloak.conf", Mode = 0444 });
 
             service.Command = ["start"];
@@ -168,13 +161,11 @@ internal static class ProductionConfigExtensions
             var config = builder.ApplicationBuilder.Configuration;
 
             if (config["AdminEntrypoint"] is string adminEntryPoint
-                && config["KeycloakDomain"] is string keycloakDomain
-                && config["PublicEntrypoint"] is string publicEntryPoint)
+                && config["KeycloakDomain"] is string keycloakDomain)
                 service.WithTraefikLabels(
-                    FrontEndNetwork,
+                    AdminNetwork,
                     new(8080, true),
-                    new TraefikRouterDef(adminEntryPoint, keycloakDomain),
-                    new TraefikRouterDef(publicEntryPoint, keycloakDomain, ["/realms", "/resources"]));
+                    new TraefikRouterDef(adminEntryPoint, keycloakDomain));
         });
 
 
@@ -252,7 +243,6 @@ internal static class ProductionConfigExtensions
             service.Deploy.Replicas = res.GetReplicaCount();
             service.AddGracefulUpdate();
 
-            service.Networks.Add(FrontEndNetwork);
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
@@ -260,13 +250,6 @@ internal static class ProductionConfigExtensions
 
             if (builder.Resource.TryGetLastAnnotation<ContainerRegistryReferenceAnnotation>(out var reference))
                 service.Image = $"{reference.ToRegistryStringAsync().GetAwaiter().GetResult()}/{res.Name}:latest";
-
-            if (config["PublicEntrypoint"] is string publicEntryPoint
-                && config["ApiDomain"] is string apiDomain)
-                service.WithTraefikLabels(
-                    FrontEndNetwork,
-                    new(8080),
-                    new TraefikRouterDef(publicEntryPoint, apiDomain));
         });
 
     public static IResourceBuilder<ProjectResource> ConfigureWebClientForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
@@ -303,20 +286,11 @@ internal static class ProductionConfigExtensions
             service.Deploy.Replicas = res.GetReplicaCount();
             service.AddGracefulUpdate();
 
-            service.Networks.Add(FrontEndNetwork);
-
             service.Secrets.Add(new() { Source = "Authentication__Schemes__Keycloak__ClientSecret" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
 
             if (builder.Resource.TryGetLastAnnotation<ContainerRegistryReferenceAnnotation>(out var reference))
                 service.Image = $"{reference.ToRegistryStringAsync().GetAwaiter().GetResult()}/{res.Name}:latest";
-
-            if (config["PublicEntrypoint"] is string publicEntryPoint
-                && config["WebClientDomain"] is string webClientDomain)
-                service.WithTraefikLabels(
-                    FrontEndNetwork,
-                    new(8080),
-                    new TraefikRouterDef(publicEntryPoint, webClientDomain));
         });
 }

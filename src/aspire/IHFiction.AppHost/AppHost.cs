@@ -5,8 +5,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
-using IHFiction.AppHost.Extensions;
+using Aspire.Cloudflared;
 
+using IHFiction.AppHost.Extensions;
 var builder = DistributedApplication.CreateBuilder(args);
 
 var keycloakClientSecret = builder.AddParameter(
@@ -91,12 +92,18 @@ if (builder.Environment.IsProduction())
     var repository = builder.AddParameter("Repository");
 
     var registry = builder.AddContainerRegistry("registry", registryUri, repository);
+    var cfTunnel = builder.AddCloudflareTunnel("ihfiction-tunnel");
+
+    cfTunnel.WithImageTag("2026.3.0")
+        .PublishAsDockerComposeService((resource, service) => service.Name = resource.Name);
 
     builder.ConfigureSwarmCompose();
 
     postgres.ConfigureForSwarm();
     mongo.ConfigureForSwarm();
-    keycloak.ConfigureForSwarm();
+
+    keycloak.ConfigureForSwarm()
+        .WithCloudflareTunnel(cfTunnel, hostname: "auth.iheartfiction.net", endpointName: "http");
 
     migrations
         .WithContainerRegistry(registry)
@@ -104,11 +111,13 @@ if (builder.Environment.IsProduction())
 
     fictionApi
         .WithContainerRegistry(registry)
-        .ConfigureFictionApiForSwarm();
+        .ConfigureFictionApiForSwarm()
+        .WithCloudflareTunnel(cfTunnel, hostname: "api.iheartfiction.net", endpointName: "http");
 
     webClient
         .WithContainerRegistry(registry)
-        .ConfigureWebClientForSwarm();
+        .ConfigureWebClientForSwarm()
+        .WithCloudflareTunnel(cfTunnel, hostname: "iheartfiction.net", endpointName: "http");
 }
 
 await builder.Build().RunAsync();
