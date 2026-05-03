@@ -27,6 +27,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="NSwag.ApiDescription.Client" />
+    <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="Sidio.Sitemap.Blazor" />
     <PackageReference Include="Ulid" />
   </ItemGroup>
