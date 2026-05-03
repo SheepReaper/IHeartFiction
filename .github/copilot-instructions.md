@@ -56,7 +56,7 @@ dotnet restore
 dotnet build --configuration Debug --no-restore
 
 # Step 3: Run tests (if code changes were made)
-dotnet test -c Release --logger "GitHubActions;report-warnings=false"
+dotnet test -c Release
 ```
 
 **Build Warnings:**
@@ -75,7 +75,7 @@ The project uses **xUnit v3** with the following test frameworks:
 
 **Run all tests:**
 ```bash
-dotnet test -c Release --logger "GitHubActions;report-warnings=false"
+dotnet test -c Release
 ```
 
 **Integration tests** use Testcontainers and require Docker to be running. If Docker is not available, integration tests will fail.
@@ -186,7 +186,7 @@ dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFict
 1. Checkout code
 2. Setup .NET SDK (uses global.json)
 3. **Build:** `dotnet build --configuration Debug` (NOT Release!)
-4. **Test:** `dotnet test -c Release --logger "GitHubActions;report-warnings=false"`
+4. **Test:** `dotnet test -c Release`
 5. Analyze tags for release detection
 
 **IMPORTANT:** CI builds in Debug but tests in Release.
