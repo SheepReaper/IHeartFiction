@@ -4,6 +4,7 @@ using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -82,6 +83,9 @@ builder.Services.AddKeycloakAuthorization(options =>
 
 builder.Services.AddAuthorizationBuilder();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+builder.Services.AddScoped<ProtectedLocalStorage>();
+builder.Services.AddScoped<BrowserProtectedStorageService>();
+builder.Services.AddScoped<ReaderProgressService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<StoryEditorService>();
 builder.Services.AddCascadingAuthenticationState();

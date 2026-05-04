@@ -20,6 +20,19 @@ else if (!string.IsNullOrEmpty(errorMessage))
 }
 else if (chapterContent != null)
 {
+    var orderedChapters = Chapters.ToList();
+    var currentChapterIndex = orderedChapters.FindIndex(chapter => chapter.Id == ChapterId);
+    var currentChapter = currentChapterIndex >= 0 ? orderedChapters[currentChapterIndex] : null;
+    var nextChapter = currentChapterIndex >= 0 && currentChapterIndex < orderedChapters.Count - 1
+        ? orderedChapters[currentChapterIndex + 1]
+        : null;
+    var isCrossBookTransition =
+        nextChapter != null
+        && currentChapter != null
+        && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
+        && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
+    var isEndOfStory = nextChapter == null && orderedChapters.Count > 0;
+
     <PageTitle>@PageTitle</PageTitle>
 
     <div class="content">
@@ -31,7 +44,7 @@ else if (chapterContent != null)
             </div>
             <div class="level-right">
                 <div class="level-item">
-                    <ChapterNavigation CurrentChapterId="@ChapterId" Chapters="Chapters" />
+                    <ChapterNavigation StoryId="@StoryId" CurrentChapterId="@ChapterId" Chapters="Chapters" />
                 </div>
             </div>
         </div>
@@ -70,10 +83,35 @@ else if (chapterContent != null)
             </div>
         }
 
+        @if (isCrossBookTransition && nextChapter != null && currentChapter != null)
+        {
+            <div class="notification has-background-info-soft has-text-info-bold">
+                <p>
+                    You finished @currentChapter.BookTitle. Next up: @nextChapter.BookTitle.
+                </p>
+                <p class="mt-2">
+                    <a class="button has-background-primary-soft has-text-primary-bold" href="@ChapterHref(nextChapter.Id)">
+                        Continue to @nextChapter.BookTitle
+                    </a>
+                </p>
+            </div>
+        }
+        else if (isEndOfStory)
+        {
+            <div class="notification has-background-success-soft has-text-success-bold">
+                <p>You've reached the end of this story.</p>
+                <p class="mt-2">
+                    <a class="button has-background-info-soft has-text-info-bold" href="/stories/@StoryId">
+                        Back to Story Details
+                    </a>
+                </p>
+            </div>
+        }
+
         <div class="level mt-6">
             <div class="level-left">
                 <div class="level-item">
-                    <ChapterNavigation CurrentChapterId="@ChapterId" Chapters="Chapters" ShowLabels="true" />
+                    <ChapterNavigation StoryId="@StoryId" CurrentChapterId="@ChapterId" Chapters="Chapters" ShowLabels="true" />
                 </div>
             </div>
             <div class="level-right">
@@ -88,8 +126,9 @@ else if (chapterContent != null)
 }
 
 @code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
     [Parameter, EditorRequired] public string ChapterId { get; set; } = null!;
-    [Parameter] public IEnumerable<ChapterItem> Chapters { get; set; } = [];
+    [Parameter] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
 
     public string PageTitle => string.Join(" - ", new[] {
         chapterContent?.StoryTitle,
@@ -132,4 +171,6 @@ else if (chapterContent != null)
         isLoading = false;
         StateHasChanged();
     }
+
+    private string ChapterHref(string chapterId) => $"/stories/{StoryId}/chapters/{chapterId}";
 }

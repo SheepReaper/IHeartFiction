@@ -1,8 +1,11 @@
 @using Markdig
 @using System.Linq
+@using IHFiction.SharedWeb.Components.Reading
+@using IHFiction.SharedWeb.Services
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inherits CancellableComponent
 @inject StoryService StoryService
+@inject ReaderProgressService ReaderProgressService
 @inject ThemeService theme
 @inject IJSRuntime js
 @inject MarkdownPipeline mdp
@@ -51,12 +54,23 @@ else if (story != null)
                 </div>
                 <div class="level-right">
                     <div class="level-item">
-                        <a href="/stories/@story?.Id" class="button has-background-info-soft has-text-info-bold">
-                            <span class="icon">
-                                <i class="fas fa-info-circle"></i>
-                            </span>
-                            <span>Story Details</span>
-                        </a>
+                        <div class="buttons">
+                            @if (story?.Type is MultiBook or MultiChapter)
+                            {
+                                <button class="button has-background-primary-soft has-text-primary-bold" @onclick="OpenContentsModal">
+                                    <span class="icon">
+                                        <i class="fas fa-list"></i>
+                                    </span>
+                                    <span>Contents</span>
+                                </button>
+                            }
+                            <a href="/stories/@story?.Id" class="button has-background-info-soft has-text-info-bold">
+                                <span class="icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                                <span>Story Details</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -64,90 +78,33 @@ else if (story != null)
             @switch (story?.Type)
             {
                 case MultiBook:
-                    <div class="columns">
-                        <div class="column is-narrow">
-                            <aside class="menu">
-                                <p class="menu-label">Books</p>
-                                <ul class="menu-list">
-                                    @if (story.Books?.Any() ?? false)
-                                    {
-                                        foreach (var book in story.Books.OrderBy(b => b.Order))
-                                        {
-                                            <li @key="book.Id">
-                                                <a class="@(book.Id.ToString() == CurrentBookId ? "is-active" : "")"
-                                                    @onclick="e => SelectBook(book.Id.ToString())">
-                                                    @book.Title
-                                                </a>
-                                                @if (book.Id.ToString() == CurrentBookId && (book.Chapters?.Any() ?? false))
-                                                {
-                                                    <ul>
-                                                        @foreach (var chapter in book.Chapters.OrderBy(c => c.Order))
-                                                        {
-                                                            <li @key="chapter.Id">
-                                                                <a class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
-                                                                    @onclick="@(e => SelectChapter(book.Id.ToString(), chapter.Id.ToString()))">
-                                                                    @chapter.Title
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                    </ul>
-                                                }
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </aside>
-                        </div>
-                        <div class="column">
-                            @if (!string.IsNullOrEmpty(CurrentChapterId))
-                            {
-                                <ChapterReader ChapterId="@CurrentChapterId" />
-                            }
-                            else
-                            {
-                                <div class="content has-text-centered">
-                                    <h2 class="title is-4">Select a Chapter</h2>
-                                    <p>Choose a chapter from the menu to start reading.</p>
-                                </div>
-                            }
-                        </div>
+                    <div class="content">
+                        @if (!string.IsNullOrEmpty(CurrentChapterId))
+                        {
+                            <ChapterReader StoryId="@StoryId" ChapterId="@CurrentChapterId" Chapters="@(navigationChapters ?? [])" />
+                        }
+                        else
+                        {
+                            <div class="content has-text-centered">
+                                <h2 class="title is-4">Select a Chapter</h2>
+                                <p>Open Contents to start reading.</p>
+                            </div>
+                        }
                     </div>
                     break;
                 case MultiChapter:
-                    <div class="columns">
-                        <div class="column is-narrow">
-                            <aside class="menu">
-                                <p class="menu-label">Chapters</p>
-                                <ul class="menu-list">
-                                    @if (story.Chapters?.Any() ?? false)
-                                    {
-                                        foreach (var chapter in story.Chapters.OrderBy(c => c.Order))
-                                        {
-                                            <li @key="chapter.Id">
-                                                <a href="/stories/@story.Id/chapters/@chapter.Id"
-                                                    class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
-                                                    @onclick="e => SelectChapter(null, chapter.Id.ToString())">
-                                                    @chapter.Title
-                                                </a>
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </aside>
-                        </div>
-                        <div class="column">
-                            @if (!string.IsNullOrEmpty(CurrentChapterId))
-                            {
-                                <ChapterReader ChapterId="@CurrentChapterId" />
-                            }
-                            else
-                            {
-                                <div class="content has-text-centered">
-                                    <h2 class="title is-4">Select a Chapter</h2>
-                                    <p>Choose a chapter from the menu to start reading.</p>
-                                </div>
-                            }
-                        </div>
+                    <div class="content">
+                        @if (!string.IsNullOrEmpty(CurrentChapterId))
+                        {
+                            <ChapterReader StoryId="@StoryId" ChapterId="@CurrentChapterId" Chapters="@(chapters ?? [])" />
+                        }
+                        else
+                        {
+                            <div class="content has-text-centered">
+                                <h2 class="title is-4">Select a Chapter</h2>
+                                <p>Open Contents to start reading.</p>
+                            </div>
+                        }
                     </div>
                     break;
                 default: // SingleBody
@@ -193,6 +150,77 @@ else if (story != null)
                     }
                     break;
             }
+
+            <div class="modal @(isContentsModalOpen ? "is-active" : string.Empty)">
+                <div class="modal-background" @onclick="CloseContentsModal"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <p class="modal-card-title">Chapter Contents</p>
+                        <button class="delete" aria-label="close" @onclick="CloseContentsModal"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        @if (story?.Type == MultiBook)
+                        {
+                            <aside class="menu">
+                                <p class="menu-label">Books</p>
+                                <ul class="menu-list">
+                                    @if (story.Books?.Any() ?? false)
+                                    {
+                                        foreach (var book in story.Books.OrderBy(b => b.Order))
+                                        {
+                                            <li @key="book.Id">
+                                                <a class="@(book.Id.ToString() == CurrentBookId ? "is-active" : "")"
+                                                   @onclick="e => SelectBook(book.Id.ToString())">
+                                                    @book.Title
+                                                </a>
+                                                @if (book.Chapters?.Any() ?? false)
+                                                {
+                                                    <ul>
+                                                        @foreach (var chapter in book.Chapters.OrderBy(c => c.Order))
+                                                        {
+                                                            <li @key="chapter.Id">
+                                                                <a href="/stories/@story.Id/chapters/@chapter.Id"
+                                                                   class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
+                                                                   @onclick="@(e => SelectChapter(book.Id.ToString(), chapter.Id.ToString()))">
+                                                                    @chapter.Title
+                                                                </a>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </aside>
+                        }
+                        else if (story?.Type == MultiChapter)
+                        {
+                            <aside class="menu">
+                                <p class="menu-label">Chapters</p>
+                                <ul class="menu-list">
+                                    @if (chapters?.Any() ?? false)
+                                    {
+                                        foreach (var chapter in chapters)
+                                        {
+                                            <li @key="chapter.Id">
+                                                <a href="/stories/@story.Id/chapters/@chapter.Id"
+                                                   class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
+                                                   @onclick="e => SelectChapter(null, chapter.Id.ToString())">
+                                                    @chapter.Title
+                                                </a>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </aside>
+                        }
+                    </section>
+                    <footer class="modal-card-foot">
+                        <button class="button" @onclick="CloseContentsModal">Close</button>
+                    </footer>
+                </div>
+            </div>
         </div>
     </div>
 }
@@ -202,10 +230,14 @@ else if (story != null)
     [Parameter] public string? CurrentChapterId { get; set; }
 
     private LinkedOfGetPublishedStoryResponse? story;
-    private IEnumerable<ChapterItem>? chapters;
+    private IEnumerable<ReaderChapterNavItem>? chapters;
+    private IEnumerable<ReaderChapterNavItem>? navigationChapters;
     private LinkedOfGetPublishedStoryContentResponse? storyContent;
     private bool isLoading = true;
+    private bool isContentsModalOpen;
     private string? errorMessage;
+    private string? lastSavedChapterId;
+    private bool attemptedProgressRestore;
     private bool _disposed = false;
 
     protected override async Task OnInitializedAsync()
@@ -230,6 +262,18 @@ else if (story != null)
         if (story?.Id.ToString() != StoryId)
         {
             await LoadStory();
+            return;
+        }
+
+        if (story?.Type == MultiBook && !string.IsNullOrEmpty(CurrentChapterId))
+        {
+            SyncCurrentBookFromChapter(CurrentChapterId);
+            await SaveReaderProgressAsync(CurrentChapterId);
+        }
+
+        if (story?.Type == MultiChapter && !string.IsNullOrEmpty(CurrentChapterId))
+        {
+            await SaveReaderProgressAsync(CurrentChapterId);
         }
     }
 
@@ -246,32 +290,80 @@ else if (story != null)
 
             if (story?.Type == MultiBook)
             {
-                // Auto-select the first book and chapter by Order if none is selected
-                if ((story.Books?.Any() ?? false) && string.IsNullOrEmpty(CurrentBookId))
+                if (story.Books?.Any() == true)
                 {
-                    var firstBook = story.Books.OrderBy(b => b.Order).First();
-                    CurrentBookId = firstBook.Id.ToString();
-                    if (firstBook.Chapters?.Any() == true)
+                    navigationChapters = story.Books
+                        .OrderBy(b => b.Order)
+                        .SelectMany(b => (b.Chapters ?? []).OrderBy(c => c.Order)
+                            .Select(c => new ReaderChapterNavItem(
+                                c.Id.ToString(),
+                                c.Title,
+                                c.Order,
+                                b.Title)))
+                        .ToList();
+
+                    if (string.IsNullOrEmpty(CurrentChapterId))
                     {
-                        CurrentChapterId = firstBook.Chapters.OrderBy(c => c.Order).First().Id.ToString();
+                        var restoredChapterId = await TryRestoreReaderProgressAsync();
+                        if (!string.IsNullOrEmpty(restoredChapterId))
+                        {
+                            CurrentChapterId = restoredChapterId;
+                        }
                     }
-                    else
+
+                    if (!string.IsNullOrEmpty(CurrentChapterId))
                     {
-                        CurrentChapterId = null;
+                        SyncCurrentBookFromChapter(CurrentChapterId);
+                        await SaveReaderProgressAsync(CurrentChapterId);
+                    }
+
+                    // Auto-select the first book and chapter by Order if no current chapter is set.
+                    if (string.IsNullOrEmpty(CurrentBookId))
+                    {
+                        var firstBook = story.Books.OrderBy(b => b.Order).First();
+                        CurrentBookId = firstBook.Id.ToString();
+                        chapters = firstBook.Chapters?.OrderBy(c => c.Order)
+                            .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, firstBook.Title))
+                            .ToList();
+
+                        if (string.IsNullOrEmpty(CurrentChapterId) && firstBook.Chapters?.Any() == true)
+                        {
+                            CurrentChapterId = firstBook.Chapters.OrderBy(c => c.Order).First().Id.ToString();
+                            await SaveReaderProgressAsync(CurrentChapterId);
+                        }
                     }
                 }
             }
             else if (story?.Type == MultiChapter)
             {
-                chapters = story.Chapters?.OrderBy(c => c.Order).ToList();
+                chapters = story.Chapters?.OrderBy(c => c.Order)
+                    .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order))
+                    .ToList();
+                navigationChapters = chapters;
+
+                if (string.IsNullOrEmpty(CurrentChapterId))
+                {
+                    var restoredChapterId = await TryRestoreReaderProgressAsync();
+                    if (!string.IsNullOrEmpty(restoredChapterId))
+                    {
+                        CurrentChapterId = restoredChapterId;
+                    }
+                }
+
                 // Auto-select the first chapter by Order if none is selected
                 if (string.IsNullOrEmpty(CurrentChapterId) && (chapters?.Any() ?? false))
                 {
-                    CurrentChapterId = chapters!.First().Id.ToString();
+                    CurrentChapterId = chapters!.First().Id;
+                }
+
+                if (!string.IsNullOrEmpty(CurrentChapterId))
+                {
+                    await SaveReaderProgressAsync(CurrentChapterId);
                 }
             }
             else if (story?.Type == SingleBody)
             {
+                navigationChapters = [];
                 // Load content for single story
                 var contentResult = await StoryService.GetPublishedStoryContentAsync(StoryId);
 
@@ -302,6 +394,28 @@ else if (story != null)
     }
     private string? CurrentBookId;
 
+    private void SyncCurrentBookFromChapter(string chapterId)
+    {
+        if (story?.Books?.Any() != true)
+        {
+            return;
+        }
+
+        var containingBook = story.Books
+            .OrderBy(b => b.Order)
+            .FirstOrDefault(book => book.Chapters?.Any(chapter => chapter.Id.ToString() == chapterId) == true);
+
+        if (containingBook == null)
+        {
+            return;
+        }
+
+        CurrentBookId = containingBook.Id.ToString();
+        chapters = containingBook.Chapters?.OrderBy(c => c.Order)
+            .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, containingBook.Title))
+            .ToList();
+    }
+
     private void SelectBook(string bookId)
     {
         CurrentBookId = bookId;
@@ -309,8 +423,11 @@ else if (story != null)
         var book = story?.Books?.FirstOrDefault(b => b.Id.ToString() == bookId);
         if (book?.Chapters?.Any() == true)
         {
-            chapters = book.Chapters.OrderBy(c => c.Order).ToList();
+            chapters = book.Chapters.OrderBy(c => c.Order)
+                .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, book.Title))
+                .ToList();
             CurrentChapterId = book.Chapters.OrderBy(c => c.Order).First().Id.ToString();
+            _ = SaveReaderProgressAsync(CurrentChapterId);
         }
         else
         {
@@ -322,6 +439,54 @@ else if (story != null)
     {
         if (bookId != null)
             CurrentBookId = bookId;
+
         CurrentChapterId = chapterId;
+        _ = SaveReaderProgressAsync(chapterId);
+        CloseContentsModal();
+    }
+
+    private async Task<string?> TryRestoreReaderProgressAsync()
+    {
+        if (attemptedProgressRestore)
+        {
+            return null;
+        }
+
+        attemptedProgressRestore = true;
+
+        var chapterId = await ReaderProgressService.GetLastReadChapterIdAsync(StoryId);
+        if (string.IsNullOrWhiteSpace(chapterId))
+        {
+            return null;
+        }
+
+        if (navigationChapters?.Any(c => c.Id == chapterId) != true)
+        {
+            await ReaderProgressService.ClearLastReadChapterIdAsync(StoryId);
+            return null;
+        }
+
+        return chapterId;
+    }
+
+    private async Task SaveReaderProgressAsync(string chapterId)
+    {
+        if (string.IsNullOrWhiteSpace(chapterId) || chapterId == lastSavedChapterId)
+        {
+            return;
+        }
+
+        lastSavedChapterId = chapterId;
+        await ReaderProgressService.SetLastReadChapterIdAsync(StoryId, chapterId);
+    }
+
+    private void OpenContentsModal()
+    {
+        isContentsModalOpen = true;
+    }
+
+    private void CloseContentsModal()
+    {
+        isContentsModalOpen = false;
     }
 }

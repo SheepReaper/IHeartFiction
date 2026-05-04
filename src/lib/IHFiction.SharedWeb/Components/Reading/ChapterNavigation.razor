@@ -1,22 +1,23 @@
 @if (Chapters.Any())
 {
-    var chapters = Chapters.OrderBy(c => c.Order).ToList();
+    var chapters = Chapters.ToList();
     var currentIndex = chapters.FindIndex(c => c.Id == CurrentChapterId);
     var previousChapter = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     var nextChapter = currentIndex >= 0 && currentIndex < chapters.Count - 1 ? chapters[currentIndex + 1]
     : null;
+    var currentChapter = currentIndex >= 0 ? chapters[currentIndex] : null;
 
     <div class="field is-grouped">
         @if (previousChapter != null)
         {
             <div class="control">
-                <a class="button">
+                <a class="button" href="@ChapterHref(previousChapter.Id.ToString())" title="@BuildTargetLabel("Previous", previousChapter, currentChapter)">
                     <span class="icon">
                         <i class="fas fa-chevron-left"></i>
                     </span>
                     @if (ShowLabels)
                     {
-                        <span>Previous</span>
+                        <span>@BuildTargetLabel("Previous", previousChapter, currentChapter)</span>
                     }
                 </a>
             </div>
@@ -45,10 +46,10 @@
         @if (nextChapter != null)
         {
             <div class="control">
-                <a class="button">
+                <a class="button" href="@ChapterHref(nextChapter.Id.ToString())" title="@BuildTargetLabel("Next", nextChapter, currentChapter)">
                     @if (ShowLabels)
                     {
-                        <span>Next</span>
+                        <span>@BuildTargetLabel("Next", nextChapter, currentChapter)</span>
                     }
                     <span class="icon">
                         <i class="fas fa-chevron-right"></i>
@@ -71,7 +72,22 @@
 }
 
 @code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
     [Parameter, EditorRequired] public string CurrentChapterId { get; set; } = null!;
-    [Parameter] public IEnumerable<ChapterItem> Chapters { get; set; } = [];
+    [Parameter] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
     [Parameter] public bool ShowLabels { get; set; } = false;
+
+    private string ChapterHref(string chapterId) => $"/stories/{StoryId}/chapters/{chapterId}";
+
+    private static string BuildTargetLabel(string direction, ReaderChapterNavItem target, ReaderChapterNavItem? current)
+    {
+        if (string.IsNullOrWhiteSpace(target.BookTitle)
+            || current == null
+            || string.Equals(target.BookTitle, current.BookTitle, StringComparison.OrdinalIgnoreCase))
+        {
+            return direction;
+        }
+
+        return $"{direction}: {target.BookTitle} · {target.Title}";
+    }
 }
