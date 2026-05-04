@@ -147,3 +147,43 @@ html[data-theme="dark"] .ihf-content-link:focus-visible {
 	 transform: translateY(-50%);
 	 margin-right: 0.5em;
 }
+
+/* =============================================
+   Mobile reading experience
+   ============================================= */
+
+/* Tablet and below: reduce box padding for reading comfort */
+@media screen and (max-width: 768px) {
+    .box.content {
+        padding: 1rem;
+    }
+}
+
+/* Mobile phones: remove box chrome, keep minimal vertical separators */
+@media screen and (max-width: 576px) {
+    .ihf-chapter-nav {
+        flex-direction: column;
+    }
+
+    .ihf-chapter-nav .control {
+        width: 100%;
+    }
+
+    .ihf-chapter-nav .control .button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .box.content {
+        padding: 0.75rem 0.5rem;
+        background-color: transparent;
+        box-shadow: none;
+        border-radius: 0;
+        border-top: 1px solid var(--bulma-border-weak);
+        border-bottom: 1px solid var(--bulma-border-weak);
+    }
+
+    .section {
+        padding: 1.5rem 0.75rem;
+    }
+}
