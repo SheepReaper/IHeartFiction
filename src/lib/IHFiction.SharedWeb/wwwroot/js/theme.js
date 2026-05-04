@@ -2,6 +2,13 @@ window.theme = {
     // This function is called by the inline script in the <head> to prevent flickering.
     // It determines and applies the theme based on localStorage or the user's OS preference.
     applyInitialTheme: () => {
+        // Test-only override for deterministic UI automation (for example, Playwright).
+        const forcedTheme = window.theme.getThemeFromUrl();
+        if (forcedTheme !== null) {
+            window.theme.setTheme(forcedTheme);
+            return;
+        }
+
         let theme = localStorage.getItem('theme');
         if (theme === null) {
             // No theme set in local storage, check OS preference
@@ -24,6 +31,16 @@ window.theme = {
     // This function is for the ThemeService to read the initial theme from the DOM
     getTheme: () => {
         return document.documentElement.getAttribute('data-theme');
+    },
+
+    getThemeFromUrl: () => {
+        const theme = new URLSearchParams(window.location.search).get('theme');
+        if (theme === null) {
+            return null;
+        }
+
+        const normalized = theme.toLowerCase();
+        return normalized === 'light' || normalized === 'dark' ? normalized : null;
     }
 };
 
