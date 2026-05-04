@@ -1,0 +1,1 @@
+Use latest C# features where practical, file-scoped namespaces, 4-space indentation in C# (.editorconfig), vertical slice architecture with CQRS-lite organization by feature, warnings treated as errors.

@@ -1,0 +1,1 @@
+After code changes: run dotnet build --configuration Debug --no-restore, then dotnet test -c Release (Docker required for integration tests). Rebuild only changed Aspire resource when possible using aspire resource <name> rebuild.

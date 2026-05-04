@@ -1,0 +1,1 @@
+Core commands: dotnet --version; docker --version; dotnet restore; dotnet build --configuration Debug --no-restore; dotnet test -c Release; dotnet run --project src/aspire/IHFiction.AppHost; aspire start/stop/describe/logs/resource <name> rebuild.

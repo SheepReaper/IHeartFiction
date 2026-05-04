@@ -1,0 +1,1 @@
+IHeartFiction is a modern cloud-native fiction reading and publishing platform built on .NET 10 with Aspire orchestration. It supports original/fan fiction, authoring tools, and community features.

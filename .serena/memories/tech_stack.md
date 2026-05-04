@@ -1,0 +1,1 @@
+Tech stack: .NET 10 (net10.0), ASP.NET Core Minimal APIs, Blazor Web App (Interactive Server), .NET Aspire AppHost, EF Core, PostgreSQL, MongoDB, Keycloak, xUnit tests with FluentAssertions and NSubstitute.
