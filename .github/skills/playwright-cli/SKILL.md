@@ -214,6 +214,17 @@ playwright-cli close-all
 playwright-cli kill-all
 ```
 
+## Repository-specific theming guidance
+
+For this repository, prefer URL-driven theme forcing for deterministic UI checks:
+
+```bash
+playwright-cli open "https://app.example.com/?theme=light"
+playwright-cli open "https://app.example.com/?theme=dark"
+```
+
+Use the `theme` query parameter instead of mutating `localStorage['theme']` when the goal is to verify rendering in a specific theme. Only use storage mutation when testing persistence behavior.
+
 ## Blazor and Aspire reliability guidance
 
 For this repository (Blazor + Aspire), use these defaults for stable audits:

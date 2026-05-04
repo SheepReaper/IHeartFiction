@@ -40,6 +40,14 @@ If .NET 10 SDK is not installed, STOP and inform the user. Do not attempt to bui
 
 ## Build and Test Commands
 
+## Agent Workflow
+
+When Serena tools are available, prefer them for codebase exploration, symbol-aware edits, and memory management.
+
+- Use Serena or symbol-aware tooling before broad file reads when practical.
+- Prefer repository memory for durable codebase facts and session memory for task plans or temporary execution context.
+- Fall back to generic grep, file, and terminal tools when Serena is not a good fit for the task.
+
 ### Project Structure
 
 The solution uses **Central Package Management** via `Directory.Packages.props` in the repository root. All package versions are centrally managed.
@@ -124,6 +132,7 @@ When validating UI changes with Playwright in this repository, use this sequence
    - `aspire wait web`
 3. Prefer `playwright-cli run-code` over ad-hoc Node scripts.
    - The repository environment may not have `playwright` resolvable from plain `node` scripts.
+   - For deterministic theme validation, prefer `?theme=light` or `?theme=dark` in the URL over mutating browser storage. Use storage mutation only when testing persistence behavior itself.
 4. For Blazor pages, do **not** default to `networkidle` waits.
    - Use `waitUntil: 'domcontentloaded'` and then explicitly wait for `main` to be visible.
 5. Treat `/_blazor/disconnect` request failures as expected noise during navigation/state changes.
