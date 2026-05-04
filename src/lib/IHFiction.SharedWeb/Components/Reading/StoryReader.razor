@@ -11,11 +11,11 @@
 {
     <div class="section">
         <div class="content has-text-centered">
-            <span class="icon is-large has-text-grey-light">
+            <span class="icon is-large">
                 <i class="fas fa-file-alt fa-3x"></i>
             </span>
-            <h2 class="title is-4 has-text-grey">No content available</h2>
-            <p class="has-text-grey">This story doesn't have any content yet.</p>
+            <h2 class="title is-4">No content available</h2>
+            <p>This story doesn't have any content yet.</p>
         </div>
     </div>
 }
@@ -36,10 +36,10 @@ else if (story != null)
                     <div class="level-item">
                         <div>
                             <h1 class="title is-3">@story?.Title</h1>
-                            <p class="subtitle is-5 has-text-grey">
+                            <p class="subtitle is-5">
                                 by @foreach (var author in story?.Authors ?? [])
                                 {
-                                    <a @key="author.Id" href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
+                                    <a @key="author.Id" href="/authors/@author.Id" class="ihf-content-link">@author.Name</a>
                                     @if (author != story?.Authors.Last())
                                     {
                                         <text>, </text>
@@ -51,7 +51,7 @@ else if (story != null)
                 </div>
                 <div class="level-right">
                     <div class="level-item">
-                        <a href="/stories/@story?.Id" class="button is-light">
+                        <a href="/stories/@story?.Id" class="button has-background-info-soft has-text-info-bold">
                             <span class="icon">
                                 <i class="fas fa-info-circle"></i>
                             </span>
@@ -184,11 +184,11 @@ else if (story != null)
                     else
                     {
                         <div class="content has-text-centered">
-                            <span class="icon is-large has-text-grey-light">
+                            <span class="icon is-large">
                                 <i class="fas fa-file-alt fa-3x"></i>
                             </span>
-                            <h2 class="title is-4 has-text-grey">No content available</h2>
-                            <p class="has-text-grey">This story doesn't have any content yet.</p>
+                            <h2 class="title is-4">No content available</h2>
+                            <p>This story doesn't have any content yet.</p>
                         </div>
                     }
                     break;

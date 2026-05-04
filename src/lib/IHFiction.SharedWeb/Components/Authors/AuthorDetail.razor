@@ -32,7 +32,7 @@ else if (author != null)
                     <div class="card">
                         <div class="card-content has-text-centered">
                             <figure class="image is-128x128 is-inline-block">
-                                <div class="has-background-primary has-text-white is-flex is-align-items-center is-justify-content-center" 
+                                <div class="ihf-avatar-badge is-flex is-align-items-center is-justify-content-center" 
                                      style="width: 128px; height: 128px; border-radius: 50%;">
                                     <span class="title is-2">@GetInitials(author.Name)</span>
                                 </div>
@@ -61,7 +61,7 @@ else if (author != null)
                         }
                         else
                         {
-                            <p class="has-text-grey-light">
+                            <p>
                                 <em>This author hasn't written a biography yet.</em>
                             </p>
                         }
@@ -69,13 +69,13 @@ else if (author != null)
                         <div class="columns is-mobile">
                             <div class="column">
                                 <div class="has-text-centered">
-                                    <p class="title is-2 has-text-primary">@author.TotalStories</p>
+                                    <p class="title is-2">@author.TotalStories</p>
                                     <p class="subtitle is-6">Total Stories</p>
                                 </div>
                             </div>
                             <div class="column">
                                 <div class="has-text-centered">
-                                    <p class="title is-2 has-text-success">@author.PublishedStories.Count</p>
+                                    <p class="title is-2">@author.PublishedStories.Count</p>
                                     <p class="subtitle is-6">Published</p>
                                 </div>
                             </div>
@@ -91,7 +91,7 @@ else if (author != null)
                                         <div class="card">
                                             <div class="card-content">
                                                 <h4 class="title is-6">
-                                                    <a href="/stories/@work.Id" class="has-text-dark">@work.Title</a>
+                                                    <a href="/stories/@work.Id" class="ihf-card-title-link">@work.Title</a>
                                                 </h4>
                                             </div>
                                         </div>
@@ -102,10 +102,10 @@ else if (author != null)
                         else
                         {
                             <div class="has-text-centered mt-6">
-                                <span class="icon is-large has-text-grey-light">
+                                <span class="icon is-large">
                                     <i class="fas fa-book fa-2x"></i>
                                 </span>
-                                <p class="has-text-grey">This author hasn't published any stories yet.</p>
+                                <p>This author hasn't published any stories yet.</p>
                             </div>
                         }
                     </div>

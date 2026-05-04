@@ -24,16 +24,16 @@
 <div @ref="_editorElement"></div>
 
 <!-- Editor status: word count always shown; character count shown when CharacterLimit is set -->
-<div class="editor-status is-size-7 has-text-grey" aria-live="polite" role="status"
+<div class="editor-status is-size-7 has-text-dark" aria-live="polite" role="status"
     style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
-    <div class="word-count" title="Word count">Words: @_wordCount</div>
+    <div class="word-count">Words: @_wordCount</div>
     @if (CharacterLimit.HasValue)
     {
         var exceeded = _charCount > CharacterLimit.Value;
-        <div class="char-count" title="Character count">
-            <span class="has-text-weight-semibold @(exceeded ? "has-text-danger" : "has-text-grey-dark")">@_charCount</span>
-            <span class="has-text-grey">/</span>
-            <span class="has-text-grey">@CharacterLimit</span>
+        <div class="char-count">
+            <span class="has-text-weight-semibold @(exceeded ? "has-text-danger" : "has-text-dark")">@_charCount</span>
+            <span class="has-text-dark">/</span>
+            <span class="has-text-dark">@CharacterLimit</span>
         </div>
     }
 </div>

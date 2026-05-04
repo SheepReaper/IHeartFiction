@@ -65,6 +65,23 @@ Choose the right action based on what changed:
 
 **Never restart the entire AppHost just because a single resource changed.** Use `aspire resource <name> rebuild` for .NET project resources — it coordinates stop, build, and restart for just that resource. Use `aspire describe --format Json` to check which commands a resource supports.
 
+### UI verification recovery playbook (Playwright + Blazor)
+
+When browser audits start timing out or serving stale static assets, use this escalation order:
+
+1. Check resource state first:
+	- `aspire describe`
+	- `aspire wait web`
+2. If the site times out at `/` during Playwright runs, restart web only:
+	- `aspire resource web restart --non-interactive -l Debug`
+3. If stale `_content/...bundle.scp.css` fingerprints are still served, rebuild web:
+	- `aspire resource web rebuild --non-interactive -l Debug`
+4. If rebuild fails, inspect logs before retrying:
+	- `aspire logs web`
+	- `aspire otel logs web`
+
+Run targeted page checks first after recovery, then full sweeps.
+
 ### Debugging issues
 
 Before making code changes, inspect the app state:
@@ -95,6 +112,7 @@ aspire mcp call <resource> <tool> --input '{"key":"value"}'   # invoke a tool
 - **Always start the app first** (`aspire start`) before making changes to verify the starting state.
 - **To restart, just run `aspire start` again** — it automatically stops the previous instance. NEVER use `aspire stop` then `aspire run`. NEVER use `aspire run` at all.
 - **Only restart the AppHost when AppHost code changes.** For .NET project resources, use `aspire resource <name> rebuild` instead.
+- For browser validation instability, prefer `aspire resource web restart` before wider restarts.
 - Use `--isolated` when working in a worktree.
 - **Avoid persistent containers** early in development to prevent state management issues.
 - **Never install the Aspire workload** — it is obsolete.

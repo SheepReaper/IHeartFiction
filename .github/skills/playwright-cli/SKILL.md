@@ -214,6 +214,27 @@ playwright-cli close-all
 playwright-cli kill-all
 ```
 
+## Blazor and Aspire reliability guidance
+
+For this repository (Blazor + Aspire), use these defaults for stable audits:
+
+1. Prefer `playwright-cli run-code` for scripted sweeps.
+2. Use `page.goto(..., { waitUntil: 'domcontentloaded' })`.
+3. After navigation, wait for app readiness explicitly:
+	- `await page.locator('main').waitFor({ state: 'visible', timeout: 15000 })`
+4. Add a short settle delay (`waitForTimeout(200-400)`) before evaluating computed styles.
+5. Do not rely on `networkidle` as the primary readiness signal for Blazor pages.
+
+### Console and network filtering
+
+- Treat `/_blazor/disconnect` request failures as expected noise unless user behavior indicates real breakage.
+- Flag `404`/`Failed to load resource` for static assets (especially `_content/...bundle.scp.css`) as high-signal operational issues.
+
+### Recovery when sweeps become flaky
+
+- If `goto` starts timing out on `/`, recover app state first (restart/rebuild `web` via Aspire), then rerun Playwright.
+- Re-validate with targeted route checks before running broad full-sweep audits.
+
 ## Local installation
 
 In some cases user might want to install playwright-cli locally. If running globally available `playwright-cli` binary fails, use `npx playwright-cli` to run the commands. For example:

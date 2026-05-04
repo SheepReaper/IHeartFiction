@@ -31,8 +31,8 @@
                 {
                     var chapter = _sortedChaps[i];
                     <li @key="chapter.Id">
-                        <a class="pagination-link @(chapter.Id == Chapter?.Id ? "is-current" : "")"
-                            aria-label="Chapter @(i + 1)" title="@chapter.Title"
+                        <a class="pagination-link has-tooltip-top @(chapter.Id == Chapter?.Id ? "is-current" : "")"
+                            aria-label="Chapter @(i + 1)" title="@chapter.Title" data-tooltip="@chapter.Title"
                             @onclick="async () => await SelectChapter(chapter)">@(i + 1)</a>
                     </li>
                 }

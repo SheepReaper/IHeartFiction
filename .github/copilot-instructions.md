@@ -114,6 +114,29 @@ After the first run, you MUST configure Keycloak secrets:
 
 **Note:** The Aspire Dashboard will prompt for missing secrets on subsequent runs.
 
+### Playwright + Aspire Verification Workflow
+
+When validating UI changes with Playwright in this repository, use this sequence to avoid flaky runs:
+
+1. Ensure the apphost is running (`aspire start` or `dotnet run --project src/aspire/IHFiction.AppHost`).
+2. Verify resource readiness before browser automation:
+   - `aspire describe`
+   - `aspire wait web`
+3. Prefer `playwright-cli run-code` over ad-hoc Node scripts.
+   - The repository environment may not have `playwright` resolvable from plain `node` scripts.
+4. For Blazor pages, do **not** default to `networkidle` waits.
+   - Use `waitUntil: 'domcontentloaded'` and then explicitly wait for `main` to be visible.
+5. Treat `/_blazor/disconnect` request failures as expected noise during navigation/state changes.
+
+If a previously healthy sweep starts timing out at `/` after edits:
+
+1. Restart only the web resource first:
+   - `aspire resource web restart --non-interactive -l Debug`
+2. Re-run a targeted Playwright check on recently changed routes.
+3. Re-run the full sweep only after targeted checks pass.
+
+If stale static-web-asset fingerprints appear in console (`_content/...bundle.scp.css` 404), restart or rebuild the affected resource before trusting contrast/readability results.
+
 ## Project Architecture
 
 ### Architectural Patterns
@@ -286,6 +309,8 @@ Custom validation attributes in `src/lib/IHFiction.SharedKernel/Validation/`:
 4. **Building in wrong configuration** - CI builds Debug first, then tests Release
 5. **Missing migrations** - MigrationService must complete before API starts
 6. **Treating warnings as errors** - All warnings must be resolved for successful build
+7. **Using `networkidle` for Blazor verification** - can hang/flap due to persistent connections; prefer `domcontentloaded` + explicit UI readiness checks
+8. **Assuming all console errors are regressions** - filter known `/_blazor/disconnect` noise before deciding a sweep failed
 
 ## Quick Reference
 

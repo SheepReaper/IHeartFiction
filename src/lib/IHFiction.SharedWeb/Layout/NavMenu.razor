@@ -66,18 +66,18 @@
                 <LoginDisplay />
             </div>
             <div class="navbar-item">
-                <a class="button is-info" href="@DocsUrl" target="_blank" rel="noopener noreferrer" title="API Docs">
+                <a class="button is-info" href="@DocsUrl" target="_blank" rel="noopener noreferrer">
                     <span class="icon"><i class="fas fa-book-medical"></i></span>
                     <span>API Docs</span>
                 </a>
             </div>
             <div class="navbar-item">
-                <a class="button is-light has-tooltip-bottom has-tooltip-subtle" data-tooltip="About" href="/about" title="About">
+                <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about">
                     <span class="icon"><i class="@CurrentCycleIcon"></i></span>
                 </a>
             </div>
             <div class="navbar-item">
-                <button class="button is-light has-tooltip-bottom has-tooltip-subtle" data-tooltip="Hit the lights" @onclick="ToggleTheme">
+                <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleTheme">
                     <span class="icon"><i class="fas fa-@themeIcon"></i></span>
                 </button>
             </div>

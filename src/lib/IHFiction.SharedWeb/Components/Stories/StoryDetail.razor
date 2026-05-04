@@ -30,10 +30,10 @@ else if (story != null)
             <div class="columns">
                 <div class="column is-two-thirds">
                     <h1 class="title is-2">@story.Title</h1>
-                    <p class="subtitle is-4 has-text-grey">
+                    <p class="subtitle is-4">
                         by @foreach (var author in story.Authors)
                         {
-                            <a @key="author.Id" href="/authors/@author.Id" class="has-text-grey">@author.Name</a>
+                            <a @key="author.Id" href="/authors/@author.Id" class="ihf-content-link">@author.Name</a>
                             @if (author != story.Authors.Last())
                             {
                                 <text>, </text>
@@ -134,7 +134,7 @@ else if (story != null)
                                                 }
                                                 else
                                                 {
-                                                    <span class="tag is-light">One-shot</span>
+                                                    <span class="tag has-background-link-soft has-text-link-bold">One-shot</span>
                                                 }
                                             </p>
                                         </div>
@@ -181,7 +181,7 @@ else if (story != null)
                                     <div class="card">
                                         <div class="card-content">
                                             <h3 class="title is-6">@chapter.Title</h3>
-                                            <p class="subtitle is-7 has-text-grey">
+                                            <p class="subtitle is-7">
                                                 @if (chapter is { })
                                                 {
                                                     <text>Order: @chapter.Order</text>
@@ -209,7 +209,7 @@ else if (story != null)
                                     <div class="card">
                                         <div class="card-content">
                                             <h3 class="title is-6">@chapter.Title</h3>
-                                            <p class="subtitle is-7 has-text-grey">
+                                            <p class="subtitle is-7">
                                                 @if (chapter.PublishedAt.HasValue)
                                                 {
                                                     <text>Published @chapter.PublishedAt.Value.ToString("MMM dd, yyyy")</text>
@@ -232,7 +232,7 @@ else if (story != null)
                                             }
                                             else
                                             {
-                                                <span class="card-footer-item has-text-grey">
+                                                <span class="card-footer-item">
                                                     <span class="icon">
                                                         <i class="fas fa-clock"></i>
                                                     </span>

@@ -1,0 +1,149 @@
+ :root {
+	 --ihf-card-shadow: 0 1.5rem 2.5rem -2rem rgba(10, 10, 10, 0.25), 0 0 0 1px var(--bulma-border-weak);
+ }
+
+ .card {
+	 --bulma-card-background-color: var(--bulma-scheme-main-bis);
+	 --bulma-card-color: var(--bulma-text-strong);
+	 --bulma-card-shadow: var(--ihf-card-shadow);
+ }
+
+ .card .title,
+ .card .subtitle,
+ .card .content,
+ .card .content p,
+ .card .content li,
+ .card .message-body,
+ .card .card-footer-item {
+	 color: inherit;
+ }
+
+ .card .card-footer-item {
+	 color: var(--bulma-text-strong);
+ }
+
+ .ihf-card-title-link {
+	 color: inherit;
+ }
+
+ .ihf-card-title-link:hover,
+ .ihf-card-title-link:focus-visible {
+	 color: var(--bulma-text-title);
+ }
+
+ .ihf-card-link {
+	 color: var(--bulma-link-30);
+ }
+
+ .ihf-card-link:hover,
+ .ihf-card-link:focus-visible {
+	 color: var(--bulma-link-20);
+ }
+
+.ihf-content-link {
+	 color: var(--bulma-link);
+}
+
+.ihf-content-link:hover,
+.ihf-content-link:focus-visible {
+	 color: var(--bulma-link-text);
+}
+
+ .ihf-avatar-badge {
+	 background-color: var(--bulma-primary-soft);
+	 color: var(--bulma-primary-bold);
+ }
+
+ html[data-theme="dark"] .card {
+	 --bulma-card-shadow: 0 1.5rem 2.5rem -2rem rgba(0, 0, 0, 0.65), 0 0 0 1px var(--bulma-border);
+ }
+
+ html[data-theme="dark"] .ihf-card-link {
+	 color: var(--bulma-link-80);
+ }
+
+ html[data-theme="dark"] .ihf-card-link:hover,
+ html[data-theme="dark"] .ihf-card-link:focus-visible {
+	 color: var(--bulma-link-90);
+ }
+
+html[data-theme="dark"] .ihf-content-link {
+	 color: var(--bulma-link-80);
+}
+
+html[data-theme="dark"] .ihf-content-link:hover,
+html[data-theme="dark"] .ihf-content-link:focus-visible {
+	 color: var(--bulma-link-90);
+}
+
+ html[data-theme="dark"] main .content a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link),
+ html[data-theme="dark"] main .box a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link),
+ html[data-theme="dark"] main .message-body a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link) {
+	 color: var(--bulma-link-80);
+ }
+
+ html[data-theme="dark"] main .content a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):hover,
+ html[data-theme="dark"] main .content a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):focus-visible,
+ html[data-theme="dark"] main .box a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):hover,
+ html[data-theme="dark"] main .box a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):focus-visible,
+ html[data-theme="dark"] main .message-body a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):hover,
+ html[data-theme="dark"] main .message-body a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):focus-visible {
+	 color: var(--bulma-link-90);
+ }
+
+/* Tooltip container */
+[data-tooltip] {
+	 position: relative;
+	 cursor: pointer;
+}
+
+/* Tooltip text */
+[data-tooltip]::after {
+	 content: attr(data-tooltip);
+	 position: absolute;
+	 opacity: 0;
+	 transition: opacity 0.3s;
+	 pointer-events: none;
+	 background-color: var(--bulma-dark);
+	 color: var(--bulma-white);
+	 padding: 0.5em 0.75em;
+	 border-radius: 4px;
+	 font-size: 0.75rem;
+	 white-space: nowrap;
+	 z-index: 1000;
+	 box-shadow: 0 0.75rem 1.5rem -1rem rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Show the tooltip on hover */
+[data-tooltip]:hover::after {
+	 opacity: 1;
+}
+
+/* Positioning */
+.has-tooltip-top::after {
+	 bottom: 100%;
+	 left: 50%;
+	 transform: translateX(-50%);
+	 margin-bottom: 0.5em;
+}
+
+.has-tooltip-right::after {
+	 top: 50%;
+	 left: 100%;
+	 transform: translateY(-50%);
+	 margin-left: 0.5em;
+}
+
+.has-tooltip-bottom::after {
+	 top: 100%;
+	 left: 50%;
+	 transform: translateX(-50%);
+	 margin-top: 0.5em;
+}
+
+.has-tooltip-left::after {
+	 top: 50%;
+	 right: 100%;
+	 transform: translateY(-50%);
+	 margin-right: 0.5em;
+}

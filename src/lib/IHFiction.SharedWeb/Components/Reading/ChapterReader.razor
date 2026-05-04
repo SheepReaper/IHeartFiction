@@ -45,13 +45,13 @@ else if (chapterContent != null)
                 <div class="message-body">
                     @if (!string.IsNullOrWhiteSpace(chapterContent.Note1))
                     {
-                        @((MarkupString)Markdown.ToHtml(chapterContent.Note1, mdp))
+                        <div class="content">@((MarkupString)Markdown.ToHtml(chapterContent.Note1, mdp))</div>
                     }
                 </div>
             </div>
         }
 
-        <div class="box">
+        <div class="box content">
             @((MarkupString)Markdown.ToHtml(chapterContent.Content, mdp))
         </div>
 
@@ -64,7 +64,7 @@ else if (chapterContent != null)
                 <div class="message-body">
                     @if (!string.IsNullOrWhiteSpace(chapterContent.Note2))
                     {
-                        @((MarkupString)Markdown.ToHtml(chapterContent.Note2, mdp))
+                        <div class="content">@((MarkupString)Markdown.ToHtml(chapterContent.Note2, mdp))</div>
                     }
                 </div>
             </div>
@@ -78,7 +78,7 @@ else if (chapterContent != null)
             </div>
             <div class="level-right">
                 <div class="level-item">
-                    <p class="has-text-grey is-size-7">
+                    <p class="is-size-7">
                         Last updated: @chapterContent.ContentUpdatedAt.ToString("MMM dd, yyyy")
                     </p>
                 </div>

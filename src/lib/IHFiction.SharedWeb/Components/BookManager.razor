@@ -29,8 +29,8 @@
                         {
                             var book = _sortedBooks[i];
                             <li @key="book.Id">
-                                <a class="pagination-link @(book.Id == Book?.Id ? "is-current" : "")"
-                                    aria-label="Book @(i + 1)" title="@book.Title"
+                                <a class="pagination-link has-tooltip-top @(book.Id == Book?.Id ? "is-current" : "")"
+                                    aria-label="Book @(i + 1)" title="@book.Title" data-tooltip="@book.Title"
                                     @onclick="async () => await SelectBook(book)">@(i + 1)</a>
                             </li>
                         }

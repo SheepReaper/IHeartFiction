@@ -498,3 +498,9 @@ appsettings.Production.json
 
 # Aspire testing
 NuGet.config
+
+# Local Playwright test results
+/.playwright-cli/*
+
+# Agent generated tooling files
+/tools/*.txt
