@@ -85,20 +85,32 @@ internal sealed class GetOwnBookContent(
         CancellationToken cancellationToken = default
     )
     {
-        var author = await authorizationService.GetCurrentAuthorAsync(claimsPrincipal, cancellationToken);
+        var authorizationResult = await authorizationService.AuthorizeBookAccessAsync(
+            id,
+            claimsPrincipal,
+            StoryAccessLevel.Edit,
+            cancellationToken: cancellationToken);
 
-        if (author.IsFailure) return author.DomainError;
+        if (authorizationResult.IsFailure)
+        {
+            // Keep endpoint error semantics stable while allowing resilient book access checks.
+            if (authorizationResult.DomainError == AuthorizationService.Errors.CollaboratorRequired
+                || authorizationResult.DomainError == AuthorizationService.Errors.OwnerOnlyOperation
+                || authorizationResult.DomainError == AuthorizationService.Errors.InsufficientPermissions)
+            {
+                return CommonErrors.Book.NotAuthorized;
+            }
+
+            return authorizationResult.DomainError;
+        }
 
         var book = await context.Books
             .Include(b => b.Story)
             .Include(b => b.Chapters)
-            .Include(b => b.Authors)
             .AsNoTracking()
             .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
         if (book is null) return CommonErrors.Book.NotFound;
-
-        if (!book.Authors.Any(b => b.Id == author.Value.Id)) return CommonErrors.Book.NotAuthorized;
 
         // Materialize chapters and join in-memory to avoid EF Core translation issues
         var chapters = book.Chapters.ToList();

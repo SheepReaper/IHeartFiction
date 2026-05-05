@@ -142,17 +142,32 @@ internal sealed class AuthorizationService(FictionDbContext context, UserService
 
         if (includeDeleted) query = context.Books.IgnoreQueryFilters();
 
-        // TODO: test if loading is necessary
-        query = query
-            .Include(b => b.Authors)
-            .Include(b => b.Story);
+        query = query.Include(b => b.Story);
 
         var book = await query.FirstOrDefaultAsync(b => b.Id == bookId, cancellationToken);
 
         if (book is null) return Errors.StoryNotFound;
-        if (book.Story is null) return Errors.StoryNotFound;
 
-        var storyPermissions = CalculateStoryPermissions(book.Story, author);
+        var storyAccess = await context.Stories
+            .Where(s => s.Id == book.StoryId)
+            .Select(s => new
+            {
+                IsOwner = s.OwnerId == author.Id,
+                IsCollaborator = s.Authors.Any(a => a.Id == author.Id)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (storyAccess is null) return Errors.StoryNotFound;
+
+        var hasStoryAccess = storyAccess.IsOwner || storyAccess.IsCollaborator;
+
+        var storyPermissions = new StoryPermissions(
+            IsOwner: storyAccess.IsOwner,
+            IsCollaborator: storyAccess.IsCollaborator,
+            CanRead: hasStoryAccess,
+            CanEdit: hasStoryAccess,
+            CanDelete: storyAccess.IsOwner,
+            CanPublish: storyAccess.IsOwner);
 
         return !storyPermissions.HasAccess(requiredAccess)
           ? (requiredAccess switch

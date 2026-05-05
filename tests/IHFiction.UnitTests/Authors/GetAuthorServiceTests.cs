@@ -35,6 +35,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),
@@ -63,6 +64,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),
@@ -84,6 +86,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),
@@ -107,6 +110,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),
@@ -134,6 +138,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),
@@ -161,6 +166,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),
@@ -196,6 +202,7 @@ public class GetAuthorServiceTests
         var response = new GetAuthor.GetAuthorResponse(
             author.UserId,
             author.Name,
+            null,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio),

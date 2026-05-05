@@ -343,6 +343,17 @@ dotnet build --configuration Debug  # Matches CI
 dotnet ef migrations add <Name> --project src/lib/IHFiction.Data/IHFiction.Data.csproj --context FictionDbContext
 ```
 
+## Browser and UI validation requirements
+
+When implementing or modifying UI behavior, routing, rendering, metadata generation, social-preview tags, SEO tags, or browser-observable behavior:
+
+- Use Playwright as the primary validation tool.
+- Do not replace Playwright with unit tests, manual testing notes, curl-only checks, or “future work.”
+- The implementation plan must include concrete Playwright tests or Playwright MCP/browser-validation steps.
+- If Playwright is not already installed, the plan must include installing and configuring it.
+- If a local dev server is needed, the plan must include how it is started and how Playwright connects to it.
+- For social preview / SEO / metadata work, validate the rendered HTML seen by a browser or by an HTTP request that observes prerendered output, and assert the relevant Open Graph, Twitter Card, canonical, and redirect behavior.
+
 ## Trust These Instructions
 
 These instructions have been carefully validated. Only search for additional information if:

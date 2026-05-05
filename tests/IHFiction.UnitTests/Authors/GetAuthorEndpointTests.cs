@@ -21,6 +21,7 @@ public class GetAuthorEndpointTests
         var response = new GetAuthor.GetAuthorResponse(
             userId,
             "Test Author",
+            null,
             DateTime.UtcNow,
             null,
             new GetAuthor.GaAuthorProfile("Test bio"),
@@ -71,7 +72,7 @@ public class GetAuthorResponseTests
         };
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(userId, name, updatedAt, deletedAt, profile, works, 2);
+        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt, deletedAt, profile, works, 2);
 
         // Assert
         response.UserId.Should().Be(userId);

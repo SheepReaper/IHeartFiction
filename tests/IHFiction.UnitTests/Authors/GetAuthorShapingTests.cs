@@ -19,6 +19,7 @@ public class GetAuthorShapingTests
         var response = new GetAuthor.GetAuthorResponse(
             UserId: Guid.NewGuid(),
             Name: "Test Author",
+            AvatarUrl: null,
             UpdatedAt: DateTime.UtcNow,
             DeletedAt: null,
             Profile: new GetAuthor.GaAuthorProfile("Bio text"),
