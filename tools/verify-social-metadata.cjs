@@ -5,6 +5,7 @@ const authorId = process.env.SSP_AUTHOR_ID ?? '01K52M35BFK3ED1HB7V7FY353C';
 const storyId = process.env.SSP_STORY_ID ?? '01K6S20WDTEWH7Q3MRJM0G9MRH';
 const chapterStoryId = process.env.SSP_CHAPTER_STORY_ID ?? '01K6SFB0G8EQ5MVNZ0RC6V1QCZ';
 const chapterId = process.env.SSP_CHAPTER_ID ?? '01K7J887GFPBQEJKE0Z6ACMP1Z';
+const allowInsecureTls = process.env.ALLOW_INSECURE_TLS === 'true';
 
 const routes = [
   '/',
@@ -37,7 +38,7 @@ function getHtml(url) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, {
       method: 'GET',
-      rejectUnauthorized: false,
+      rejectUnauthorized: !allowInsecureTls,
       headers: {
         'User-Agent': 'ihf-social-metadata-verifier/1.0'
       }
