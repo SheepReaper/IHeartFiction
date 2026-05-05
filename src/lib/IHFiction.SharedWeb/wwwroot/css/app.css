@@ -76,18 +76,12 @@ html[data-theme="dark"] .ihf-content-link:focus-visible {
 	 color: var(--bulma-link-90);
 }
 
- html[data-theme="dark"] main .content a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link),
- html[data-theme="dark"] main .box a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link),
- html[data-theme="dark"] main .message-body a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link) {
+ /* Dark theme: style reading-surface links while leaving controls/nav links untouched. */
+ html[data-theme="dark"] main :is(.content, .message-body) a:not(:is(.button, .tag, .ihf-card-title-link, .ihf-card-link)) {
 	 color: var(--bulma-link-80);
  }
 
- html[data-theme="dark"] main .content a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):hover,
- html[data-theme="dark"] main .content a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):focus-visible,
- html[data-theme="dark"] main .box a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):hover,
- html[data-theme="dark"] main .box a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):focus-visible,
- html[data-theme="dark"] main .message-body a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):hover,
- html[data-theme="dark"] main .message-body a:not(.button):not(.tag):not(.card-footer-item):not(.navbar-item):not(.ihf-card-title-link):not(.ihf-card-link):focus-visible {
+ html[data-theme="dark"] main :is(.content, .message-body) a:not(:is(.button, .tag, .ihf-card-title-link, .ihf-card-link)):is(:hover, :focus-visible) {
 	 color: var(--bulma-link-90);
  }
 
