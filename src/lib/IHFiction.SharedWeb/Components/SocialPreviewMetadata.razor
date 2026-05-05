@@ -20,8 +20,10 @@
 
     <meta name="twitter:card" content="@TwitterCard" />
     <meta name="twitter:title" content="@ResolvedTitle" />
-    <meta name="twitter:description" content="@ResolvedDescription" />
+    <meta name="twitter:description" content="@ResolvedTwitterDescription" />
     <meta name="twitter:image" content="@ResolvedImageUrl" />
+    <meta name="twitter:image:src" content="@ResolvedImageUrl" />
+    <meta property="twitter:image" content="@ResolvedImageUrl" />
 </HeadContent>
 
 @code {
@@ -40,6 +42,7 @@
 
     private string ResolvedTitle => Normalize(Title, 60, "IHeartFiction");
     private string ResolvedDescription => Normalize(Description, 200, "Read stories and discover authors on IHeartFiction.");
+    private string ResolvedTwitterDescription => Normalize(Description, 199, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedPageUrl => ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
     private string ResolvedCanonicalUrl => ToAbsolute(CanonicalUrl ?? ResolvedPageUrl);
     private string ResolvedImageUrl => ToAbsolute(ImageUrl ?? DefaultImagePath);
