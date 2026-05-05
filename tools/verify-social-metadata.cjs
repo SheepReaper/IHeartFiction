@@ -8,6 +8,7 @@ const chapterId = process.env.SSP_CHAPTER_ID ?? '01K7J887GFPBQEJKE0Z6ACMP1Z';
 
 const routes = [
   '/',
+  '/about',
   '/authors',
   '/stories',
   `/authors/${authorId}`,
@@ -61,6 +62,61 @@ function titleFromHtml(html) {
   return match?.[1]?.trim() ?? '';
 }
 
+function extractMetaContent(html, property) {
+  const escapedProperty = property.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const propertyFirst = new RegExp(`<meta\\s+[^>]*property=["']${escapedProperty}["'][^>]*content=["']([^"']*)["'][^>]*>`, 'i');
+  const contentFirst = new RegExp(`<meta\\s+[^>]*content=["']([^"']*)["'][^>]*property=["']${escapedProperty}["'][^>]*>`, 'i');
+  return propertyFirst.exec(html)?.[1] ?? contentFirst.exec(html)?.[1] ?? '';
+}
+
+function extractMetaNameContent(html, name) {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const nameFirst = new RegExp(`<meta\\s+[^>]*name=["']${escapedName}["'][^>]*content=["']([^"']*)["'][^>]*>`, 'i');
+  const contentFirst = new RegExp(`<meta\\s+[^>]*content=["']([^"']*)["'][^>]*name=["']${escapedName}["'][^>]*>`, 'i');
+  return nameFirst.exec(html)?.[1] ?? contentFirst.exec(html)?.[1] ?? '';
+}
+
+function checkTitleLength(html) {
+  const ogTitle = extractMetaContent(html, 'og:title');
+  if (!ogTitle) {
+    return 'missing og:title content';
+  }
+
+  if (ogTitle.length > 60) {
+    return `og:title too long (${ogTitle.length} > 60)`;
+  }
+
+  return null;
+}
+
+function checkDescriptionLength(html) {
+  const twitterDescription = extractMetaNameContent(html, 'twitter:description');
+  if (!twitterDescription) {
+    return 'missing twitter:description content';
+  }
+
+  if (twitterDescription.length > 200) {
+    return `twitter:description too long (${twitterDescription.length} > 200)`;
+  }
+
+  return null;
+}
+
+function checkImageDimensions(html) {
+  const width = Number.parseInt(extractMetaContent(html, 'og:image:width'), 10);
+  const height = Number.parseInt(extractMetaContent(html, 'og:image:height'), 10);
+
+  if (Number.isNaN(width) || Number.isNaN(height)) {
+    return 'missing og:image:width or og:image:height content';
+  }
+
+  if (width !== 1200 || height !== 630) {
+    return `og:image dimensions are ${width}x${height} but expected 1200x630`;
+  }
+
+  return null;
+}
+
 async function main() {
   const failures = [];
 
@@ -88,6 +144,21 @@ async function main() {
     const title = titleFromHtml(response.body);
     if (!title || /Story Details - IHeartFiction|Reading Chapter - IHeartFiction|Author Profile - IHeartFiction/i.test(title)) {
       failures.push(`${route}: title is still generic ('${title || '(empty)'}')`);
+    }
+
+    const titleLengthIssue = checkTitleLength(response.body);
+    if (titleLengthIssue) {
+      failures.push(`${route}: ${titleLengthIssue}`);
+    }
+
+    const descriptionLengthIssue = checkDescriptionLength(response.body);
+    if (descriptionLengthIssue) {
+      failures.push(`${route}: ${descriptionLengthIssue}`);
+    }
+
+    const imageDimensionsIssue = checkImageDimensions(response.body);
+    if (imageDimensionsIssue) {
+      failures.push(`${route}: ${imageDimensionsIssue}`);
     }
   }
 

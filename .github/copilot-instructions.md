@@ -354,6 +354,17 @@ When implementing or modifying UI behavior, routing, rendering, metadata generat
 - If a local dev server is needed, the plan must include how it is started and how Playwright connects to it.
 - For social preview / SEO / metadata work, validate the rendered HTML seen by a browser or by an HTTP request that observes prerendered output, and assert the relevant Open Graph, Twitter Card, canonical, and redirect behavior.
 
+## Social Share Preview (SSP) standards
+
+When implementing or updating social metadata, enforce these defaults unless a route has a strong reason to override them:
+
+- `og:title` and `twitter:title`: target 30-60 characters, hard max 60.
+- `og:description` and `twitter:description`: target 55-200 characters, hard max 200.
+- Put the primary topic and CTA within the first ~110 characters of descriptions for mobile-safe truncation.
+- `twitter:card` must remain `summary_large_image`.
+- Default social image must be 1200x630 (1.91:1) and reusable across Open Graph and Twitter.
+- Keep default social image asset lightweight (prefer <= 1 MB) and available via an absolute URL at render time.
+
 ## Trust These Instructions
 
 These instructions have been carefully validated. Only search for additional information if:

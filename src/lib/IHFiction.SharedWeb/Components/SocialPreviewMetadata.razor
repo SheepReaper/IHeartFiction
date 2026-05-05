@@ -25,21 +25,21 @@
 </HeadContent>
 
 @code {
-    private const string DefaultImagePath = "/_content/IHFiction.SharedWeb/favicon/web-app-manifest-512x512.png";
+    private const string DefaultImagePath = "/_content/IHFiction.SharedWeb/og-image.png";
 
     [Parameter, EditorRequired] public string Title { get; set; } = null!;
     [Parameter, EditorRequired] public string Description { get; set; } = null!;
     [Parameter] public string? PageUrl { get; set; }
     [Parameter] public string? CanonicalUrl { get; set; }
     [Parameter] public string? ImageUrl { get; set; }
-    [Parameter] public int ImageWidth { get; set; } = 512;
-    [Parameter] public int ImageHeight { get; set; } = 512;
+    [Parameter] public int ImageWidth { get; set; } = 1200;
+    [Parameter] public int ImageHeight { get; set; } = 630;
     [Parameter] public string Type { get; set; } = "website";
     [Parameter] public string SiteName { get; set; } = "IHeartFiction";
     [Parameter] public string TwitterCard { get; set; } = "summary_large_image";
 
-    private string ResolvedTitle => Normalize(Title, 120, "IHeartFiction");
-    private string ResolvedDescription => Normalize(Description, 220, "Read stories and discover authors on IHeartFiction.");
+    private string ResolvedTitle => Normalize(Title, 60, "IHeartFiction");
+    private string ResolvedDescription => Normalize(Description, 200, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedPageUrl => ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
     private string ResolvedCanonicalUrl => ToAbsolute(CanonicalUrl ?? ResolvedPageUrl);
     private string ResolvedImageUrl => ToAbsolute(ImageUrl ?? DefaultImagePath);
