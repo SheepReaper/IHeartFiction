@@ -1,4 +1,7 @@
+@using IHFiction.SharedWeb.Configuration
+@using Microsoft.Extensions.Options
 @inject NavigationManager Nav
+@inject IOptions<SiteUrlOptions> SiteUrlOptions
 
 <PageTitle>@ResolvedTitle</PageTitle>
 
@@ -37,18 +40,55 @@
 
     private string ResolvedTitle => Normalize(Title, 120, "IHeartFiction");
     private string ResolvedDescription => Normalize(Description, 220, "Read stories and discover authors on IHeartFiction.");
-    private string ResolvedPageUrl => ToAbsolute(PageUrl ?? Nav.Uri);
+    private string ResolvedPageUrl => ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
     private string ResolvedCanonicalUrl => ToAbsolute(CanonicalUrl ?? ResolvedPageUrl);
     private string ResolvedImageUrl => ToAbsolute(ImageUrl ?? DefaultImagePath);
 
+    private Uri MetadataBaseUri => GetMetadataBaseUri();
+
     private string ToAbsolute(string url)
     {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var absoluteUri))
+        var candidate = url.Trim();
+
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
         {
-            return absoluteUri.ToString();
+            // Keep explicit HTTP(S) absolute URLs as-is.
+            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                return absoluteUri.ToString();
+            }
+
+            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
+                ? "/"
+                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
         }
 
-        return Nav.ToAbsoluteUri(url).ToString();
+        return new Uri(MetadataBaseUri, candidate).ToString();
+    }
+
+    private Uri GetMetadataBaseUri()
+    {
+        var baseUri = SiteUrlOptions.Value.BaseUrl;
+
+        if (baseUri is null)
+        {
+            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
+        }
+
+        return baseUri;
+    }
+
+    private string GetCurrentPathAndQuery()
+    {
+        if (!Uri.TryCreate(Nav.Uri, UriKind.Absolute, out var currentUri)
+            || string.Equals(currentUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+        {
+            return "/";
+        }
+
+        return string.IsNullOrWhiteSpace(currentUri.PathAndQuery)
+            ? "/"
+            : string.Concat(currentUri.PathAndQuery, currentUri.Fragment);
     }
 
     private static string Normalize(string? value, int maxLength, string fallback)

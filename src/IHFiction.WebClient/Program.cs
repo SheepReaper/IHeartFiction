@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using IHFiction.Data;
 using IHFiction.Data.Contexts;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Extensions;
 using IHFiction.SharedWeb.Services;
@@ -35,6 +36,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddOptions<SiteUrlOptions>()
+    .Configure(options =>
+    {
+        var configuredBaseUrl = builder.Configuration["BaseUrl"];
+        options.BaseUrl = Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var uri) ? uri : null;
+    })
+    .Validate(
+        options => options.BaseUrl is { IsAbsoluteUri: true }
+            && (options.BaseUrl.Scheme == Uri.UriSchemeHttps || options.BaseUrl.Scheme == Uri.UriSchemeHttp),
+        "BaseUrl must be an absolute HTTP(S) URL.")
+    .ValidateOnStart();
 
 builder.Services.AddSingleton<IComponentBaseProvider, ComponentBaseProvider>();
 
