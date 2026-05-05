@@ -1,11 +1,37 @@
 @using IHFiction.SharedWeb.Components.Reading
+@inject StoryService StoryService
 
 @page "/stories/{storyId}/read"
 
-<PageTitle>Reading Story - IHeartFiction</PageTitle>
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    CanonicalUrl="@CanonicalUrl"
+    Type="article" />
 
 <StoryReader StoryId="@StoryId" />
 
 @code {
     [Parameter] public string StoryId { get; set; } = null!;
+
+    private LinkedOfGetPublishedStoryResponse? story;
+
+    private string CanonicalUrl => $"/stories/{StoryId}";
+
+    private string MetadataTitle => story is null
+        ? "Read Story - IHeartFiction"
+        : $"Read {story.Title} | IHeartFiction";
+
+    private string MetadataDescription => story switch
+    {
+        null => "Read and share stories on IHeartFiction.",
+        _ when !string.IsNullOrWhiteSpace(story.Description) => story.Description,
+        _ => $"Start reading {story.Title} on IHeartFiction."
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await StoryService.GetStoryAsync(StoryId);
+        story = result.IsSuccess ? result.Value : null;
+    }
 }

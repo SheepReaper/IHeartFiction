@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.Text;
 using System.Runtime.Serialization;
 
 using Microsoft.AspNetCore.Mvc;
@@ -44,6 +46,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
     /// </summary>
     /// <param name="UserId">The user ID associated with this author</param>
     /// <param name="Name">Display name of the author</param>
+    /// <param name="AvatarUrl">Public avatar URL for social previews and profile cards</param>
     /// <param name="UpdatedAt">When the author profile was last updated</param>
     /// <param name="DeletedAt">When the author was deleted (null if not deleted)</param>
     /// <param name="Profile">Author's profile information including bio</param>
@@ -52,11 +55,13 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
     internal sealed record GetAuthorResponse(
         Guid UserId,
         string Name,
+        string? AvatarUrl,
         DateTime UpdatedAt,
         DateTime? DeletedAt,
         GaAuthorProfile Profile,
         IEnumerable<AuthorWorkItem> PublishedStories,
         int TotalStories);
+
     public async Task<Result<GetAuthorResponse>> HandleAsync(
         Ulid id,
         CancellationToken cancellationToken = default)
@@ -68,6 +73,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
             .Select(a => new GetAuthorResponse(
                 a.UserId,
                 a.Name,
+                BuildAvatarUrl(a.GravatarEmail),
                 a.UpdatedAt,
                 a.DeletedAt,
                 new GaAuthorProfile(a.Profile.Bio),
@@ -86,6 +92,29 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
             ? CommonErrors.Author.NotFound
             : author;
     }
+
+    private static string? BuildAvatarUrl(string? gravatarEmail)
+    {
+        if (string.IsNullOrWhiteSpace(gravatarEmail))
+        {
+            return null;
+        }
+
+        #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase email and hash
+        var normalized = gravatarEmail.Trim().ToLowerInvariant();
+        #pragma warning restore CA1308
+
+        #pragma warning disable CA5351 // MD5 is required by Gravatar hashing protocol
+        var hashBytes = MD5.HashData(Encoding.UTF8.GetBytes(normalized));
+        #pragma warning restore CA5351
+
+        #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase email and hash
+        var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+        #pragma warning restore CA1308
+
+        return $"https://www.gravatar.com/avatar/{hash}?s=512&d=identicon&r=g";
+    }
+
     public static string EndpointName => nameof(GetAuthor);
 
     internal sealed class Endpoint : IEndpoint

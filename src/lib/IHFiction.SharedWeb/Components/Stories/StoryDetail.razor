@@ -1,6 +1,11 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inject StoryService StoryService
 
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    Type="article" />
+
 
 @if (isLoading)
 {
@@ -259,6 +264,18 @@ else if (story != null)
     private bool isLoading = true;
     private string? errorMessage;
 
+    private string MetadataTitle => story is null
+        ? "Story Details - IHeartFiction"
+        : $"{story.Title} | IHeartFiction";
+
+    private string MetadataDescription => story switch
+    {
+        null => "Read story details, discover authors, and start reading on IHeartFiction.",
+        _ when !string.IsNullOrWhiteSpace(story.Description) =>
+            $"{story.Description} By {FormatAuthorList(story.Authors)}.",
+        _ => $"Read {story.Title} by {FormatAuthorList(story.Authors)} on IHeartFiction."
+    };
+
     // Helper to provide a non-null story id string for markup
     private string StoryIdString => story?.Id.ToString() ?? string.Empty;
 
@@ -305,5 +322,16 @@ else if (story != null)
 
         isLoading = false;
         StateHasChanged();
+    }
+
+    private static string FormatAuthorList(IEnumerable<StoryAuthor> authors)
+    {
+        var names = authors.Select(a => a.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
+        if (names.Count == 0)
+        {
+            return "IHeartFiction authors";
+        }
+
+        return names.Count == 1 ? names[0] : string.Join(", ", names.Take(3));
     }
 }

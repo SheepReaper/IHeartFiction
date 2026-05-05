@@ -2,6 +2,12 @@
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
 
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    ImageUrl="@MetadataImageUrl"
+    Type="profile" />
+
 @if (isLoading)
 {
     <div class="section">
@@ -121,6 +127,19 @@ else if (author != null)
     private LinkedOfGetAuthorResponse? author;
     private bool isLoading = true;
     private string? errorMessage;
+
+    private string MetadataTitle => author is null
+        ? "Author Profile - IHeartFiction"
+        : $"{author.Name} - Author Profile | IHeartFiction";
+
+    private string MetadataDescription => author switch
+    {
+        null => "Explore author profiles, published stories, and creator updates on IHeartFiction.",
+        _ when !string.IsNullOrWhiteSpace(author.Profile.Bio) => author.Profile.Bio!,
+        _ => $"Read stories by {author.Name} on IHeartFiction. {author.PublishedStories.Count} published {(author.PublishedStories.Count == 1 ? "story" : "stories")}."
+    };
+
+    private string? MetadataImageUrl => author?.AvatarUrl;
 
     protected override async Task OnInitializedAsync()
     {

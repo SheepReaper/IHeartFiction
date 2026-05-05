@@ -2,6 +2,11 @@
 @inject ChapterService ChapterService
 @inject MarkdownPipeline mdp
 
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    Type="article" />
+
 
 @if (isLoading)
 {
@@ -32,8 +37,6 @@ else if (chapterContent != null)
         && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
         && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
     var isEndOfStory = nextChapter == null && orderedChapters.Count > 0;
-
-    <PageTitle>@PageTitle</PageTitle>
 
     <div class="content">
         <div class="level">
@@ -134,6 +137,17 @@ else if (chapterContent != null)
         chapterContent?.StoryTitle,
         chapterContent?.BookTitle,
         chapterContent?.ChapterTitle }.Where(s => !string.IsNullOrWhiteSpace(s))) ?? "Reading - I❤️Fiction";
+
+    private string MetadataTitle => chapterContent is null
+        ? "Reading Chapter - IHeartFiction"
+        : $"{PageTitle} | IHeartFiction";
+
+    private string MetadataDescription => chapterContent switch
+    {
+        null => "Read chapter updates and continue the story on IHeartFiction.",
+        _ when !string.IsNullOrWhiteSpace(chapterContent.Content) => chapterContent.Content,
+        _ => $"Read {chapterContent?.ChapterTitle ?? "the latest chapter"} from {chapterContent?.StoryTitle ?? "this story"} on IHeartFiction."
+    };
 
     private LinkedOfGetPublishedChapterContentResponse? chapterContent;
     private bool isLoading = true;

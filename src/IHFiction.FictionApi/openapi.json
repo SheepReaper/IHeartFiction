@@ -3692,6 +3692,7 @@
           "links",
           "userId",
           "name",
+          "avatarUrl",
           "updatedAt",
           "deletedAt",
           "profile",
@@ -3714,6 +3715,13 @@
           "name": {
             "type": "string",
             "description": "Display name of the author"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Public avatar URL for social previews and profile cards"
           },
           "updatedAt": {
             "type": "string",
