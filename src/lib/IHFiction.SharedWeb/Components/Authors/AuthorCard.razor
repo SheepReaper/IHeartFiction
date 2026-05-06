@@ -1,11 +1,21 @@
+@using Markdig
+@inject MarkdownPipeline mdp
+
 <div class="card">
     <div class="card-content">
         <div class="media">
             <div class="media-left">
                 <figure class="image is-48x48">
-                    <div class="ihf-avatar-badge is-flex is-align-items-center is-justify-content-center" style="width: 48px; height: 48px; border-radius: 50%;">
-                        <span class="has-text-weight-bold">@GetInitials(Author.Name)</span>
-                    </div>
+                    @if (!string.IsNullOrWhiteSpace(Author.AvatarUrl))
+                    {
+                        <img class="is-rounded" src="@Author.AvatarUrl" alt="@Author.Name" />
+                    }
+                    else
+                    {
+                        <div class="ihf-avatar-badge is-flex is-align-items-center is-justify-content-center" style="width: 48px; height: 48px; border-radius: 50%;">
+                            <span class="has-text-weight-bold">@GetInitials(Author.Name)</span>
+                        </div>
+                    }
                 </figure>
             </div>
             <div class="media-content">
@@ -21,9 +31,7 @@
         <div class="content">
             @if (!string.IsNullOrWhiteSpace(Author.Bio))
             {
-                <p>
-                    @(Author.Bio.Length > 150 ? Author.Bio.Substring(0, 150) + "..." : Author.Bio)
-                </p>
+                <p class="ihf-bio-excerpt">@Markdown.ToPlainText(Author.Bio, mdp)</p>
             }
             else
             {

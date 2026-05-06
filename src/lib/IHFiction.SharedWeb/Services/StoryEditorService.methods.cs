@@ -283,7 +283,7 @@ public partial class StoryEditorService(
 
         var apiResult = result.Value;
 
-        string? storyType;
+        string storyType;
 
         if (apiResult.Books.Count > 0)
             storyType = MultiBook;

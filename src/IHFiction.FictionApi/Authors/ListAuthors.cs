@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
+using System.Text;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -51,14 +53,15 @@ internal sealed class ListAuthors(
 
     private static readonly SortMapping[] SortMappings = [
         new(nameof(Author.Name)),
-        new(nameof(Author.CreatedAt)),
-        new(nameof(Author.UpdatedAt))];
+        new(nameof(Author.CreatedAt), nameof(Author.Id)),
+        new(nameof(Author.UpdatedAt), reverse: true)];
 
     /// <summary>
     /// Represents a single author item in the authors list response.
     /// </summary>
     /// <param name="Id">Unique identifier for the author</param>
     /// <param name="Name">Display name of the author</param>
+    /// <param name="AvatarUrl">Public avatar URL for profile cards</param>
     /// <param name="Bio">Author's biography or description</param>
     /// <param name="CreatedAt">When the author profile was created</param>
     /// <param name="UpdatedAt">When the author profile was last updated</param>
@@ -67,6 +70,7 @@ internal sealed class ListAuthors(
     internal sealed record ListAuthorsItem(
         Ulid Id,
         string Name,
+        string? AvatarUrl,
         string Bio,
         DateTime CreatedAt,
         DateTime UpdatedAt,
@@ -95,6 +99,7 @@ internal sealed class ListAuthors(
             .Select(a => new ListAuthorsItem(
                 a.Id,
                 a.Name,
+                BuildAvatarUrl(a.GravatarEmail),
                 a.Profile.Bio ?? "",
                 a.CreatedAt,
                 a.UpdatedAt,
@@ -104,6 +109,29 @@ internal sealed class ListAuthors(
         // Execute paginated query using the centralized service
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
     }
+
+        private static string? BuildAvatarUrl(string? gravatarEmail)
+        {
+        if (string.IsNullOrWhiteSpace(gravatarEmail))
+        {
+            return null;
+        }
+
+    #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase email and hash
+        var normalized = gravatarEmail.Trim().ToLowerInvariant();
+    #pragma warning restore CA1308
+
+    #pragma warning disable CA5351 // MD5 is required by Gravatar hashing protocol
+        var hashBytes = MD5.HashData(Encoding.UTF8.GetBytes(normalized));
+    #pragma warning restore CA5351
+
+    #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase email and hash
+        var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+    #pragma warning restore CA1308
+
+        return $"https://www.gravatar.com/avatar/{hash}?s=512&d=identicon&r=g";
+        }
+
     public static string EndpointName => nameof(ListAuthors);
 
     internal sealed class Endpoint : IEndpoint

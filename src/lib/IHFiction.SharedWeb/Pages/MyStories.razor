@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.AspNetCore.Authorization
+@using static IHFiction.Data.Stories.Domain.StoryType
 
 @page "/my-stories"
 
@@ -10,7 +11,24 @@
 <h1>My Stories</h1>
 
 <div class="block">
-    <button class="button is-primary" @onclick="CreateNewStory">Create New Story</button>
+    <div class="dropdown is-hoverable">
+        <div class="dropdown-trigger">
+            <button class="button is-primary" aria-haspopup="true" aria-controls="create-story-menu">
+                <span>Create New Story</span>
+                <span class="icon is-small">
+                    <i class="fas fa-angle-down" aria-hidden="true"></i>
+                </span>
+            </button>
+        </div>
+        <div class="dropdown-menu" id="create-story-menu" role="menu">
+            <div class="dropdown-content">
+                @foreach (string storyType in StoryTypes)
+                {
+                    <a @key="storyType" class="dropdown-item" @onclick="() => CreateNewStory(storyType)">@GetLabel(storyType)</a>
+                }
+            </div>
+        </div>
+    </div>
 </div>
 
 @if (_isLoading)
@@ -115,6 +133,8 @@ else if (_stories != null)
 }
 
 @code {
+    private static readonly string[] StoryTypes = [SingleBody, MultiChapter, MultiBook];
+
     private ICollection<LinkedOfAuthorStoryItem>? _stories;
     private bool _isLoading = true;
     private string? _errorMessage;
@@ -129,9 +149,9 @@ else if (_stories != null)
         await LoadStories();
     }
 
-    private void CreateNewStory()
+    private void CreateNewStory(string storyType)
     {
-        Navigation.NavigateTo("/stories/new");
+        Navigation.NavigateTo($"/stories/new?storyType={Uri.EscapeDataString(storyType)}");
     }
 
     private void EditStory(string storyId)
@@ -219,4 +239,12 @@ else if (_stories != null)
         _isLoading = false;
         StateHasChanged();
     }
+
+    private static string GetLabel(string storyType) => storyType switch
+    {
+        SingleBody => "One-Shot",
+        MultiChapter => "Chaptered",
+        MultiBook => "Book-based",
+        _ => "Unknown"
+    };
 }

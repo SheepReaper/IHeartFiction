@@ -94,7 +94,16 @@ internal static partial class InputSanitizationService
     /// </summary>
     public static string? SanitizeBio(string? bio)
     {
-        return SanitizeOptionalText(bio);
+        if (string.IsNullOrWhiteSpace(bio))
+            return null;
+
+        // Preserve line breaks while normalizing excessive whitespace per line.
+        var lines = bio.Split('\n', StringSplitOptions.None);
+        var sanitizedLines = lines.Select(line =>
+            ValidationRegexPatterns.ConsecutiveWhitespace().Replace(line.Trim(), " "));
+
+        var sanitized = string.Join('\n', sanitizedLines).Trim();
+        return string.IsNullOrEmpty(sanitized) ? null : sanitized;
     }
 
     /// <summary>

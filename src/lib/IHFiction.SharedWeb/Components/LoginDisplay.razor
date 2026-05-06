@@ -1,11 +1,24 @@
 @inject NavigationManager Navigation
 @inject LoaderService LoaderService
+@inject AccountService AccountService
+
+@using System.Security.Cryptography
+@using System.Text
 
 <AuthorizeView>
     <Authorized>
         <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
-                @context.User.Identity?.Name
+                @if (!string.IsNullOrEmpty(_avatarUrl))
+                {
+                    <figure class="image is-24x24">
+                        <img class="is-rounded" src="@_avatarUrl" alt="@context.User.Identity?.Name" />
+                    </figure>
+                }
+                else
+                {
+                    @(context.User.Identity?.Name)
+                }
             </a>
 
             <div class="navbar-dropdown">
@@ -16,6 +29,10 @@
                         Log out
                     </button>
                 </form> *@
+                <a class="navbar-item" href="account/settings">
+                    Account Settings
+                </a>
+                <hr class="navbar-divider" />
                 <a class="navbar-item" @onclick="OnLogoutClick" disabled="@_loading">
                     Log out
                 </a>
@@ -40,6 +57,29 @@
     public string? ReturnUrl { get; set; }
 
     private bool _loading;
+    private string? _avatarUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await AccountService.GetUserProfileAsync();
+        if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.Value.GravatarEmail))
+        {
+            _avatarUrl = BuildGravatarUrl(result.Value.GravatarEmail);
+        }
+    }
+
+    private static string? BuildGravatarUrl(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return null;
+        var normalized = email.Trim().ToLowerInvariant();
+#pragma warning disable CA5351 // MD5 is required by Gravatar hashing protocol
+        var hashBytes = MD5.HashData(Encoding.UTF8.GetBytes(normalized));
+#pragma warning restore CA5351
+#pragma warning disable CA1308 // Gravatar canonicalization requires lowercase
+        var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+#pragma warning restore CA1308
+    return $"https://www.gravatar.com/avatar/{hash}?s=24&d=mp&r=g";
+    }
 
     private void OnSignUpClick() => OnLoginClick();
 

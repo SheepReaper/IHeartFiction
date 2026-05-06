@@ -21,8 +21,8 @@
         "tags": [
           "Current User"
         ],
-        "summary": "Get Current Author Profile",
-        "description": "Retrieves the profile information and works for the currently authenticated author. Returns the author's personal information, biography, and lists of both collaborative and owned works. This endpoint requires authentication and author registration.",
+        "summary": "Get Own Author Profile",
+        "description": "Retrieves the profile and works for the currently authenticated author. This endpoint requires authentication and author registration.",
         "operationId": "GetOwnAuthorProfile",
         "parameters": [
           {
@@ -61,16 +61,6 @@
           },
           "403": {
             "description": "Forbidden",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -583,6 +573,146 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LinkedOfGetOwnStoryContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get User Profile",
+        "description": "Retrieves the display name and Gravatar email for the currently authenticated user, along with a flag indicating whether the user is registered as an author.",
+        "operationId": "GetOwnUserProfile",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetOwnUserProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Update User Profile",
+        "description": "Updates the display name and Gravatar email for the currently authenticated user. Name is required; Gravatar email is optional.",
+        "operationId": "UpdateOwnUserProfile",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOwnUserProfileBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUpdateOwnUserProfileResponse"
                 }
               }
             }
@@ -3709,23 +3839,19 @@
           },
           "userId": {
             "type": "string",
-            "description": "The user ID associated with this author",
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "description": "Display name of the author"
+            "type": "string"
           },
           "avatarUrl": {
             "type": [
               "null",
               "string"
-            ],
-            "description": "Public avatar URL for social previews and profile cards"
+            ]
           },
           "updatedAt": {
             "type": "string",
-            "description": "When the author profile was last updated",
             "format": "date-time"
           },
           "deletedAt": {
@@ -3733,19 +3859,16 @@
               "null",
               "string"
             ],
-            "description": "When the author was deleted (null if not deleted)",
             "format": "date-time"
           },
           "profile": {
-            "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/GaAuthorProfile"
           },
           "publishedStories": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuthorWorkItem"
-            },
-            "description": "Collection of works created by this author"
+            }
           },
           "totalStories": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -3753,7 +3876,6 @@
               "integer",
               "string"
             ],
-            "description": "Total number of stories by the author",
             "format": "int32"
           }
         },
@@ -3780,47 +3902,39 @@
             }
           },
           "id": {
-            "description": "Unique identifier for the author",
             "$ref": "#/components/schemas/Ulid"
           },
           "userId": {
             "type": "string",
-            "description": "The user ID associated with this author",
             "format": "uuid"
           },
           "name": {
-            "type": "string",
-            "description": "Display name of the author"
+            "type": "string"
           },
           "gravatarEmail": {
             "type": [
               "null",
               "string"
-            ],
-            "description": "Email address for Gravatar profile picture"
+            ]
           },
           "updatedAt": {
             "type": "string",
-            "description": "When the author profile was last updated",
             "format": "date-time"
           },
           "profile": {
-            "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/OwnAuthorProfile"
           },
           "works": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OwnAuthorWorkItem"
-            },
-            "description": "Collection of works the author collaborates on"
+            }
           },
           "ownedWorks": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OwnAuthorWorkItem"
-            },
-            "description": "Collection of works owned by the author"
+            }
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -4069,6 +4183,39 @@
               "$ref": "#/components/schemas/BookSummaryItem"
             },
             "description": "List of books within the story."
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfGetOwnUserProfileResponse": {
+        "required": [
+          "links",
+          "name",
+          "gravatarEmail",
+          "isAuthor"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the user"
+          },
+          "gravatarEmail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email address for Gravatar profile picture"
+          },
+          "isAuthor": {
+            "type": "boolean",
+            "description": "Whether the user is registered as an author"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -4335,6 +4482,7 @@
           "links",
           "id",
           "name",
+          "avatarUrl",
           "bio",
           "createdAt",
           "updatedAt",
@@ -4356,6 +4504,13 @@
           "name": {
             "type": "string",
             "description": "Display name of the author"
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Public avatar URL for profile cards"
           },
           "bio": {
             "type": "string",
@@ -5014,6 +5169,34 @@
           "profile": {
             "description": "Updated profile information including bio",
             "$ref": "#/components/schemas/UoapAuthorProfile"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfUpdateOwnUserProfileResponse": {
+        "required": [
+          "links",
+          "name",
+          "gravatarEmail"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "name": {
+            "type": "string",
+            "description": "Updated display name of the user"
+          },
+          "gravatarEmail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Updated email address for Gravatar profile picture"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -5778,6 +5961,30 @@
           }
         },
         "description": "Request body model for updating an author's profile."
+      },
+      "UpdateOwnUserProfileBody": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string",
+            "description": "Display name of the user"
+          },
+          "gravatarEmail": {
+            "maxLength": 256,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email address for Gravatar profile picture"
+          }
+        },
+        "description": "Request body model for updating the current user's profile."
       },
       "UpdateStoryContentBody": {
         "required": [

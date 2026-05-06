@@ -1,4 +1,4 @@
-using IHFiction.SharedKernel.Infrastructure;
+﻿using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
@@ -50,4 +50,22 @@ public class AccountService(IFictionApiClient client)
     ) => !Ulid.TryParse(chapterId, out var ulid)
         ? DomainError.InvalidUlid
         : await GetCurrentAuthorChapterContentAsync(ulid, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfGetOwnUserProfileResponse>> GetUserProfileAsync(
+        string? fields = null,
+        CancellationToken cancellationToken = default) => await client.GetOwnUserProfileAsync(fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfUpdateOwnUserProfileResponse>> UpdateUserProfileAsync(
+        UpdateOwnUserProfileBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default) => await client.UpdateOwnUserProfileAsync(body, fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfGetOwnAuthorProfileResponse>> GetAuthorProfileAsync(
+        string? fields = null,
+        CancellationToken cancellationToken = default) => await client.GetOwnAuthorProfileAsync(fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfUpdateOwnAuthorProfileResponse>> UpdateAuthorBioAsync(
+        UpdateOwnAuthorProfileBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default) => await client.UpdateOwnAuthorProfileAsync(body, fields, cancellationToken).HandleApiException();
 }

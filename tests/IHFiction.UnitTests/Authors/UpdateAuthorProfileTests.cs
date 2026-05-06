@@ -142,4 +142,20 @@ public class UpdateAuthorProfileBusinessLogicTests
         Assert.NotNull(sanitized);
         Assert.Equal("This is a bio with extra spaces and tabs", sanitized);
     }
+
+    [Fact]
+    public void InputSanitizationService_SanitizeBio_PreservesLineBreaks()
+    {
+        // Arrange
+        var multilineBio = "# About Me\n\nI write   fantasy.\nSecond   line.";
+
+        // Act
+        var sanitized = InputSanitizationService.SanitizeBio(multilineBio);
+
+        // Assert
+        Assert.NotNull(sanitized);
+        Assert.Contains("\n\n", sanitized);
+        Assert.Contains("I write fantasy.", sanitized);
+        Assert.Contains("\nSecond line.", sanitized);
+    }
 }

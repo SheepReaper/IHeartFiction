@@ -142,6 +142,7 @@ internal sealed class GetOwnStoryContent(
             bookSummaries
         );
     }
+
     public static string EndpointName => nameof(GetOwnStoryContent);
 
     internal sealed class Endpoint : IEndpoint

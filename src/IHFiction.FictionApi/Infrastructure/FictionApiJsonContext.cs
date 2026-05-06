@@ -47,6 +47,13 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(UpdateOwnAuthorProfile.UpdateOwnAuthorProfileBody))]
 [JsonSerializable(typeof(Linked<UpdateOwnAuthorProfile.UpdateOwnAuthorProfileResponse>))]
 
+[JsonSerializable(typeof(GetOwnUserProfile.GetOwnUserProfileQuery))]
+[JsonSerializable(typeof(Linked<GetOwnUserProfile.GetOwnUserProfileResponse>))]
+
+[JsonSerializable(typeof(UpdateOwnUserProfile.UpdateOwnUserProfileQuery))]
+[JsonSerializable(typeof(UpdateOwnUserProfile.UpdateOwnUserProfileBody))]
+[JsonSerializable(typeof(Linked<UpdateOwnUserProfile.UpdateOwnUserProfileResponse>))]
+
 
 // Authors
 [JsonSerializable(typeof(GetAuthor.GetAuthorQuery))]

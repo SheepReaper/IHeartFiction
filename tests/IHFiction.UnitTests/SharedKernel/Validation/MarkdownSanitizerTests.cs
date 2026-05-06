@@ -217,6 +217,22 @@ public class MarkdownSanitizerTests
     }
 
     [Fact]
+    public void SanitizeNote_WithMultilineContent_PreservesLineBreaks()
+    {
+        // Arrange
+        var note = "First   line\n\nSecond   line";
+
+        // Act
+        var result = MarkdownSanitizer.SanitizeNote(note, _defaultOptions, false);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Contains("\n\n", result);
+        Assert.Contains("First line", result);
+        Assert.Contains("\nSecond line", result);
+    }
+
+    [Fact]
     public void SanitizeNote_WithInvalidLink_RemovesLink()
     {
         // Arrange

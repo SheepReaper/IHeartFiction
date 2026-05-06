@@ -143,23 +143,26 @@ else
 
     <div class="field is-grouped">
         <div class="control">
-            <!-- Save: always visible, enabled only if dirty -->
             <button class="button is-info" disabled="@(_isBusy || !(EditorService.CurrentStory?.Dirty ?? false))"
-                @onclick="e => Save(false)">
-                Save
+                @onclick="() => Save(stayInEditor: true)">
+                Save and Continue
+            </button>
+        </div>
+        <div class="control">
+            <button class="button is-link is-light" disabled="@(_isBusy || !(EditorService.CurrentStory?.Dirty ?? false))"
+                @onclick="() => Save(stayInEditor: false)">
+                Save and Close
             </button>
         </div>
         @if (CanPublish)
         {
             <div class="control">
-                <!-- Save and Publish: visible only if not published, enabled only if not published -->
                 <button class="button is-success" disabled="@(_isBusy || !(EditorService.CurrentStory?.Dirty ?? false))"
                     @onclick="PublishStory">
                     Save and Publish
                 </button>
             </div>
             <div class="control">
-                <!-- Publish: visible and enabled only if not published -->
                 <button class="button is-warning" disabled="@(_isBusy || (EditorService.CurrentStory?.Dirty ?? false))"
                     @onclick="PublishOnly">
                     Publish
@@ -173,8 +176,14 @@ else
 }
 
 @code {
+    private static readonly HashSet<string> SupportedStoryTypes = [SingleBody, MultiChapter, MultiBook];
+
     [Parameter]
     public string? StoryId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "storyType")]
+    public string? InitialStoryType { get; set; }
 
     public bool CanPublish => EditorService.CurrentStory?.IsPublished == false
     || EditorService.CurrentBook?.IsPublished == false
@@ -208,7 +217,7 @@ else
         else
         {
             // This is a new story
-            EditorService.CreateNewStory(SingleBody);
+            EditorService.CreateNewStory(GetInitialStoryType());
         }
 
         if (_error is null && EditorService.CurrentStory is { StoryType: MultiBook, Books.Count: > 0 } bookStory)
@@ -321,9 +330,12 @@ else
         StateHasChanged();
     }
 
-    private async Task Save(bool andPublish)
+    private async Task Save(bool stayInEditor, bool andPublish = false)
     {
         if (EditorService.CurrentStory is null) return;
+
+        var wasNewStory = EditorService.CurrentStory.Id is null || EditorService.CurrentStory.Id == default;
+        var initialStoryType = EditorService.CurrentStory.StoryType;
 
         _isBusy = true;
         _errorMessage = null;
@@ -332,23 +344,75 @@ else
 
         var result = await EditorService.SaveStoryAsync();
 
+        if (result.IsSuccess && wasNewStory)
+        {
+            result = await EnsureInitialStructureAsync(initialStoryType);
+        }
+
         if (result.IsSuccess && andPublish) result = await EditorService.PublishStoryAsync();
 
         if (result.IsFailure) _errorMessage = result.DomainError.Description;
 
-        else Navigation.NavigateTo("/my-stories");
-
-        // keep busy until navigation occurs; if navigation didn't happen, clear flag
-        if (result.IsSuccess) EditorService.Reset();
+        else if (stayInEditor)
+        {
+            NavigateToEditorRoute();
+        }
+        else
+        {
+            EditorService.Reset();
+            Navigation.NavigateTo("/my-stories");
+            return;
+        }
 
         _isBusy = false;
 
         StateHasChanged();
     }
 
+    private async Task<Result> EnsureInitialStructureAsync(string storyType)
+    {
+        if (EditorService.CurrentStory is null) return Result.Failure(Errors.NoStoryLoaded);
+
+        switch (storyType)
+        {
+            case MultiChapter when EditorService.CurrentStory.Chapters.Count == 0:
+            {
+                var chapterResult = await EditorService.AddNewChapterAsync(CancellationToken);
+
+                if (chapterResult.IsFailure) return chapterResult.DomainError;
+
+                if (chapterResult.Value.Id is { } chapterId && chapterId != default)
+                {
+                    var loadResult = await EditorService.LoadChapterAsync(chapterId, CancellationToken);
+
+                    if (loadResult.IsFailure) return loadResult.DomainError;
+                }
+
+                break;
+            }
+            case MultiBook when EditorService.CurrentStory.Books.Count == 0:
+            {
+                var bookResult = await EditorService.AddNewBookAsync(CancellationToken);
+
+                if (bookResult.IsFailure) return bookResult.DomainError;
+
+                if (bookResult.Value.Id is { } bookId && bookId != default)
+                {
+                    var loadResult = await EditorService.LoadBookAsync(bookId, CancellationToken);
+
+                    if (loadResult.IsFailure) return loadResult.DomainError;
+                }
+
+                break;
+            }
+        }
+
+        return Result.Success();
+    }
+
     private async Task PublishStory()
     {
-        await Save(andPublish: true);
+        await Save(stayInEditor: true, andPublish: true);
     }
 
     private async Task PublishOnly()
@@ -364,7 +428,7 @@ else
 
         if (publishResult.IsFailure) _errorMessage = publishResult.DomainError.Description;
 
-        else Navigation.NavigateTo("/my-stories");
+        else NavigateToEditorRoute();
 
         _isBusy = false;
 
@@ -377,6 +441,24 @@ else
         _isBusy = true;
         Navigation.NavigateTo("/my-stories");
     }
+
+    private void NavigateToEditorRoute()
+    {
+        if (EditorService.CurrentStory?.Id is not { } storyId || storyId == default) return;
+
+        var target = $"/stories/{storyId}/edit";
+        var currentPath = Navigation.ToAbsoluteUri(Navigation.Uri).PathAndQuery;
+        var targetPath = Navigation.ToAbsoluteUri(target).PathAndQuery;
+
+        if (!string.Equals(currentPath, targetPath, StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo(target, replace: true);
+        }
+    }
+
+    private string GetInitialStoryType() => SupportedStoryTypes.Contains(InitialStoryType ?? string.Empty)
+        ? InitialStoryType!
+        : SingleBody;
 
     private static string GetLabel(string storyType) => storyType switch
     {

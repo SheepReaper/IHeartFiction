@@ -1,9 +1,8 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -36,17 +35,6 @@ internal sealed class GetOwnAuthorProfile(
     /// <param name="Title">Title of the work</param>
     internal sealed record OwnAuthorWorkItem(Ulid Id, string Title);
 
-    /// <summary>
-    /// Response model for getting the current authenticated author's profile and works.
-    /// </summary>
-    /// <param name="Id">Unique identifier for the author</param>
-    /// <param name="UserId">The user ID associated with this author</param>
-    /// <param name="Name">Display name of the author</param>
-    /// <param name="GravatarEmail">Email address for Gravatar profile picture</param>
-    /// <param name="UpdatedAt">When the author profile was last updated</param>
-    /// <param name="Profile">Author's profile information including bio</param>
-    /// <param name="Works">Collection of works the author collaborates on</param>
-    /// <param name="OwnedWorks">Collection of works owned by the author</param>
     internal sealed record GetOwnAuthorProfileResponse(
         Ulid Id,
         Guid UserId,
@@ -60,7 +48,6 @@ internal sealed class GetOwnAuthorProfile(
     public async Task<Result<GetOwnAuthorProfileResponse>> HandleAsync(
         ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken = default)
     {
-        // Get the current author using the centralized authorization service
         var authorResult = await authorizationService.GetCurrentAuthorAsync(claimsPrincipal, cancellationToken);
 
         if (authorResult.IsFailure) return authorResult.DomainError;
@@ -83,6 +70,7 @@ internal sealed class GetOwnAuthorProfile(
             works.Select(work => new OwnAuthorWorkItem(work.Id, work.Title)),
             ownedWorks.Select(work => new OwnAuthorWorkItem(work.Id, work.Title)));
     }
+
     public static string EndpointName => nameof(GetOwnAuthorProfile);
 
     internal sealed class Endpoint : IEndpoint
@@ -100,19 +88,13 @@ internal sealed class GetOwnAuthorProfile(
             {
                 var result = await useCase.HandleAsync(claimsPrincipal, cancellationToken);
 
-                return result
-                    .WithLinks([
-                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", result.IsSuccess ? result.Value.Id.ToString() : null)]),
-                        linker.Create<UpdateOwnAuthorProfile>("update-profile", HttpMethods.Put),
-                    ]).ToOkResult(query);
+                return result.ToOkResult(query);
             })
-            .WithSummary("Get Current Author Profile")
-            .WithDescription("Retrieves the profile information and works for the currently authenticated author. " +
-                "Returns the author's personal information, biography, and lists of both collaborative " +
-                "and owned works. This endpoint requires authentication and author registration.")
+            .WithSummary("Get Own Author Profile")
+            .WithDescription("Retrieves the profile and works for the currently authenticated author. This endpoint requires authentication and author registration.")
             .WithTags(ApiTags.Account.CurrentUser)
-            .RequireAuthorization("author") // Requires authentication
-            .WithStandardResponses(conflict: false)
+            .RequireAuthorization("author")
+            .WithStandardResponses(conflict: false, notFound: false)
             .Produces<Linked<GetOwnAuthorProfileResponse>>();
         }
     }

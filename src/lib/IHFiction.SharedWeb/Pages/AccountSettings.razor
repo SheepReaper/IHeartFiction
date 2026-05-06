@@ -1,0 +1,219 @@
+﻿@page "/account/settings"
+@attribute [Authorize]
+@inherits CancellableComponent
+@inject AccountService AccountService
+@inject LoaderService LoaderService
+
+<PageTitle>Account Settings — IHeartFiction</PageTitle>
+
+<div class="container">
+    <h1 class="title">Account Settings</h1>
+
+    @if (_initialLoading)
+    {
+        <div class="has-text-centered py-6">
+            <span class="icon is-large has-text-grey">
+                <i class="fas fa-spinner fa-spin fa-2x"></i>
+            </span>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(_loadError))
+    {
+        <div class="notification is-danger">
+            <button class="delete" @onclick="e => _loadError = string.Empty"></button>
+            <strong>Error:</strong> @_loadError
+        </div>
+    }
+    else
+    {
+        <div class="box mb-5">
+            <h2 class="title is-4">Profile</h2>
+            <p class="subtitle is-6 mb-4">Your display name and avatar email shown to other readers and authors.</p>
+
+            @if (!string.IsNullOrEmpty(_profileError))
+            {
+                <div class="notification is-danger">
+                    <button class="delete" @onclick="e => _profileError = string.Empty"></button>
+                    <strong>Error:</strong> @_profileError
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(_profileSuccess))
+            {
+                <div class="notification is-success">
+                    <button class="delete" @onclick="e => _profileSuccess = string.Empty"></button>
+                    @_profileSuccess
+                </div>
+            }
+
+            <div class="field">
+                <label class="label">Display Name</label>
+                <div class="control">
+                    <input class="input" type="text" placeholder="Your display name" @bind="_name" maxlength="100" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Gravatar Email</label>
+                <div class="control">
+                    <input class="input" type="email" placeholder="email@example.com (optional)" @bind="_gravatarEmail" maxlength="256" />
+                </div>
+                <p class="help">Used to load your avatar from <a href="https://gravatar.com" target="_blank" rel="noopener noreferrer">Gravatar</a>. Leave blank to use no avatar.</p>
+            </div>
+
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" disabled="@_profileLoading" @onclick="OnSaveProfileAsync">
+                        Save Profile
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if (_isAuthor)
+        {
+            <div class="box mb-5">
+                <h2 class="title is-4">Author Profile</h2>
+                <p class="subtitle is-6 mb-4">Your public author bio shown on your author page.</p>
+
+                @if (!string.IsNullOrEmpty(_authorError))
+                {
+                    <div class="notification is-danger">
+                        <button class="delete" @onclick="e => _authorError = string.Empty"></button>
+                        <strong>Error:</strong> @_authorError
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(_authorSuccess))
+                {
+                    <div class="notification is-success">
+                        <button class="delete" @onclick="e => _authorSuccess = string.Empty"></button>
+                        @_authorSuccess
+                    </div>
+                }
+
+                <div class="field">
+                    <label class="label">Bio</label>
+                    <div class="control">
+                        <textarea class="textarea" rows="6" placeholder="Tell readers about yourself... (Markdown supported)" @bind="_bio" maxlength="2000"></textarea>
+                    </div>
+                    <p class="help">Supports Markdown. Maximum 2000 characters.</p>
+                </div>
+
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" disabled="@_authorLoading" @onclick="OnSaveAuthorBioAsync">
+                            Save Author Bio
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+
+    private bool _initialLoading = true;
+    private string? _loadError;
+
+    private string _name = string.Empty;
+    private string? _gravatarEmail;
+    private bool _isAuthor;
+    private string? _bio;
+
+    private bool _profileLoading;
+    private string? _profileError;
+    private string? _profileSuccess;
+
+    private bool _authorLoading;
+    private string? _authorError;
+    private string? _authorSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var profileResult = await AccountService.GetUserProfileAsync(cancellationToken: CancellationToken);
+
+        if (profileResult.IsFailure)
+        {
+            _loadError = profileResult.DomainError.Description;
+            _initialLoading = false;
+            return;
+        }
+
+        _name = profileResult.Value.Name;
+        _gravatarEmail = profileResult.Value.GravatarEmail;
+        _isAuthor = profileResult.Value.IsAuthor;
+
+        if (_isAuthor)
+        {
+            var authorResult = await AccountService.GetAuthorProfileAsync(cancellationToken: CancellationToken);
+
+            if (authorResult.IsSuccess)
+            {
+                _bio = authorResult.Value.Profile?.Bio;
+            }
+        }
+
+        _initialLoading = false;
+    }
+
+    private async Task OnSaveProfileAsync()
+    {
+        _profileError = null;
+        _profileSuccess = null;
+        _profileLoading = true;
+        LoaderService.Show();
+
+        try
+        {
+            var result = await AccountService.UpdateUserProfileAsync(
+                new UpdateOwnUserProfileBody { Name = _name, GravatarEmail = _gravatarEmail },
+                cancellationToken: CancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _name = result.Value.Name;
+                _gravatarEmail = result.Value.GravatarEmail;
+                _profileSuccess = "Profile saved successfully.";
+            }
+            else
+            {
+                _profileError = result.DomainError.Description;
+            }
+        }
+        finally
+        {
+            _profileLoading = false;
+            LoaderService.Hide();
+        }
+    }
+
+    private async Task OnSaveAuthorBioAsync()
+    {
+        _authorError = null;
+        _authorSuccess = null;
+        _authorLoading = true;
+        LoaderService.Show();
+
+        try
+        {
+            var result = await AccountService.UpdateAuthorBioAsync(
+                new UpdateOwnAuthorProfileBody { Bio = _bio },
+                cancellationToken: CancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _bio = result.Value.Profile?.Bio;
+                _authorSuccess = "Author bio saved successfully.";
+            }
+            else
+            {
+                _authorError = result.DomainError.Description;
+            }
+        }
+        finally
+        {
+            _authorLoading = false;
+            LoaderService.Hide();
+        }
+    }
+}

@@ -54,6 +54,14 @@
 	 color: var(--bulma-primary-bold);
  }
 
+ .ihf-bio-excerpt {
+	 overflow: hidden;
+	 display: -webkit-box;
+     line-clamp: 3;
+	 -webkit-line-clamp: 3;
+	 -webkit-box-orient: vertical;
+ }
+
  html[data-theme="dark"] .card {
 	 --bulma-card-shadow: 0 1.5rem 2.5rem -2rem rgba(0, 0, 0, 0.65), 0 0 0 1px var(--bulma-border);
  }

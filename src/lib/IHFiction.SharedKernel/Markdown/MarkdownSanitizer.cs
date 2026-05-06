@@ -57,8 +57,12 @@ public static class MarkdownSanitizer
         sanitized = SanitizeImages(sanitized, options, isDevelopment);
         sanitized = SanitizeLinks(sanitized, options, isDevelopment);
 
-        // More aggressive whitespace normalization for notes
-        sanitized = ValidationRegexPatterns.ConsecutiveWhitespace().Replace(sanitized, " ");
+        // Preserve line breaks while normalizing excessive whitespace per line.
+        var lines = sanitized.Split('\n', StringSplitOptions.None);
+        var sanitizedLines = lines.Select(line =>
+            ValidationRegexPatterns.ConsecutiveWhitespace().Replace(line.Trim(), " "));
+
+        sanitized = string.Join('\n', sanitizedLines).Trim();
 
         return string.IsNullOrEmpty(sanitized) ? null : sanitized;
     }

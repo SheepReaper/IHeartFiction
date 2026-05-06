@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using System.Runtime.Serialization;
@@ -41,17 +41,6 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
     /// <param name="PublishedAt">When the work was published (null if unpublished)</param>
     internal sealed record AuthorWorkItem(Ulid Id, string Title, DateTime? PublishedAt);
 
-    /// <summary>
-    /// Response model for getting a specific author by their ID.
-    /// </summary>
-    /// <param name="UserId">The user ID associated with this author</param>
-    /// <param name="Name">Display name of the author</param>
-    /// <param name="AvatarUrl">Public avatar URL for social previews and profile cards</param>
-    /// <param name="UpdatedAt">When the author profile was last updated</param>
-    /// <param name="DeletedAt">When the author was deleted (null if not deleted)</param>
-    /// <param name="Profile">Author's profile information including bio</param>
-    /// <param name="PublishedStories">Collection of works created by this author</param>
-    /// <param name="TotalStories">Total number of stories by the author</param>
     internal sealed record GetAuthorResponse(
         Guid UserId,
         string Name,
@@ -67,30 +56,29 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
         CancellationToken cancellationToken = default)
     {
         var author = await context.Authors
-            .Include(a => a.Profile)
             .Include(a => a.Works)
             .Where(a => a.Id == id)
-            .Select(a => new GetAuthorResponse(
-                a.UserId,
-                a.Name,
-                BuildAvatarUrl(a.GravatarEmail),
-                a.UpdatedAt,
-                a.DeletedAt,
-                new GaAuthorProfile(a.Profile.Bio),
-                a.Works
-                    .Where(w => w is Story && w.PublishedAt != null)
-                    .Select(w => new AuthorWorkItem(
-                        w.Id,
-                        w.Title,
-                        w.PublishedAt)),
-                a.Works.Count(w => w is Story)
-            ))
             .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
 
-        return author is null
-            ? CommonErrors.Author.NotFound
-            : author;
+        if (author is null) return CommonErrors.Author.NotFound;
+
+        var publishedStories = author.Works
+            .Where(w => w is Story && w.PublishedAt != null)
+            .Select(w => new AuthorWorkItem(w.Id, w.Title, w.PublishedAt));
+
+        var totalStories = author.Works.Count(w => w is Story);
+
+        return new GetAuthorResponse(
+            author.UserId,
+            author.Name,
+            BuildAvatarUrl(author.GravatarEmail),
+            author.UpdatedAt,
+            author.DeletedAt,
+            new GaAuthorProfile(
+                author.Profile.Bio),
+            publishedStories,
+            totalStories);
     }
 
     private static string? BuildAvatarUrl(string? gravatarEmail)
@@ -146,7 +134,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
                 "Returns the author's profile information and a list of their works. " +
                 "This is a public endpoint that does not require authentication.")
             .WithTags(ApiTags.Authors.Discovery)
-            .AllowAnonymous() // Public endpoint - no authentication required
+            .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<GetAuthorResponse>>();
         }

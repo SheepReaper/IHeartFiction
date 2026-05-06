@@ -15,8 +15,8 @@ public class ListAuthorsShapingTests
     public void WithLinks_And_ShapeData_Flattens_LinkedPagedCollection()
     {
         // Arrange - create a couple of ListAuthorsItem instances
-        var item1 = new ListAuthors.ListAuthorsItem(Ulid.NewUlid(), "Alice", "bio1", DateTime.UtcNow, DateTime.UtcNow, 2, 1);
-        var item2 = new ListAuthors.ListAuthorsItem(Ulid.NewUlid(), "Bob", "bio2", DateTime.UtcNow, DateTime.UtcNow, 3, 2);
+        var item1 = new ListAuthors.ListAuthorsItem(Ulid.NewUlid(), "Alice", null, "bio1", DateTime.UtcNow, DateTime.UtcNow, 2, 1);
+        var item2 = new ListAuthors.ListAuthorsItem(Ulid.NewUlid(), "Bob", null, "bio2", DateTime.UtcNow, DateTime.UtcNow, 3, 2);
 
         // Build a simple IQueryable over the items
         var items = new[] { item1, item2 }.AsQueryable();

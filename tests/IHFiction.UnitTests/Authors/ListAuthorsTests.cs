@@ -25,6 +25,7 @@ public class ListAuthorsTests
         var item = new ListAuthors.ListAuthorsItem(
             authorId,
             "John Doe",
+            null,
             "A prolific author of fantasy novels.",
             createdAt,
             updatedAt,
@@ -34,6 +35,7 @@ public class ListAuthorsTests
         // Assert
         Assert.Equal(authorId, item.Id);
         Assert.Equal("John Doe", item.Name);
+        Assert.Null(item.AvatarUrl);
         Assert.Equal("A prolific author of fantasy novels.", item.Bio);
         Assert.Equal(createdAt, item.CreatedAt);
         Assert.Equal(updatedAt, item.UpdatedAt);
@@ -47,8 +49,8 @@ public class ListAuthorsTests
         // Arrange
         var authors = new List<ListAuthors.ListAuthorsItem>
         {
-            new(Ulid.NewUlid(), "Author 1", "Bio 1", DateTime.UtcNow, DateTime.UtcNow, 3, 2),
-            new(Ulid.NewUlid(), "Author 2", "Bio 2", DateTime.UtcNow, DateTime.UtcNow, 5, 4)
+            new(Ulid.NewUlid(), "Author 1", null, "Bio 1", DateTime.UtcNow, DateTime.UtcNow, 3, 2),
+            new(Ulid.NewUlid(), "Author 2", null, "Bio 2", DateTime.UtcNow, DateTime.UtcNow, 5, 4)
         };
 
         // Act
