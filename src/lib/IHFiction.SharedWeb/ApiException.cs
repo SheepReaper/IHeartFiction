@@ -29,14 +29,28 @@ public partial class ApiException
             description = $"{pd.Title}: {pd.Detail}";
         }
 
-        return new DomainError(nameof(ApiException), $"{description ?? ex.Response}");
+        return new DomainError(nameof(ApiException), BuildDescription(ex, description ?? ex.Response));
     }
 
     public static DomainError ToDomainError(ApiException ex)
     {
         ArgumentNullException.ThrowIfNull(ex);
 
-        return new DomainError(nameof(ApiException), $"{ex.Response}");
+        return new DomainError(nameof(ApiException), BuildDescription(ex, ex.Response));
+    }
+
+    private static string BuildDescription(ApiException ex, string baseDescription)
+    {
+        ArgumentNullException.ThrowIfNull(ex);
+
+        var status = $"HTTP {ex.StatusCode}";
+
+        if (ex.InnerException is null)
+        {
+            return $"{status}: {baseDescription}";
+        }
+
+        return $"{status}: {baseDescription} :: Inner: {ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
     }
 
     public static implicit operator DomainError(ApiException ex) => ToDomainError(ex);

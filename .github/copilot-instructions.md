@@ -48,6 +48,16 @@ When Serena tools are available, prefer them for codebase exploration, symbol-aw
 - Prefer repository memory for durable codebase facts and session memory for task plans or temporary execution context.
 - Fall back to generic grep, file, and terminal tools when Serena is not a good fit for the task.
 
+### Command Policy (Strict)
+
+For EF Core migration creation in this repository, agents MUST use the exact canonical command below.
+
+- Canonical command (required):
+   - `dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFiction.Data.csproj --context FictionDbContext`
+- Disallowed for migration creation in this repo:
+   - Running from any alternate `--project` target.
+- If an agent runs a non-canonical variant, it must immediately rerun using the canonical command and report the correction.
+
 ### Project Structure
 
 The solution uses **Central Package Management** via `Directory.Packages.props` in the repository root. All package versions are centrally managed.
@@ -193,6 +203,8 @@ EF Core migrations are in `src/lib/IHFiction.Data/Migrations/`. The MigrationSer
 ```bash
 dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFiction.Data.csproj --context FictionDbContext
 ```
+
+**Do not use alternate variants for this repository.**
 
 ## Configuration Files
 

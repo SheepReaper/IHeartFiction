@@ -1,10 +1,17 @@
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedWeb.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class StoryService(IFictionApiClient client)
+public class StoryService(IFictionApiClient client, ILogger<StoryService> logger)
 {
+    private static readonly Action<ILogger, Ulid, Exception?> LogUploadStoryCoverFailed =
+        LoggerMessage.Define<Ulid>(
+            LogLevel.Error,
+            new EventId(1001, nameof(UploadStoryCoverAsync)),
+            "Failed to upload story cover for story {StoryId}");
+
     public async ValueTask<Result> PublishWorkAsync(
         Ulid id,
         bool publishAll = false,
@@ -182,4 +189,47 @@ public class StoryService(IFictionApiClient client)
     ) => !Ulid.TryParse(id, out var ulid)
         ? DomainError.InvalidUlid
         : await UpdateStoryContentAsync(ulid, body, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfDeleteStoryCoverResponse>> DeleteStoryCoverAsync(
+        Ulid id,
+        CancellationToken cancellationToken = default
+    ) => id == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.DeleteStoryCoverAsync(id.ToString(), cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfUploadStoryCoverResponse>> UploadStoryCoverAsync(
+        Ulid id,
+        Stream content,
+        string fileName,
+        string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        if (id == Ulid.Empty)
+        {
+            return DomainError.EmptyUlid;
+        }
+
+        ArgumentNullException.ThrowIfNull(content);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(contentType);
+
+        try
+        {
+            return await client.UploadStoryCoverAsync(
+                id.ToString(),
+                new(content, fileName, contentType),
+                cancellationToken).HandleApiException();
+        }
+        catch (Exception ex) when (ex is HttpRequestException
+            or IOException
+            or InvalidOperationException
+            or FormatException
+            or NotSupportedException
+            or ObjectDisposedException
+            or TaskCanceledException)
+        {
+            LogUploadStoryCoverFailed(logger, id, ex);
+            return new DomainError("StoryService.UploadStoryCover", $"Failed to upload story cover: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
 }

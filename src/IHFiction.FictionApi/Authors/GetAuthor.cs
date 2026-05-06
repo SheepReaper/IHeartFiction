@@ -31,7 +31,10 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
     /// Represents an author's profile information.
     /// </summary>
     /// <param name="Bio">Author's biography or description</param>
-    internal sealed record GaAuthorProfile(string? Bio);
+    /// <param name="SocialLinks">Author social links keyed by type</param>
+    internal sealed record GaAuthorProfile(string? Bio, IEnumerable<GaAuthorSocialLink> SocialLinks);
+
+    internal sealed record GaAuthorSocialLink(string Type, string Value);
 
     /// <summary>
     /// Represents a work (story) created by an author.
@@ -76,7 +79,10 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
             author.UpdatedAt,
             author.DeletedAt,
             new GaAuthorProfile(
-                author.Profile.Bio),
+                author.Profile.Bio,
+                author.Profile.SocialLinks
+                    .OrderBy(link => link.Type)
+                    .Select(link => new GaAuthorSocialLink(link.Type, link.Value))),
             publishedStories,
             totalStories);
     }

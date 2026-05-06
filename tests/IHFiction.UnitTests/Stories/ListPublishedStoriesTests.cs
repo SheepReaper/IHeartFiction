@@ -31,9 +31,10 @@ public class ListPublishedStoriesTests
             true,  // HasContent
             false, // HasChapters
             false, // HasBooks
+            false, // HasCoverImage
             0,
             Ulid.NewUlid(),
-            "Author Name");    // ChapterCount
+            "Author Name");
 
         // Assert
         Assert.Equal(storyId, item.StoryId);
@@ -54,8 +55,8 @@ public class ListPublishedStoriesTests
         // Arrange
         var stories = new List<ListPublishedStories.ListPublishedStoriesItem>
         {
-            new(Ulid.NewUlid(), "Story 1", "Description 1", DateTime.UtcNow, DateTime.UtcNow, true, false, false, 0, Ulid.NewUlid(), "Author 1"),
-            new(Ulid.NewUlid(), "Story 2", "Description 2", DateTime.UtcNow, DateTime.UtcNow, false, true, false, 5, Ulid.NewUlid(),"Author 2")
+            new(Ulid.NewUlid(), "Story 1", "Description 1", DateTime.UtcNow, DateTime.UtcNow, true, false, false, false, 0, Ulid.NewUlid(), "Author 1"),
+            new(Ulid.NewUlid(), "Story 2", "Description 2", DateTime.UtcNow, DateTime.UtcNow, false, true, false, true, 5, Ulid.NewUlid(),"Author 2")
         };
 
         // Act

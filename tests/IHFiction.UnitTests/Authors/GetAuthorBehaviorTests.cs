@@ -23,7 +23,7 @@ public class GetAuthorBehaviorTests
         // Arrange
         var userId = Guid.NewGuid();
         var updatedAt = DateTime.UtcNow;
-        var profile = new GetAuthor.GaAuthorProfile("Bio");
+        var profile = new GetAuthor.GaAuthorProfile("Bio", []);
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
@@ -40,7 +40,7 @@ public class GetAuthorBehaviorTests
         var emptyGuid = Guid.Empty;
         var name = "Author with Empty GUID";
         var updatedAt = DateTime.UtcNow;
-        var profile = new GetAuthor.GaAuthorProfile("Bio");
+        var profile = new GetAuthor.GaAuthorProfile("Bio", []);
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
@@ -57,7 +57,7 @@ public class GetAuthorBehaviorTests
         var userId = Guid.NewGuid();
         var name = "Future Author";
         var futureDate = new DateTime(2100, 12, 31, 23, 59, 59, DateTimeKind.Utc);
-        var profile = new GetAuthor.GaAuthorProfile("Bio");
+        var profile = new GetAuthor.GaAuthorProfile("Bio", []);
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
@@ -74,7 +74,7 @@ public class GetAuthorBehaviorTests
         var userId = Guid.NewGuid();
         var name = "Historical Author";
         var pastDate = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var profile = new GetAuthor.GaAuthorProfile("Bio");
+        var profile = new GetAuthor.GaAuthorProfile("Bio", []);
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
@@ -92,7 +92,7 @@ public class GetAuthorBehaviorTests
         var name = "Inconsistent Author";
         var updatedAt = DateTime.UtcNow;
         var deletedAt = updatedAt.AddDays(-1); // Deleted before last update
-        var profile = new GetAuthor.GaAuthorProfile("Bio");
+        var profile = new GetAuthor.GaAuthorProfile("Bio", []);
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
@@ -169,7 +169,7 @@ public class GetAuthorBehaviorTests
             null,
             DateTime.UtcNow,
             null,
-            new GetAuthor.GaAuthorProfile("Bio"),
+            new GetAuthor.GaAuthorProfile("Bio", []),
             [],
             0
         );

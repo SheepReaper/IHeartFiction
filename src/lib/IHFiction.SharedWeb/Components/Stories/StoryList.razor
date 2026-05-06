@@ -36,9 +36,9 @@
                     <div class="control">
                         <div class="select is-fullwidth">
                             <select @bind="sortBy" @bind:after="() => OnSortChanged()">
-                                <option value="publishedAt">Recently Published</option>
+                                <option value="publishedAt desc">Recently Published</option>
                                 <option value="title">Title (A-Z)</option>
-                                <option value="updatedAt">Recently Updated</option>
+                                <option value="updatedAt desc">Recently Updated</option>
                             </select>
                         </div>
                     </div>
@@ -122,7 +122,7 @@
     private bool isLoading = true;
     private string? errorMessage;
     private string searchQuery = "";
-    private string sortBy = "publishedAt";
+    private string sortBy = "publishedAt desc";
     private int currentPage = 1;
     private const int pageSize = 12;
 

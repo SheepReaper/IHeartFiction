@@ -38,7 +38,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
             3
         );
@@ -67,7 +67,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
             0
         );
@@ -89,7 +89,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
 
             0
@@ -113,7 +113,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
             0
         );
@@ -141,7 +141,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
             0
         );
@@ -169,7 +169,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
             100
         );
@@ -205,7 +205,7 @@ public class GetAuthorServiceTests
             null,
             author.UpdatedAt,
             author.DeletedAt,
-            new GetAuthor.GaAuthorProfile(author.Profile.Bio),
+            new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
             author.Works.Select(work => new GetAuthor.AuthorWorkItem(work.Id, work.Title, null)),
             6
         );

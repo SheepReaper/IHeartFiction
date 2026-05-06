@@ -296,6 +296,7 @@ public partial class StoryEditorService(
             Ulid.Parse(apiResult.StoryId, CultureInfo.InvariantCulture),
             apiResult.StoryTitle,
             apiResult.StoryDescription,
+            apiResult.HasCoverImage,
             apiResult.StoryUpdatedAt.UtcDateTime,
             ObjectId.Parse(apiResult.ContentId),
             apiResult.Content,
@@ -369,6 +370,7 @@ public partial class StoryEditorService(
             await using (CurrentStory.SuppressDirty())
             {
                 CurrentStory.Id = Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture);
+                CurrentStory.HasCoverImage = false;
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
                 CurrentStory.Description = apiResult.Description;
                 CurrentStory.Title = apiResult.Title;
@@ -416,6 +418,43 @@ public partial class StoryEditorService(
                 CurrentStory.ContentUpdatedAt = apiResult.ContentUpdatedAt.UtcDateTime;
                 CurrentStory.StoryUpdatedAt = apiResult.StoryUpdatedAt.UtcDateTime;
             }
+        }
+
+        if (RemoveCoverOnSave && CurrentStory.Id.HasValue)
+        {
+            var deleteCoverResult = await storyService.DeleteStoryCoverAsync(CurrentStory.Id.Value, cancellationToken);
+
+            if (deleteCoverResult.IsFailure) return deleteCoverResult.DomainError;
+
+            await using (CurrentStory.SuppressDirty())
+            {
+                CurrentStory.HasCoverImage = deleteCoverResult.Value.HasCoverImage;
+            }
+
+            ClearPendingCoverState();
+        }
+        else if (PendingCoverContent is not null
+            && !string.IsNullOrWhiteSpace(PendingCoverFileName)
+            && !string.IsNullOrWhiteSpace(PendingCoverContentType)
+            && CurrentStory.Id.HasValue)
+        {
+            await using var pendingCoverStream = new MemoryStream(PendingCoverContent, writable: false);
+
+            var uploadCoverResult = await storyService.UploadStoryCoverAsync(
+                CurrentStory.Id.Value,
+                pendingCoverStream,
+                PendingCoverFileName,
+                PendingCoverContentType,
+                cancellationToken);
+
+            if (uploadCoverResult.IsFailure) return uploadCoverResult.DomainError;
+
+            await using (CurrentStory.SuppressDirty())
+            {
+                CurrentStory.HasCoverImage = uploadCoverResult.Value.HasCoverImage;
+            }
+
+            ClearPendingCoverState();
         }
 
         // Save Chapters
@@ -583,6 +622,7 @@ public partial class StoryEditorService(
         ClearChapter();
         ClearBook();
         ClearStory();
+        ClearPendingCoverState();
 
         if (wasDirty == true)
             DirtyStateChanged?.Invoke(this, new(false));

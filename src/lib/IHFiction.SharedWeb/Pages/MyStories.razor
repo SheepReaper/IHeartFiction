@@ -57,6 +57,20 @@ else if (_stories != null)
     <Virtualize Items="_stories" Context="story">
         <div class="box">
             <div class="columns is-vcentered">
+                <div class="column is-narrow">
+                    @if (story.HasCoverImage)
+                    {
+                        <figure class="image is-96x96">
+                            <img src="/stories/@story.Id/cover" alt="@story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
+                        </figure>
+                    }
+                    else
+                    {
+                        <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 96px; width: 96px;">
+                            <span class="has-text-weight-semibold">@story.Title[..Math.Min(story.Title.Length, 1)]</span>
+                        </div>
+                    }
+                </div>
                 <div class="column">
                     <p class="title is-5">@story.Title</p>
                     <p class="subtitle is-6">@(story.IsPublished ? "Published" : "Draft")</p>

@@ -7,8 +7,8 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="navbar-item has-dropdown is-hoverable">
-            <a class="navbar-link">
+        <div class="navbar-item has-dropdown @(_isMenuOpen ? "is-active" : string.Empty)">
+            <a class="navbar-link" role="button" aria-haspopup="true" aria-expanded="@_isMenuOpen" tabindex="0" @onclick="ToggleMenu">
                 @if (!string.IsNullOrEmpty(_avatarUrl))
                 {
                     <figure class="image is-24x24">
@@ -29,7 +29,7 @@
                         Log out
                     </button>
                 </form> *@
-                <a class="navbar-item" href="account/settings">
+                <a class="navbar-item" @onclick="OnAccountSettingsClick">
                     Account Settings
                 </a>
                 <hr class="navbar-divider" />
@@ -58,6 +58,7 @@
 
     private bool _loading;
     private string? _avatarUrl;
+    private bool _isMenuOpen;
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,7 +79,17 @@
 #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase
         var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
 #pragma warning restore CA1308
-    return $"https://www.gravatar.com/avatar/{hash}?s=24&d=mp&r=g";
+        return $"https://www.gravatar.com/avatar/{hash}?s=24&d=mp&r=g";
+    }
+
+    private void ToggleMenu()
+    {
+        _isMenuOpen = !_isMenuOpen;
+    }
+
+    private void CloseMenu()
+    {
+        _isMenuOpen = false;
     }
 
     private void OnSignUpClick() => OnLoginClick();
@@ -92,8 +103,15 @@
 
     private void OnLogoutClick()
     {
+        CloseMenu();
         _loading = true;
         LoaderService.Show();
         Navigation.NavigateTo($"authentication/logout", forceLoad: true);
+    }
+
+    private void OnAccountSettingsClick()
+    {
+        CloseMenu();
+        Navigation.NavigateTo("account/settings");
     }
 }

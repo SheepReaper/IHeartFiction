@@ -6,6 +6,8 @@ public sealed class Story : Work
 {
     public string Description { get; set; } = default!;
 
+    public StoryCover? Cover { get; set; }
+
     public ObjectId? WorkBodyId { get; set; }
 
     private IList<Chapter>? _chapters;
@@ -18,6 +20,7 @@ public sealed class Story : Work
     public ICollection<Anthology> Anthologies => _anthologies ??= [];
 
     public bool HasContent => WorkBodyId?.Timestamp != default;
+    public bool HasCoverImage => Cover is not null;
     public bool HasChapters => Chapters.Count > 0;
     public bool HasBooks => Books.Count > 0;
     public bool IsValid => !(HasContent || HasChapters || HasBooks) // New story

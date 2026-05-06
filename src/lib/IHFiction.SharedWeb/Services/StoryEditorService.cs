@@ -1,4 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
+using Microsoft.AspNetCore.Components.Forms;
+
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Stories;
 
 namespace IHFiction.SharedWeb.Services;
 
@@ -42,7 +47,19 @@ public partial class StoryEditorService
         public static readonly DomainError ChapterLoad = new("StoryEditorService.ChapterLoad", "Failed to load chapter.");
         public static readonly DomainError BookLoad = new("StoryEditorService.BookLoad", "Failed to load book.");
         public static readonly DomainError InvalidStoryType = new("StoryEditorService.InvalidStoryType", "The current story type does not support this operation.");
+        public static readonly DomainError InvalidCoverType = new("StoryEditorService.InvalidCoverType", "Cover images must be JPG, PNG, or WebP.");
+        public static readonly DomainError CoverTooLarge = new("StoryEditorService.CoverTooLarge", $"Cover images must be {StoryCoverRules.MaxFileSizeBytes / (1024 * 1024)} MB or smaller.");
     }
+
+    private byte[]? PendingCoverContent { get; set; }
+    private string? PendingCoverFileName { get; set; }
+    private string? PendingCoverContentType { get; set; }
+    private string? PendingCoverPreviewUrl { get; set; }
+    private bool RemoveCoverOnSave { get; set; }
+
+    [SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "Blazor image bindings consume relative URLs and data URLs as strings.")]
+    public string? CurrentCoverPreviewUrl => PendingCoverPreviewUrl ?? CurrentStory?.CoverImageUrl;
+    public bool HasVisibleCover => !string.IsNullOrWhiteSpace(CurrentCoverPreviewUrl);
 
     public StoryEditorModel? CurrentStory
     {
@@ -53,6 +70,8 @@ public partial class StoryEditorService
 
             var oldStory = field;
             field = value;
+
+            ClearPendingCoverState();
 
             if (oldStory is not null)
                 oldStory.DirtyStateChanged -= OnDirtyStateChanged;
@@ -102,6 +121,65 @@ public partial class StoryEditorService
 
             ChapterChanged?.Invoke(this, new(oldChapter, value));
         }
+    }
+
+    public async Task<Result> SetPendingCoverAsync(IBrowserFile file, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (CurrentStory is null)
+        {
+            return Errors.NoStoryLoaded;
+        }
+
+        if (file.Size > StoryCoverRules.MaxFileSizeBytes)
+        {
+            return Errors.CoverTooLarge;
+        }
+
+        if (!StoryCoverRules.IsAllowedContentType(file.ContentType)
+            || !StoryCoverRules.IsAllowedFileExtension(file.Name))
+        {
+            return Errors.InvalidCoverType;
+        }
+
+        await using var stream = file.OpenReadStream(StoryCoverRules.MaxFileSizeBytes, cancellationToken);
+        await using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream, cancellationToken);
+
+        PendingCoverContent = memoryStream.ToArray();
+        PendingCoverFileName = file.Name;
+        PendingCoverContentType = file.ContentType;
+        PendingCoverPreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(PendingCoverContent)}";
+        RemoveCoverOnSave = false;
+        CurrentStory.Dirty = true;
+
+        return Result.Success();
+    }
+
+    public void MarkCoverForRemoval()
+    {
+        if (CurrentStory is null)
+        {
+            return;
+        }
+
+        PendingCoverContent = null;
+        PendingCoverFileName = null;
+        PendingCoverContentType = null;
+        PendingCoverPreviewUrl = null;
+        RemoveCoverOnSave = true;
+        CurrentStory.HasCoverImage = false;
+        CurrentStory.Dirty = true;
+    }
+
+    private void ClearPendingCoverState()
+    {
+        PendingCoverContent = null;
+        PendingCoverFileName = null;
+        PendingCoverContentType = null;
+        PendingCoverPreviewUrl = null;
+        RemoveCoverOnSave = false;
     }
 }
 

@@ -22,8 +22,8 @@ public class GetAuthorShapingTests
             AvatarUrl: null,
             UpdatedAt: DateTime.UtcNow,
             DeletedAt: null,
-            Profile: new GetAuthor.GaAuthorProfile("Bio text"),
-            PublishedStories: new[] { new GetAuthor.AuthorWorkItem(Ulid.NewUlid(), "Story 1", DateTime.UtcNow) },
+            Profile: new GetAuthor.GaAuthorProfile("Bio text", []),
+            PublishedStories: [new GetAuthor.AuthorWorkItem(Ulid.NewUlid(), "Story 1", DateTime.UtcNow)],
             TotalStories: 1
         );
 

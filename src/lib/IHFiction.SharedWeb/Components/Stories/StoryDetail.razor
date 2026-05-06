@@ -4,6 +4,7 @@
 <SocialPreviewMetadata
     Title="@MetadataTitle"
     Description="@MetadataDescription"
+    ImageUrl="@CoverImageUrl"
     Type="article" />
 
 
@@ -34,6 +35,21 @@ else if (story != null)
         <div class="container">
             <div class="columns">
                 <div class="column is-two-thirds">
+                    @if (story.HasCoverImage)
+                    {
+                        <figure class="image is-3by2 mb-5">
+                            <img src="@CoverImageUrl" alt="@story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
+                        </figure>
+                    }
+                    else
+                    {
+                        <figure class="image is-3by2 mb-5">
+                            <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
+                                <span class="title is-4 has-text-primary-bold">@story.Title</span>
+                            </div>
+                        </figure>
+                    }
+
                     <h1 class="title is-2">@story.Title</h1>
                     <p class="subtitle is-4">
                         by @foreach (var author in story.Authors)
@@ -275,6 +291,10 @@ else if (story != null)
             $"{story.Description} By {FormatAuthorList(story.Authors)}.",
         _ => $"Read {story.Title} by {FormatAuthorList(story.Authors)} on IHeartFiction."
     };
+
+    private string? CoverImageUrl => story?.HasCoverImage == true
+        ? $"/stories/{story.Id}/cover"
+        : null;
 
     // Helper to provide a non-null story id string for markup
     private string StoryIdString => story?.Id.ToString() ?? string.Empty;

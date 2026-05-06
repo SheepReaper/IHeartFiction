@@ -104,7 +104,7 @@
 
             if (result.IsSuccess)
             {
-                Navigation.NavigateTo($"authentication/login?returnUrl=/stories/new", forceLoad: true);
+                Navigation.NavigateTo("/sign-in-again?reason=author-role-updated&returnUrl=%2Fstories%2Fnew", forceLoad: true);
             }
             else
             {

@@ -1,4 +1,23 @@
 <div class="card">
+    @if (Story.HasCoverImage)
+    {
+        <div class="card-image">
+            <figure class="image is-4by3">
+                <img src="/stories/@Story.StoryId/cover" alt="@Story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
+            </figure>
+        </div>
+    }
+    else
+    {
+        <div class="card-image">
+            <figure class="image is-4by3">
+                <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
+                    <span class="has-text-weight-semibold">@Story.Title</span>
+                </div>
+            </figure>
+        </div>
+    }
+
     <div class="card-content">
         <div class="content">
             <h3 class="title is-5">

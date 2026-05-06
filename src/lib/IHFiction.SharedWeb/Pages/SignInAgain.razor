@@ -15,6 +15,12 @@
             </div>
             break;
 
+        case "author-role-updated":
+            <div>
+                <p class="content">Your author access has been granted. Please sign in again so the application can refresh your permissions.</p>
+            </div>
+            break;
+
         case null:
             <div>
                 <p class="content">The application requires you to sign in again.</p>
@@ -28,6 +34,10 @@
             </div>
             break;
     }
+
+    <div class="mt-4">
+        <button class="button is-primary" @onclick="SignInAgainNow">Sign In Again</button>
+    </div>
 </div>
 
 @code {
@@ -38,6 +48,12 @@
     [Parameter]
     [SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
+
+    private void SignInAgainNow()
+    {
+        var target = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+        Navigation.NavigateTo($"/authentication/refresh?returnUrl={Uri.EscapeDataString(target)}", true);
+    }
 
     protected override void OnInitialized()
     {

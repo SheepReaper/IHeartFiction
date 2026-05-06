@@ -1,6 +1,8 @@
 @using IHFiction.SharedKernel.Infrastructure
+@using IHFiction.SharedKernel.Stories
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.Data.Stories.Domain
+@using Microsoft.AspNetCore.Components.Forms
 @using System.Globalization
 
 @using System.Linq
@@ -74,6 +76,44 @@ else
             </div>
         </div>
         <div class="column">
+            <div class="box">
+                <h3 class="subtitle">Cover Image</h3>
+
+                @if (EditorService.CurrentCoverPreviewUrl is { } coverPreviewUrl)
+                {
+                    <figure class="image is-4by3 mb-4">
+                        <img src="@coverPreviewUrl" alt="Story cover preview" style="object-fit: cover; height: 100%; width: 100%;" />
+                    </figure>
+                }
+                else
+                {
+                    <figure class="image is-4by3 mb-4">
+                        <div class="has-background-link-soft has-text-link-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
+                            <span class="has-text-weight-semibold">No cover selected</span>
+                        </div>
+                    </figure>
+                }
+
+                <div class="field">
+                    <label class="label">Upload Cover</label>
+                    <div class="control">
+                        <InputFile class="input" accept="@StoryCoverRules.AcceptAttribute" OnChange="HandleCoverSelected" disabled="@_isBusy" />
+                    </div>
+                    <p class="help">JPG, PNG, or WebP up to 5 MB.</p>
+                </div>
+
+                @if (EditorService.HasVisibleCover)
+                {
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-light is-danger" type="button" @onclick="RemoveCover" disabled="@_isBusy">
+                                Remove Cover
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
             @if (EditorService.CurrentStory.Id != default)
             {
                 <div class="section">
@@ -367,6 +407,28 @@ else
         _isBusy = false;
 
         StateHasChanged();
+    }
+
+    private async Task HandleCoverSelected(InputFileChangeEventArgs args)
+    {
+        if (args.FileCount == 0)
+        {
+            return;
+        }
+
+        _errorMessage = null;
+
+        var result = await EditorService.SetPendingCoverAsync(args.File, CancellationToken);
+
+        if (result.IsFailure)
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+    }
+
+    private void RemoveCover()
+    {
+        EditorService.MarkCoverForRemoval();
     }
 
     private async Task<Result> EnsureInitialStructureAsync(string storyType)

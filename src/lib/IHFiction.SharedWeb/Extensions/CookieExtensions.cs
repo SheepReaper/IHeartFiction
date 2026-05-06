@@ -24,6 +24,8 @@ public static class CookieExtensions
             cookieOptions.Cookie.Name = ".IHFiction.Auth";
             cookieOptions.Cookie.MaxAge = TimeSpan.FromDays(14);
             cookieOptions.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            cookieOptions.LoginPath = "/authentication/login";
+            cookieOptions.AccessDeniedPath = "/sign-in-again";
 
             cookieOptions.SlidingExpiration = true;
 

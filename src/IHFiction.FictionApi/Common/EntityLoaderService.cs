@@ -57,6 +57,7 @@ internal sealed class EntityLoaderService(FictionDbContext context)
         query = query
             .Include(s => s.Owner)
             .Include(s => s.Authors)
+            .Include(s => s.Cover)
             .Include(s => s.Tags)
             .Include(s => s.Chapters)
             .Include(s => s.Books)
@@ -68,6 +69,7 @@ internal sealed class EntityLoaderService(FictionDbContext context)
     public async Task<Story?> LoadStoryForConversionAsync(Ulid storyId, CancellationToken cancellationToken)
     {
         return await context.Stories
+            .Include(s => s.Cover)
             .Include(s => s.Chapters)
             .Include(s => s.Books)
                 .ThenInclude(b => b.Chapters)

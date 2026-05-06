@@ -26,7 +26,10 @@ internal sealed class GetOwnAuthorProfile(
     /// Represents the current authenticated author's profile information.
     /// </summary>
     /// <param name="Bio">Author's biography or description</param>
-    internal sealed record OwnAuthorProfile(string? Bio);
+    /// <param name="SocialLinks">Author social links keyed by type</param>
+    internal sealed record OwnAuthorProfile(string? Bio, IEnumerable<OwnAuthorSocialLink> SocialLinks);
+
+    internal sealed record OwnAuthorSocialLink(string Type, string Value);
 
     /// <summary>
     /// Represents a work (story) associated with the current author.
@@ -66,7 +69,11 @@ internal sealed class GetOwnAuthorProfile(
             author.Name,
             author.GravatarEmail,
             author.UpdatedAt,
-            new OwnAuthorProfile(author.Profile.Bio),
+            new OwnAuthorProfile(
+                author.Profile.Bio,
+                author.Profile.SocialLinks
+                    .OrderBy(link => link.Type)
+                    .Select(link => new OwnAuthorSocialLink(link.Type, link.Value))),
             works.Select(work => new OwnAuthorWorkItem(work.Id, work.Title)),
             ownedWorks.Select(work => new OwnAuthorWorkItem(work.Id, work.Title)));
     }

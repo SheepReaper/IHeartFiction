@@ -63,7 +63,10 @@ internal sealed class RegisterAsAuthor(
     /// Represents an author's profile information.
     /// </summary>
     /// <param name="Bio">Author's biography or description</param>
-    internal sealed record RaaAuthorProfile(string? Bio);
+    /// <param name="SocialLinks">Author social links keyed by type</param>
+    internal sealed record RaaAuthorProfile(string? Bio, IEnumerable<RaaAuthorSocialLink> SocialLinks);
+
+    internal sealed record RaaAuthorSocialLink(string Type, string Value);
 
     public async Task<Result<RegisterAsAuthorResponse>> HandleAsync(
         ClaimsPrincipal claimsPrincipal,
@@ -91,7 +94,11 @@ internal sealed class RegisterAsAuthor(
             author.Name,
             author.GravatarEmail,
             author.UpdatedAt,
-            new RaaAuthorProfile(author.Profile.Bio));
+            new RaaAuthorProfile(
+                author.Profile.Bio,
+                author.Profile.SocialLinks
+                    .OrderBy(link => link.Type)
+                    .Select(link => new RaaAuthorSocialLink(link.Type, link.Value))));
     }
     public static string EndpointName => nameof(RegisterAsAuthor);
 

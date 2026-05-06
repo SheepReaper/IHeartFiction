@@ -3,6 +3,7 @@ using System;
 using IHFiction.Data.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IHFiction.Data.Migrations
 {
     [DbContext(typeof(FictionDbContext))]
-    partial class FictionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260506105829_AddStoryCovers")]
+    partial class AddStoryCovers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -497,39 +500,6 @@ namespace IHFiction.Data.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("AuthorId")
                                 .HasConstraintName("fk_authors_authors_id");
-
-                            b1.OwnsMany("IHFiction.Data.Authors.Domain.SocialLink", "SocialLinks", b2 =>
-                                {
-                                    b2.Property<string>("author_id")
-                                        .HasColumnType("character varying(26)")
-                                        .HasColumnName("author_id");
-
-                                    b2.Property<string>("Type")
-                                        .HasMaxLength(50)
-                                        .HasColumnType("character varying(50)")
-                                        .HasColumnName("type");
-
-                                    b2.Property<string>("Value")
-                                        .IsRequired()
-                                        .HasMaxLength(500)
-                                        .HasColumnType("character varying(500)")
-                                        .HasColumnName("value");
-
-                                    b2.HasKey("author_id", "Type")
-                                        .HasName("pk_author_social_links");
-
-                                    b2.HasIndex("author_id", "Type")
-                                        .IsUnique()
-                                        .HasDatabaseName("ix_author_social_links_author_id_type");
-
-                                    b2.ToTable("author_social_links", "ihfiction.dev2");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("author_id")
-                                        .HasConstraintName("fk_author_social_links_authors_author_id");
-                                });
-
-                            b1.Navigation("SocialLinks");
                         });
 
                     b.Navigation("Profile")

@@ -30,6 +30,7 @@ public class GetOwnStoriesTests
             true,
             collaboratorNames,
             tags,
+            false,
             true,
             false,
             false,
@@ -72,6 +73,7 @@ public class GetOwnStoriesTests
             collaboratorNames,
             tags,
             false,
+            false,
             true,
             false,
             true);
@@ -100,6 +102,7 @@ public class GetOwnStoriesTests
                 true,
                 ["Collaborator 1"],
                 ["tag1"],
+                false,
                 true,
                 false,
                 false,

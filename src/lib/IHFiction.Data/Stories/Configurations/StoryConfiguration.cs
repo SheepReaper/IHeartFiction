@@ -12,6 +12,11 @@ internal sealed class StoryConfiguration : IEntityTypeConfiguration<Story>
             .HasColumnName("description")
             .IsRequired();
 
+        builder.HasOne(story => story.Cover)
+            .WithOne(cover => cover.Story)
+            .HasForeignKey<StoryCover>(cover => cover.StoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.Property(story => story.WorkBodyId)
             .HasColumnName("work_body_id");
 

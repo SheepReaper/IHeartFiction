@@ -24,7 +24,7 @@ public class GetAuthorEndpointTests
             null,
             DateTime.UtcNow,
             null,
-            new GetAuthor.GaAuthorProfile("Test bio"),
+            new GetAuthor.GaAuthorProfile("Test bio", []),
             [],
 
             0
@@ -64,7 +64,7 @@ public class GetAuthorResponseTests
         var name = "Test Author";
         var updatedAt = DateTime.UtcNow;
         var deletedAt = DateTime.UtcNow.AddDays(1);
-        var profile = new GetAuthor.GaAuthorProfile("Test bio");
+        var profile = new GetAuthor.GaAuthorProfile("Test bio", []);
         var works = new List<GetAuthor.AuthorWorkItem>
         {
             new(Ulid.NewUlid(), "Work 1", DateTime.Now),

@@ -17,6 +17,7 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Author> Authors { get; set; } = null!;
     public DbSet<Story> Stories { get; set; } = null!;
+    public DbSet<StoryCover> StoryCovers { get; set; } = null!;
     public DbSet<Book> Books { get; set; } = null!;
     public DbSet<Chapter> Chapters { get; set; } = null!;
     public DbSet<Tag> Tags { get; set; } = null!;

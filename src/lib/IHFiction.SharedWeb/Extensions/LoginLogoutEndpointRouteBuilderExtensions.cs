@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 
+using IHFiction.SharedWeb.Infrastructure;
+
 namespace IHFiction.SharedWeb.Extensions;
 
 public static class LoginLogoutEndpointRouteBuilderExtensions
 {
-    public static IEndpointConventionBuilder MapLoginAndLogout(this IEndpointRouteBuilder builder, params string[] authenticationSchemes)
+    public static IEndpointConventionBuilder MapLoginAndLogout(this IEndpointRouteBuilder builder, string cookieScheme, string oidcScheme)
     {
         var group = builder.MapGroup("");
 
@@ -15,7 +17,21 @@ public static class LoginLogoutEndpointRouteBuilderExtensions
             TypedResults.Challenge(GetAuthProperties(returnUrl, context.HttpContext))).AllowAnonymous();
 
         group.MapGet("logout", (string? returnUrl, IHttpContextAccessor context) =>
-            TypedResults.SignOut(GetAuthProperties(returnUrl, context.HttpContext), authenticationSchemes));
+            TypedResults.SignOut(GetAuthProperties(returnUrl, context.HttpContext), [cookieScheme, oidcScheme]));
+
+        group.MapGet("refresh", async Task<IResult> (
+            string? returnUrl,
+            HttpContext httpContext,
+            CookieOidcRefresher refresher,
+            CancellationToken cancellationToken) =>
+        {
+            var authProperties = GetAuthProperties(returnUrl, httpContext);
+            var refreshed = await refresher.TryRefreshAuthenticationAsync(httpContext, cookieScheme, oidcScheme, cancellationToken);
+
+            return refreshed
+                ? TypedResults.LocalRedirect(authProperties.RedirectUri!)
+                : TypedResults.Challenge(authProperties);
+        }).AllowAnonymous();
 
         return group;
     }

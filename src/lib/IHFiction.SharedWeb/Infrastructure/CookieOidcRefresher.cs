@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -37,21 +38,9 @@ public sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> oi
         // If the token is not about to expire skip this process
         if (now < expiresAt - TimeSpan.FromSeconds(refreshThresholdSeconds ?? 60)) return;
 
-        var oidcConfiguration = await oidcOptions.ConfigurationManager!.GetConfigurationAsync(context.HttpContext.RequestAborted);
-        var tokenEndpoint = oidcConfiguration.TokenEndpoint;
+        var refreshed = await RefreshPrincipalAsync(context.Properties, oidcScheme, context.HttpContext.RequestAborted);
 
-        using var body = new FormUrlEncodedContent(new Dictionary<string, string?>
-        {
-            [OpenIdConnectParameterNames.ClientId] = oidcOptions.ClientId,
-            [OpenIdConnectParameterNames.ClientSecret] = oidcOptions.ClientSecret,
-            [OpenIdConnectParameterNames.GrantType] = OpenIdConnectGrantTypes.RefreshToken,
-            [OpenIdConnectParameterNames.RefreshToken] = context.Properties.GetTokenValue(OpenIdConnectParameterNames.RefreshToken),
-            [OpenIdConnectParameterNames.Scope] = string.Join(" ", oidcOptions.Scope),
-        });
-
-        using var response = await oidcOptions.Backchannel.PostAsync(new Uri(tokenEndpoint), body);
-
-        if (!response.IsSuccessStatusCode)
+        if (refreshed is null)
         {
             context.RejectPrincipal();
 
@@ -60,7 +49,65 @@ public sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> oi
             return;
         }
 
-        var token = new OpenIdConnectMessage(await response.Content.ReadAsStringAsync());
+        context.ShouldRenew = true;
+        context.ReplacePrincipal(refreshed.Value.Principal);
+        context.Properties.StoreTokens(refreshed.Value.Tokens);
+    }
+
+    public async Task<bool> TryRefreshAuthenticationAsync(HttpContext httpContext, string cookieScheme, string oidcScheme, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(httpContext);
+
+        var authenticateResult = await httpContext.AuthenticateAsync(cookieScheme);
+
+        if (!authenticateResult.Succeeded || authenticateResult.Properties is null)
+        {
+            return false;
+        }
+
+        var refreshed = await RefreshPrincipalAsync(authenticateResult.Properties, oidcScheme, cancellationToken);
+
+        if (refreshed is null)
+        {
+            await httpContext.SignOutAsync(cookieScheme);
+            return false;
+        }
+
+        authenticateResult.Properties.StoreTokens(refreshed.Value.Tokens);
+        await httpContext.SignInAsync(cookieScheme, refreshed.Value.Principal, authenticateResult.Properties);
+        return true;
+    }
+
+    private async Task<(ClaimsPrincipal Principal, IReadOnlyList<AuthenticationToken> Tokens)?> RefreshPrincipalAsync(
+        AuthenticationProperties properties,
+        string oidcScheme,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(properties);
+
+        var oidcOptions = oidcOptionsMonitor.Get(oidcScheme);
+        var now = oidcOptions.TimeProvider?.GetUtcNow() ?? throw new InvalidOperationException("No time provider configured in OIDC options.");
+
+        var oidcConfiguration = await oidcOptions.ConfigurationManager!.GetConfigurationAsync(cancellationToken);
+        var tokenEndpoint = oidcConfiguration.TokenEndpoint;
+
+        using var body = new FormUrlEncodedContent(new Dictionary<string, string?>
+        {
+            [OpenIdConnectParameterNames.ClientId] = oidcOptions.ClientId,
+            [OpenIdConnectParameterNames.ClientSecret] = oidcOptions.ClientSecret,
+            [OpenIdConnectParameterNames.GrantType] = OpenIdConnectGrantTypes.RefreshToken,
+            [OpenIdConnectParameterNames.RefreshToken] = properties.GetTokenValue(OpenIdConnectParameterNames.RefreshToken),
+            [OpenIdConnectParameterNames.Scope] = string.Join(" ", oidcOptions.Scope),
+        });
+
+        using var response = await oidcOptions.Backchannel.PostAsync(new Uri(tokenEndpoint), body, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        var token = new OpenIdConnectMessage(await response.Content.ReadAsStringAsync(cancellationToken));
         var validationParameters = oidcOptions.TokenValidationParameters.Clone();
 
         if (oidcOptions.ConfigurationManager is BaseConfigurationManager baseConfigurationManager)
@@ -77,11 +124,7 @@ public sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> oi
 
         if (!validationResult.IsValid)
         {
-            context.RejectPrincipal();
-
-            await context.HttpContext.SignOutAsync(context.Scheme.Name);
-
-            return;
+            return null;
         }
 
         var validatedIdToken = JwtSecurityTokenConverter.Convert(validationResult.SecurityToken as JsonWebToken);
@@ -94,16 +137,16 @@ public sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> oi
             ValidatedIdToken = validatedIdToken
         });
 
-        context.ShouldRenew = true;
-        context.ReplacePrincipal(new ClaimsPrincipal(validationResult.ClaimsIdentity));
-
-        context.Properties.StoreTokens([
+        var tokens = new List<AuthenticationToken>
+        {
             new(){ Name = OpenIdConnectParameterNames.AccessToken, Value = token.AccessToken },
             new(){ Name = OpenIdConnectParameterNames.IdToken, Value = token.IdToken },
             new(){ Name = OpenIdConnectParameterNames.RefreshToken, Value = token.RefreshToken },
             new(){ Name = OpenIdConnectParameterNames.TokenType, Value = token.TokenType },
             new(){ Name = "expires_at", Value = now.AddSeconds(double.Parse(token.ExpiresIn, NumberStyles.Float, CultureInfo.InvariantCulture))
                 .ToString("o", CultureInfo.InvariantCulture) }
-        ]);
+        };
+
+        return (new ClaimsPrincipal(validationResult.ClaimsIdentity), tokens);
     }
 }

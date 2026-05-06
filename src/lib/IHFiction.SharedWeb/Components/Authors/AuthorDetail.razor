@@ -38,10 +38,17 @@ else if (author != null)
                     <div class="card">
                         <div class="card-content has-text-centered">
                             <figure class="image is-128x128 is-inline-block">
-                                <div class="ihf-avatar-badge is-flex is-align-items-center is-justify-content-center" 
-                                     style="width: 128px; height: 128px; border-radius: 50%;">
-                                    <span class="title is-2">@GetInitials(author.Name)</span>
-                                </div>
+                                @if (!string.IsNullOrWhiteSpace(author.AvatarUrl))
+                                {
+                                    <img class="is-rounded" src="@author.AvatarUrl" alt="@author.Name" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <div class="ihf-avatar-badge is-flex is-align-items-center is-justify-content-center" 
+                                         style="width: 128px; height: 128px; border-radius: 50%;">
+                                        <span class="title is-2">@GetInitials(author.Name)</span>
+                                    </div>
+                                }
                             </figure>
                             <h1 class="title is-3 mt-4">@author.Name</h1>
                             <div class="tags is-centered">
@@ -70,6 +77,24 @@ else if (author != null)
                             <p>
                                 <em>This author hasn't written a biography yet.</em>
                             </p>
+                        }
+
+                        @if (author.Profile.SocialLinks?.Any() == true)
+                        {
+                            <h3 class="title is-5 mt-5">Links</h3>
+                            <div class="buttons">
+                                @foreach (var link in author.Profile.SocialLinks)
+                                {
+                                    <a class="button is-light"
+                                       href="@link.Value"
+                                       target="_blank"
+                                       rel="noopener noreferrer nofollow"
+                                       title="@GetSocialLinkLabel(link.Type)">
+                                        <span class="icon"><i class="@GetSocialLinkIcon(link.Type)"></i></span>
+                                        <span>@GetSocialLinkLabel(link.Type)</span>
+                                    </a>
+                                }
+                            </div>
                         }
 
                         <div class="columns is-mobile">
@@ -184,5 +209,23 @@ else if (author != null)
             return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
         
         return (parts[0].Substring(0, 1) + parts[^1].Substring(0, 1)).ToUpper();
+    }
+
+    private static string GetSocialLinkLabel(string? type)
+    {
+        return type?.Trim().ToLowerInvariant() switch
+        {
+            "patreon" => "Patreon",
+            _ => string.IsNullOrWhiteSpace(type) ? "Social Link" : type
+        };
+    }
+
+    private static string GetSocialLinkIcon(string? type)
+    {
+        return type?.Trim().ToLowerInvariant() switch
+        {
+            "patreon" => "fab fa-patreon",
+            _ => "fas fa-link"
+        };
     }
 }

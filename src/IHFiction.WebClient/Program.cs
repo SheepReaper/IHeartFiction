@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Mime;
+using System.Net;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -189,6 +190,44 @@ app.MapStaticAssets();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGet("/stories/{id}/cover", async Task<IResult> (
+    string id,
+    IFictionApiClient fictionApiClient,
+    HttpContext httpContext,
+    CancellationToken cancellationToken) =>
+{
+    if (!Ulid.TryParse(id, out _))
+        return TypedResults.NotFound();
+
+    if (fictionApiClient is not FictionApiClient client)
+        return TypedResults.Problem("Invalid API client registration.", statusCode: StatusCodes.Status500InternalServerError);
+
+    using var response = await client.GetStoryCoverResponseAsync(id, cancellationToken);
+
+    if (response.StatusCode == HttpStatusCode.NotFound)
+        return TypedResults.NotFound();
+
+    if (response.StatusCode == HttpStatusCode.Forbidden)
+        return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
+
+    if (!response.IsSuccessStatusCode)
+        return TypedResults.StatusCode((int)response.StatusCode);
+
+    var contentType = response.Content.Headers.ContentType?.ToString() ?? MediaTypeNames.Application.Octet;
+
+    if (response.Headers.ETag is { } etag)
+        httpContext.Response.Headers.ETag = etag.ToString();
+
+    if (response.Headers.CacheControl is { } cacheControl)
+        httpContext.Response.Headers.CacheControl = cacheControl.ToString();
+
+    if (response.Content.Headers.LastModified is { } lastModified)
+        httpContext.Response.Headers.LastModified = lastModified.ToString("R");
+
+    var content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+    return TypedResults.File(content, contentType);
+});
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode(options => options.ContentSecurityFrameAncestorsPolicy = null) // This is set in the CSP above

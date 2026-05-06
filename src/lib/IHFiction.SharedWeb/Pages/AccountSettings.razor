@@ -98,10 +98,31 @@
                     <p class="help">Supports Markdown. Maximum 2000 characters.</p>
                 </div>
 
+                <hr />
+
+                <h3 class="title is-5">Sponsorship Platforms</h3>
+                <p class="subtitle is-6 mb-4">Connect ways readers can financially support your work.</p>
+
+                <div class="field">
+                    <label class="label">Patreon URL</label>
+                    <div class="control">
+                        <input class="input" type="url" placeholder="https://www.patreon.com/creatorSlug" @bind="_patreonUrl" maxlength="500" />
+                    </div>
+                    <p class="help">Use your full Patreon creator URL. Leave blank to remove it.</p>
+                </div>
+
+                <hr />
+
+                <h3 class="title is-5">Social Platforms</h3>
+                <p class="subtitle is-6 mb-2">General social profile links.</p>
+                <div class="notification has-background-info-soft has-text-info-bold">
+                    Additional social platforms are coming soon.
+                </div>
+
                 <div class="field">
                     <div class="control">
                         <button class="button is-primary" disabled="@_authorLoading" @onclick="OnSaveAuthorBioAsync">
-                            Save Author Bio
+                            Save Author Profile
                         </button>
                     </div>
                 </div>
@@ -111,6 +132,7 @@
 </div>
 
 @code {
+    private const string PatreonType = "Patreon";
 
     private bool _initialLoading = true;
     private string? _loadError;
@@ -119,6 +141,7 @@
     private string? _gravatarEmail;
     private bool _isAuthor;
     private string? _bio;
+    private string? _patreonUrl;
 
     private bool _profileLoading;
     private string? _profileError;
@@ -150,6 +173,9 @@
             if (authorResult.IsSuccess)
             {
                 _bio = authorResult.Value.Profile?.Bio;
+                _patreonUrl = authorResult.Value.Profile?.SocialLinks?
+                    .FirstOrDefault(link => string.Equals(link.Type, PatreonType, StringComparison.OrdinalIgnoreCase))?
+                    .Value;
             }
         }
 
@@ -196,14 +222,21 @@
 
         try
         {
-            var result = await AccountService.UpdateAuthorBioAsync(
-                new UpdateOwnAuthorProfileBody { Bio = _bio },
+            var result = await AccountService.UpdateAuthorProfileAsync(
+                new UpdateOwnAuthorProfileBody
+                {
+                    Bio = _bio,
+                    SocialLinks = BuildSocialLinksPayload()
+                },
                 cancellationToken: CancellationToken);
 
             if (result.IsSuccess)
             {
                 _bio = result.Value.Profile?.Bio;
-                _authorSuccess = "Author bio saved successfully.";
+                _patreonUrl = result.Value.Profile?.SocialLinks?
+                    .FirstOrDefault(link => string.Equals(link.Type, PatreonType, StringComparison.OrdinalIgnoreCase))?
+                    .Value;
+                _authorSuccess = "Author profile saved successfully.";
             }
             else
             {
@@ -215,5 +248,21 @@
             _authorLoading = false;
             LoaderService.Hide();
         }
+    }
+
+    private ICollection<UpdateOwnAuthorSocialLink> BuildSocialLinksPayload()
+    {
+        var links = new List<UpdateOwnAuthorSocialLink>();
+
+        if (!string.IsNullOrWhiteSpace(_patreonUrl))
+        {
+            links.Add(new UpdateOwnAuthorSocialLink
+            {
+                Type = PatreonType,
+                Value = _patreonUrl.Trim()
+            });
+        }
+
+        return links;
     }
 }

@@ -65,6 +65,7 @@ internal sealed class ListPublishedStories(
     /// <param name="HasContent">Whether the story has direct content</param>
     /// <param name="HasChapters">Whether the story has chapters</param>
     /// <param name="HasBooks">Whether the story has books</param>
+    /// <param name="HasCoverImage">Whether the story has a cover image</param>
     /// <param name="ChapterCount">Number of chapters in the story</param>
     /// <param name="AuthorId">Unique identifier for the story author</param>
     /// <param name="AuthorName">Name of the story author</param>
@@ -77,6 +78,7 @@ internal sealed class ListPublishedStories(
         bool HasContent,
         bool HasChapters,
         bool HasBooks,
+        bool HasCoverImage,
         int ChapterCount,
         Ulid AuthorId,
         string AuthorName);
@@ -112,6 +114,7 @@ internal sealed class ListPublishedStories(
             s.HasContent,
             s.HasChapters,
             s.HasBooks,
+            s.Cover != null,
             s.Chapters.Count,
             s.OwnerId,
             s.Owner.Name));

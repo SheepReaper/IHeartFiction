@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 
+using IHFiction.SharedKernel.Authors;
 using IHFiction.SharedKernel.Validation;
 
 namespace IHFiction.FictionApi.Common;
@@ -104,6 +105,58 @@ internal static partial class InputSanitizationService
 
         var sanitized = string.Join('\n', sanitizedLines).Trim();
         return string.IsNullOrEmpty(sanitized) ? null : sanitized;
+    }
+
+    public static string? SanitizeSocialLinkValue(string? type, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(type) || string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        if (type.Equals(AuthorSocialLinkTypes.Patreon, StringComparison.OrdinalIgnoreCase))
+        {
+            return SanitizePatreonUrl(value);
+        }
+
+        return null;
+    }
+
+    public static string? SanitizePatreonUrl(string? value)
+    {
+        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
+        {
+            return null;
+        }
+
+        #pragma warning disable CA1308 // Hostname comparisons here intentionally use lowercase normalization.
+        var host = uri.Host.Trim().ToLowerInvariant();
+        #pragma warning restore CA1308
+        if (host != "patreon.com" && host != "www.patreon.com")
+        {
+            return null;
+        }
+
+        var segments = uri.AbsolutePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (segments.Length != 1)
+        {
+            return null;
+        }
+
+        var slug = segments[0];
+        if (!Regex.IsMatch(slug, "^[a-zA-Z0-9._-]{2,100}$"))
+        {
+            return null;
+        }
+
+        return $"https://www.patreon.com/{slug}";
     }
 
     /// <summary>

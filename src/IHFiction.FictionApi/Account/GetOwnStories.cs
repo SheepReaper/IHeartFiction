@@ -73,6 +73,7 @@ internal sealed class GetOwnStories(
     /// <param name="IsOwned">Whether the current author owns this story</param>
     /// <param name="CollaboratorNames">Names of collaborators on the story</param>
     /// <param name="Tags">Tags associated with the story</param>
+    /// <param name="HasCoverImage">Whether the story has a cover image</param>
     /// <param name="HasContent">Whether the story has direct content</param>
     /// <param name="HasChapters">Whether the story has chapters</param>
     /// <param name="HasBooks">Whether the story has books</param>
@@ -88,6 +89,7 @@ internal sealed class GetOwnStories(
         bool IsOwned,
         IEnumerable<string> CollaboratorNames,
         IEnumerable<string> Tags,
+        bool HasCoverImage,
         bool HasContent,
         bool HasChapters,
         bool HasBooks,
@@ -143,6 +145,7 @@ internal sealed class GetOwnStories(
                 s.OwnerId == author.Id,
                 s.Authors.Where(a => a.Id != author.Id).Select(a => a.Name),
                 s.Tags.Select(t => t.ToString()),
+                s.Cover != null,
                 s.HasContent,
                 s.HasChapters,
                 s.HasBooks,

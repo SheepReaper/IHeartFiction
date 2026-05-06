@@ -68,6 +68,7 @@ internal sealed class GetOwnStoryContent(
     /// <param name="Note2">Optional second note field for additional author notes or comments.</param>
     /// <param name="ContentUpdatedAt">When the content was last updated.</param>
     /// <param name="StoryUpdatedAt">When the story was last updated.</param>
+    /// <param name="HasCoverImage">Whether the story currently has a cover image.</param>
     /// <param name="Chapters">List of chapters within the story.</param>
     /// <param name="Books">List of books within the story.</param>
     internal sealed record GetOwnStoryContentResponse(
@@ -81,6 +82,7 @@ internal sealed class GetOwnStoryContent(
         string? Note2,
         DateTime? ContentUpdatedAt,
         DateTime StoryUpdatedAt,
+        bool HasCoverImage,
         ICollection<ChapterSummaryItem> Chapters,
         ICollection<BookSummaryItem> Books
     );
@@ -138,6 +140,7 @@ internal sealed class GetOwnStoryContent(
             note2,
             contentUpdatedAt,
             story.UpdatedAt,
+            story.Cover is not null,
             chapterSummaries,
             bookSummaries
         );

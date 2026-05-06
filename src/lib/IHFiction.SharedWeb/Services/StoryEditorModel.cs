@@ -1,7 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+
+using IHFiction.SharedKernel.Stories;
 
 using MongoDB.Bson;
 
@@ -16,12 +19,39 @@ public class StoryEditorModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
     private bool _initializing = true;
 
-    public Ulid? Id { get; set; }
+    public Ulid? Id
+    {
+        get;
+        set
+        {
+            if (value == field) return;
+            field = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CoverImageUrl));
+        }
+    }
+
     public bool IsPublished { get; set; }
     public ObjectId? ContentId { get; set; }
     public DateTime? ContentUpdatedAt { get; set; }
     public DateTime? StoryUpdatedAt { get; set; }
     public string StoryType { get; set; }
+    [SuppressMessage("Design", "CA1056:URI-like properties should not be strings", Justification = "Blazor image bindings consume relative string paths directly.")]
+    public string? CoverImageUrl => Id is { } storyId && storyId != Ulid.Empty && HasCoverImage
+        ? StoryCoverRoutes.GetPath(storyId)
+        : null;
+
+    public bool HasCoverImage
+    {
+        get;
+        set
+        {
+            if (value == field) return;
+            field = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CoverImageUrl));
+        }
+    }
 
     public ObservableCollection<ChapterEditorModel> Chapters { get; } = [];
     public ObservableCollection<BookEditorModel> Books { get; } = [];
@@ -118,6 +148,7 @@ public class StoryEditorModel : INotifyPropertyChanged
         Ulid? storyId,
         string? title,
         string? description,
+        bool hasCoverImage,
         DateTime? storyUpdatedAt,
         ObjectId? contentId,
         string? content,
@@ -132,6 +163,7 @@ public class StoryEditorModel : INotifyPropertyChanged
         ContentUpdatedAt = contentUpdatedAt;
         StoryUpdatedAt = storyUpdatedAt;
         StoryType = storyType;
+        HasCoverImage = hasCoverImage;
         Title = title;
         Description = description;
         Content = content;
@@ -178,6 +210,7 @@ public class StoryEditorModel : INotifyPropertyChanged
         Ulid storyId,
         string? title,
         string? description,
+        bool hasCoverImage,
         DateTime storyUpdatedAt,
         ObjectId? contentId,
         string? content,
@@ -190,6 +223,7 @@ public class StoryEditorModel : INotifyPropertyChanged
         storyId,
         title,
         description,
+        hasCoverImage,
         storyUpdatedAt,
         contentId,
         content,
@@ -199,7 +233,7 @@ public class StoryEditorModel : INotifyPropertyChanged
     )
     { _initializing = false };
 
-    public static StoryEditorModel Create(string storyType) => new(storyType, false, null, null, null, null, null, null, null, null, null) { _initializing = false };
+    public static StoryEditorModel Create(string storyType) => new(storyType, false, null, null, null, false, null, null, null, null, null, null) { _initializing = false };
     public static StoryEditorModel CreateSingleBody() => Create(SingleBody);
     public static StoryEditorModel CreateMultiBook() => Create(MultiBook);
     public static StoryEditorModel CreateMultiChapter() => Create(MultiChapter);

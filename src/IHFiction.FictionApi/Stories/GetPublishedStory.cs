@@ -77,6 +77,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="OwnerId">Unique identifier of the story owner</param>
     /// <param name="OwnerName">Display name of the story owner</param>
     /// <param name="Type">The type of the story (e.g., "SingleBody", "MultiChapter", "MultiBook")</param>
+    /// <param name="HasCoverImage">Whether the story has a cover image</param>
     /// <param name="Authors">Collection of authors associated with this story</param>
     /// <param name="Tags">Collection of tags associated with this story</param>
     /// <param name="Books">Collection of books within this story (if applicable)</param>
@@ -92,6 +93,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
         Ulid OwnerId,
         string OwnerName,
         string Type,
+        bool HasCoverImage,
         IEnumerable<StoryAuthor> Authors,
         IEnumerable<StoryTag> Tags,
         IEnumerable<BookItem> Books,
@@ -125,6 +127,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             story.OwnerId,
             story.Owner.Name,
             storyType,
+            story.Cover is not null,
             story.Authors
                 .Select(a => new StoryAuthor(a.Id, a.Name))
                 .OrderBy(a => a.Id, new OwnerFirst(story.OwnerId))
