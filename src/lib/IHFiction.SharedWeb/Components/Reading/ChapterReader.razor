@@ -5,6 +5,7 @@
 <SocialPreviewMetadata
     Title="@MetadataTitle"
     Description="@MetadataDescription"
+    ImageUrl="@CoverImageUrl"
     Type="article" />
 
 
@@ -152,6 +153,8 @@ else if (chapterContent != null)
     private LinkedOfGetPublishedChapterContentResponse? chapterContent;
     private bool isLoading = true;
     private string? errorMessage;
+
+    private string? CoverImageUrl => chapterContent is {} ? $"/stories/{chapterContent.StoryId}/cover" : null;
 
     protected override async Task OnInitializedAsync()
     {

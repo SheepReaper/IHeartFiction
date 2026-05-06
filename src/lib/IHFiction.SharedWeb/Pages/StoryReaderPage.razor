@@ -6,6 +6,7 @@
 <SocialPreviewMetadata
     Title="@MetadataTitle"
     Description="@MetadataDescription"
+    ImageUrl="@CoverImageUrl"
     CanonicalUrl="@CanonicalUrl"
     Type="article" />
 
@@ -21,6 +22,8 @@
     private string MetadataTitle => story is null
         ? "Read Story - IHeartFiction"
         : $"Read {story.Title} | IHeartFiction";
+
+    private string? CoverImageUrl => $"/stories/{StoryId}/cover";
 
     private string MetadataDescription => story switch
     {
