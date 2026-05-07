@@ -51,6 +51,7 @@ The project is built on the .NET platform, embracing a modern, cloud-native arch
 - **Orchestration:** .NET Aspire to manage and compose the various services that make up the application.
 - **Database:** PostgreSQL for robust and scalable data storage.
 - **Data Access:** Entity Framework Core (EFCore) for object-relational mapping.
+- **Async Workflows & Messaging:** WolverineFx for asynchronous command/event processing and service-domain messaging.
 - **Authentication:** Keycloak for secure and flexible identity and access management.
 - **Containerization:** Docker and Docker Compose for consistent development and deployment environments.
 

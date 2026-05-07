@@ -37,6 +37,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="WolverineFx" />
   </ItemGroup>
 
   <ItemGroup>

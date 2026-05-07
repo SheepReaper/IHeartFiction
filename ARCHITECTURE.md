@@ -4,6 +4,7 @@ The architecture of IHeartFiction is guided by several key principles:
 
 - **Vertical Slice Architecture:** Instead of organizing code by technical layers (e.g., "Controllers", "Services", "Data"), we group features by vertical slices. Each feature, like `CreateStory` or `GetAuthorProfile`, is a self-contained unit. This makes the codebase easier to understand, maintain, and extend.
 - **CQRS (Command Query Responsibility Segregation) Lite:** We separate operations that change data (Commands) from operations that read data (Queries). This separation allows us to optimize each path independently, leading to better performance and clarity. For example, a `CreateStory` command is handled differently than a `ListPublishedStories` query.
+- **Message-Driven Workflows with WolverineFx:** For new asynchronous workflows, cross-domain coordination, and queued background work, we standardize on WolverineFx. This allows APIs to acknowledge requests quickly, delegate long-running work to message handlers, and scale processing horizontally across service instances.
 - **Shared Kernel:** Common code, entities, and interfaces that are shared across different parts of the system are placed in a `SharedKernel` library. This promotes code reuse while minimizing tight coupling between services.
 - **Primary Key Strategy: ULIDs**: For entity identifiers, we have made a deliberate choice to use ULIDs (Universally Unique Lexicographically Sortable Identifiers) instead of traditional integers or GUIDs. This decision provides several key advantages that align with the goals of a modern, scalable web platform:
     - **Performance:** Unlike GUIDs (UUIDv4), ULIDs are monotonic; they are generated in a lexicographically sortable order based on their timestamp component. This is a major benefit for database performance, as it prevents index fragmentation on our primary keys and clustered indexes, leading to faster writes and range queries.
@@ -63,6 +64,16 @@ We follow a "code-first" approach to API development, where the C# source code i
 3.  **Typed Client Generation:** The generated schema is then consumed by our Blazor Web App. A source generator uses it to create a strongly-typed C# HTTP client, providing compile-time safety for API calls, enables IntelliSense, and eliminates a whole class of common frontend bugs.
 
 This approach was chosen deliberately. Even though the initial Blazor app runs in Interactive Server mode, using a proper HTTP client decouples the frontend from the backend, making it significantly easier to introduce other clients in the future, such as a Blazor WASM app or a native .NET MAUI application, without having to refactor the presentation layer.
+
+## WolverineFx Adoption Guidance
+
+For all new work, use WolverineFx when at least one of these is true:
+
+- The API can return immediately while work continues asynchronously.
+- The operation crosses service/domain boundaries and should be modeled as messages/events.
+- The workload benefits from queue-based parallel processing across multiple service instances.
+
+Prefer direct in-process logic when work is immediate, local, and naturally synchronous. Existing slices should not be refactored solely to adopt WolverineFx unless that is the explicit task.
 
 ## A Note on Minimal APIs
 

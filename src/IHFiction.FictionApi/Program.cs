@@ -30,6 +30,8 @@ using MongoDB.Driver.Core.Extensions.DiagnosticSources;
 
 using Scalar.AspNetCore;
 
+using Wolverine;
+
 [assembly: DbContext(typeof(FictionDbContext))]
 
 AppContext.SetSwitch("Npgsql.EnableGss", false);
@@ -37,6 +39,8 @@ AppContext.SetSwitch("Npgsql.EnableGss", false);
 static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);
 
 var builder = WebApplication.CreateSlimBuilder(args);
+
+builder.Host.UseWolverine();
 
 // Slim builder disables https support, add it back in development
 if (builder.Environment.IsDevelopment())

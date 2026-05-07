@@ -164,6 +164,14 @@ If stale static-web-asset fingerprints appear in console (`_content/...bundle.sc
 2. **CQRS Lite** - Separation of Commands (writes) and Queries (reads)
 3. **Shared Kernel** - Common code in `IHFiction.SharedKernel`
 4. **Primary Keys: ULIDs** - Lexicographically sortable, URL-safe identifiers
+5. **Async Messaging: WolverineFx** - Primary mechanism for new asynchronous workflows, inter-domain messaging, and queue-based parallel work
+
+### WolverineFx Policy For New Work
+
+- For new features, prefer WolverineFx when requests can return immediately and complete work asynchronously.
+- For new service/domain communication, use WolverineFx messages/events instead of tightly coupled direct calls.
+- For queued work that can run across multiple instances, prefer WolverineFx durable queues and idempotent handlers.
+- Do not retrofit existing features to WolverineFx unless explicitly asked.
 
 ### Solution Structure
 
