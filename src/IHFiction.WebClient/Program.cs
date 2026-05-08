@@ -118,7 +118,7 @@ builder.Services.AddOutputCache();
 
 builder.Services.AddTransient<AuthenticationHandler>();
 
-builder.Services.AddHttpClient<IFictionApiClient, FictionApiClient>(client =>
+builder.Services.AddHttpClient<FictionApiClient>(client =>
     client.BaseAddress = builder.Environment.IsProduction()
         ? builder.Configuration.GetValue<Uri>("ApiBaseAddress")
         : new("https+http://fiction"))
@@ -193,7 +193,7 @@ app.UseAuthorization();
 
 app.MapGet("/stories/{id}/cover", async Task<IResult> (
     string id,
-    IFictionApiClient fictionApiClient,
+    FictionApiClient fictionApiClient,
     HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {

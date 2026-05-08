@@ -3,7 +3,7 @@ using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class WorkService(IFictionApiClient client)
+public class WorkService(FictionApiClient client)
 {
     public async ValueTask<Result<LinkedOfPublishWorkResponse>> PublishWorkAsync(
         Ulid id,
@@ -12,7 +12,7 @@ public class WorkService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => id == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.PublishWorkAsync(id.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.PublishWorkAsync(id, body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfPublishWorkResponse>> PublishWorkAsync(
         string id,

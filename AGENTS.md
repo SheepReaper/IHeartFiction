@@ -16,6 +16,23 @@ Do not use any variant for standard migration creation, including:
 
 If the wrong command is run, rerun immediately with the exact command above and report the correction.
 
+## Migration Application And Schema Mismatch Guardrail (Mandatory)
+
+Local EF migrations are applied by `src/aspire/IHFiction.MigrationService/`.
+
+If any of these appear after model or migration changes:
+
+- `relation ... does not exist`
+- missing table, column, index, or constraint errors
+- runtime failures that start immediately after schema changes
+
+Do this first:
+
+1. Start or verify the AppHost.
+2. Start or verify the migration resource/container.
+3. Wait for the migration service to finish.
+4. Only then debug API, EF, LINQ, serialization, or frontend symptoms.
+
 ## WolverineFx Guidance (Mandatory For New Work)
 
 For new features in this repository, WolverineFx is the primary mechanism when asynchronous, queued, or cross-domain messaging behavior is needed.

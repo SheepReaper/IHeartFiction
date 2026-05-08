@@ -1,12 +1,17 @@
 using System.Text.Json;
 
+using Cysharp.Serialization.Json;
+
+using IHFiction.Data.Infrastructure;
+
 namespace IHFiction.SharedWeb;
 
 public partial class FictionApiClient
 {
     static partial void UpdateJsonSerializerSettings(JsonSerializerOptions settings)
     {
-        // settings.Converters.Add(new UlidJsonConverter());
+        settings.Converters.Add(new UlidJsonConverter());
+        settings.Converters.Add(new ObjectIdJsonConverter());
     }}
 
 public partial class FileParameter(System.IO.Stream data, string? fileName, string? contentType){

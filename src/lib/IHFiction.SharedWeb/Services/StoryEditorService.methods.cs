@@ -1,8 +1,4 @@
-using System.Globalization;
-
 using IHFiction.SharedKernel.Infrastructure;
-
-using MongoDB.Bson;
 
 using static IHFiction.Data.Stories.Domain.StoryType;
 
@@ -34,7 +30,7 @@ public partial class StoryEditorService(
         var apiResult = result.Value;
 
         var bookModel = BookEditorModel.Create(
-            Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture),
+            apiResult.Id,
             apiResult.Title,
             apiResult.Description,
             CurrentStory.Books.Count,
@@ -68,10 +64,10 @@ public partial class StoryEditorService(
         var apiResult = result.Value;
 
         var chapterModel = ChapterEditorModel.Create(
-            Ulid.Parse(apiResult.ChapterId, CultureInfo.InvariantCulture),
+            apiResult.ChapterId,
             apiResult.ChapterTitle,
             apiResult.ChapterUpdatedAt.UtcDateTime,
-            ObjectId.Parse(apiResult.ContentId),
+            apiResult.ContentId,
             apiResult.Content,
             apiResult.Note1,
             apiResult.Note2,
@@ -97,10 +93,10 @@ public partial class StoryEditorService(
         var apiResult = result.Value;
 
         var chapterModel = ChapterEditorModel.Create(
-            Ulid.Parse(apiResult.ChapterId, CultureInfo.InvariantCulture),
+            apiResult.ChapterId,
             apiResult.ChapterTitle,
             apiResult.ChapterUpdatedAt.UtcDateTime,
-            ObjectId.Parse(apiResult.ContentId),
+            apiResult.ContentId,
             apiResult.Content,
             apiResult.Note1,
             apiResult.Note2,
@@ -163,10 +159,10 @@ public partial class StoryEditorService(
         var apiResult = result.Value;
 
         CurrentChapter = ChapterEditorModel.Create(
-            Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture),
+            apiResult.Id,
             apiResult.Title,
             apiResult.UpdatedAt.UtcDateTime,
-            ObjectId.Parse(apiResult.ContentId),
+            apiResult.ContentId,
             apiResult.Content,
             apiResult.Note1,
             apiResult.Note2,
@@ -198,10 +194,10 @@ public partial class StoryEditorService(
         var apiResult = result.Value;
 
         CurrentChapter = ChapterEditorModel.Create(
-            Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture),
+            apiResult.Id,
             apiResult.Title,
             apiResult.UpdatedAt.UtcDateTime,
-            ObjectId.Parse(apiResult.ContentId),
+            apiResult.ContentId,
             apiResult.Content,
             apiResult.Note1,
             apiResult.Note2,
@@ -233,7 +229,7 @@ public partial class StoryEditorService(
         var apiResult = result.Value;
 
         CurrentBook = BookEditorModel.Create(
-            Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture),
+            apiResult.Id,
             apiResult.Title,
             apiResult.Description,
             apiResult.Order,
@@ -245,10 +241,10 @@ public partial class StoryEditorService(
             foreach (var chapSummary in apiResult.Chapters)
             {
                 CurrentBook.Chapters.Add(ChapterEditorModel.Create(
-                    Ulid.Parse(chapSummary.Id, CultureInfo.InvariantCulture),
+                    chapSummary.Id,
                     chapSummary.Title,
                     chapSummary.ChapterUpdatedAt.UtcDateTime,
-                    ObjectId.Parse(chapSummary.ContentId),
+                    chapSummary.ContentId,
                     chapSummary.Content,
                     chapSummary.Note1,
                     chapSummary.Note2,
@@ -293,12 +289,12 @@ public partial class StoryEditorService(
         var storyModel = StoryEditorModel.Create(
             storyType,
             apiResult.IsPublished,
-            Ulid.Parse(apiResult.StoryId, CultureInfo.InvariantCulture),
+            apiResult.StoryId,
             apiResult.StoryTitle,
             apiResult.StoryDescription,
             apiResult.HasCoverImage,
             apiResult.StoryUpdatedAt.UtcDateTime,
-            ObjectId.Parse(apiResult.ContentId),
+            apiResult.ContentId,
             apiResult.Content,
             apiResult.Note1,
             apiResult.Note2,
@@ -312,7 +308,7 @@ public partial class StoryEditorService(
                 foreach (var bookSummary in apiResult.Books)
                 {
                     storyModel.Books.Add(BookEditorModel.Create(
-                        Ulid.Parse(bookSummary.Id, CultureInfo.InvariantCulture),
+                        bookSummary.Id,
                         bookSummary.Title,
                         bookSummary.Description,
                         bookSummary.Order,
@@ -323,7 +319,7 @@ public partial class StoryEditorService(
                 foreach (var chapterSummary in apiResult.Chapters)
                 {
                     storyModel.Chapters.Add(ChapterEditorModel.Create(
-                        Ulid.Parse(chapterSummary.Id, CultureInfo.InvariantCulture),
+                        chapterSummary.Id,
                         chapterSummary.Title,
                         null,
                         null,
@@ -369,7 +365,7 @@ public partial class StoryEditorService(
 
             await using (CurrentStory.SuppressDirty())
             {
-                CurrentStory.Id = Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture);
+                CurrentStory.Id = apiResult.Id;
                 CurrentStory.HasCoverImage = false;
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
                 CurrentStory.Description = apiResult.Description;
@@ -389,7 +385,7 @@ public partial class StoryEditorService(
 
             await using (CurrentStory.SuppressDirty())
             {
-                CurrentStory.Id = Ulid.Parse(apiResult.Id, CultureInfo.InvariantCulture);
+                CurrentStory.Id = apiResult.Id;
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
                 CurrentStory.Description = apiResult.Description;
                 CurrentStory.Title = apiResult.Title;
@@ -409,9 +405,9 @@ public partial class StoryEditorService(
 
             await using (CurrentStory.SuppressDirty())
             {
-                CurrentStory.Id = Ulid.Parse(apiResult.StoryId, CultureInfo.InvariantCulture);
+                CurrentStory.Id = apiResult.StoryId;
                 CurrentStory.Title = apiResult.StoryTitle;
-                CurrentStory.ContentId = ObjectId.Parse(apiResult.ContentId);
+                CurrentStory.ContentId = apiResult.ContentId;
                 CurrentStory.Content = apiResult.Content;
                 CurrentStory.Note1 = apiResult.Note1;
                 CurrentStory.Note2 = apiResult.Note2;

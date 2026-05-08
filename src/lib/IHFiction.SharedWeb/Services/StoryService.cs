@@ -1,10 +1,11 @@
+using Microsoft.Extensions.Logging;
+
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedWeb.Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class StoryService(IFictionApiClient client, ILogger<StoryService> logger)
+public class StoryService(FictionApiClient client, ILogger<StoryService> logger)
 {
     private static readonly Action<ILogger, Ulid, Exception?> LogUploadStoryCoverFailed =
         LoggerMessage.Define<Ulid>(
@@ -17,7 +18,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         bool publishAll = false,
         CancellationToken cancellationToken = default) => id == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.PublishWorkAsync(id.ToString(), new() { PublishAll = publishAll }, null, cancellationToken).HandleApiException();
+            : await client.PublishWorkAsync(id, new() { PublishAll = publishAll }, null, cancellationToken).HandleApiException();
 
     public async ValueTask<Result> PublishWorkAsync(
         string id,
@@ -34,7 +35,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => id == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.ConvertStoryTypeAsync(id.ToString(), body, cancellationToken).HandleApiException();
+            : await client.ConvertStoryTypeAsync(id, body, cancellationToken).HandleApiException();
 
     public async ValueTask<Result> ConvertStoryTypeAsync(
         string id,
@@ -50,7 +51,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         string? fields = null,
         CancellationToken cancellationToken = default) => storyId == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.ListPublishedStoryChaptersAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
+            : await client.ListPublishedStoryChaptersAsync(storyId, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedPagedCollectionOfListPublishedStoryChaptersItem>> ListStoryChaptersAsync(
         string storyId,
@@ -67,7 +68,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => storyId == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.GetPublishedStoryAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
+            : await client.GetPublishedStoryAsync(storyId, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfGetPublishedStoryResponse>> GetStoryAsync(
         string storyId,
@@ -84,7 +85,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => storyId == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.GetPublishedStoryContentAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
+            : await client.GetPublishedStoryContentAsync(storyId, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfGetPublishedStoryContentResponse>> GetPublishedStoryContentAsync(
         string storyId,
@@ -100,9 +101,9 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         string? search = null,
         string? sort = null,
         string? fields = null,
-        ListPublishedStoriesBody? body = null,
+        string? authorId = null,
         CancellationToken cancellationToken = default
-    ) => await client.ListPublishedStoriesAsync(page, pageSize, search, sort, fields, body, cancellationToken).HandleApiException();
+    ) => await client.ListPublishedStoriesAsync(page, pageSize, search, sort, fields, authorId, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedPagedCollectionOfAuthorStoryItem>> GetCurrentAuthorStoriesAsync(
         GetOwnStoriesBody body,
@@ -122,7 +123,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
     {
         return id == Ulid.Empty
             ? DomainError.EmptyUlid
-            : await client.UnpublishStoryAsync(id.ToString(), fields, cancellationToken).HandleApiException();
+            : await client.UnpublishStoryAsync(id, fields, cancellationToken).HandleApiException();
     }
 
     public async ValueTask<Result<LinkedOfUnpublishStoryResponse>> UnpublishStoryAsync(
@@ -139,7 +140,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => id == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.DeleteStoryAsync(id.ToString(), cancellationToken).HandleApiException();
+        : await client.DeleteStoryAsync(id, cancellationToken).HandleApiException();
 
     public async ValueTask<Result> DeleteStoryAsync(
         string id,
@@ -161,7 +162,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => id == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.UpdateStoryMetadataAsync(id.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.UpdateStoryMetadataAsync(id, body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUpdateStoryMetadataResponse>> UpdateStoryMetadataAsync(
         string id,
@@ -179,7 +180,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => id == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.UpdateStoryContentAsync(id.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.UpdateStoryContentAsync(id, body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUpdateStoryContentResponse>> UpdateStoryContentAsync(
         string id,
@@ -195,7 +196,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         CancellationToken cancellationToken = default
     ) => id == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.DeleteStoryCoverAsync(id.ToString(), cancellationToken).HandleApiException();
+        : await client.DeleteStoryCoverAsync(id, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUploadStoryCoverResponse>> UploadStoryCoverAsync(
         Ulid id,
@@ -216,7 +217,7 @@ public class StoryService(IFictionApiClient client, ILogger<StoryService> logger
         try
         {
             return await client.UploadStoryCoverAsync(
-                id.ToString(),
+                id,
                 new(content, fileName, contentType),
                 cancellationToken).HandleApiException();
         }

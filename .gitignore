@@ -504,3 +504,6 @@ NuGet.config
 
 # Agent generated tooling files
 /tools/*.txt
+
+# Agent generated artifacts
+/.artifacts/*

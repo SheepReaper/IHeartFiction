@@ -112,6 +112,21 @@ dotnet run --project src/aspire/IHFiction.AppHost
 aspire run
 ```
 
+### Migration Service First For Schema Changes
+
+For local Aspire runs, `src/aspire/IHFiction.MigrationService` applies EF Core migrations.
+
+Treat these as migration-first signals:
+- `relation ... does not exist`
+- missing table, column, index, or constraint errors
+- failures that begin immediately after EF model or migration changes
+
+Required order:
+1. Start or verify the AppHost.
+2. Start or verify the migration resource.
+3. Wait for migration completion.
+4. Only then debug API, EF query translation, serialization, or frontend behavior that depends on the new schema.
+
 ### First-Time Setup (CRITICAL)
 
 After the first run, you MUST configure Keycloak secrets:

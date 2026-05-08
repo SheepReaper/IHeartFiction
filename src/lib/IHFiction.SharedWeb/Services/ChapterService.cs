@@ -3,7 +3,7 @@ using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class ChapterService(IFictionApiClient client)
+public class ChapterService(FictionApiClient client)
 {
     public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         Ulid chapterId,
@@ -11,7 +11,7 @@ public class ChapterService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetOwnChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetOwnChapterContentAsync(chapterId, fields, cancellationToken).HandleApiException();
     public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         string chapterId,
         string? fields = null,
@@ -26,7 +26,7 @@ public class ChapterService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetPublishedChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetPublishedChapterContentAsync(chapterId, fields, cancellationToken).HandleApiException();
     public async ValueTask<Result<LinkedOfGetPublishedChapterContentResponse>> GetChapterContentAsync(
         string chapterId,
         string? fields = null,
@@ -42,7 +42,7 @@ public class ChapterService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => storyId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.CreateStoryChapterAsync(storyId.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.CreateStoryChapterAsync(storyId, body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfCreateStoryChapterResponse>> AddChapterToStoryAsync(
         string storyId,
@@ -58,7 +58,7 @@ public class ChapterService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.DeleteChapterAsync(chapterId.ToString(), cancellationToken).HandleApiException();
+        : await client.DeleteChapterAsync(chapterId, cancellationToken).HandleApiException();
 
     public async ValueTask<Result> DeleteChapterAsync(
         string chapterId,
@@ -74,7 +74,7 @@ public class ChapterService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.UpdateChapterMetadataAsync(chapterId.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.UpdateChapterMetadataAsync(chapterId, body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUpdateChapterMetadataResponse>> UpdateChapterMetadataAsync(
         string chapterId,
@@ -92,7 +92,7 @@ public class ChapterService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.UpdateChapterContentAsync(chapterId.ToString(), body, fields, cancellationToken).HandleApiException();
+        : await client.UpdateChapterContentAsync(chapterId, body, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfUpdateChapterContentResponse>> UpdateChapterContentAsync(
         string chapterId,

@@ -3,17 +3,16 @@
 
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
+
+    <OpenApiInputPath>$(MSBuildProjectDirectory)/../../IHFiction.FictionApi/openapi.json</OpenApiInputPath>
+    <OpenApiClientOutputPath>$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/openapiClient.cs</OpenApiClientOutputPath>
+    <OpenApiClientGeneratorProject>$(MSBuildProjectDirectory)/../IHFiction.ApiClientGenerator/IHFiction.ApiClientGenerator.csproj</OpenApiClientGeneratorProject>
+    <OpenApiClientGeneratorTargetFramework>net10.0</OpenApiClientGeneratorTargetFramework>
+    <OpenApiClientGeneratorDll>$(MSBuildProjectDirectory)/../IHFiction.ApiClientGenerator/bin/$(Configuration)/$(OpenApiClientGeneratorTargetFramework)/IHFiction.ApiClientGenerator.dll</OpenApiClientGeneratorDll>
   </PropertyGroup>
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <OpenApiReference Include="../../IHFiction.FictionApi/openapi.json" CodeGenerator="NSwagCSharp" Namespace="IHFiction.SharedWeb">
-      <ClassName>FictionApiClient</ClassName>
-      <Options>/UseBaseUrl:false /GenerateClientInterfaces:true /GenerateOptionalParameters:true /JsonLibrary:SystemTextJson</Options>
-    </OpenApiReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -26,9 +25,9 @@
     <PackageReference Include="Npgsql.DependencyInjection" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
-    <PackageReference Include="NSwag.ApiDescription.Client" />
     <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="Sidio.Sitemap.Blazor" />
+    <PackageReference Include="Snappier" />
     <PackageReference Include="Ulid" />
   </ItemGroup>
 
@@ -36,5 +35,47 @@
     <ProjectReference Include="../IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />
     <ProjectReference Include="../IHFiction.Data/IHFiction.Data.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ApiClientGeneratorInputs Include="../IHFiction.ApiClientGenerator/**/*.cs" />
+    <ApiClientGeneratorInputs Include="../IHFiction.ApiClientGenerator/*.csproj" />
+  </ItemGroup>
+
+  <Target Name="BuildApiClientGenerator"
+    Inputs="@(ApiClientGeneratorInputs)"
+    Outputs="$(OpenApiClientGeneratorDll)">
+
+    <MSBuild Projects="$(OpenApiClientGeneratorProject)"
+      Targets="Build"
+      Properties="Configuration=$(Configuration);TargetFramework=$(OpenApiClientGeneratorTargetFramework)"
+      RemoveProperties="RuntimeIdentifier;SelfContained" />
+  </Target>
+
+  <Target Name="GenerateApiClient"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="BuildApiClientGenerator"
+    Inputs="$(OpenApiInputPath);$(OpenApiClientGeneratorDll)"
+    Outputs="$(OpenApiClientOutputPath)">
+
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(OpenApiClientOutputPath)'))" />
+
+    <Message Importance="high"
+      Text="Generating OpenAPI client: $(OpenApiClientOutputPath)" />
+
+    <Exec
+      Command="dotnet &quot;$(OpenApiClientGeneratorDll)&quot; &quot;$(OpenApiInputPath)&quot; &quot;$(OpenApiClientOutputPath)&quot;" />
+  </Target>
+
+  <Target Name="IncludeGeneratedApiClient"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="GenerateApiClient">
+
+    <ItemGroup>
+      <Compile Include="$(OpenApiClientOutputPath)"
+        AutoGen="true"
+        DesignTime="true"
+        Visible="false" />
+    </ItemGroup>
+  </Target>
 
 </Project>

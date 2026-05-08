@@ -93,25 +93,29 @@ internal static class OpenApiExtensions
 
     private static async Task SchemaTransformer(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken ct)
     {
-        var t = context.JsonTypeInfo.Type;
+        var dt = context.JsonPropertyInfo?.PropertyType ?? context.ParameterDescription?.Type ?? context.JsonTypeInfo.Type;
+        var ut = Nullable.GetUnderlyingType(dt) ?? dt;
+        var isNullable = Nullable.GetUnderlyingType(dt) is not null || schema.Type.HasValue && schema.Type.Value.HasFlag(JsonSchemaType.Null);
 
-        if (t == typeof(Ulid) || Nullable.GetUnderlyingType(t) == typeof(Ulid))
+        if (ut == typeof(Ulid))
         {
-            schema.Type = JsonSchemaType.Null | JsonSchemaType.String;
+            schema.Type = JsonSchemaType.String | (isNullable ? JsonSchemaType.Null : 0);
             schema.Description = "Universally Unique Lexicographically Sortable Identifier";
             schema.Format = "ulid";
             schema.Example = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+            schema.Pattern = "^[0-9A-HJKMNP-TV-Z]{26}$";
         }
 
-        if (t == typeof(ObjectId) || Nullable.GetUnderlyingType(t) == typeof(ObjectId))
+        if (ut == typeof(ObjectId))
         {
-            schema.Type = JsonSchemaType.Null | JsonSchemaType.String;
-            schema.Description = "MongoDB ObjectID";
+            schema.Type = JsonSchemaType.String | (isNullable ? JsonSchemaType.Null : 0);
+            schema.Description = "MongoDB ObjectId";
             schema.Format = "objectid";
             schema.Example = "507f191e810c19729de860ea";
+            schema.Pattern = "^[a-fA-F0-9]{24}$";
         }
 
-        if (t == typeof(ProblemDetails) || t == typeof(HttpValidationProblemDetails))
+        if (ut == typeof(ProblemDetails) || ut == typeof(HttpValidationProblemDetails))
         {
             void Desc(string name, string text)
             {
@@ -127,12 +131,12 @@ internal static class OpenApiExtensions
             Desc("errors", "A dictionary of validation errors keyed by field name.");
         }
 
-        if (t == typeof(ProblemDetails))
+        if (ut == typeof(ProblemDetails))
         {
             schema.Description ??= "Standard RFC 7807/9457 problem details payload.";
         }
 
-        if (t == typeof(HttpValidationProblemDetails))
+        if (ut == typeof(HttpValidationProblemDetails))
         {
             schema.Description ??= "An extension of the Standard RFC 7807/9457 problem details payload to include validation errors.";
         }
@@ -141,9 +145,9 @@ internal static class OpenApiExtensions
             && (x.GetGenericTypeDefinition() == typeof(IQueryable<>)
                 || x.GetGenericTypeDefinition() == typeof(IEnumerable<>));
 
-        if (IsSeq(t) && schema is OpenApiSchema arr && arr.Items is null)
+        if (IsSeq(ut) && schema is OpenApiSchema arr && arr.Items is null)
         {
-            var itemType = t.GetGenericArguments()[0];
+            var itemType = ut.GetGenericArguments()[0];
 
             var item = await context.GetOrCreateSchemaAsync(itemType, null, ct);
 
@@ -152,9 +156,9 @@ internal static class OpenApiExtensions
                 : item;
         }
 
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Linked<>))
+        if (ut.IsGenericType && ut.GetGenericTypeDefinition() == typeof(Linked<>))
         {
-            var innerType = t.GetGenericArguments()[0];
+            var innerType = ut.GetGenericArguments()[0];
             var inner = await context.GetOrCreateSchemaAsync(innerType, null, ct);
             var links = await context.GetOrCreateSchemaAsync(typeof(IEnumerable<LinkItem>), null, ct);
             var linksName = context.JsonTypeInfo.Options.PropertyNamingPolicy?.ConvertName(nameof(ILinks.Links)) ?? nameof(ILinks.Links);

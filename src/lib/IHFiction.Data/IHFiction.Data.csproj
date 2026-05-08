@@ -25,6 +25,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Api" />
+    <PackageReference Include="Snappier" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>
 

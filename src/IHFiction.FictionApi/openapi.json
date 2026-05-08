@@ -2493,24 +2493,22 @@
               "default": ""
             },
             "example": "name,createdAt"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
+          },
+          {
+            "name": "AuthorId",
+            "in": "query",
               "schema": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/ListPublishedStoriesBody"
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "type": [
+                "null",
+                "string"
+              ],
+              "description": "Universally Unique Lexicographically Sortable Identifier",
+              "format": "ulid",
+              "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
                   }
-                ]
               }
-            }
-          }
-        },
+        ],
         "responses": {
           "400": {
             "description": "Bad Request",
@@ -5984,12 +5982,26 @@
         },
         "description": "Request model for listing tags with pagination, search, and filtering capabilities."
       },
-      "ObjectId": {
-        "type": [
-          "null",
-          "string"
+"MarkDeviceNotificationReadResponse": {
+        "required": [
+          "notificationId",
+          "readAt"
         ],
-        "description": "MongoDB ObjectID",
+        "type": "object",
+        "properties": {
+          "notificationId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ObjectId": {
+        "pattern": "^[a-fA-F0-9]{24}$",
+        "type": "string",
+        "description": "MongoDB ObjectId",
         "format": "objectid",
         "example": "507f191e810c19729de860ea"
       },
@@ -6202,10 +6214,8 @@
         "description": "Represents a tag associated with a story."
       },
       "Ulid": {
-        "type": [
-          "null",
-          "string"
-        ],
+        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+        "type": "string",
         "description": "Universally Unique Lexicographically Sortable Identifier",
         "format": "ulid",
         "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
@@ -6482,10 +6492,10 @@
       "name": "Author Discovery"
     },
     {
-      "name": "Story Management"
+      "name": "Story Discovery"
     },
     {
-      "name": "Story Discovery"
+      "name": "Story Management"
     },
     {
       "name": "Tag Discovery"

@@ -9,6 +9,8 @@ using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 
+using MongoDB.Bson;
+
 namespace IHFiction.FictionApi.Infrastructure;
 
 
@@ -20,6 +22,7 @@ namespace IHFiction.FictionApi.Infrastructure;
 // Common
 [JsonSerializable(typeof(Dictionary<string, JsonElement>))]
 [JsonSerializable(typeof(Ulid))]
+[JsonSerializable(typeof(ObjectId))]
 
 
 // Account

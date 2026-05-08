@@ -3,7 +3,7 @@ using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class AccountService(IFictionApiClient client)
+public class AccountService(FictionApiClient client)
 {
     public async ValueTask<Result<LinkedOfRegisterAsAuthorResponse>> RegisterAsAuthorAsync(
         RegisterAsAuthorBody body,
@@ -25,7 +25,7 @@ public class AccountService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => storyId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetOwnStoryContentAsync(storyId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetOwnStoryContentAsync(storyId, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfGetOwnStoryContentResponse>> GetCurrentAuthorStoryContentAsync(
         string storyId,
@@ -41,7 +41,7 @@ public class AccountService(IFictionApiClient client)
         CancellationToken cancellationToken = default
     ) => chapterId == Ulid.Empty
         ? DomainError.EmptyUlid
-        : await client.GetOwnChapterContentAsync(chapterId.ToString(), fields, cancellationToken).HandleApiException();
+        : await client.GetOwnChapterContentAsync(chapterId, fields, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfGetOwnChapterContentResponse>> GetCurrentAuthorChapterContentAsync(
         string chapterId,

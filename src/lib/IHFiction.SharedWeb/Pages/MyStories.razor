@@ -168,7 +168,7 @@ else if (_stories != null)
         Navigation.NavigateTo($"/stories/new?storyType={Uri.EscapeDataString(storyType)}");
     }
 
-    private void EditStory(string storyId)
+    private void EditStory(Ulid storyId)
     {
         Navigation.NavigateTo($"/stories/{storyId}/edit");
     }
@@ -205,7 +205,7 @@ else if (_stories != null)
         _selectedStory = null;
     }
 
-    private async Task UnpublishStory(string storyId)
+    private async Task UnpublishStory(Ulid storyId)
     {
         _isLoading = true;
         _errorMessage = null;
@@ -221,7 +221,7 @@ else if (_stories != null)
         _isLoading = false;
     }
 
-    private async Task DeleteStory(string storyId)
+    private async Task DeleteStory(Ulid storyId)
     {
         _isLoading = true;
         _errorMessage = null;
