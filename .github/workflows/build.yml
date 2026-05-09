@@ -1,6 +1,12 @@
 name: Build
 permissions:
   contents: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 on:
   push:
@@ -12,6 +18,7 @@ on:
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  CI: true
 
 jobs:
   build:
@@ -30,26 +37,53 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
 
       - name: Build
         run: dotnet build --configuration Debug
+
+      - name: Show resolved build version
+        shell: pwsh
+        run: |
+          $dll = Join-Path $PWD "src/lib/IHFiction.SharedKernel/bin/Debug/net10.0/IHFiction.SharedKernel.dll"
+          if (-not (Test-Path $dll)) { throw "Expected assembly not found: $dll" }
+
+          $resolvedDll = (Resolve-Path $dll).Path
+          $fileInfo = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($resolvedDll)
+
+          Write-Host "Resolved SharedKernel assembly metadata"
+          Write-Host "AssemblyVersion=$($fileInfo.FileVersion)"
+          Write-Host "InformationalVersion=$($fileInfo.ProductVersion)"
         
       - name: Test
         run: dotnet test -c ${{ matrix.config }}
         shell: bash
 
+      - name: Attest build provenance (internal artifacts)
+        if: github.event_name == 'push'
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            src/**/bin/Debug/**/*.dll
+            src/**/bin/Debug/**/*.pdb
+            src/**/bin/Debug/**/*.deps.json
+
       - id: analyze_tag
         name: Analyze tag
         shell: bash
         run: |
+          echo "is_release=false" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
           if [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
               echo "Release tag detected"
-              echo "::set-output name=is_release::true"
+              echo "is_release=true" >> "$GITHUB_OUTPUT"
               if [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+.*- ]]; then
                   echo "Prerelease tag detected"
-                  echo "::set-output name=is_prerelease::true"
+                  echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
               fi
           fi

@@ -59,6 +59,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.5.0" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="18.4.0" />
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.2" />
@@ -67,6 +68,7 @@
     <PackageVersion Include="MongoDB.Bson" Version="3.8.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.8.0" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
+    <PackageVersion Include="MinVer" Version="6.0.0" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
