@@ -44,7 +44,7 @@ jobs:
       matrix:
         include:
         - language: csharp
-          build-mode: manual
+          build-mode: none
         - language: javascript-typescript
           build-mode: none
         - language: actions
@@ -80,25 +80,6 @@ jobs:
         # For more details on CodeQL's query packs, refer to: https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
         # queries: security-extended,security-and-quality
       
-    - if: matrix.language == 'csharp'
-      name: Set up .Net 10 SDK
-      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
-      with:
-        dotnet-version: "10.x"
-
-    # If the analyze step fails for one of the languages you are analyzing with
-    # "We were unable to automatically build your code", modify the matrix above
-    # to set the build mode to "manual" for that language. Then modify this step
-    # to build your code.
-    # ℹ️ Command-line programs to run using the OS shell.
-    # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
-    - if: matrix.language == 'csharp'
-      name: Dotnet Build
-      shell: bash
-      run: |
-        dotnet restore
-        dotnet build --no-restore --configuration Release
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@e46ed2cbd01164d986452f91f178727624ae40d7 # v4
       with:

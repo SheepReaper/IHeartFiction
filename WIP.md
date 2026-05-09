@@ -19,3 +19,7 @@
 Recent changes (dev notes):
 
 - Added a simple word/character count to the Markdown editor component. This is intentionally a raw-markdown count (no rich-text delta parsing).
+
+# updates
+- does SharedWeb really need Aspire.KeyCloak.Authentication?
+- does Data really need Aspire.Npgsql.EntityFrameworkCore.PostgreSQL?
