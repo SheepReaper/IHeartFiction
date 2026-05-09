@@ -37,6 +37,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="SharpCompress" />
     <PackageReference Include="WolverineFx" />
   </ItemGroup>
 
@@ -47,11 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference 
-      Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj"
-      OutputItemType="Analyzer" 
-      ReferenceOutputAssembly="false"
-      GlobalPropertiesToRemove="RuntimeIdentifiers;RuntimeIdentifier" />
+    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifiers;RuntimeIdentifier" />
   </ItemGroup>
 
   <ItemGroup>
