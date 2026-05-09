@@ -8,16 +8,20 @@ using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Notifications;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
+
+using Wolverine;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class PublishStory(
     FictionDbContext context,
     UserService userService,
-    TimeProvider dateTimeProvider) : IUseCase, INameEndpoint<PublishStory>
+    TimeProvider dateTimeProvider,
+    IMessageBus messageBus) : IUseCase, INameEndpoint<PublishStory>
 {
     internal static class Errors
     {
@@ -103,6 +107,8 @@ internal sealed class PublishStory(
 
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
+
+            await messageBus.PublishAsync(new StoryPublishedNotificationRequested(story.Id));
 
             return new PublishStoryResponse(
                 story.Id,

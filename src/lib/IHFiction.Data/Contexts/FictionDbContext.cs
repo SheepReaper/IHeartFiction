@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Infrastructure;
+using IHFiction.Data.Notifications.Domain;
 using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
 
@@ -23,6 +24,15 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
     public DbSet<Tag> Tags { get; set; } = null!;
     public DbSet<Anthology> Anthologies { get; set; } = null!;
     public DbSet<Work> Works { get; set; } = null!;
+    public DbSet<UserAuthorFollow> UserAuthorFollows { get; set; } = null!;
+    public DbSet<UserStoryFollow> UserStoryFollows { get; set; } = null!;
+    public DbSet<DeviceAuthorFollow> DeviceAuthorFollows { get; set; } = null!;
+    public DbSet<DeviceStoryFollow> DeviceStoryFollows { get; set; } = null!;
+    public DbSet<NotificationRecord> Notifications { get; set; } = null!;
+    public DbSet<UserNotificationDelivery> UserNotificationDeliveries { get; set; } = null!;
+    public DbSet<DeviceNotificationDelivery> DeviceNotificationDeliveries { get; set; } = null!;
+    public DbSet<UserPushSubscription> UserPushSubscriptions { get; set; } = null!;
+    public DbSet<DevicePushSubscription> DevicePushSubscriptions { get; set; } = null!;
 
     // apply configurations from assembly except for WorkBodyConfiguration
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder

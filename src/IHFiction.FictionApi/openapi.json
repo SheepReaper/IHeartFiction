@@ -368,6 +368,153 @@
         }
       }
     },
+    "/me/follows": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get Followed Authors And Stories",
+        "description": "Lists the authors and stories followed by the currently authenticated user.",
+        "operationId": "GetOwnFollows",
+        "parameters": [
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOwnFollowsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/notifications": {
+      "get": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Get Notification Inbox",
+        "description": "Lists recent notifications for the currently authenticated user and includes the unread count.",
+        "operationId": "GetOwnNotifications",
+        "parameters": [
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "maximum": 200,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetOwnNotificationsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/stories": {
       "get": {
         "tags": [
@@ -720,6 +867,396 @@
         }
       }
     },
+    "/me/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Mark Notification Read",
+        "description": "Marks a notification as read for the currently authenticated user.",
+        "operationId": "MarkOwnNotificationRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfMarkOwnNotificationReadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authors/{id}/follow": {
+      "post": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Follow Author",
+        "description": "Follows an author for the currently authenticated user. This operation is idempotent.",
+        "operationId": "FollowAuthor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfFollowAuthorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Unfollow Author",
+        "description": "Unfollows an author for the currently authenticated user. This operation is idempotent.",
+        "operationId": "UnfollowAuthor",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUnfollowAuthorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authors/{id}/follow/device": {
+      "post": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "Follow Author For Device",
+        "description": "Follows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
+        "operationId": "FollowAuthorForDevice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfFollowAuthorForDeviceResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "Unfollow Author For Device",
+        "description": "Unfollows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
+        "operationId": "UnfollowAuthorForDevice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUnfollowAuthorForDeviceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/authors/{id}": {
       "get": {
         "tags": [
@@ -881,6 +1418,351 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LinkedPagedCollectionOfListAuthorsItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/device/follows": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Device Follows",
+        "description": "Lists the authors and stories followed by an anonymous browser or installed PWA device.",
+        "operationId": "GetDeviceFollows",
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetDeviceFollowsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/device/notifications": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Device Notification Inbox",
+        "description": "Lists recent notifications for an anonymous browser or installed PWA device and includes the unread count.",
+        "operationId": "GetDeviceNotifications",
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Limit",
+            "in": "query",
+            "schema": {
+              "maximum": 200,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetDeviceNotificationsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/device/notifications/{id}/read": {
+      "post": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Mark Device Notification Read",
+        "description": "Marks a notification as read for an anonymous browser or installed PWA device.",
+        "operationId": "MarkDeviceNotificationRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkDeviceNotificationReadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/push-subscription/device": {
+      "put": {
+        "tags": [
+          "Author Discovery"
+        ],
+        "summary": "Register Device Push Subscription",
+        "description": "Registers or refreshes a web push subscription for an anonymous browser or installed PWA device.",
+        "operationId": "RegisterDevicePushSubscription",
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDevicePushSubscriptionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfRegisterDevicePushSubscriptionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/push-subscription": {
+      "put": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Register Push Subscription",
+        "description": "Registers or refreshes a web push subscription for the currently authenticated user.",
+        "operationId": "RegisterOwnPushSubscription",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterOwnPushSubscriptionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfRegisterOwnPushSubscriptionResponse"
                 }
               }
             }
@@ -2103,6 +2985,312 @@
         }
       }
     },
+    "/stories/{id}/follow": {
+      "post": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Follow Story",
+        "description": "Follows a published story for the currently authenticated user. This operation is idempotent.",
+        "operationId": "FollowStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfFollowStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Current User"
+        ],
+        "summary": "Unfollow Story",
+        "description": "Unfollows a published story for the currently authenticated user. This operation is idempotent.",
+        "operationId": "UnfollowStory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUnfollowStoryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stories/{id}/follow/device": {
+      "post": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Follow Story For Device",
+        "description": "Follows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
+        "operationId": "FollowStoryForDevice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfFollowStoryForDeviceResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Unfollow Story For Device",
+        "description": "Unfollows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
+        "operationId": "UnfollowStoryForDevice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfUnfollowStoryForDeviceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/chapters/{id}/content": {
       "get": {
         "tags": [
@@ -2497,7 +3685,7 @@
           {
             "name": "AuthorId",
             "in": "query",
-              "schema": {
+            "schema": {
               "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
               "type": [
                 "null",
@@ -2506,8 +3694,8 @@
               "description": "Universally Unique Lexicographically Sortable Identifier",
               "format": "ulid",
               "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
-                  }
-              }
+            }
+          }
         ],
         "responses": {
           "400": {
@@ -3491,6 +4679,129 @@
         },
         "description": "Request body model for adding a new chapter to a story."
       },
+      "DeviceFollowedAuthorItem": {
+        "required": [
+          "authorId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceFollowedStoryItem": {
+        "required": [
+          "storyId",
+          "title",
+          "isPublished"
+        ],
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isPublished": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DeviceNotificationItem": {
+        "required": [
+          "notificationId",
+          "kind",
+          "title",
+          "body",
+          "targetPath",
+          "eventOccurredAt",
+          "deliveredAt",
+          "readAt",
+          "authorId",
+          "authorName",
+          "storyId",
+          "storyTitle",
+          "chapterId",
+          "chapterTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "notificationId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "targetPath": {
+            "type": "string"
+          },
+          "eventOccurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "storyId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "storyTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "chapterId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "chapterTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "GaAuthorProfile": {
         "required": [
           "bio",
@@ -3527,6 +4838,94 @@
           },
           "value": {
             "type": "string"
+          }
+        }
+      },
+      "GetDeviceFollowsResponse": {
+        "required": [
+          "authors",
+          "stories"
+        ],
+        "type": "object",
+        "properties": {
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceFollowedAuthorItem"
+            }
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceFollowedStoryItem"
+            }
+          }
+        }
+      },
+      "GetDeviceNotificationsResponse": {
+        "required": [
+          "items",
+          "unreadCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceNotificationItem"
+            }
+          },
+          "unreadCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "GetOwnFollowsResponse": {
+        "required": [
+          "authors",
+          "stories"
+        ],
+        "type": "object",
+        "properties": {
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OwnFollowedAuthorItem"
+            }
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OwnFollowedStoryItem"
+            }
+          }
+        }
+      },
+      "GetOwnNotificationsResponse": {
+        "required": [
+          "items",
+          "unreadCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OwnNotificationItem"
+            }
+          },
+          "unreadCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -4074,6 +5473,98 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfFollowAuthorForDeviceResponse": {
+        "required": [
+          "links",
+          "authorId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfFollowAuthorResponse": {
+        "required": [
+          "links",
+          "authorId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfFollowStoryForDeviceResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfFollowStoryResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -5030,6 +6521,30 @@
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
+      "LinkedOfMarkOwnNotificationReadResponse": {
+        "required": [
+          "links",
+          "notificationId",
+          "readAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "notificationId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
       "LinkedOfPublishStoryResponse": {
         "required": [
           "links",
@@ -5205,6 +6720,136 @@
           "profile": {
             "description": "Author's profile information including bio",
             "$ref": "#/components/schemas/RaaAuthorProfile"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfRegisterDevicePushSubscriptionResponse": {
+        "required": [
+          "links",
+          "isRegistered"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "isRegistered": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfRegisterOwnPushSubscriptionResponse": {
+        "required": [
+          "links",
+          "isRegistered"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "isRegistered": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfUnfollowAuthorForDeviceResponse": {
+        "required": [
+          "links",
+          "authorId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfUnfollowAuthorResponse": {
+        "required": [
+          "links",
+          "authorId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfUnfollowStoryForDeviceResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfUnfollowStoryResponse": {
+        "required": [
+          "links",
+          "storyId",
+          "isFollowing"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "isFollowing": {
+            "type": "boolean"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -5952,21 +7597,6 @@
         },
         "description": "An object representing a hypermedia link."
       },
-      "ListPublishedStoriesBody": {
-        "type": "object",
-        "properties": {
-          "authorId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Universally Unique Lexicographically Sortable Identifier",
-            "format": "ulid",
-            "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
-          }
-        },
-        "description": "Request model for listing published stories."
-      },
       "ListTagsBody": {
         "type": "object",
         "properties": {
@@ -5982,7 +7612,7 @@
         },
         "description": "Request model for listing tags with pagination, search, and filtering capabilities."
       },
-"MarkDeviceNotificationReadResponse": {
+      "MarkDeviceNotificationReadResponse": {
         "required": [
           "notificationId",
           "readAt"
@@ -6061,6 +7691,129 @@
           }
         },
         "description": "Represents a work (story) associated with the current author."
+      },
+      "OwnFollowedAuthorItem": {
+        "required": [
+          "authorId",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "OwnFollowedStoryItem": {
+        "required": [
+          "storyId",
+          "title",
+          "isPublished"
+        ],
+        "type": "object",
+        "properties": {
+          "storyId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isPublished": {
+            "type": "boolean"
+          }
+        }
+      },
+      "OwnNotificationItem": {
+        "required": [
+          "notificationId",
+          "kind",
+          "title",
+          "body",
+          "targetPath",
+          "eventOccurredAt",
+          "deliveredAt",
+          "readAt",
+          "authorId",
+          "authorName",
+          "storyId",
+          "storyTitle",
+          "chapterId",
+          "chapterTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "notificationId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "targetPath": {
+            "type": "string"
+          },
+          "eventOccurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "authorId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "storyId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "storyTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "chapterId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "chapterTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "ProblemDetails": {
         "type": "object",
@@ -6168,6 +7921,90 @@
           }
         },
         "description": "Request model for registering as an author."
+      },
+      "RegisterDevicePushSubscriptionBody": {
+        "required": [
+          "endpoint",
+          "p256dhKey",
+          "authKey",
+          "expiresAt",
+          "userAgent"
+        ],
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "p256dhKey": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "authKey": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "userAgent": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RegisterOwnPushSubscriptionBody": {
+        "required": [
+          "endpoint",
+          "p256dhKey",
+          "authKey",
+          "expiresAt",
+          "userAgent"
+        ],
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": "string"
+          },
+          "p256dhKey": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "authKey": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "userAgent": {
+            "maxLength": 500,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "StoryAuthor": {
         "required": [

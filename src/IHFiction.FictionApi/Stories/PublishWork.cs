@@ -9,16 +9,20 @@ using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Notifications;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
+
+using Wolverine;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class PublishWork(
     FictionDbContext context,
     UserService userService,
-    TimeProvider dateTimeProvider) : IUseCase, INameEndpoint<PublishWork>
+    TimeProvider dateTimeProvider,
+    IMessageBus messageBus) : IUseCase, INameEndpoint<PublishWork>
 {
     internal static class Errors
     {
@@ -88,11 +92,15 @@ internal sealed class PublishWork(
         bool hasContent = false;
         bool hasChildren = false;
         int childCount = 0;
+        var storyNotifications = new List<Ulid>();
+        var chapterNotifications = new List<Ulid>();
 
         if (work is Story story)
         {
             await context.Entry(story).Collection(s => s.Chapters).LoadAsync(cancellationToken);
             await context.Entry(story).Collection(s => s.Books).LoadAsync(cancellationToken);
+            foreach (var book in story.Books)
+                await context.Entry(book).Collection(candidate => candidate.Chapters).LoadAsync(cancellationToken);
             hasContent = story.HasContent;
             hasChildren = story.HasChapters || story.HasBooks;
             childCount = story.Chapters.Count + story.Books.Count;
@@ -121,8 +129,24 @@ internal sealed class PublishWork(
             return Errors.NoContentToPublish;
         try
         {
+            var publishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+
             // Publish this work
-            work.PublishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+            if (!work.IsPublished)
+            {
+                work.PublishedAt = publishedAt;
+
+                switch (work)
+                {
+                    case Story publishedStory:
+                        storyNotifications.Add(publishedStory.Id);
+                        break;
+                    case Chapter chapter:
+                        chapterNotifications.Add(chapter.Id);
+                        break;
+                }
+            }
+
             // Optionally publish all children
             if (body.PublishAll)
             {
@@ -132,33 +156,52 @@ internal sealed class PublishWork(
                         foreach (var b in s.Books)
                         {
                             if (!b.IsPublished)
-                                b.PublishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+                                b.PublishedAt = publishedAt;
                             foreach (var c in b.Chapters)
                                 if (!c.IsPublished)
-                                    c.PublishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+                                {
+                                    c.PublishedAt = publishedAt;
+                                    chapterNotifications.Add(c.Id);
+                                }
                         }
                         foreach (var c in s.Chapters)
                             if (!c.IsPublished)
-                                c.PublishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+                            {
+                                c.PublishedAt = publishedAt;
+                                chapterNotifications.Add(c.Id);
+                            }
                         break;
                     case Book b:
                         foreach (var c in b.Chapters)
                             if (!c.IsPublished)
-                                c.PublishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+                            {
+                                c.PublishedAt = publishedAt;
+                                chapterNotifications.Add(c.Id);
+                            }
                         break;
                     case Anthology a:
                         foreach (var s2 in a.Stories)
                             if (!s2.IsPublished)
-                                s2.PublishedAt = dateTimeProvider.GetUtcNow().UtcDateTime;
+                            {
+                                s2.PublishedAt = publishedAt;
+                                storyNotifications.Add(s2.Id);
+                            }
                         break;
                 }
             }
             await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var storyId in storyNotifications.Distinct())
+                await messageBus.PublishAsync(new StoryPublishedNotificationRequested(storyId));
+
+            foreach (var chapterId in chapterNotifications.Distinct())
+                await messageBus.PublishAsync(new ChapterPublishedNotificationRequested(chapterId));
+
             return new PublishWorkResponse(
                 work.Id,
                 work.Title,
                 work.GetType().Name,
-                work.PublishedAt.Value,
+                work.PublishedAt ?? publishedAt,
                 work.UpdatedAt,
                 hasContent,
                 hasChildren,

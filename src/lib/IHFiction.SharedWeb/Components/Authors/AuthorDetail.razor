@@ -1,6 +1,7 @@
 ﻿@using Markdig
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
+@using IHFiction.SharedWeb.Components.Notifications
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -51,6 +52,9 @@ else if (author != null)
                                 }
                             </figure>
                             <h1 class="title is-3 mt-4">@author.Name</h1>
+                            <div class="mt-4">
+                                <AuthorFollowButton AuthorId="@AuthorId" />
+                            </div>
                             <div class="tags is-centered">
                                 <span class="tag is-primary">
                                     <span class="icon">

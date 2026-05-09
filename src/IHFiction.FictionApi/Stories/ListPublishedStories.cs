@@ -1,8 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using System.Net.Mime;
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
@@ -38,21 +35,15 @@ internal sealed class ListPublishedStories(
 
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListPublishedStoriesItem>]
-        string Fields = ""
+        string Fields = "",
+
+        Ulid? AuthorId = null
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [
         new(nameof(Story.PublishedAt)),
         new(nameof(Story.Title)),
         new(nameof(Story.UpdatedAt))];
-
-    /// <summary>
-    /// Request model for listing published stories.
-    /// </summary>
-    /// <param name="AuthorId">Limit results to stories by a specific author.</param>
-    internal sealed record ListPublishedStoriesBody(
-        Ulid? AuthorId = null
-    );
 
     /// <summary>
     /// Represents a single published story item in the stories list response.
@@ -85,7 +76,6 @@ internal sealed class ListPublishedStories(
 
     public async Task<Result<PagedCollection<ListPublishedStoriesItem>>> HandleAsync(
         ListPublishedStoriesQuery query,
-        ListPublishedStoriesBody body,
         CancellationToken cancellationToken = default)
     {
         // Build the base query for published stories
@@ -95,7 +85,7 @@ internal sealed class ListPublishedStories(
             .Include(s => s.Books)
             .Include(s => s.Authors)
             .Where(s => s.PublishedAt != null)
-            .Where(s => body.AuthorId == null || s.Authors.Any(a => a.Id == body.AuthorId))
+            .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId))
             .AsNoTracking();
 
         // Apply search filter if provided
@@ -132,11 +122,10 @@ internal sealed class ListPublishedStories(
         {
             return builder.MapGet("stories/published", async (
                 [AsParameters] ListPublishedStoriesQuery query,
-                [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ListPublishedStoriesBody? body,
                 ListPublishedStories useCase,
                 CancellationToken cancellationToken) =>
             {
-                var result = await useCase.HandleAsync(query, body ?? new(), cancellationToken);
+                var result = await useCase.HandleAsync(query, cancellationToken);
 
                 return result.ToOkResult(query);
             }
@@ -150,8 +139,7 @@ internal sealed class ListPublishedStories(
             .WithTags(ApiTags.Stories.Discovery)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(notFound: false, conflict: false, unauthorized: false, forbidden: false)
-            .Produces<LinkedPagedCollection<ListPublishedStoriesItem>>()
-            .Accepts<ListPublishedStoriesBody>(true, MediaTypeNames.Application.Json);
+            .Produces<LinkedPagedCollection<ListPublishedStoriesItem>>();
         }
     }
 }

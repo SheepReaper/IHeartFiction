@@ -37,6 +37,13 @@
                 </span>
                 <span>Authors</span>
             </NavLink>
+
+            <NavLink class="navbar-item" href="following">
+                <span class="icon">
+                    <i class="fas fa-bell"></i>
+                </span>
+                <span>Following</span>
+            </NavLink>
             <AuthorizeView>
                 <Authorized>
                     @if (context.User.IsInRole("author"))

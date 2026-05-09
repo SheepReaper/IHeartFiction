@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Notifications;
 using IHFiction.FictionApi.Stories;
 using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.Linking;
@@ -53,6 +54,15 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(GetOwnUserProfile.GetOwnUserProfileQuery))]
 [JsonSerializable(typeof(Linked<GetOwnUserProfile.GetOwnUserProfileResponse>))]
 
+[JsonSerializable(typeof(GetOwnFollows.GetOwnFollowsQuery))]
+[JsonSerializable(typeof(GetOwnFollows.GetOwnFollowsResponse))]
+
+[JsonSerializable(typeof(GetOwnNotifications.GetOwnNotificationsQuery))]
+[JsonSerializable(typeof(GetOwnNotifications.GetOwnNotificationsResponse))]
+
+[JsonSerializable(typeof(MarkOwnNotificationRead.MarkOwnNotificationReadQuery))]
+[JsonSerializable(typeof(Linked<MarkOwnNotificationRead.MarkOwnNotificationReadResponse>))]
+
 [JsonSerializable(typeof(UpdateOwnUserProfile.UpdateOwnUserProfileQuery))]
 [JsonSerializable(typeof(UpdateOwnUserProfile.UpdateOwnUserProfileBody))]
 [JsonSerializable(typeof(Linked<UpdateOwnUserProfile.UpdateOwnUserProfileResponse>))]
@@ -61,6 +71,18 @@ namespace IHFiction.FictionApi.Infrastructure;
 // Authors
 [JsonSerializable(typeof(GetAuthor.GetAuthorQuery))]
 [JsonSerializable(typeof(Linked<GetAuthor.GetAuthorResponse>))]
+
+[JsonSerializable(typeof(FollowAuthor.FollowAuthorQuery))]
+[JsonSerializable(typeof(Linked<FollowAuthor.FollowAuthorResponse>))]
+
+[JsonSerializable(typeof(UnfollowAuthor.UnfollowAuthorQuery))]
+[JsonSerializable(typeof(Linked<UnfollowAuthor.UnfollowAuthorResponse>))]
+
+[JsonSerializable(typeof(FollowAuthorForDevice.FollowAuthorForDeviceQuery))]
+[JsonSerializable(typeof(Linked<FollowAuthorForDevice.FollowAuthorForDeviceResponse>))]
+
+[JsonSerializable(typeof(UnfollowAuthorForDevice.UnfollowAuthorForDeviceQuery))]
+[JsonSerializable(typeof(Linked<UnfollowAuthorForDevice.UnfollowAuthorForDeviceResponse>))]
 
 [JsonSerializable(typeof(ListAuthors.ListAuthorsQuery))]
 [JsonSerializable(typeof(LinkedPagedCollection<ListAuthors.ListAuthorsItem>))]
@@ -95,6 +117,18 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(GetPublishedStory.GetPublishedStoryQuery))]
 [JsonSerializable(typeof(Linked<GetPublishedStory.GetPublishedStoryResponse>))]
 
+[JsonSerializable(typeof(FollowStory.FollowStoryQuery))]
+[JsonSerializable(typeof(Linked<FollowStory.FollowStoryResponse>))]
+
+[JsonSerializable(typeof(UnfollowStory.UnfollowStoryQuery))]
+[JsonSerializable(typeof(Linked<UnfollowStory.UnfollowStoryResponse>))]
+
+[JsonSerializable(typeof(FollowStoryForDevice.FollowStoryForDeviceQuery))]
+[JsonSerializable(typeof(Linked<FollowStoryForDevice.FollowStoryForDeviceResponse>))]
+
+[JsonSerializable(typeof(UnfollowStoryForDevice.UnfollowStoryForDeviceQuery))]
+[JsonSerializable(typeof(Linked<UnfollowStoryForDevice.UnfollowStoryForDeviceResponse>))]
+
 [JsonSerializable(typeof(Linked<DeleteStoryCover.DeleteStoryCoverResponse>))]
 
 [JsonSerializable(typeof(Linked<UploadStoryCover.UploadStoryCoverResponse>))]
@@ -103,7 +137,6 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(Linked<GetPublishedStoryContent.GetPublishedStoryContentResponse>))]
 
 [JsonSerializable(typeof(ListPublishedStories.ListPublishedStoriesQuery))]
-[JsonSerializable(typeof(ListPublishedStories.ListPublishedStoriesBody))]
 [JsonSerializable(typeof(LinkedPagedCollection<ListPublishedStories.ListPublishedStoriesItem>))]
 
 [JsonSerializable(typeof(ListPublishedStoryChapters.ListPublishedStoryChaptersQuery))]
@@ -144,4 +177,21 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(ListTags.ListTagsQuery))]
 [JsonSerializable(typeof(ListTags.ListTagsBody))]
 [JsonSerializable(typeof(LinkedPagedCollection<ListTags.ListTagsItem>))]
+
+
+// Notifications
+[JsonSerializable(typeof(RegisterOwnPushSubscription.RegisterOwnPushSubscriptionBody))]
+[JsonSerializable(typeof(Linked<RegisterOwnPushSubscription.RegisterOwnPushSubscriptionResponse>))]
+
+[JsonSerializable(typeof(RegisterDevicePushSubscription.RegisterDevicePushSubscriptionBody))]
+[JsonSerializable(typeof(Linked<RegisterDevicePushSubscription.RegisterDevicePushSubscriptionResponse>))]
+
+[JsonSerializable(typeof(GetDeviceFollows.GetDeviceFollowsQuery))]
+[JsonSerializable(typeof(GetDeviceFollows.GetDeviceFollowsResponse))]
+
+[JsonSerializable(typeof(GetDeviceNotifications.GetDeviceNotificationsQuery))]
+[JsonSerializable(typeof(GetDeviceNotifications.GetDeviceNotificationsResponse))]
+
+[JsonSerializable(typeof(MarkDeviceNotificationRead.MarkDeviceNotificationReadQuery))]
+[JsonSerializable(typeof(Linked<MarkDeviceNotificationRead.MarkDeviceNotificationReadResponse>))]
 internal partial class FictionApiJsonSerializerContext : JsonSerializerContext;

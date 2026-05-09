@@ -141,10 +141,7 @@
         pageSize: pageSize,
         search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
         sort: sortBy,
-        body: new()
-        {
-            AuthorId = AuthorId,
-        },
+        authorId: AuthorId,
         cancellationToken: CancellationToken);
 
         if (result.IsSuccess)

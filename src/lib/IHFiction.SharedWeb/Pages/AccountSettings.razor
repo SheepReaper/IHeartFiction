@@ -3,6 +3,7 @@
 @inherits CancellableComponent
 @inject AccountService AccountService
 @inject LoaderService LoaderService
+@inject NavigationManager Navigation
 
 <PageTitle>Account Settings — IHeartFiction</PageTitle>
 
@@ -67,6 +68,15 @@
                     </button>
                 </div>
             </div>
+        </div>
+
+        <div class="box mb-5">
+            <h2 class="title is-4">Following & Notifications</h2>
+            <p class="subtitle is-6 mb-4">Manage the authors and stories you follow and review your notification inbox.</p>
+
+            <button class="button has-background-link-soft has-text-link-bold" @onclick="OnOpenFollowingAsync">
+                Open Following & Notifications
+            </button>
         </div>
 
         @if (_isAuthor)
@@ -264,5 +274,11 @@
         }
 
         return links;
+    }
+
+    private Task OnOpenFollowingAsync()
+    {
+        Navigation.NavigateTo("/following");
+        return Task.CompletedTask;
     }
 }

@@ -1,5 +1,6 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inject StoryService StoryService
+@using IHFiction.SharedWeb.Components.Notifications
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -118,6 +119,10 @@ else if (story != null)
                                             <span>Not Published</span>
                                         </button>
                                     }
+                                </div>
+
+                                <div class="field mt-3">
+                                    <StoryFollowButton StoryId="@story.Id" IsPublished="@story.IsPublished" />
                                 </div>
 
                                 <hr>

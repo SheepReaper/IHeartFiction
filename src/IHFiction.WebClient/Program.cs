@@ -128,6 +128,7 @@ builder.Services.AddTransient<AccountService>();
 builder.Services.AddTransient<AuthorService>();
 builder.Services.AddTransient<BookService>();
 builder.Services.AddTransient<ChapterService>();
+builder.Services.AddTransient<NotificationService>();
 builder.Services.AddTransient<StoryService>();
 builder.Services.AddTransient<WorkService>();
 

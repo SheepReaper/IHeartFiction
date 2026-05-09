@@ -1,0 +1,138 @@
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+@if (_loaded)
+{
+    <div>
+        <button class="button @ButtonClass is-fullwidth"
+                disabled="@(_submitting || !IsPublished)"
+                @onclick="ToggleFollowAsync">
+            <span class="icon">
+                <i class="fas @(_isFollowing ? "fa-bookmark" : "fa-book-medical")"></i>
+            </span>
+            <span>@ButtonText</span>
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="help is-danger mt-2">@_error</p>
+        }
+    </div>
+}
+else
+{
+    <button class="button is-fullwidth" disabled>
+        <span class="icon"><i class="fas fa-spinner fa-spin"></i></span>
+        <span>Loading</span>
+    </button>
+}
+
+@code {
+    [Parameter, EditorRequired] public Ulid StoryId { get; set; }
+    [Parameter] public bool IsPublished { get; set; } = true;
+
+    private bool _loaded;
+    private bool _isAuthenticated;
+    private bool _isFollowing;
+    private bool _submitting;
+    private string? _error;
+    private Ulid _storyId;
+
+    private string ButtonClass => _isFollowing
+        ? "has-background-danger-soft has-text-danger-bold"
+        : "has-background-link-soft has-text-link-bold";
+
+    private string ButtonText
+    {
+        get
+        {
+            if (!IsPublished)
+            {
+                return "Available After Publish";
+            }
+
+            return _isFollowing ? "Unfollow Story" : "Follow Story";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        if (StoryId == Ulid.Empty)
+        {
+            _error = "Invalid story identifier.";
+            _loaded = true;
+            StateHasChanged();
+            return;
+        }
+
+        _storyId = StoryId;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+
+        if (IsPublished)
+        {
+            var result = await NotificationService.IsStoryFollowedAsync(_storyId, _isAuthenticated);
+            if (result.IsSuccess)
+            {
+                _isFollowing = result.Value;
+            }
+            else
+            {
+                _error = result.DomainError.Description;
+            }
+        }
+
+        _loaded = true;
+        StateHasChanged();
+    }
+
+    private async Task ToggleFollowAsync()
+    {
+        _error = null;
+        _submitting = true;
+
+        try
+        {
+            if (!_isFollowing)
+            {
+                var subscription = await JSRuntime.InvokeAsync<BrowserPushSubscription?>("blazorPushNotifications.requestSubscription");
+                if (subscription is null)
+                {
+                    _error = "Notifications are not available or permission was not granted.";
+                    return;
+                }
+
+                var subscriptionResult = await NotificationService.RegisterPushSubscriptionAsync(subscription, _isAuthenticated);
+                if (subscriptionResult.IsFailure)
+                {
+                    _error = subscriptionResult.DomainError.Description;
+                    return;
+                }
+            }
+
+            var result = _isFollowing
+                ? await NotificationService.UnfollowStoryAsync(_storyId, _isAuthenticated)
+                : await NotificationService.FollowStoryAsync(_storyId, _isAuthenticated);
+
+            if (result.IsSuccess)
+            {
+                _isFollowing = !_isFollowing;
+            }
+            else
+            {
+                _error = result.DomainError.Description;
+            }
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}

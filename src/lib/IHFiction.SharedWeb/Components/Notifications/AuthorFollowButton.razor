@@ -1,0 +1,119 @@
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+@if (_loaded)
+{
+    <div>
+        <button class="button @ButtonClass is-fullwidth"
+                disabled="@_submitting"
+                @onclick="ToggleFollowAsync">
+            <span class="icon">
+                <i class="fas @(_isFollowing ? "fa-bell-slash" : "fa-bell")"></i>
+            </span>
+            <span>@(_isFollowing ? "Unfollow Author" : "Follow Author")</span>
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="help is-danger mt-2">@_error</p>
+        }
+    </div>
+}
+else
+{
+    <button class="button is-fullwidth" disabled>
+        <span class="icon"><i class="fas fa-spinner fa-spin"></i></span>
+        <span>Loading</span>
+    </button>
+}
+
+@code {
+    [Parameter, EditorRequired] public string AuthorId { get; set; } = string.Empty;
+
+    private bool _loaded;
+    private bool _isAuthenticated;
+    private bool _isFollowing;
+    private bool _submitting;
+    private string? _error;
+    private Ulid _authorId;
+
+    private string ButtonClass => _isFollowing
+        ? "has-background-danger-soft has-text-danger-bold"
+        : "has-background-link-soft has-text-link-bold";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        if (!Ulid.TryParse(AuthorId, out _authorId))
+        {
+            _error = "Invalid author identifier.";
+            _loaded = true;
+            StateHasChanged();
+            return;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+
+        var result = await NotificationService.IsAuthorFollowedAsync(_authorId, _isAuthenticated);
+        if (result.IsSuccess)
+        {
+            _isFollowing = result.Value;
+        }
+        else
+        {
+            _error = result.DomainError.Description;
+        }
+
+        _loaded = true;
+        StateHasChanged();
+    }
+
+    private async Task ToggleFollowAsync()
+    {
+        _error = null;
+        _submitting = true;
+
+        try
+        {
+            if (!_isFollowing)
+            {
+                var subscription = await JSRuntime.InvokeAsync<BrowserPushSubscription?>("blazorPushNotifications.requestSubscription");
+                if (subscription is null)
+                {
+                    _error = "Notifications are not available or permission was not granted.";
+                    return;
+                }
+
+                var subscriptionResult = await NotificationService.RegisterPushSubscriptionAsync(subscription, _isAuthenticated);
+                if (subscriptionResult.IsFailure)
+                {
+                    _error = subscriptionResult.DomainError.Description;
+                    return;
+                }
+            }
+
+            var result = _isFollowing
+                ? await NotificationService.UnfollowAuthorAsync(_authorId, _isAuthenticated)
+                : await NotificationService.FollowAuthorAsync(_authorId, _isAuthenticated);
+
+            if (result.IsSuccess)
+            {
+                _isFollowing = !_isFollowing;
+            }
+            else
+            {
+                _error = result.DomainError.Description;
+            }
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}

@@ -1,6 +1,9 @@
 {
   "name": "I❤️Fiction",
   "short_name": "I❤️Fic",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/_content/IHFiction.SharedWeb/favicon/web-app-manifest-192x192.png",

@@ -20,6 +20,7 @@ using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Notifications;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Markdown;
 
@@ -40,7 +41,13 @@ static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocumen
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Host.UseWolverine();
+builder.Host.UseWolverine(opts =>
+{
+    // NotificationFanoutHandler is internal — Wolverine only scans exported (public) types by default,
+    // so we must register it explicitly. Skip during OpenAPI doc generation (build env).
+    if (!IsBuildEnvironment())
+        opts.Discovery.IncludeType<NotificationFanoutHandler>();
+});
 
 // Slim builder disables https support, add it back in development
 if (builder.Environment.IsDevelopment())
@@ -144,7 +151,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         if (builder.Environment.IsDevelopment())
             options.RequireHttpsMetadata = false;
 
-        else if (builder.Configuration["OidcAuthority"] is string authority)
+        // Allow explicit authority override from configuration (e.g. to force HTTP endpoint in development)
+        if (builder.Configuration["OidcAuthority"] is string authority)
             options.Authority = authority;
 
         // Allow for a small clock drift between the API and the identity provider
