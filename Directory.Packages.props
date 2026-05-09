@@ -59,7 +59,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.7" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.203" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.5.0" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="18.4.0" />
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.2" />
