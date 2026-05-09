@@ -66,7 +66,7 @@ jobs:
       - name: Attest build provenance (internal artifacts)
         if: github.event_name == 'push'
         continue-on-error: true
-        uses: actions/attest@v4.1.0
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: |
             src/**/bin/Debug/**/*.dll
