@@ -68,7 +68,7 @@
     <PackageVersion Include="MongoDB.Bson" Version="3.8.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.8.0" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.1" />
-    <PackageVersion Include="MinVer" Version="6.0.0" />
+    <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="Npgsql" Version="10.0.2" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.2" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
