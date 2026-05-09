@@ -35,7 +35,7 @@ else if (author != null)
     <div class="section">
         <div class="container">
             <div class="columns">
-                <div class="column is-one-quarter">
+                <div class="column is-one-quarter" style="min-width: 20rem;">
                     <div class="card">
                         <div class="card-content has-text-centered">
                             <figure class="image is-128x128 is-inline-block">
@@ -52,10 +52,12 @@ else if (author != null)
                                 }
                             </figure>
                             <h1 class="title is-3 mt-4">@author.Name</h1>
-                            <div class="mt-4">
+                            <div class="ihf-follow-panel has-text-left">
+                                <p class="has-text-weight-semibold mb-2">Follow updates</p>
+                                <p class="help">Get notified when this author publishes new stories.</p>
                                 <AuthorFollowButton AuthorId="@AuthorId" />
                             </div>
-                            <div class="tags is-centered">
+                            <div class="tags is-centered mt-5">
                                 <span class="tag is-primary">
                                     <span class="icon">
                                         <i class="fas fa-calendar"></i>

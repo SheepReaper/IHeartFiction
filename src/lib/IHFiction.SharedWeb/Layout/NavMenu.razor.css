@@ -1,0 +1,47 @@
+/* =============================================
+   Mobile hamburger menu polish
+   Bulma's touch breakpoint: max-width 1023px
+   ============================================= */
+
+@media screen and (max-width: 1023px) {
+
+    /* Taller touch targets for primary nav links */
+    .navbar-start .navbar-item {
+        padding-block: 0.875rem;
+        font-size: 1.05rem;
+    }
+
+    /* Visual separator before the action section */
+    .navbar-end {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 0.25rem;
+        padding-bottom: 0.5rem;
+    }
+
+    /* API Docs — fills the full row with left-aligned text */
+    .ihf-nav-api-docs {
+        padding-inline: 0.75rem;
+        padding-block: 0.5rem;
+    }
+
+    .ihf-nav-api-docs .button {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    /* About + Theme toggle — share a single compact row */
+    .ihf-nav-actions {
+        padding-inline: 0.75rem;
+        padding-block: 0.5rem;
+    }
+
+    .ihf-nav-actions .buttons {
+        flex-wrap: nowrap;
+        margin-bottom: 0;
+    }
+
+    .ihf-nav-actions .button {
+        flex: 1;
+        justify-content: center;
+    }
+}

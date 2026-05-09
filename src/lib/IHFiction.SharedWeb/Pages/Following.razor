@@ -8,24 +8,34 @@
 
 <div class="section">
     <div class="container">
-        <div class="level mb-5">
+        <div class="level is-align-items-flex-start mb-5">
             <div class="level-left">
                 <div>
                     <h1 class="title mb-2">Following & Notifications</h1>
-                    <p class="subtitle is-6 mb-0">
-                        @_modeDescription
-                    </p>
+
+                    <div class="tags">
+                        <span class="tag has-background-link-soft has-text-link-bold">@((_follows?.Authors.Count ?? 0) + (_follows?.Stories.Count ?? 0)) followed</span>
+                        @if (_inbox is not null)
+                        {
+                            <span class="tag has-background-warning-soft has-text-warning-bold">@_inbox.UnreadCount unread</span>
+                        }
+                    </div>
                 </div>
             </div>
-            <div class="level-right">
-                @if (_inbox is not null)
-                {
-                    <div class="tags has-addons">
-                        <span class="tag has-background-link-soft has-text-link-bold">Unread</span>
-                        <span class="tag is-dark">@_inbox.UnreadCount</span>
-                    </div>
-                }
-            </div>
+        </div>
+
+        <div class="ihf-notification-summary mb-5">
+            <article class="ihf-notification-tile">
+                <p class="heading">Following</p>
+                <p class="title is-4">@((_follows?.Authors.Count ?? 0) + (_follows?.Stories.Count ?? 0))</p>
+                <p class="subtitle is-7">Authors and stories tracked on this profile or device.</p>
+            </article>
+
+            <article class="ihf-notification-tile">
+                <p class="heading">Unread</p>
+                <p class="title is-4">@(_inbox?.UnreadCount ?? 0)</p>
+                <p class="subtitle is-7">Notifications waiting in the inbox.</p>
+            </article>
         </div>
 
         @if (_loading)
@@ -64,10 +74,11 @@
                         {
                             @foreach (var author in _follows.Authors)
                             {
-                                <div class="box has-background-link-soft mb-3">
+                                <div class="ihf-notification-item mb-3">
                                     <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap" style="gap: 0.75rem;">
                                         <div>
                                             <a class="has-text-link-bold" href="/authors/@author.AuthorId">@author.Name</a>
+                                            <p class="is-size-7 has-text-grey mb-0">Author updates</p>
                                         </div>
                                         <button class="button is-small has-background-danger-soft has-text-danger-bold"
                                                 disabled="@_actionBusy"
@@ -80,8 +91,14 @@
                         }
                         else
                         {
-                            <div class="notification has-background-info-soft has-text-info-bold">
-                                You are not following any authors yet.
+                            <div class="ihf-notification-empty mb-4">
+                                <span class="icon is-medium has-text-link">
+                                    <i class="fas fa-user-pen fa-2x"></i>
+                                </span>
+                                <div>
+                                    <p class="has-text-weight-semibold">No authors followed</p>
+                                    <p class="is-size-7">Follow an author from their profile to receive publish updates.</p>
+                                </div>
                             </div>
                         }
 
@@ -90,14 +107,17 @@
                         {
                             @foreach (var story in _follows.Stories)
                             {
-                                <div class="box has-background-warning-soft mb-3">
+                                <div class="ihf-notification-item mb-3">
                                     <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap" style="gap: 0.75rem;">
                                         <div>
                                             <a class="has-text-warning-bold" href="/stories/@story.StoryId">@story.Title</a>
-                                            @if (!story.IsPublished)
-                                            {
-                                                <span class="tag ml-2">Draft</span>
-                                            }
+                                            <div class="tags mt-2 mb-0">
+                                                <span class="tag has-background-warning-soft has-text-warning-bold">Story updates</span>
+                                                @if (!story.IsPublished)
+                                                {
+                                                    <span class="tag">Draft</span>
+                                                }
+                                            </div>
                                         </div>
                                         <button class="button is-small has-background-danger-soft has-text-danger-bold"
                                                 disabled="@_actionBusy"
@@ -110,8 +130,14 @@
                         }
                         else
                         {
-                            <div class="notification has-background-warning-soft has-text-warning-bold">
-                                You are not following any stories yet.
+                            <div class="ihf-notification-empty">
+                                <span class="icon is-medium has-text-warning">
+                                    <i class="fas fa-book-bookmark fa-2x"></i>
+                                </span>
+                                <div>
+                                    <p class="has-text-weight-semibold">No stories followed</p>
+                                    <p class="is-size-7">Use the story detail follow button to get future publish alerts.</p>
+                                </div>
                             </div>
                         }
                     </div>
@@ -136,12 +162,12 @@
                         {
                             @foreach (var item in _inbox.Items.OrderByDescending(notification => notification.DeliveredAt))
                             {
-                                <article class="box @(item.ReadAt is null ? "has-background-primary-soft" : string.Empty) mb-3">
+                                <article class="ihf-notification-item @(item.ReadAt is null ? "is-unread" : string.Empty) mb-3">
                                     <div class="is-flex is-justify-content-space-between is-align-items-flex-start is-flex-wrap-wrap" style="gap: 1rem;">
                                         <div>
                                             <p class="title is-6 mb-2">@item.Title</p>
                                             <p class="mb-2">@item.Body</p>
-                                            <div class="tags">
+                                            <div class="ihf-notification-item__meta">
                                                 <span class="tag has-background-link-soft has-text-link-bold">@FormatKind(item.Kind)</span>
                                                 <span class="tag">@item.AuthorName</span>
                                                 @if (item.ReadAt is null)
@@ -154,7 +180,7 @@
                                             </p>
                                         </div>
 
-                                        <div class="buttons are-small mb-0">
+                                        <div class="ihf-notification-item__actions">
                                             <a class="button has-background-link-soft has-text-link-bold" href="@item.TargetPath">
                                                 Open
                                             </a>
@@ -173,8 +199,14 @@
                         }
                         else
                         {
-                            <div class="notification has-background-info-soft has-text-info-bold">
-                                No notifications yet. Follow authors or stories to build your inbox.
+                            <div class="ihf-notification-empty">
+                                <span class="icon is-medium has-text-info">
+                                    <i class="fas fa-bell-slash fa-2x"></i>
+                                </span>
+                                <div>
+                                    <p class="has-text-weight-semibold">No notifications yet</p>
+                                    <p class="is-size-7">Follow authors or stories and new publish events will appear here.</p>
+                                </div>
                             </div>
                         }
                     </div>
@@ -191,10 +223,6 @@
     private string? _error;
     private FollowSnapshot? _follows;
     private NotificationInbox? _inbox;
-
-    private string _modeDescription => _isAuthenticated
-        ? "Manage the authors and stories you follow, and review the notifications delivered to your account."
-        : "Manage the follows and notifications stored on this browser or installed PWA device.";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

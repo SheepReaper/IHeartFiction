@@ -1,3 +1,4 @@
+#pragma warning disable CA1515 // Wolverine IncludeType requires public handler/message types.
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
@@ -5,7 +6,6 @@ using IHFiction.Data.Notifications.Domain;
 
 namespace IHFiction.FictionApi.Notifications;
 
-#pragma warning disable CA1515 // Wolverine IncludeType requires public handler/message types.
 public sealed record StoryPublishedNotificationRequested(Ulid StoryId);
 public sealed record ChapterPublishedNotificationRequested(Ulid ChapterId);
 

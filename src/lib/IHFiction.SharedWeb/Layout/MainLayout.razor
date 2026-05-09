@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject Microsoft.Extensions.Hosting.IHostEnvironment HostEnvironment
 
 <NavMenu />
 
@@ -10,8 +11,11 @@
 
 <Loader />
 
-<div id="blazor-error-ui" data-nosnippet class="notification is-danger is-hidden">
-    <button class="delete" onclick="document.getElementById('blazor-error-ui').classList.add('is-hidden')"></button>
-    <strong>An unhandled error has occurred.</strong>
-    <a href="." class="button is-small has-background-danger-soft has-text-danger-bold ml-2">Reload</a>
-</div>
+@if (string.Equals(HostEnvironment.EnvironmentName, "Development", StringComparison.OrdinalIgnoreCase))
+{
+    <div id="blazor-error-ui" data-nosnippet class="notification is-danger is-hidden">
+        <button class="delete" onclick="document.getElementById('blazor-error-ui').classList.add('is-hidden')"></button>
+        <strong>An unhandled error has occurred.</strong>
+        <a href="." class="button is-small has-background-danger-soft has-text-danger-bold ml-2">Reload</a>
+    </div>
+}
