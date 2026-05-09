@@ -48,8 +48,32 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifiers;RuntimeIdentifier" />
+    <ProjectReference Include="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" ReferenceOutputAssembly="false" GlobalPropertiesToRemove="RuntimeIdentifiers;RuntimeIdentifier" />
   </ItemGroup>
+
+  <Target Name="CopyProjectSourceGeneratorsToIntermediateOutput" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="../lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj" Targets="GetTargetPath" RemoveProperties="RuntimeIdentifiers;RuntimeIdentifier;TargetFramework">
+      <Output TaskParameter="TargetOutputs" ItemName="_SourceGeneratorAnalyzer" />
+    </MSBuild>
+
+    <GetFileHash Files="@(_SourceGeneratorAnalyzer)">
+      <Output TaskParameter="Items" ItemName="_SourceGeneratorAnalyzerWithHash" />
+    </GetFileHash>
+
+    <ItemGroup>
+      <_SourceGeneratorAnalyzerCopy Include="@(_SourceGeneratorAnalyzerWithHash)">
+        <DestinationFolder>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\analyzers\source-generators\%(FileHash)\</DestinationFolder>
+        <Destination>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\analyzers\source-generators\%(FileHash)\%(Filename)%(Extension)</Destination>
+      </_SourceGeneratorAnalyzerCopy>
+    </ItemGroup>
+
+    <MakeDir Directories="@(_SourceGeneratorAnalyzerCopy->'%(DestinationFolder)')" />
+    <Copy SourceFiles="@(_SourceGeneratorAnalyzerCopy)" DestinationFiles="@(_SourceGeneratorAnalyzerCopy->'%(Destination)')" SkipUnchangedFiles="true" />
+
+    <ItemGroup>
+      <Analyzer Include="@(_SourceGeneratorAnalyzerCopy->'%(Destination)')" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
