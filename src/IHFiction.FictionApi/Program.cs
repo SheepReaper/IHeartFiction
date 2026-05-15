@@ -170,9 +170,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 
         if (builder.Environment.IsDevelopment() || IsBuildEnvironment())
+        {
             options.RequireHttpsMetadata = false;
+        }
 
-        else if (builder.Configuration["OidcAuthority"] is string authority)
+        if (builder.Configuration["OidcAuthority"] is string authority)
             options.Authority = authority;
 
     });

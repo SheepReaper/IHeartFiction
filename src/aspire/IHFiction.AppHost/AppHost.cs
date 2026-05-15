@@ -40,7 +40,7 @@ var storiesDb = mongo.AddDatabase("stories-db");
 
 var fictionDb = postgres.AddDatabase("fiction-db");
 
-var keycloak = builder.AddKeycloak("keycloak", builder.Environment.IsDevelopment() ? 8080 : null)
+var keycloak = builder.AddKeycloak("keycloak", 8080)
     .WithImageTag("26.3")
     .WithLifetime(ContainerLifetime.Persistent);
 

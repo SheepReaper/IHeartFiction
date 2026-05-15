@@ -82,7 +82,7 @@ builder.Services
         if (builder.Environment.IsDevelopment())
             options.RequireHttpsMetadata = false;
 
-        else if (builder.Configuration["OidcAuthority"] is string authority)
+        if (builder.Configuration["OidcAuthority"] is string authority)
             options.Authority = authority;
 
     })
