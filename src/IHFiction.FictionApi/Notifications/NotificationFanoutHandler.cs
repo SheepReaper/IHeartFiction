@@ -1,16 +1,42 @@
 #pragma warning disable CA1515 // Wolverine IncludeType requires public handler/message types.
+using System.Text.Json;
+
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Notifications.Domain;
+
+using WebPush;
 
 namespace IHFiction.FictionApi.Notifications;
 
 public sealed record StoryPublishedNotificationRequested(Ulid StoryId);
 public sealed record ChapterPublishedNotificationRequested(Ulid ChapterId);
 
-public sealed class NotificationFanoutHandler(FictionDbContext context)
+public sealed partial class NotificationFanoutHandler(
+    FictionDbContext context,
+    IOptions<WebPushOptions> webPushOptions,
+    ILogger<NotificationFanoutHandler> logger)
 {
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Warning,
+        Message = "WebPush VAPID configuration is incomplete. Skipping push sends for notification {NotificationId} (testing-only log).")]
+    private partial void LogMissingVapidConfiguration(Ulid notificationId);
+
+    [LoggerMessage(
+        EventId = 1001,
+        Level = LogLevel.Warning,
+        Message = "WebPush subscription is gone and was removed for device {DeviceId} (testing-only log).")]
+    private partial void LogRemovedGoneSubscription(Exception exception, string deviceId);
+
+    [LoggerMessage(
+        EventId = 1002,
+        Level = LogLevel.Warning,
+        Message = "WebPush send failed for device {DeviceId} and endpoint {Endpoint} (testing-only log).")]
+    private partial void LogPushSendFailed(Exception exception, string deviceId, string endpoint);
+
     public async Task Handle(
         StoryPublishedNotificationRequested message,
         CancellationToken cancellationToken = default)
@@ -61,6 +87,7 @@ public sealed class NotificationFanoutHandler(FictionDbContext context)
 
         await AddMissingUserDeliveriesAsync(notification.Id, userIds, notification.EventOccurredAt, cancellationToken);
         await AddMissingDeviceDeliveriesAsync(notification.Id, deviceIds, notification.EventOccurredAt, cancellationToken);
+        await SendDevicePushNotificationsAsync(deviceIds, notification, cancellationToken);
 
         if (context.ChangeTracker.HasChanges())
         {
@@ -140,6 +167,11 @@ public sealed class NotificationFanoutHandler(FictionDbContext context)
             .Distinct()
             .ToListAsync(cancellationToken);
 
+        var combinedDeviceIds = authorFollowerDeviceIds
+            .Concat(storyFollowerDeviceIds)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
         await AddMissingUserDeliveriesAsync(
             notification.Id,
             authorFollowerUserIds.Concat(storyFollowerUserIds).Distinct(),
@@ -148,13 +180,89 @@ public sealed class NotificationFanoutHandler(FictionDbContext context)
 
         await AddMissingDeviceDeliveriesAsync(
             notification.Id,
-            authorFollowerDeviceIds.Concat(storyFollowerDeviceIds).Distinct(),
+            combinedDeviceIds,
             notification.EventOccurredAt,
             cancellationToken);
+
+        await SendDevicePushNotificationsAsync(combinedDeviceIds, notification, cancellationToken);
 
         if (context.ChangeTracker.HasChanges())
         {
             await context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task SendDevicePushNotificationsAsync(
+        IEnumerable<string> deviceIds,
+        NotificationRecord notification,
+        CancellationToken cancellationToken)
+    {
+        var recipientIds = deviceIds
+            .Where(candidate => !string.IsNullOrWhiteSpace(candidate))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        if (recipientIds.Length == 0)
+        {
+            return;
+        }
+
+        var options = webPushOptions.Value;
+
+        if (string.IsNullOrWhiteSpace(options.Subject)
+            || string.IsNullOrWhiteSpace(options.PublicKey)
+            || string.IsNullOrWhiteSpace(options.PrivateKey))
+        {
+            LogMissingVapidConfiguration(notification.Id);
+            return;
+        }
+
+        var subscriptions = await context.DevicePushSubscriptions
+            .Where(subscription => recipientIds.Contains(subscription.DeviceId))
+            .ToListAsync(cancellationToken);
+
+        if (subscriptions.Count == 0)
+        {
+            return;
+        }
+
+        var payload = JsonSerializer.Serialize(new
+        {
+            title = notification.Title,
+            body = notification.Body,
+            url = notification.TargetPath
+        });
+
+        var vapidDetails = new VapidDetails(options.Subject, options.PublicKey, options.PrivateKey);
+        using var webPushClient = new WebPushClient();
+        var deliveryAttemptedAt = DateTime.UtcNow;
+
+        foreach (var subscription in subscriptions)
+        {
+            var pushSubscription = new PushSubscription(
+                subscription.Endpoint,
+                subscription.P256dhKey,
+                subscription.AuthKey);
+
+            try
+            {
+                await webPushClient.SendNotificationAsync(pushSubscription, payload, vapidDetails, cancellationToken);
+                subscription.LastSuccessfulDeliveryAt = deliveryAttemptedAt;
+                subscription.LastFailureAt = null;
+            }
+            catch (WebPushException exception) when ((int)exception.StatusCode == 410)
+            {
+                subscription.LastFailureAt = deliveryAttemptedAt;
+                context.DevicePushSubscriptions.Remove(subscription);
+
+                LogRemovedGoneSubscription(exception, subscription.DeviceId);
+            }
+            catch (WebPushException exception)
+            {
+                subscription.LastFailureAt = deliveryAttemptedAt;
+
+                LogPushSendFailed(exception, subscription.DeviceId, subscription.Endpoint);
+            }
         }
     }
 

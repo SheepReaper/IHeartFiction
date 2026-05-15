@@ -38,6 +38,7 @@
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="SharpCompress" />
+    <PackageReference Include="WebPush" />
     <PackageReference Include="WolverineFx" />
   </ItemGroup>
 

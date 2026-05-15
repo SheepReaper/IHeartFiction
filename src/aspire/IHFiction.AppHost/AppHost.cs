@@ -10,6 +10,8 @@ using Aspire.Cloudflared;
 using IHFiction.AppHost.Extensions;
 var builder = DistributedApplication.CreateBuilder(args);
 
+var vapid = new VapidKeysDefaultProvider();
+
 var keycloakClientSecret = builder.AddParameter(
     "ApiOidcClientSecret",
     secret: true);
@@ -17,6 +19,12 @@ var keycloakClientSecret = builder.AddParameter(
 var keycloakAdminClientSecret = builder.AddParameter(
     "ApiKeycloakAdminClientSecret",
     secret: true);
+
+var vapidPrivKey = builder.AddParameter(
+    "VapidPrivKey", vapid.DefaultPrivKey, secret: true, persist: true);
+
+var vapidPubKey = builder.AddParameter(
+    "VapidPubKey", vapid.DefaultPubKey, secret: true, persist: true);
 
 var postgres = builder.AddPostgres("postgres")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -44,6 +52,8 @@ var migrations = builder.AddProject<Projects.IHFiction_MigrationService>("migrat
 
 var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
+    .WithEnvironment("WebPush__PrivateKey", vapidPrivKey)
+    .WithEnvironment("WebPush__PublicKey", vapidPubKey)
     .WithReference(keycloak)
     .WithReference(fictionDb)
     .WithReference(storiesDb)

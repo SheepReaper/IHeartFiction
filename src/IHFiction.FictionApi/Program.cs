@@ -116,6 +116,7 @@ if (builder.Environment.IsProduction())
 builder.Services.AddSingleton(dateTime);
 builder.Services.AddSingleton(FictionApiJsonSerializerContext.Default);
 builder.Services.Configure<MarkdownOptions>(builder.Configuration.GetSection(MarkdownOptions.SectionName));
+builder.Services.Configure<WebPushOptions>(builder.Configuration.GetSection("WebPush"));
 
 // Configure database connections
 builder.AddNpgsqlDbContext<FictionDbContext>(
