@@ -1,0 +1,109 @@
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+using IHFiction.Data.Contexts;
+using IHFiction.Data.Notifications.Domain;
+using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
+using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
+
+namespace IHFiction.FictionApi.Notifications;
+
+internal sealed class RegisterOwnPushSubscription(
+    FictionDbContext context,
+    UserService userService) : IUseCase, INameEndpoint<RegisterOwnPushSubscription>
+{
+    internal static readonly DomainError InvalidSubscription =
+        new("PushSubscription.Invalid", "A valid push subscription is required.");
+
+    internal sealed record RegisterOwnPushSubscriptionBody(
+        [property: Required]
+        [property: StringLength(500)]
+        string Endpoint,
+        [property: Required]
+        [property: StringLength(200)]
+        string P256dhKey,
+        [property: Required]
+        [property: StringLength(200)]
+        string AuthKey,
+        DateTime? ExpiresAt,
+        [property: StringLength(500)]
+        string? UserAgent);
+
+    internal sealed record RegisterOwnPushSubscriptionResponse(bool IsRegistered);
+
+    public async Task<Result<RegisterOwnPushSubscriptionResponse>> HandleAsync(
+        RegisterOwnPushSubscriptionBody body,
+        ClaimsPrincipal claimsPrincipal,
+        CancellationToken cancellationToken = default)
+    {
+        if (!IsValid(body)) return InvalidSubscription;
+
+        var userResult = await userService.GetUserAsync(claimsPrincipal, cancellationToken);
+        if (userResult.IsFailure) return userResult.DomainError;
+
+        var subscription = await context.UserPushSubscriptions
+            .FirstOrDefaultAsync(candidate => candidate.Endpoint == body.Endpoint, cancellationToken);
+
+        if (subscription is null)
+        {
+            context.UserPushSubscriptions.Add(new UserPushSubscription
+            {
+                UserId = userResult.Value.Id,
+                Endpoint = body.Endpoint,
+                P256dhKey = body.P256dhKey,
+                AuthKey = body.AuthKey,
+                ExpiresAt = body.ExpiresAt,
+                UserAgent = body.UserAgent
+            });
+        }
+        else
+        {
+            subscription.UserId = userResult.Value.Id;
+            subscription.P256dhKey = body.P256dhKey;
+            subscription.AuthKey = body.AuthKey;
+            subscription.ExpiresAt = body.ExpiresAt;
+            subscription.UserAgent = body.UserAgent;
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+        return new RegisterOwnPushSubscriptionResponse(true);
+    }
+
+    private static bool IsValid(RegisterOwnPushSubscriptionBody body) =>
+        !string.IsNullOrWhiteSpace(body.Endpoint)
+        && !string.IsNullOrWhiteSpace(body.P256dhKey)
+        && !string.IsNullOrWhiteSpace(body.AuthKey);
+
+    public static string EndpointName => nameof(RegisterOwnPushSubscription);
+
+    internal sealed class Endpoint : IEndpoint
+    {
+        public string Name => EndpointName;
+
+        public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
+        {
+            return builder.MapPut("notifications/push-subscription", async (
+                [FromBody] RegisterOwnPushSubscriptionBody body,
+                RegisterOwnPushSubscription useCase,
+                ClaimsPrincipal claimsPrincipal,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await useCase.HandleAsync(body, claimsPrincipal, cancellationToken);
+                return result.ToOkResult();
+            })
+            .WithSummary("Register Push Subscription")
+            .WithDescription("Registers or refreshes a web push subscription for the currently authenticated user.")
+            .WithTags(ApiTags.Account.CurrentUser)
+            .RequireAuthorization()
+            .WithStandardResponses(conflict: false)
+            .Produces<Linked<RegisterOwnPushSubscriptionResponse>>()
+            .Accepts<RegisterOwnPushSubscriptionBody>("application/json");
+        }
+    }
+}
