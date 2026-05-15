@@ -1,10 +1,10 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -89,18 +89,9 @@ public sealed class ConvertStoryTypeIntegrationTests : BaseIntegrationTest, ICon
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
     public static void ConfigureServices(IServiceCollection services)
     {
-        services.AddKeyedScoped(
-            nameof(ConvertStoryTypeIntegrationTests),
-            (sp, key) => new FictionDbContext(new DbContextOptionsBuilder<FictionDbContext>()
-                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(ConvertStoryTypeIntegrationTests)}"))
-                .UseSnakeCaseNamingConvention()
-                .Options));
-
-        services.AddKeyedScoped(
-            nameof(ConvertStoryTypeIntegrationTests),
-            (sp, key) => sp.GetRequiredService<IMongoClient>()
-                .GetDatabase($"test_stories_{nameof(ConvertStoryTypeIntegrationTests)}")
-                .GetCollection<WorkBody>("works"));
+        services
+            .AddKeyedTestFictionDbContext<ConvertStoryTypeIntegrationTests>(configurePendingModelWarning: false, useDefaultInterceptors: false)
+            .AddKeyedTestWorkBodyCollection<ConvertStoryTypeIntegrationTests>();
     }
 
     public async ValueTask InitializeAsync()

@@ -1,15 +1,13 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-
 using FluentAssertions;
 
-using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -392,14 +390,7 @@ public class GetAuthorEdgeCaseTests : BaseIntegrationTest, IConfigureServices<Ge
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
     public static void ConfigureServices(IServiceCollection services)
     {
-        services.AddKeyedScoped(
-            nameof(GetAuthorEdgeCaseTests),
-            (sp, key) => new FictionDbContext(new DbContextOptionsBuilder<FictionDbContext>()
-                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(GetAuthorEdgeCaseTests)}"))
-                .UseSnakeCaseNamingConvention()
-                .ConfigureWarnings(w => w.Log(RelationalEventId.PendingModelChangesWarning))
-                .WithDefaultInterceptors(sp.GetRequiredService<TimeProvider>())
-                .Options));
+        services.AddKeyedTestFictionDbContext<GetAuthorEdgeCaseTests>();
     }
 
     public async ValueTask InitializeAsync()

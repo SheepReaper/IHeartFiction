@@ -2,15 +2,13 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-
-using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace IHFiction.IntegrationTests.Authors;
 
@@ -290,14 +288,7 @@ Visit my [website](https://example.com) for more info!";
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
     public static void ConfigureServices(IServiceCollection services)
     {
-        services.AddKeyedScoped(
-            nameof(UpdateAuthorProfileIntegrationTests),
-            (sp, key) => new FictionDbContext(new DbContextOptionsBuilder<FictionDbContext>()
-                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(UpdateAuthorProfileIntegrationTests)}"))
-                .UseSnakeCaseNamingConvention()
-                .ConfigureWarnings(w => w.Log(RelationalEventId.PendingModelChangesWarning))
-                .WithDefaultInterceptors(sp.GetRequiredService<TimeProvider>())
-                .Options));
+        services.AddKeyedTestFictionDbContext<UpdateAuthorProfileIntegrationTests>();
     }
 
     public async ValueTask InitializeAsync()

@@ -1,18 +1,16 @@
 using System.Security.Claims;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
-
-using IHFiction.Data;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Markdown;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -222,20 +220,9 @@ public sealed class UpdateStoryContentMarkdownTests : BaseIntegrationTest, IConf
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
     public static void ConfigureServices(IServiceCollection services)
     {
-        services.AddKeyedScoped(
-            nameof(UpdateStoryContentMarkdownTests),
-            (sp, key) => new FictionDbContext(new DbContextOptionsBuilder<FictionDbContext>()
-                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(UpdateStoryContentMarkdownTests)}"))
-                .UseSnakeCaseNamingConvention()
-                .ConfigureWarnings(w => w.Log(RelationalEventId.PendingModelChangesWarning))
-                .WithDefaultInterceptors(sp.GetRequiredService<TimeProvider>())
-                .Options));
-
-        services.AddKeyedScoped(
-            nameof(UpdateStoryContentMarkdownTests),
-            (sp, key) => sp.GetRequiredService<IMongoClient>()
-                .GetDatabase($"test_stories_{nameof(UpdateStoryContentMarkdownTests)}")
-                .GetCollection<WorkBody>("works"));
+        services
+            .AddKeyedTestFictionDbContext<UpdateStoryContentMarkdownTests>()
+            .AddKeyedTestWorkBodyCollection<UpdateStoryContentMarkdownTests>();
     }
 
     public async ValueTask InitializeAsync()
