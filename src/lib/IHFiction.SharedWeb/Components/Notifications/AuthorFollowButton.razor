@@ -1,13 +1,13 @@
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JS
+
+@implements IAsyncDisposable
 
 @if (_loaded)
 {
     <div>
-        <button class="button @ButtonClass is-fullwidth"
-                disabled="@_submitting"
-                @onclick="ToggleFollowAsync">
+        <button class="button @ButtonClass is-fullwidth" disabled="@_submitting" @onclick="ToggleFollowAsync">
             <span class="icon">
                 <i class="fas @(_isFollowing ? "fa-bell-slash" : "fa-bell")"></i>
             </span>
@@ -42,12 +42,16 @@ else
         ? "has-background-danger-soft has-text-danger-bold"
         : "has-background-link-soft has-text-link-bold";
 
+    private IJSObjectReference? module;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
         {
             return;
         }
+
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Layout/MainLayout.razor.js");
 
         if (!Ulid.TryParse(AuthorId, out _authorId))
         {
@@ -83,7 +87,7 @@ else
         {
             if (!_isFollowing)
             {
-                var subscription = await JSRuntime.InvokeAsync<BrowserPushSubscription?>("blazorPushNotifications.requestSubscription");
+                var subscription = await module!.InvokeAsync<BrowserPushSubscription?>("requestSubscription");
                 if (subscription is null)
                 {
                     _error = "Notifications are not available or permission was not granted.";
@@ -114,6 +118,21 @@ else
         finally
         {
             _submitting = false;
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (module is not null)
+        {
+            try
+            {
+                await module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The JS runtime is already disposed, so we can ignore this exception.
+            }
         }
     }
 }
