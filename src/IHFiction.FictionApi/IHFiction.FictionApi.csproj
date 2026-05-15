@@ -63,8 +63,8 @@
 
     <ItemGroup>
       <_SourceGeneratorAnalyzerCopy Include="@(_SourceGeneratorAnalyzerWithHash)">
-        <DestinationFolder>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\analyzers\source-generators\%(FileHash)\</DestinationFolder>
-        <Destination>$(MSBuildProjectDirectory)\obj\$(Configuration)\$(TargetFramework)\analyzers\source-generators\%(FileHash)\%(Filename)%(Extension)</Destination>
+        <DestinationFolder>$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/analyzers/source-generators/%(FileHash)/</DestinationFolder>
+        <Destination>$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/analyzers/source-generators/%(FileHash)/%(Filename)%(Extension)</Destination>
       </_SourceGeneratorAnalyzerCopy>
     </ItemGroup>
 
