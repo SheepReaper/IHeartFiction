@@ -67,14 +67,23 @@ The solution uses **Central Package Management** via `Directory.Packages.props` 
 **IMPORTANT:** Always build in Debug configuration first to match CI/CD pipeline:
 
 ```bash
-# Step 1: Restore dependencies (always run first)
+# Step 1: For cloud/ephemeral agents, run preflight first
+./tools/agent-bootstrap.sh
+
+# Step 2: Restore dependencies
 dotnet restore
 
-# Step 2: Build in Debug configuration (matches CI workflow)
+# Step 3: Build in Debug configuration (matches CI workflow)
 dotnet build --configuration Debug --no-restore
 
-# Step 3: Run tests (if code changes were made)
-dotnet test -c Release
+# Step 4: Run tests (if code changes were made)
+dotnet test -c Release --no-restore
+```
+
+Windows PowerShell preflight equivalent:
+
+```powershell
+./tools/agent-bootstrap.ps1
 ```
 
 **Build Warnings:**

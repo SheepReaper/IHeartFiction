@@ -43,8 +43,11 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
 
+      - name: Restore
+        run: dotnet restore
+
       - name: Build
-        run: dotnet build --configuration Debug
+        run: dotnet build --configuration Debug --no-restore
 
       - name: Show resolved build version
         shell: pwsh
@@ -60,7 +63,7 @@ jobs:
           Write-Host "InformationalVersion=$($fileInfo.ProductVersion)"
         
       - name: Test
-        run: dotnet test -c ${{ matrix.config }}
+        run: dotnet test -c ${{ matrix.config }} --no-restore
         shell: bash
 
       - name: Attest build provenance (internal artifacts)

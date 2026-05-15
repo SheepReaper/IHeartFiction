@@ -16,6 +16,27 @@ Use this skill to perform one complete, focused DRY refactor from discovery thro
 2. Establish git and branch state.
    - Run `git status --short --branch` and identify uncommitted user work.
    - Do not overwrite or revert unrelated changes.
+    - Validate that `origin` is configured before any fetch/pull/push command:
+
+```bash
+if ! git remote get-url origin >/dev/null 2>&1; then
+   if [ -n "${GITHUB_REPOSITORY:-}" ]; then
+      git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+   elif command -v gh >/dev/null 2>&1; then
+      REPO_NAME=$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || true)
+      if [ -n "$REPO_NAME" ]; then
+         git remote add origin "https://github.com/${REPO_NAME}.git"
+      fi
+   fi
+fi
+
+if ! git remote get-url origin >/dev/null 2>&1; then
+   echo "origin remote is not configured."
+   echo "Run: git remote add origin https://github.com/<owner>/<repo>.git"
+   exit 1
+fi
+```
+
    - Fetch the remote main branch if network/auth are available.
    - Create a dedicated branch from main, using the repository's default remote if present:
 
@@ -52,12 +73,14 @@ git switch -c dry-refactor/<short-topic>
 
 6. Publish the branch before any build.
    - Push the dedicated work branch upstream before running project builds or tests that build the project. This gives SourceLink a remote branch and avoids noisy errors about missing remote metadata.
+   - Run dependency restore before any `--no-restore` command.
 
 ```bash
 git push -u origin HEAD
 ```
 
    - If network or auth is unavailable, report that validation may include SourceLink remote warnings and continue with the narrowest useful local validation.
+   - If `origin` is missing and cannot be inferred, stop and request explicit remote configuration.
 
 7. Verify.
    - Run the most relevant tests, build, formatter, or analyzer for touched projects after the branch has been pushed.

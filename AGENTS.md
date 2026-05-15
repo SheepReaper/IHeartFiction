@@ -56,3 +56,29 @@ Use this pattern by default:
 - Do not use cached delegate fields from `LoggerMessage.Define(...)` unless explicitly required.
 
 This aligns with analyzer expectations and keeps logging style consistent across the repository.
+
+## Cloud Agent Preflight (Mandatory)
+
+Before running `dotnet build --no-restore`, `dotnet test --no-restore`, or git push/fetch commands that assume `origin`, run:
+
+```bash
+./tools/agent-bootstrap.sh
+```
+
+On Windows PowerShell, run:
+
+```powershell
+./tools/agent-bootstrap.ps1
+```
+
+Preflight guarantees:
+
+- `origin` remote is validated and configured when it can be inferred.
+- `dotnet restore` has completed so `project.assets.json` is present.
+- The current .NET SDK version is printed for diagnostics.
+
+If preflight cannot infer a remote, do not guess. Use the explicit command:
+
+```bash
+git remote add origin https://github.com/SheepReaper/IHeartFiction.git
+```
