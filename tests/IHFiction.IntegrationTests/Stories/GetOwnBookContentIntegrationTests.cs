@@ -1,13 +1,13 @@
 using System.Security.Claims;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 using MongoDB.Driver;
 
@@ -116,18 +116,9 @@ public sealed class GetOwnBookContentIntegrationTests : BaseIntegrationTest, ICo
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "This method implements IConfigureServices<T>")]
     public static void ConfigureServices(IServiceCollection services)
     {
-        services.AddKeyedScoped(
-            nameof(GetOwnBookContentIntegrationTests),
-            (sp, key) => new FictionDbContext(new DbContextOptionsBuilder<FictionDbContext>()
-                .UseNpgsql(sp.GetRequiredService<PgsqlConnectionStringProvider>().GetConnectionStringForDatabase($"test_{nameof(GetOwnBookContentIntegrationTests)}"))
-                .UseSnakeCaseNamingConvention()
-                .Options));
-
-        services.AddKeyedScoped(
-            nameof(GetOwnBookContentIntegrationTests),
-            (sp, key) => sp.GetRequiredService<IMongoClient>()
-                .GetDatabase($"test_stories_{nameof(GetOwnBookContentIntegrationTests)}")
-                .GetCollection<WorkBody>("works"));
+        services
+            .AddKeyedTestFictionDbContext<GetOwnBookContentIntegrationTests>(configurePendingModelWarning: false, useDefaultInterceptors: false)
+            .AddKeyedTestWorkBodyCollection<GetOwnBookContentIntegrationTests>();
     }
 
     public async ValueTask InitializeAsync()
