@@ -23,6 +23,7 @@ using IHFiction.FictionApi.Infrastructure;
 using IHFiction.FictionApi.Notifications;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Markdown;
+using IHFiction.SharedKernel.Notifications;
 
 using Keycloak.AuthServices.Authorization;
 

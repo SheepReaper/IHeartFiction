@@ -7,6 +7,8 @@ using Microsoft.Extensions.Options;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Notifications.Domain;
 
+using IHFiction.SharedKernel.Notifications;
+
 using WebPush;
 
 namespace IHFiction.FictionApi.Notifications;

@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using IHFiction.Data;
 using IHFiction.Data.Contexts;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Notifications;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Extensions;
@@ -37,6 +38,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddOptions<WebPushOptions>()
+    .Bind(builder.Configuration.GetSection("WebPush"))
+    .Validate(options =>
+        !string.IsNullOrWhiteSpace(options.PublicKey),
+        "WebPush options must have PublicKey configured.");
 
 builder.Services.AddOptions<SiteUrlOptions>()
     .Configure(options =>
