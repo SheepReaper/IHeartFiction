@@ -159,9 +159,6 @@ internal sealed class UnfollowStory(
 
 internal sealed class FollowStoryForDevice(FictionDbContext context) : IUseCase, INameEndpoint<FollowStoryForDevice>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record FollowStoryForDeviceQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<FollowStoryForDeviceResponse>]
@@ -175,7 +172,7 @@ internal sealed class FollowStoryForDevice(FictionDbContext context) : IUseCase,
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var story = await context.Stories
             .AsNoTracking()
@@ -231,9 +228,6 @@ internal sealed class FollowStoryForDevice(FictionDbContext context) : IUseCase,
 
 internal sealed class UnfollowStoryForDevice(FictionDbContext context) : IUseCase, INameEndpoint<UnfollowStoryForDevice>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record UnfollowStoryForDeviceQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UnfollowStoryForDeviceResponse>]
@@ -247,7 +241,7 @@ internal sealed class UnfollowStoryForDevice(FictionDbContext context) : IUseCas
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var story = await context.Stories
             .AsNoTracking()

@@ -14,9 +14,6 @@ namespace IHFiction.FictionApi.Notifications;
 
 internal sealed class GetDeviceFollows(FictionDbContext context) : IUseCase, INameEndpoint<GetDeviceFollows>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record GetDeviceFollowsQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<GetDeviceFollowsResponse>]
@@ -33,7 +30,7 @@ internal sealed class GetDeviceFollows(FictionDbContext context) : IUseCase, INa
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var authors = await context.DeviceAuthorFollows
             .AsNoTracking()

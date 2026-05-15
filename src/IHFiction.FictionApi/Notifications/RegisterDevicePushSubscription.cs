@@ -15,9 +15,6 @@ namespace IHFiction.FictionApi.Notifications;
 
 internal sealed class RegisterDevicePushSubscription(FictionDbContext context) : IUseCase, INameEndpoint<RegisterDevicePushSubscription>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record RegisterDevicePushSubscriptionBody(
         [property: Required]
         [property: StringLength(500)]
@@ -39,7 +36,7 @@ internal sealed class RegisterDevicePushSubscription(FictionDbContext context) :
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
         if (!IsValid(body)) return RegisterOwnPushSubscription.InvalidSubscription;
 
         var subscription = await context.DevicePushSubscriptions

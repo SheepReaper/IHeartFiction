@@ -14,9 +14,6 @@ namespace IHFiction.FictionApi.Notifications;
 
 internal sealed class GetDeviceNotifications(FictionDbContext context) : IUseCase, INameEndpoint<GetDeviceNotifications>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record GetDeviceNotificationsQuery(
         [property: Range(1, 200, ErrorMessage = "Limit must be between 1 and 200.")]
         int Limit = 50,
@@ -50,7 +47,7 @@ internal sealed class GetDeviceNotifications(FictionDbContext context) : IUseCas
         GetDeviceNotificationsQuery query,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var deliveries = await context.DeviceNotificationDeliveries
             .Where(delivery => delivery.DeviceId == deviceId)
