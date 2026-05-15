@@ -64,6 +64,7 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
+    .WithEnvironment("WebPush__PublicKey", vapidPubKey)
     .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
     .WithReference(fictionApi) // API client uses service discovery if ApiBaseAddress is not set
     .WithReference(fictionDb) // Blazor server-side uses db directly via service discovery

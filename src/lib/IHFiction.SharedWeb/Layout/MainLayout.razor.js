@@ -1,7 +1,7 @@
-const applicationServerPublicKey = 'BEUD5p2W5S7MVXTeiRQwHB-K7eYiItpmaBMiJs8bwcdrv8J7CxSyYCh0Gs8eo2y1iDr6Vt1xjpWu_4yEKwoxCpk';
 const serviceWorkerUrl = './_content/IHFiction.SharedWeb/js/service-worker.js';
 
-export async function requestSubscription() {
+/** @param {string} applicationServerPublicKey  */
+export async function requestSubscription(applicationServerPublicKey) {
     if (!isSupported()) {
         return null;
     }
@@ -16,7 +16,7 @@ export async function requestSubscription() {
     let subscription = await registration.pushManager.getSubscription();
 
     if (!subscription) {
-        subscription = await subscribe(registration);
+        subscription = await subscribe(registration, applicationServerPublicKey);
     }
 
     return subscription ? { subscription, userAgent: navigator.userAgent } : null;
@@ -84,8 +84,11 @@ async function waitForActiveServiceWorker(registration) {
     });
 }
 
-/** @param {ServiceWorkerRegistration} worker */
-async function subscribe(worker) {
+/** 
+ * @param {ServiceWorkerRegistration} worker 
+ * @param {string} applicationServerPublicKey
+*/
+async function subscribe(worker, applicationServerPublicKey) {
     try {
         return await worker.pushManager.subscribe({
             userVisibleOnly: true,

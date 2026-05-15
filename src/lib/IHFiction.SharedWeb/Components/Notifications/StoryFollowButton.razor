@@ -1,6 +1,10 @@
+@using Microsoft.Extensions.Options
+@using IHFiction.SharedKernel.Notifications
+
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JS
+@inject IOptions<WebPushOptions> WebPushOptions
 
 @implements IAsyncDisposable
 
@@ -107,7 +111,7 @@ else
         {
             if (!_isFollowing)
             {
-                var subscription = await module!.InvokeAsync<BrowserPushSubscription?>("requestSubscription");
+                var subscription = await module!.InvokeAsync<BrowserPushSubscription?>("requestSubscription", WebPushOptions.Value.PublicKey);
                 if (subscription is null)
                 {
                     _error = "Notifications are not available or permission was not granted.";
