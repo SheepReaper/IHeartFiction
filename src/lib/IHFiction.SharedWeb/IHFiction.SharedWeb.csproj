@@ -33,6 +33,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>IHFiction.UnitTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />
     <ProjectReference Include="../IHFiction.Data/IHFiction.Data.csproj" />
   </ItemGroup>

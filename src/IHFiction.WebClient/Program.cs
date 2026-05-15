@@ -124,6 +124,8 @@ builder.Services.AddHttpClient<FictionApiClient>(client =>
         : new("https+http://fiction"))
         .AddHttpMessageHandler<AuthenticationHandler>();
 
+builder.Services.AddTransient<IFictionApiClient>(services => services.GetRequiredService<FictionApiClient>());
+
 builder.Services.AddTransient<AccountService>();
 builder.Services.AddTransient<AuthorService>();
 builder.Services.AddTransient<BookService>();

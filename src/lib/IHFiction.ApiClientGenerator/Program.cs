@@ -15,6 +15,7 @@ CSharpClientGeneratorSettings settings = new()
     ClassName = "FictionApiClient",
     UseBaseUrl = false,
     GenerateOptionalParameters = true,
+    GenerateClientInterfaces = true,
     CSharpGeneratorSettings =
     {
         Namespace = "IHFiction.SharedWeb",

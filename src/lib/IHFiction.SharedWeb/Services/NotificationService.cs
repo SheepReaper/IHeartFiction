@@ -1,25 +1,56 @@
 using System.Globalization;
+
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
-public sealed class NotificationService(FictionApiClient client, BrowserProtectedStorageService storage)
+public sealed class NotificationService
 {
     private const string DeviceIdStorageKey = "notifications:device-id";
+    private readonly IFictionApiClient _client;
+    private readonly BrowserProtectedStorageService? _storage;
+    private readonly Func<Task<string?>> getOrCreateDeviceIdAsync;
+
+    public NotificationService(IFictionApiClient client, BrowserProtectedStorageService storage)
+    {
+        _client = client;
+        _storage = storage;
+        getOrCreateDeviceIdAsync = GetOrCreateStoredDeviceIdAsync;
+    }
+
+    public NotificationService(IFictionApiClient client, Func<Task<string?>> getOrCreateDeviceIdAsync)
+    {
+        _client = client;
+        this.getOrCreateDeviceIdAsync = getOrCreateDeviceIdAsync;
+    }
 
     public async Task<Result<FollowSnapshot>> GetFollowSnapshotAsync(bool isAuthenticated, CancellationToken cancellationToken = default)
     {
         if (isAuthenticated)
         {
-            var result = await client.GetOwnFollowsAsync(null, cancellationToken).HandleApiException();
-            return result.IsFailure
-                ? result.DomainError
-                : MapFollowSnapshot(result.Value);
+            var ownResult = await _client.GetOwnFollowsAsync(null, cancellationToken).HandleApiException();
+            var authDeviceId = await GetOrCreateDeviceIdAsync();
+            var authDeviceResult = await _client.GetDeviceFollowsAsync(authDeviceId, null, cancellationToken).HandleApiException();
+
+            if (ownResult.IsFailure && authDeviceResult.IsFailure)
+            {
+                return ownResult.DomainError;
+            }
+
+            var ownSnapshot = ownResult.IsFailure
+                ? new FollowSnapshot([], [])
+                : MapFollowSnapshot(ownResult.Value);
+
+            var deviceSnapshot = authDeviceResult.IsFailure
+                ? new FollowSnapshot([], [])
+                : MapFollowSnapshot(authDeviceResult.Value);
+
+            return MergeFollowSnapshot(ownSnapshot, deviceSnapshot);
         }
 
         var deviceId = await GetOrCreateDeviceIdAsync();
-        var deviceResult = await client.GetDeviceFollowsAsync(deviceId, null, cancellationToken).HandleApiException();
+        var deviceResult = await _client.GetDeviceFollowsAsync(deviceId, null, cancellationToken).HandleApiException();
         return deviceResult.IsFailure
             ? deviceResult.DomainError
             : MapFollowSnapshot(deviceResult.Value);
@@ -29,14 +60,28 @@ public sealed class NotificationService(FictionApiClient client, BrowserProtecte
     {
         if (isAuthenticated)
         {
-            var result = await client.GetOwnNotificationsAsync(limit, null, cancellationToken).HandleApiException();
-            return result.IsFailure
-                ? result.DomainError
-                : MapNotificationInbox(result.Value);
+            var ownResult = await _client.GetOwnNotificationsAsync(limit, null, cancellationToken).HandleApiException();
+            var authDeviceId = await GetOrCreateDeviceIdAsync();
+            var authDeviceResult = await _client.GetDeviceNotificationsAsync(authDeviceId, limit, null, cancellationToken).HandleApiException();
+
+            if (ownResult.IsFailure && authDeviceResult.IsFailure)
+            {
+                return ownResult.DomainError;
+            }
+
+            var ownInbox = ownResult.IsFailure
+                ? new NotificationInbox([], 0)
+                : MapNotificationInbox(ownResult.Value);
+
+            var deviceInbox = authDeviceResult.IsFailure
+                ? new NotificationInbox([], 0)
+                : MapNotificationInbox(authDeviceResult.Value);
+
+            return MergeNotificationInbox(ownInbox, deviceInbox, limit);
         }
 
         var deviceId = await GetOrCreateDeviceIdAsync();
-        var deviceResult = await client.GetDeviceNotificationsAsync(deviceId, limit, null, cancellationToken).HandleApiException();
+        var deviceResult = await _client.GetDeviceNotificationsAsync(deviceId, limit, null, cancellationToken).HandleApiException();
         return deviceResult.IsFailure
             ? deviceResult.DomainError
             : MapNotificationInbox(deviceResult.Value);
@@ -45,36 +90,50 @@ public sealed class NotificationService(FictionApiClient client, BrowserProtecte
     public async Task<Result> FollowAuthorAsync(Ulid authorId, bool isAuthenticated, CancellationToken cancellationToken = default)
     {
         return isAuthenticated
-            ? await client.FollowAuthorAsync(authorId, null, cancellationToken).HandleApiException()
-            : await client.FollowAuthorForDeviceAsync(authorId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
+            ? await _client.FollowAuthorAsync(authorId, null, cancellationToken).HandleApiException()
+            : await _client.FollowAuthorForDeviceAsync(authorId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
     }
 
     public async Task<Result> UnfollowAuthorAsync(Ulid authorId, bool isAuthenticated, CancellationToken cancellationToken = default)
     {
         return isAuthenticated
-            ? await client.UnfollowAuthorAsync(authorId, null, cancellationToken).HandleApiException()
-            : await client.UnfollowAuthorForDeviceAsync(authorId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
+            ? await _client.UnfollowAuthorAsync(authorId, null, cancellationToken).HandleApiException()
+            : await _client.UnfollowAuthorForDeviceAsync(authorId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
     }
 
     public async Task<Result> FollowStoryAsync(Ulid storyId, bool isAuthenticated, CancellationToken cancellationToken = default)
     {
         return isAuthenticated
-            ? await client.FollowStoryAsync(storyId, null, cancellationToken).HandleApiException()
-            : await client.FollowStoryForDeviceAsync(storyId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
+            ? await _client.FollowStoryAsync(storyId, null, cancellationToken).HandleApiException()
+            : await _client.FollowStoryForDeviceAsync(storyId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
     }
 
     public async Task<Result> UnfollowStoryAsync(Ulid storyId, bool isAuthenticated, CancellationToken cancellationToken = default)
     {
         return isAuthenticated
-            ? await client.UnfollowStoryAsync(storyId, null, cancellationToken).HandleApiException()
-            : await client.UnfollowStoryForDeviceAsync(storyId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
+            ? await _client.UnfollowStoryAsync(storyId, null, cancellationToken).HandleApiException()
+            : await _client.UnfollowStoryForDeviceAsync(storyId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
     }
 
     public async Task<Result> MarkNotificationReadAsync(Ulid notificationId, bool isAuthenticated, CancellationToken cancellationToken = default)
     {
-        return isAuthenticated
-            ? await client.MarkOwnNotificationReadAsync(notificationId, null, cancellationToken).HandleApiException()
-            : await client.MarkDeviceNotificationReadAsync(notificationId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
+        if (!isAuthenticated)
+        {
+            return await _client.MarkDeviceNotificationReadAsync(notificationId, await GetOrCreateDeviceIdAsync(), null, cancellationToken).HandleApiException();
+        }
+
+        var ownResult = await _client.MarkOwnNotificationReadAsync(notificationId, null, cancellationToken).HandleApiException();
+        if (ownResult.IsSuccess)
+        {
+            return ownResult;
+        }
+
+        var deviceId = await GetOrCreateDeviceIdAsync();
+        var deviceResult = await _client.MarkDeviceNotificationReadAsync(notificationId, deviceId, null, cancellationToken).HandleApiException();
+
+        return deviceResult.IsSuccess
+            ? deviceResult
+            : ownResult;
     }
 
     public async Task<Result> RegisterPushSubscriptionAsync(
@@ -85,8 +144,8 @@ public sealed class NotificationService(FictionApiClient client, BrowserProtecte
         ArgumentNullException.ThrowIfNull(subscription);
 
         return isAuthenticated
-            ? await client.RegisterOwnPushSubscriptionAsync(MapOwnPushSubscription(subscription), cancellationToken).HandleApiException()
-            : await client.RegisterDevicePushSubscriptionAsync(MapDevicePushSubscription(subscription), await GetOrCreateDeviceIdAsync(), cancellationToken).HandleApiException();
+            ? await _client.RegisterOwnPushSubscriptionAsync(subscription, cancellationToken).HandleApiException()
+            : await _client.RegisterDevicePushSubscriptionAsync(subscription, await GetOrCreateDeviceIdAsync(), cancellationToken).HandleApiException();
     }
 
     public async Task<Result<bool>> IsAuthorFollowedAsync(Ulid authorId, bool isAuthenticated, CancellationToken cancellationToken = default)
@@ -113,28 +172,33 @@ public sealed class NotificationService(FictionApiClient client, BrowserProtecte
 
     private async Task<string?> GetOrCreateDeviceIdAsync()
     {
-        var existing = await storage.GetAsync<string>(DeviceIdStorageKey);
+        return await getOrCreateDeviceIdAsync();
+    }
+
+    private async Task<string?> GetOrCreateStoredDeviceIdAsync()
+    {
+        var existing = await _storage!.GetAsync<string>(DeviceIdStorageKey);
         if (!string.IsNullOrWhiteSpace(existing))
         {
             return existing;
         }
 
         var created = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
-        await storage.SetAsync(DeviceIdStorageKey, created);
+        await _storage.SetAsync(DeviceIdStorageKey, created);
         return created;
     }
 
-    private static FollowSnapshot MapFollowSnapshot(global::IHFiction.SharedWeb.GetOwnFollowsResponse response) =>
+    private static FollowSnapshot MapFollowSnapshot(GetOwnFollowsResponse response) =>
         new(
             response.Authors.Select(author => new FollowedAuthor(ParseUlid(author.AuthorId), author.Name)).ToList(),
             response.Stories.Select(story => new FollowedStory(ParseUlid(story.StoryId), story.Title, story.IsPublished)).ToList());
 
-    private static FollowSnapshot MapFollowSnapshot(global::IHFiction.SharedWeb.GetDeviceFollowsResponse response) =>
+    private static FollowSnapshot MapFollowSnapshot(GetDeviceFollowsResponse response) =>
         new(
             response.Authors.Select(author => new FollowedAuthor(ParseUlid(author.AuthorId), author.Name)).ToList(),
             response.Stories.Select(story => new FollowedStory(ParseUlid(story.StoryId), story.Title, story.IsPublished)).ToList());
 
-    private static NotificationInbox MapNotificationInbox(global::IHFiction.SharedWeb.GetOwnNotificationsResponse response) =>
+    private static NotificationInbox MapNotificationInbox(GetOwnNotificationsResponse response) =>
         new(
             response.Items.Select(item => new NotificationListItem(
                 ParseUlid(item.NotificationId),
@@ -153,7 +217,7 @@ public sealed class NotificationService(FictionApiClient client, BrowserProtecte
                 item.ChapterTitle)).ToList(),
             response.UnreadCount);
 
-    private static NotificationInbox MapNotificationInbox(global::IHFiction.SharedWeb.GetDeviceNotificationsResponse response) =>
+    private static NotificationInbox MapNotificationInbox(GetDeviceNotificationsResponse response) =>
         new(
             [.. response.Items.Select(item => new NotificationListItem(
                 ParseUlid(item.NotificationId),
@@ -172,27 +236,43 @@ public sealed class NotificationService(FictionApiClient client, BrowserProtecte
                 item.ChapterTitle))],
             response.UnreadCount);
 
+    private static FollowSnapshot MergeFollowSnapshot(FollowSnapshot own, FollowSnapshot device)
+    {
+        var authors = own.Authors
+            .Concat(device.Authors)
+            .DistinctBy(author => author.AuthorId)
+            .ToList();
+
+        var stories = own.Stories
+            .Concat(device.Stories)
+            .DistinctBy(story => story.StoryId)
+            .ToList();
+
+        return new FollowSnapshot(authors, stories);
+    }
+
+    private static NotificationInbox MergeNotificationInbox(NotificationInbox own, NotificationInbox device, int limit)
+    {
+        var items = own.Items
+            .Concat(device.Items)
+            .GroupBy(item => item.NotificationId)
+            .Select(group =>
+            {
+                var ordered = group
+                    .OrderByDescending(item => item.DeliveredAt)
+                    .ToList();
+
+                return ordered.FirstOrDefault(item => item.ReadAt is null) ?? ordered[0];
+            })
+            .OrderByDescending(item => item.DeliveredAt)
+            .Take(limit)
+            .ToList();
+
+        var unreadCount = items.Count(item => item.ReadAt is null);
+        return new NotificationInbox(items, unreadCount);
+    }
+
     private static Ulid ParseUlid(Ulid value) => value;
-
-    private static RegisterOwnPushSubscriptionBody MapOwnPushSubscription(BrowserPushSubscription subscription) =>
-        new()
-        {
-            Endpoint = subscription.Endpoint,
-            P256dhKey = subscription.P256dhKey,
-            AuthKey = subscription.AuthKey,
-            ExpiresAt = subscription.ExpiresAt,
-            UserAgent = subscription.UserAgent
-        };
-
-    private static RegisterDevicePushSubscriptionBody MapDevicePushSubscription(BrowserPushSubscription subscription) =>
-        new()
-        {
-            Endpoint = subscription.Endpoint,
-            P256dhKey = subscription.P256dhKey,
-            AuthKey = subscription.AuthKey,
-            ExpiresAt = subscription.ExpiresAt,
-            UserAgent = subscription.UserAgent
-        };
 }
 
 public sealed record FollowSnapshot(
@@ -223,9 +303,57 @@ public sealed record NotificationListItem(
     Ulid? ChapterId,
     string? ChapterTitle);
 
-public sealed record BrowserPushSubscription(
+public sealed record PushSubscriptionKeys(
+    string P256DH,
+    string Auth
+);
+
+public sealed record PushSubscription(
     string Endpoint,
-    string P256dhKey,
-    string AuthKey,
-    DateTime? ExpiresAt,
-    string? UserAgent);
+    double? ExpirationTime,
+    PushSubscriptionKeys? Keys);
+
+public sealed record BrowserPushSubscription(
+    PushSubscription Subscription,
+    string? UserAgent)
+{
+    public static RegisterDevicePushSubscriptionBody ToRegisterDevicePushSubscriptionBody(BrowserPushSubscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(subscription);
+
+        return new()
+        {
+            Endpoint = subscription.Subscription.Endpoint,
+            P256dhKey = subscription.Subscription.Keys?.P256DH,
+            AuthKey = subscription.Subscription.Keys?.Auth,
+            ExpiresAt = subscription.Subscription.ExpirationTime.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds((long)subscription.Subscription.ExpirationTime) : null,
+            UserAgent = subscription.UserAgent
+        };
+    }
+
+    public static implicit operator RegisterDevicePushSubscriptionBody(BrowserPushSubscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(subscription);
+        return ToRegisterDevicePushSubscriptionBody(subscription);
+    }
+
+    public static RegisterOwnPushSubscriptionBody ToRegisterOwnPushSubscriptionBody(BrowserPushSubscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(subscription);
+
+        return new()
+        {
+            Endpoint = subscription.Subscription.Endpoint,
+            P256dhKey = subscription.Subscription.Keys?.P256DH,
+            AuthKey = subscription.Subscription.Keys?.Auth,
+            ExpiresAt = subscription.Subscription.ExpirationTime.HasValue ? DateTimeOffset.FromUnixTimeMilliseconds((long)subscription.Subscription.ExpirationTime) : null,
+            UserAgent = subscription.UserAgent
+        };
+    }
+
+    public static implicit operator RegisterOwnPushSubscriptionBody(BrowserPushSubscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(subscription);
+        return ToRegisterOwnPushSubscriptionBody(subscription);
+    }
+}
