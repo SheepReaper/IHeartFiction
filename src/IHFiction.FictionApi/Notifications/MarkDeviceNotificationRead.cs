@@ -16,9 +16,6 @@ internal sealed class MarkDeviceNotificationRead(
     FictionDbContext context,
     TimeProvider timeProvider) : IUseCase, INameEndpoint<MarkDeviceNotificationRead>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal static readonly DomainError NotificationNotFound =
         new("Notification.NotFound", "Notification not found.");
 
@@ -35,7 +32,7 @@ internal sealed class MarkDeviceNotificationRead(
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var delivery = await context.DeviceNotificationDeliveries
             .FirstOrDefaultAsync(candidate => candidate.DeviceId == deviceId && candidate.NotificationId == id, cancellationToken);

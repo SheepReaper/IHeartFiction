@@ -41,6 +41,14 @@ internal static class CommonErrors
     }
 
     /// <summary>
+    /// Device-related errors for anonymous browser or installed PWA device operations.
+    /// </summary>
+    internal static class Device
+    {
+        public static readonly DomainError InvalidIdentifier = new("Device.InvalidIdentifier", "A valid device identifier is required.");
+    }
+
+    /// <summary>
     /// Authentication and authorization errors.
     /// </summary>
     internal static class Auth

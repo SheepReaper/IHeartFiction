@@ -151,9 +151,6 @@ internal sealed class UnfollowAuthor(
 
 internal sealed class FollowAuthorForDevice(FictionDbContext context) : IUseCase, INameEndpoint<FollowAuthorForDevice>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record FollowAuthorForDeviceQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<FollowAuthorForDeviceResponse>]
@@ -167,7 +164,7 @@ internal sealed class FollowAuthorForDevice(FictionDbContext context) : IUseCase
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var exists = await context.Authors.AnyAsync(author => author.Id == id, cancellationToken);
         if (!exists) return CommonErrors.Author.NotFound;
@@ -219,9 +216,6 @@ internal sealed class FollowAuthorForDevice(FictionDbContext context) : IUseCase
 
 internal sealed class UnfollowAuthorForDevice(FictionDbContext context) : IUseCase, INameEndpoint<UnfollowAuthorForDevice>
 {
-    internal static readonly DomainError InvalidDeviceId =
-        new("Device.InvalidIdentifier", "A valid device identifier is required.");
-
     internal sealed record UnfollowAuthorForDeviceQuery(
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<UnfollowAuthorForDeviceResponse>]
@@ -235,7 +229,7 @@ internal sealed class UnfollowAuthorForDevice(FictionDbContext context) : IUseCa
         string? deviceId,
         CancellationToken cancellationToken = default)
     {
-        if (!DeviceIdHeader.IsValid(deviceId)) return InvalidDeviceId;
+        if (!DeviceIdHeader.IsValid(deviceId)) return CommonErrors.Device.InvalidIdentifier;
 
         var exists = await context.Authors.AnyAsync(author => author.Id == id, cancellationToken);
         if (!exists) return CommonErrors.Author.NotFound;
