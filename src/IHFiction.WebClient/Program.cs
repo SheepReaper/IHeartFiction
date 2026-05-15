@@ -154,8 +154,6 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-
 if (app.Environment.IsProduction())
 {
     string[] trustedProxiesCidr = [.. (builder.Configuration["TrustedProxies"]
@@ -184,13 +182,30 @@ if (app.Environment.IsProduction())
     app.UseCsp();
 }
 
-app.UseAntiforgery();
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
+app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals(
+        "/_content/IHFiction.SharedWeb/js/service-worker.js",
+        StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.Headers["Service-Worker-Allowed"] = "/";
+    }
+
+    await next();
+});
+
 app.UseRequestTimeouts();
-app.UseOutputCache();
-app.MapStaticAssets();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
+app.UseOutputCache();
+
+app.MapStaticAssets();
 
 app.MapGet("/stories/{id}/cover", async Task<IResult> (
     string id,
