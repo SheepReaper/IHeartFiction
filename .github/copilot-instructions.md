@@ -237,6 +237,17 @@ dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFict
 - **`Directory.Packages.props`** - Central package version management
 - **`global.json`** - SDK version pinned to 10.0.100-rc.1
 
+### Logging Pattern Preference
+
+For C# logging, prefer source-generated `LoggerMessage` attributes over cached delegates from `LoggerMessage.Define(...)`.
+
+Default implementation pattern:
+- Make the containing class `partial`.
+- Use `private partial void` logging methods (no bodies) annotated with `[LoggerMessage(...)]`.
+- Keep event IDs/messages explicit and stable.
+
+Only use delegate-based logging if there is a specific reason that source generation cannot be used.
+
 ### Application Settings
 
 - `appsettings.json` - Base configuration

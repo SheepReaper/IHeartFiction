@@ -507,3 +507,6 @@ NuGet.config
 
 # Agent generated artifacts
 /.artifacts/*
+
+# C# Dev kit language server generated files
+*.lscache 

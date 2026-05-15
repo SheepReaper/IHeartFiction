@@ -44,3 +44,15 @@ Use WolverineFx when:
 - Queued work should be processed in parallel by multiple instances.
 
 Do not refactor existing features solely to adopt WolverineFx unless explicitly requested.
+
+## Logging Guidance (Preferred Pattern)
+
+When adding or updating structured logs in C# code, prefer source-generated logging via `LoggerMessage` attributes.
+
+Use this pattern by default:
+
+- Mark the containing class as `partial`.
+- Define `private partial void` logging methods with `[LoggerMessage(...)]` attributes.
+- Do not use cached delegate fields from `LoggerMessage.Define(...)` unless explicitly required.
+
+This aligns with analyzer expectations and keeps logging style consistent across the repository.
