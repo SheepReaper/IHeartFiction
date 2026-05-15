@@ -9,6 +9,7 @@ using IHFiction.Data.Notifications.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Notifications;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -247,6 +248,8 @@ internal sealed class UnfollowAuthorForDevice(FictionDbContext context) : IUseCa
             context.DeviceAuthorFollows.Remove(existing);
             await context.SaveChangesAsync(cancellationToken);
         }
+
+        await DevicePushSubscriptionCleanup.RemoveIfDeviceHasNoFollowsAsync(context, deviceId!, cancellationToken);
 
         return new UnfollowAuthorForDeviceResponse(id, false);
     }
