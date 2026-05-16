@@ -1,26 +1,28 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Net.Mime;
 using System.Net;
+using System.Net.Mime;
 using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 using IHFiction.Data;
 using IHFiction.Data.Contexts;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Notifications;
-using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb;
+using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Extensions;
 using IHFiction.SharedWeb.Services;
+using IHFiction.SharedWeb.Sitemap;
 using IHFiction.WebClient;
 using IHFiction.WebClient.Components;
 
@@ -30,7 +32,6 @@ using Markdig;
 
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core.Services;
-
 const string keycloakAuthenticationScheme = "Keycloak";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,7 +60,8 @@ builder.Services.AddOptions<SiteUrlOptions>()
 
 builder.Services.AddSingleton<IComponentBaseProvider, ComponentBaseProvider>();
 
-builder.Services.AddDefaultSitemapServices<HttpContextBaseUrlProvider>();
+builder.Services.AddDefaultSitemapServices<HttpContextBaseUrlProvider>()
+    .AddCustomSitemapNodeProvider<DynamicSitemapNodeProvider>();
 
 builder.AddNpgsqlDbContext<FictionDbContext>(
     "fiction-db",
@@ -121,7 +123,21 @@ builder.Services.AddRazorComponents()
     });
 
 builder.Services.AddRequestTimeouts();
-builder.Services.AddOutputCache();
+builder.Services.AddOutputCache(options =>
+{
+    // Apply to middleware-generated sitemap response
+    options.AddBasePolicy(policy => policy
+        .With(ctx =>
+            HttpMethods.IsGet(ctx.HttpContext.Request.Method) &&
+            ctx.HttpContext.Request.Path.Equals("/sitemap.xml", StringComparison.OrdinalIgnoreCase))
+        .Expire(TimeSpan.FromHours(1))
+        .Tag("sitemap"));
+
+    options.AddPolicy("Robots", policy => policy
+        .Expire(TimeSpan.FromHours(6))
+        .SetVaryByHost(false)
+        .Tag("robots"));
+});
 
 builder.Services.AddTransient<AuthenticationHandler>();
 
@@ -208,10 +224,6 @@ app.Use(async (context, next) =>
 });
 
 app.UseRequestTimeouts();
-
-app.UseAuthentication();
-app.UseAuthorization();
-app.UseAntiforgery();
 app.UseOutputCache();
 
 app.MapStaticAssets();
@@ -254,34 +266,34 @@ app.MapGet("/stories/{id}/cover", async Task<IResult> (
     return TypedResults.File(content, contentType);
 });
 
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode(options => options.ContentSecurityFrameAncestorsPolicy = null) // This is set in the CSP above
-    .AddAdditionalAssemblies(typeof(IHFiction.SharedWeb._Imports).Assembly);
-
 app.MapGroup("authentication")
     .MapLoginAndLogout(CookieAuthenticationDefaults.AuthenticationScheme, keycloakAuthenticationScheme);
 
 app.MapCspReportingEndpoint();
 
-app.MapGet("/robots.txt", async ctx =>
+app.MapGet("/robots.txt", (IOptions<SiteUrlOptions> siteUrl, HttpContext ctx) =>
 {
-    var baseUrl = $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}".TrimEnd('/');
+    var baseUrl = siteUrl.Value.BaseUrl!.ToString().TrimEnd('/');
 
-    var body = $"Sitemap: {baseUrl}/sitemap.xml\nSitemap: {baseUrl}/sitemap-dynamic.xml\n";
+    ctx.Response.Headers.CacheControl = "public, max-age=21600, s-maxage=21600";
 
-    ctx.Response.ContentType = MediaTypeNames.Text.Plain;
-    ctx.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0";
-    ctx.Response.Headers.Pragma = "no-cache";
-    ctx.Response.Headers.Expires = "0";
+    var body = $"Sitemap: {baseUrl}/sitemap.xml\n";
 
-    await TypedResults.Text(body).ExecuteAsync(ctx);
-});
+    return Results.Text(body, MediaTypeNames.Text.Plain);
+}).CacheOutput("Robots");
+
+app.UseSitemap();
 
 app.MapMethods("/uptime", [HttpMethods.Head, HttpMethods.Get], () => Results.Ok());
 
-app.MapStaticSitemap();
-app.MapDynamicSitemap();
-
 app.MapDefaultEndpoints();
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode(options => options.ContentSecurityFrameAncestorsPolicy = null) // This is set in the CSP above
+    .AddAdditionalAssemblies(typeof(IHFiction.SharedWeb._Imports).Assembly);
 
 await app.RunAsync();

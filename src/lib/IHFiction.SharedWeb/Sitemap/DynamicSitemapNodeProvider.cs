@@ -9,12 +9,22 @@ namespace IHFiction.SharedWeb.Sitemap;
 
 public class DynamicSitemapNodeProvider(FictionDbContext db) : ICustomSitemapNodeProvider
 {
-    private readonly FictionDbContext _db = db;
-
     public IEnumerable<SitemapNode> GetNodes()
     {
+        // Newest published author
+        yield return new SitemapNode("/authors", db.Authors
+            .Where(a => a.Works.Any(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))
+            .OrderBy(a => a.Id)
+            .Last().UpdatedAt);
+
+        // Newest published story
+        yield return new SitemapNode("/stories", db.Stories
+            .Where(s => s.PublishedAt != null)
+            .OrderBy(s => s.Id)
+            .Last().UpdatedAt);
+            
         // Authors
-        foreach (var author in _db.Authors
+        foreach (var author in db.Authors
             .Include(a => a.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))
             .Where(a => a.Works.Any(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))
             .AsNoTracking())
@@ -25,13 +35,12 @@ public class DynamicSitemapNodeProvider(FictionDbContext db) : ICustomSitemapNod
         }
 
         // Stories and Chapters
-        foreach (var story in _db.Stories
+        foreach (var story in db.Stories
             .Include(s => s.Chapters.Where(c => c.PublishedAt != null))
             .AsNoTracking()
             .Where(s => s.PublishedAt != null))
         {
             yield return new SitemapNode($"/stories/{story.Id}", story.UpdatedAt);
-            yield return new SitemapNode($"/stories/{story.Id}/read", story.UpdatedAt);
 
             foreach (var chapter in story.Chapters)
             {
