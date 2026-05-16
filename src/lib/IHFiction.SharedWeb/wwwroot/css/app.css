@@ -287,3 +287,34 @@ html[data-theme="dark"] .ihf-content-link:focus-visible {
         padding: 1.5rem 0.75rem;
     }
 }
+
+/* =============================================
+   Font loading behavior
+   ============================================= */
+
+@font-face {
+	font-family: "Font Awesome 6 Free";
+	font-style: normal;
+	font-weight: 900;
+	font-display: swap;
+	src: url("../font-awesome/6.4.0/webfonts/fa-solid-900.woff2") format("woff2"),
+		url("../font-awesome/6.4.0/webfonts/fa-solid-900.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "Font Awesome 5 Free";
+	font-style: normal;
+	font-weight: 900;
+	font-display: swap;
+	src: url("../font-awesome/6.4.0/webfonts/fa-solid-900.woff2") format("woff2"),
+		url("../font-awesome/6.4.0/webfonts/fa-solid-900.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: "FontAwesome";
+	font-style: normal;
+	font-weight: 900;
+	font-display: swap;
+	src: url("../font-awesome/6.4.0/webfonts/fa-solid-900.woff2") format("woff2"),
+		url("../font-awesome/6.4.0/webfonts/fa-solid-900.ttf") format("truetype");
+}
