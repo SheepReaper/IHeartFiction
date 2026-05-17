@@ -1,0 +1,141 @@
+@if (Mode == StoryListViewMode.Compact)
+{
+    <article class="box">
+        <div class="media">
+            <div class="media-left">
+                @if (!string.IsNullOrWhiteSpace(Item.CoverImagePath))
+                {
+                    <figure class="image is-64x64">
+                        <img src="@Item.CoverImagePath" alt="@Item.Title cover image" style="object-fit: cover; width: 64px; height: 64px;" />
+                    </figure>
+                }
+                else
+                {
+                    <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="width: 64px; height: 64px;">
+                        <span class="icon is-small"><i class="fas fa-book"></i></span>
+                    </div>
+                }
+            </div>
+            <div class="media-content">
+                <p class="title is-6 mb-1">
+                    <a href="@Item.Href" class="ihf-card-title-link">@Item.Title</a>
+                </p>
+                @if (!string.IsNullOrWhiteSpace(Item.AuthorName) && !string.IsNullOrWhiteSpace(Item.AuthorHref))
+                {
+                    <p class="is-size-7 has-text-grey mb-2">
+                        by <a href="@Item.AuthorHref" class="ihf-card-link">@Item.AuthorName</a>
+                    </p>
+                }
+                @if (Item.Badges?.Count > 0 || !string.IsNullOrWhiteSpace(Item.ContentKindLabel) || !string.IsNullOrWhiteSpace(Item.StatusLabel))
+                {
+                    <div class="tags">
+                        @if (!string.IsNullOrWhiteSpace(Item.ContentKindLabel))
+                        {
+                            <span class="tag has-background-info-soft has-text-info-bold">@Item.ContentKindLabel</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Item.StatusLabel))
+                        {
+                            <span class="tag has-background-primary-soft has-text-primary-bold">@Item.StatusLabel</span>
+                        }
+                        @if (Item.Badges is not null)
+                        {
+                            @foreach (var badge in Item.Badges)
+                            {
+                                <span class="tag has-background-link-soft has-text-link-bold">@badge</span>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+            <div class="media-right">
+                @if (TrailingActions is not null)
+                {
+                    @TrailingActions(Item)
+                }
+                else if (!string.IsNullOrWhiteSpace(Item.PrimaryActionHref))
+                {
+                    <a href="@Item.PrimaryActionHref" class="button is-small has-background-success-soft has-text-success-bold" aria-label="@(Item.PrimaryActionLabel ?? "Open")">
+                        <span class="icon is-small"><i class="fas fa-@(Item.PrimaryActionIcon ?? "arrow-right")"></i></span>
+                    </a>
+                }
+            </div>
+        </div>
+    </article>
+}
+else
+{
+    <div class="card">
+        @if (!string.IsNullOrWhiteSpace(Item.CoverImagePath))
+        {
+            <div class="card-image">
+                <figure class="image is-4by3">
+                    <img src="@Item.CoverImagePath" alt="@Item.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
+                </figure>
+            </div>
+        }
+        <div class="card-content">
+            <div class="content">
+                <h3 class="title is-5">
+                    <a href="@Item.Href" class="ihf-card-title-link">@Item.Title</a>
+                </h3>
+
+                @if (!string.IsNullOrWhiteSpace(Item.AuthorName) && !string.IsNullOrWhiteSpace(Item.AuthorHref))
+                {
+                    <p class="subtitle is-6">
+                        by <a href="@Item.AuthorHref" class="ihf-card-link">@Item.AuthorName</a>
+                    </p>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Item.Description))
+                {
+                    <p>@Item.Description</p>
+                }
+
+                @if (Item.Badges?.Count > 0 || !string.IsNullOrWhiteSpace(Item.ContentKindLabel) || !string.IsNullOrWhiteSpace(Item.StatusLabel))
+                {
+                    <div class="tags mt-4">
+                        @if (!string.IsNullOrWhiteSpace(Item.ContentKindLabel))
+                        {
+                            <span class="tag has-background-info-soft has-text-info-bold">@Item.ContentKindLabel</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Item.StatusLabel))
+                        {
+                            <span class="tag has-background-primary-soft has-text-primary-bold">@Item.StatusLabel</span>
+                        }
+                        @if (Item.Badges is not null)
+                        {
+                            @foreach (var badge in Item.Badges)
+                            {
+                                <span class="tag has-background-link-soft has-text-link-bold">@badge</span>
+                            }
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (TrailingActions is not null)
+        {
+            <footer class="card-footer">
+                @TrailingActions(Item)
+            </footer>
+        }
+        else if (!string.IsNullOrWhiteSpace(Item.PrimaryActionHref))
+        {
+            <footer class="card-footer">
+                <a href="@Item.PrimaryActionHref" class="card-footer-item">
+                    <span class="icon">
+                        <i class="fas fa-@(Item.PrimaryActionIcon ?? "arrow-right")"></i>
+                    </span>
+                    <span>@(Item.PrimaryActionLabel ?? "Open")</span>
+                </a>
+            </footer>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public StoryListDisplayItem Item { get; set; } = null!;
+    [Parameter] public StoryListViewMode Mode { get; set; } = StoryListViewMode.Expanded;
+    [Parameter] public RenderFragment<StoryListDisplayItem>? TrailingActions { get; set; }
+}

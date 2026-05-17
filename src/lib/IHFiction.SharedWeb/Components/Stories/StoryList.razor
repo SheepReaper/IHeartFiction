@@ -71,7 +71,7 @@
             <div class="columns is-multiline">
                 @foreach (var story in stories.Data)
                 {
-                    <div @key="story.StoryId" class="column is-one-third">
+                    <div @key="story.StoryId" class="column @(IsCompact ? "is-full" : "is-one-third")">
                         <StoryCard Story="story" />
                     </div>
                 }
@@ -119,6 +119,7 @@
 
 @code {
     [Parameter] public string? AuthorId { get; set; } = null;
+    [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 
     private LinkedPagedCollectionOfListPublishedStoriesItem? stories;
     private bool isLoading = true;

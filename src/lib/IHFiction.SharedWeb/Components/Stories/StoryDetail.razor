@@ -1,6 +1,7 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inject StoryService StoryService
 @using IHFiction.SharedWeb.Components.Notifications
+@using IHFiction.SharedWeb.Components.Reading
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -199,80 +200,7 @@ else if (story != null)
             {
                 <div class="section">
                     <h2 class="title is-4">Chapters</h2>
-                    <div class="columns is-multiline">
-                        @if (story.Chapters?.Any() ?? false)
-                        {
-                            @foreach (var chapter in story.Chapters.OrderBy(c => c.Order))
-                            {
-                                var cid = chapter.Id.ToString();
-                                <div @key="chapter.Id" class="column is-half">
-                                    <div class="card">
-                                        <div class="card-content">
-                                            <h3 class="title is-6">@chapter.Title</h3>
-                                            <p class="subtitle is-7">
-                                                @if (chapter is { })
-                                                {
-                                                    <text>Order: @chapter.Order</text>
-                                                }
-                                            </p>
-                                        </div>
-                                        <footer class="card-footer">
-                                                <a href="/stories/@StoryIdString/chapters/@cid" class="card-footer-item">
-                                                <span class="icon">
-                                                    <i class="fas fa-book-open"></i>
-                                                </span>
-                                                <span>Read</span>
-                                            </a>
-                                        </footer>
-                                    </div>
-                                </div>
-                            }
-                        }
-                        else if (chapters?.Data?.Any() ?? false)
-                        {
-                            @foreach (var chapter in chapters.Data)
-                            {
-                                var cid = chapter.ChapterId.ToString();
-                                <div @key="chapter.ChapterId" class="column is-half">
-                                    <div class="card">
-                                        <div class="card-content">
-                                            <h3 class="title is-6">@chapter.Title</h3>
-                                            <p class="subtitle is-7">
-                                                @if (chapter.PublishedAt.HasValue)
-                                                {
-                                                    <text>Published @chapter.PublishedAt.Value.ToString("MMM dd, yyyy")</text>
-                                                }
-                                                else
-                                                {
-                                                    <text>Draft</text>
-                                                }
-                                            </p>
-                                        </div>
-                                        <footer class="card-footer">
-                                            @if (chapter.PublishedAt.HasValue)
-                                            {
-                                                    <a href="/stories/@StoryIdString/chapters/@cid" class="card-footer-item">
-                                                    <span class="icon">
-                                                        <i class="fas fa-book-open"></i>
-                                                    </span>
-                                                    <span>Read</span>
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <span class="card-footer-item">
-                                                    <span class="icon">
-                                                        <i class="fas fa-clock"></i>
-                                                    </span>
-                                                    <span>Not Available</span>
-                                                </span>
-                                            }
-                                        </footer>
-                                    </div>
-                                </div>
-                            }
-                        }
-                    </div>
+                    <ChapterList StoryId="@StoryIdString" Chapters="BuildChapterItems()" />
                 </div>
             }
         </div>
@@ -306,6 +234,27 @@ else if (story != null)
     // Helper to provide a non-null story id string for markup
     private string StoryIdString => story?.Id.ToString() ?? string.Empty;
 
+    private List<ReaderChapterNavItem> BuildChapterItems()
+    {
+        if (story?.Chapters?.Any() ?? false)
+        {
+            return story.Chapters
+                .OrderBy(chapter => chapter.Order)
+                .Select(chapter => new ReaderChapterNavItem(chapter.Id.ToString(), chapter.Title, chapter.Order))
+                .ToList();
+        }
+
+        if (chapters?.Data?.Any() ?? false)
+        {
+            return chapters.Data
+                .OrderBy(chapter => chapter.Order)
+                .Select(chapter => new ReaderChapterNavItem(chapter.ChapterId.ToString(), chapter.Title, chapter.Order))
+                .ToList();
+        }
+
+        return [];
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadStory();
@@ -334,8 +283,7 @@ else if (story != null)
             if (story?.Type == MultiChapter)
             {
                 var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
-                
-                    @* chapters = chaptersResult.Value; *@
+
                 if (chaptersResult.IsSuccess)
                 {
                     chapters = chaptersResult.Value;

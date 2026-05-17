@@ -1,8 +1,9 @@
 @using Markdig
 @inject MarkdownPipeline mdp
 
-<div class="card">
-    <div class="card-content">
+@if (IsCompact)
+{
+    <article class="box">
         <div class="media">
             <div class="media-left">
                 <figure class="image is-48x48">
@@ -19,61 +20,106 @@
                 </figure>
             </div>
             <div class="media-content">
-                <p class="title is-5">
+                <p class="mb-1 has-text-weight-semibold">
                     <a href="/authors/@Author.Id" class="ihf-card-title-link">@Author.Name</a>
                 </p>
-                <p class="subtitle is-6">
-                    @Author.PublishedStories published stories
+                <p class="is-size-7 has-text-grey mb-2">
+                    @Author.PublishedStories published stories • Joined @Author.CreatedAt.ToString("MMM yyyy")
                 </p>
+                <div class="tags">
+                    <span class="tag has-background-info-soft has-text-info-bold">@Author.TotalStories total</span>
+                </div>
+            </div>
+            <div class="media-right">
+                <div class="buttons are-small">
+                    <a href="/authors/@Author.Id" class="button has-background-link-soft has-text-link-bold" aria-label="View profile">
+                        <span class="icon is-small"><i class="fas fa-user"></i></span>
+                    </a>
+                    <a href="/authors/@Author.Id/stories" class="button has-background-primary-soft has-text-primary-bold" aria-label="View stories">
+                        <span class="icon is-small"><i class="fas fa-book"></i></span>
+                    </a>
+                </div>
             </div>
         </div>
+    </article>
+}
+else
+{
+    <div class="card">
+        <div class="card-content">
+            <div class="media">
+                <div class="media-left">
+                    <figure class="image is-48x48">
+                        @if (!string.IsNullOrWhiteSpace(Author.AvatarUrl))
+                        {
+                            <img class="is-rounded" src="@Author.AvatarUrl" alt="@Author.Name" />
+                        }
+                        else
+                        {
+                            <div class="ihf-avatar-badge is-flex is-align-items-center is-justify-content-center" style="width: 48px; height: 48px; border-radius: 50%;">
+                                <span class="has-text-weight-bold">@GetInitials(Author.Name)</span>
+                            </div>
+                        }
+                    </figure>
+                </div>
+                <div class="media-content">
+                    <p class="title is-5">
+                        <a href="/authors/@Author.Id" class="ihf-card-title-link">@Author.Name</a>
+                    </p>
+                    <p class="subtitle is-6">
+                        @Author.PublishedStories published stories
+                    </p>
+                </div>
+            </div>
 
-        <div class="content">
-            @if (!string.IsNullOrWhiteSpace(Author.Bio))
-            {
-                <p class="ihf-bio-excerpt">@Markdown.ToPlainText(Author.Bio, mdp)</p>
-            }
-            else
-            {
-                <p>
-                    <em>No biography available</em>
-                </p>
-            }
-            
-            <div class="tags">
-                <span class="tag has-background-info-soft has-text-info-bold">
-                    <span class="icon is-small">
-                        <i class="fas fa-book"></i>
+            <div class="content">
+                @if (!string.IsNullOrWhiteSpace(Author.Bio))
+                {
+                    <p class="ihf-bio-excerpt">@Markdown.ToPlainText(Author.Bio, mdp)</p>
+                }
+                else
+                {
+                    <p>
+                        <em>No biography available</em>
+                    </p>
+                }
+
+                <div class="tags">
+                    <span class="tag has-background-info-soft has-text-info-bold">
+                        <span class="icon is-small">
+                            <i class="fas fa-book"></i>
+                        </span>
+                        <span>@Author.TotalStories stories</span>
                     </span>
-                    <span>@Author.TotalStories stories</span>
-                </span>
-                <span class="tag has-background-primary-soft has-text-primary-bold">
-                    <span class="icon is-small">
-                        <i class="fas fa-calendar"></i>
+                    <span class="tag has-background-primary-soft has-text-primary-bold">
+                        <span class="icon is-small">
+                            <i class="fas fa-calendar"></i>
+                        </span>
+                        <span>Joined @Author.CreatedAt.ToString("MMM yyyy")</span>
                     </span>
-                    <span>Joined @Author.CreatedAt.ToString("MMM yyyy")</span>
-                </span>
+                </div>
             </div>
         </div>
+        <footer class="card-footer">
+            <a href="/authors/@Author.Id" class="card-footer-item">
+                <span class="icon">
+                    <i class="fas fa-user"></i>
+                </span>
+                <span>View Profile</span>
+            </a>
+            <a href="/authors/@Author.Id/stories" class="card-footer-item">
+                <span class="icon">
+                    <i class="fas fa-book"></i>
+                </span>
+                <span>View Stories</span>
+            </a>
+        </footer>
     </div>
-    <footer class="card-footer">
-        <a href="/authors/@Author.Id" class="card-footer-item">
-            <span class="icon">
-                <i class="fas fa-user"></i>
-            </span>
-            <span>View Profile</span>
-        </a>
-        <a href="/authors/@Author.Id/stories" class="card-footer-item">
-            <span class="icon">
-                <i class="fas fa-book"></i>
-            </span>
-            <span>View Stories</span>
-        </a>
-    </footer>
-</div>
+}
 
 @code {
     [Parameter, EditorRequired] public LinkedOfListAuthorsItem Author { get; set; } = null!;
+    [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 
     private static string GetInitials(string name)
     {

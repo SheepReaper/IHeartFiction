@@ -1,0 +1,47 @@
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+@if (Items?.Count > 0)
+{
+    @if (UseVirtualization)
+    {
+        <Virtualize Items="Items" Context="item">
+            <SharedStoryListItem Item="item" Mode="EffectiveMode" TrailingActions="TrailingActions" />
+        </Virtualize>
+    }
+    else
+    {
+        <div class="columns is-multiline">
+            @foreach (var item in Items)
+            {
+                <div @key="item.Id" class="column @(EffectiveMode == StoryListViewMode.Compact ? "is-full" : "is-one-third")">
+                    <SharedStoryListItem Item="item" Mode="EffectiveMode" TrailingActions="TrailingActions" />
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    <div class="has-text-centered">
+        <div class="content">
+            <span class="icon is-large">
+                <i class="fas fa-book fa-3x"></i>
+            </span>
+            <h3 class="title is-4">@EmptyStateTitle</h3>
+            <p>@EmptyStateMessage</p>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ICollection<StoryListDisplayItem> Items { get; set; } = [];
+    [Parameter] public bool UseVirtualization { get; set; }
+    [Parameter] public StoryListViewMode? Mode { get; set; }
+    [Parameter] public RenderFragment<StoryListDisplayItem>? TrailingActions { get; set; }
+    [Parameter] public string EmptyStateTitle { get; set; } = "No stories found";
+    [Parameter] public string EmptyStateMessage { get; set; } = "Try adjusting your search criteria.";
+
+    [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
+
+    private StoryListViewMode EffectiveMode => Mode ?? (IsCompact ? StoryListViewMode.Compact : StoryListViewMode.Expanded);
+}

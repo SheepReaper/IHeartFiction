@@ -1,4 +1,5 @@
 ﻿@using Markdig
+@using IHFiction.SharedWeb.Components.Stories
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
 @using IHFiction.SharedWeb.Components.Notifications
@@ -121,20 +122,10 @@ else if (author != null)
                         @if (author.PublishedStories.Any())
                         {
                             <h3 class="title is-5">Stories</h3>
-                            <div class="columns is-multiline">
-                                @foreach (var work in author.PublishedStories)
-                                {
-                                    <div @key="work.Id" class="column is-half">
-                                        <div class="card">
-                                            <div class="card-content">
-                                                <h4 class="title is-6">
-                                                    <a href="/stories/@work.Id" class="ihf-card-title-link">@work.Title</a>
-                                                </h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
+                            <SharedStoryList
+                                Items="BuildAuthorPublishedStoryItems()"
+                                EmptyStateTitle="No stories found"
+                                EmptyStateMessage="This author hasn't published any stories yet." />
                         }
                         else
                         {
@@ -203,6 +194,11 @@ else if (author != null)
 
         isLoading = false;
         StateHasChanged();
+    }
+
+    private List<StoryListDisplayItem> BuildAuthorPublishedStoryItems()
+    {
+        return author?.PublishedStories.Select(StoryListDisplayAdapters.FromAuthorWorkItem).ToList() ?? [];
     }
 
     private static string GetInitials(string name)

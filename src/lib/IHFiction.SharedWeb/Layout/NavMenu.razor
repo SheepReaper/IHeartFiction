@@ -4,6 +4,7 @@
 @rendermode RenderMode.InteractiveServer
 @inherits CancellableComponent
 @inject ThemeService theme
+@inject ViewPreferencesService viewPreferences
 @inject IConfiguration config
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -88,6 +89,9 @@
                     <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleThemeAndCloseMenu" aria-label="Hit the lights">
                         <span class="icon"><i class="fas fa-@themeIcon"></i></span>
                     </button>
+                    <button class="button has-background-success-soft has-text-success-bold has-tooltip-bottom" data-tooltip="@compactToggleTooltip" @onclick="ToggleCompactAndCloseMenu" aria-label="@compactToggleTooltip">
+                        <span class="icon"><i class="fas fa-@compactToggleIcon"></i></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -97,6 +101,8 @@
 @code {
     private bool _isMobileMenuOpen = false;
     private string themeIcon => theme.CurrentTheme == "dark" ? "sun" : "moon";
+    private string compactToggleIcon => viewPreferences.IsCompact ? "th-large" : "th-list";
+    private string compactToggleTooltip => viewPreferences.IsCompact ? "Expanded view" : "Compact view";
     private bool _disposed = false;
     private ElementReference _navbarRootRef;
     private IJSObjectReference? _module;
@@ -123,6 +129,7 @@
     protected override Task OnInitializedAsync()
     {
         theme.ThemeChanged += OnThemeChanged;
+        viewPreferences.CompactModeChanged += OnCompactModeChanged;
         Navigation.LocationChanged += OnLocationChanged;
 
         // start icon rotation (every 3s)
@@ -190,6 +197,12 @@
         await theme.ToggleThemeAsync(CancellationToken);
     }
 
+    private async Task ToggleCompactAndCloseMenu()
+    {
+        await CloseMobileMenuAsync();
+        await viewPreferences.ToggleCompactAsync(CancellationToken);
+    }
+
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         if (IsCloseExemptLocation(e.Location))
@@ -218,11 +231,17 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnCompactModeChanged(object? sender, CompactModeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     protected override async ValueTask DisposeAsyncCore()
     {
         if(_disposed) return;
 
         theme.ThemeChanged -= OnThemeChanged;
+        viewPreferences.CompactModeChanged -= OnCompactModeChanged;
         Navigation.LocationChanged -= OnLocationChanged;
 
         if (_iconTimer is not null)

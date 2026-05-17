@@ -1,127 +1,179 @@
-<div class="card">
-    @if (Story.HasCoverImage)
-    {
-        <div class="card-image">
-            <figure class="image is-4by3">
-                <img src="/stories/@Story.StoryId/cover" alt="@Story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
-            </figure>
-        </div>
-    }
-    else
-    {
-        <div class="card-image">
-            <figure class="image is-4by3">
-                <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
-                    <span class="has-text-weight-semibold">@Story.Title</span>
+@if (IsCompact)
+{
+    <article class="box">
+        <div class="media">
+            <div class="media-left">
+                @if (Story.HasCoverImage)
+                {
+                    <figure class="image is-64x64">
+                        <img src="/stories/@Story.StoryId/cover" alt="@Story.Title cover image" style="object-fit: cover; width: 64px; height: 64px;" />
+                    </figure>
+                }
+                else
+                {
+                    <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="width: 64px; height: 64px;">
+                        <span class="icon is-small"><i class="fas fa-book"></i></span>
+                    </div>
+                }
+            </div>
+            <div class="media-content">
+                <p class="title is-6 mb-1">
+                    <a href="/stories/@Story.StoryId" class="ihf-card-title-link">@Story.Title</a>
+                </p>
+                <p class="is-size-7 has-text-grey mb-2">
+                    by <a href="/authors/@Story.AuthorId" class="ihf-card-link">@Story.AuthorName</a>
+                </p>
+                <div class="tags">
+                    @if (Story.HasChapters)
+                    {
+                        <span class="tag has-background-info-soft has-text-info-bold">@Story.ChapterCount chapters</span>
+                    }
+                    else if (Story.HasBooks)
+                    {
+                        <span class="tag has-background-primary-soft has-text-primary-bold">Multi-book series</span>
+                    }
+                    else
+                    {
+                        <span class="tag has-background-link-soft has-text-link-bold">One-shot</span>
+                    }
                 </div>
-            </figure>
-        </div>
-    }
-
-    <div class="card-content">
-        <div class="content">
-            <h3 class="title is-5">
-                <a href="/stories/@Story.StoryId" class="ihf-card-title-link">@Story.Title</a>
-            </h3>
-            
-            <p class="subtitle is-6">
-                by <a href="/authors/@Story.AuthorId" class="ihf-card-link">@Story.AuthorName</a>
-            </p>
-
-            <p>
-                @(Story.Description.Length > 200 ? Story.Description.Substring(0, 200) + "..." : Story.Description)
-            </p>
-
-            <div class="tags mt-4">
-                @* @if (Story.PublishedAt < DateTime.UtcNow)
-                {
-                    <span class="tag is-success">
-                        <span class="icon is-small">
-                            <i class="fas fa-check"></i>
-                        </span>
-                        <span>Published</span>
-                    </span>
-                }
-                else
-                {
-                    <span class="tag is-warning">
-                        <span class="icon is-small">
-                            <i class="fas fa-clock"></i>
-                        </span>
-                        <span>Draft</span>
-                    </span>
-                } *@
-
-                @if (Story.HasChapters)
-                {
-                    <span class="tag has-background-info-soft has-text-info-bold">
-                        <span class="icon is-small">
-                            <i class="fas fa-list"></i>
-                        </span>
-                        <span>@Story.ChapterCount chapters</span>
-                    </span>
-                }
-                else if (Story.HasBooks)
-                {
-                    <span class="tag has-background-primary-soft has-text-primary-bold">
-                        <span class="icon is-small">
-                            <i class="fas fa-book"></i>
-                        </span>
-                        <span>Multi-book series</span>
-                    </span>
-                }
-                else
-                {
-                    <span class="tag has-background-link-soft has-text-link-bold">
-                        <span class="icon is-small">
-                            <i class="fas fa-file-alt"></i>
-                        </span>
-                        <span>One-shot</span>
-                    </span>
-                }
-
-                <span class="tag has-background-dark-soft has-text-dark-bold">
-                    <span class="icon is-small">
-                        <i class="fas fa-calendar"></i>
-                    </span>
-                    <span>@Story.UpdatedAt.ToString("MMM dd, yyyy")</span>
-                </span>
+            </div>
+            <div class="media-right">
+                <a href="/stories/@Story.StoryId/read" class="button is-small has-background-success-soft has-text-success-bold" aria-label="Read story">
+                    <span class="icon is-small"><i class="fas fa-book-open"></i></span>
+                </a>
             </div>
         </div>
-    </div>
-    
-    <footer class="card-footer">
-        <a href="/stories/@Story.StoryId" class="card-footer-item">
-            <span class="icon">
-                <i class="fas fa-eye"></i>
-            </span>
-            <span>View Details</span>
-        </a>
-        
-        @if (Story.PublishedAt < DateTime.UtcNow)
+    </article>
+}
+else
+{
+    <div class="card">
+        @if (Story.HasCoverImage)
         {
-            @if (Story.HasChapters)
-            {
-                <a href="/stories/@Story.StoryId/read" class="card-footer-item">
-                    <span class="icon">
-                        <i class="fas fa-book-open"></i>
-                    </span>
-                    <span>Start Reading</span>
-                </a>
-            }
-            else
-            {
-                <a href="/stories/@Story.StoryId/read" class="card-footer-item">
-                    <span class="icon">
-                        <i class="fas fa-book-open"></i>
-                    </span>
-                    <span>Read Story</span>
-                </a>
-            }
+            <div class="card-image">
+                <figure class="image is-4by3">
+                    <img src="/stories/@Story.StoryId/cover" alt="@Story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
+                </figure>
+            </div>
         }
-    </footer>
-</div>
+        else
+        {
+            <div class="card-image">
+                <figure class="image is-4by3">
+                    <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
+                        <span class="has-text-weight-semibold">@Story.Title</span>
+                    </div>
+                </figure>
+            </div>
+        }
+
+        <div class="card-content">
+            <div class="content">
+                <h3 class="title is-5">
+                    <a href="/stories/@Story.StoryId" class="ihf-card-title-link">@Story.Title</a>
+                </h3>
+
+                <p class="subtitle is-6">
+                    by <a href="/authors/@Story.AuthorId" class="ihf-card-link">@Story.AuthorName</a>
+                </p>
+
+                <p>
+                    @(Story.Description.Length > 200 ? Story.Description.Substring(0, 200) + "..." : Story.Description)
+                </p>
+
+                <div class="tags mt-4">
+                    @* @if (Story.PublishedAt < DateTime.UtcNow)
+                    {
+                        <span class="tag is-success">
+                            <span class="icon is-small">
+                                <i class="fas fa-check"></i>
+                            </span>
+                            <span>Published</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="tag is-warning">
+                            <span class="icon is-small">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <span>Draft</span>
+                        </span>
+                    } *@
+
+                    @if (Story.HasChapters)
+                    {
+                        <span class="tag has-background-info-soft has-text-info-bold">
+                            <span class="icon is-small">
+                                <i class="fas fa-list"></i>
+                            </span>
+                            <span>@Story.ChapterCount chapters</span>
+                        </span>
+                    }
+                    else if (Story.HasBooks)
+                    {
+                        <span class="tag has-background-primary-soft has-text-primary-bold">
+                            <span class="icon is-small">
+                                <i class="fas fa-book"></i>
+                            </span>
+                            <span>Multi-book series</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="tag has-background-link-soft has-text-link-bold">
+                            <span class="icon is-small">
+                                <i class="fas fa-file-alt"></i>
+                            </span>
+                            <span>One-shot</span>
+                        </span>
+                    }
+
+                    <span class="tag has-background-dark-soft has-text-dark-bold">
+                        <span class="icon is-small">
+                            <i class="fas fa-calendar"></i>
+                        </span>
+                        <span>@Story.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <footer class="card-footer">
+            <a href="/stories/@Story.StoryId" class="card-footer-item">
+                <span class="icon">
+                    <i class="fas fa-eye"></i>
+                </span>
+                <span>View Details</span>
+            </a>
+
+            @if (Story.PublishedAt < DateTime.UtcNow)
+            {
+                @if (Story.HasChapters)
+                {
+                    <a href="/stories/@Story.StoryId/read" class="card-footer-item">
+                        <span class="icon">
+                            <i class="fas fa-book-open"></i>
+                        </span>
+                        <span>Start Reading</span>
+                    </a>
+                }
+                else
+                {
+                    <a href="/stories/@Story.StoryId/read" class="card-footer-item">
+                        <span class="icon">
+                            <i class="fas fa-book-open"></i>
+                        </span>
+                        <span>Read Story</span>
+                    </a>
+                }
+            }
+        </footer>
+    </div>
+}
 
 @code {
     [Parameter, EditorRequired] public LinkedOfListPublishedStoriesItem Story { get; set; } = null!;
+    [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 }

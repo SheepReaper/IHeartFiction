@@ -1,5 +1,5 @@
-@using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.AspNetCore.Authorization
+@using IHFiction.SharedWeb.Components.Stories
 @using static IHFiction.Data.Stories.Domain.StoryType
 
 @page "/my-stories"
@@ -54,57 +54,40 @@ else if (!string.IsNullOrEmpty(_errorMessage))
 }
 else if (_stories != null)
 {
-    <Virtualize Items="_stories" Context="story">
-        <div class="box">
-            <div class="columns is-vcentered">
-                <div class="column is-narrow">
-                    @if (story.HasCoverImage)
-                    {
-                        <figure class="image is-96x96">
-                            <img src="/stories/@story.Id/cover" alt="@story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
-                        </figure>
-                    }
-                    else
-                    {
-                        <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 96px; width: 96px;">
-                            <span class="has-text-weight-semibold">@story.Title[..Math.Min(story.Title.Length, 1)]</span>
-                        </div>
-                    }
+    <SharedStoryList
+        Items="BuildMyStoryDisplayItems()"
+        Mode="StoryListViewMode.Compact"
+        UseVirtualization="true"
+        EmptyStateTitle="No stories found"
+        EmptyStateMessage="Create your first story to get started.">
+        <TrailingActions Context="item">
+            <div class="dropdown is-hoverable is-right">
+                <div class="dropdown-trigger">
+                    <button class="button is-small" aria-haspopup="true" aria-controls="dropdown-menu">
+                        <span>Actions</span>
+                        <span class="icon is-small">
+                            <i class="fas fa-angle-down" aria-hidden="true"></i>
+                        </span>
+                    </button>
                 </div>
-                <div class="column">
-                    <p class="title is-5">@story.Title</p>
-                    <p class="subtitle is-6">@(story.IsPublished ? "Published" : "Draft")</p>
-                </div>
-                <div class="column is-narrow">
-                    <div class="dropdown is-hoverable is-right">
-                        <div class="dropdown-trigger">
-                            <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
-                                <span>Actions</span>
-                                <span class="icon is-small">
-                                    <i class="fas fa-angle-down" aria-hidden="true"></i>
-                                </span>
-                            </button>
-                        </div>
-                        <div class="dropdown-menu" id="dropdown-menu" role="menu">
-                            <div class="dropdown-content">
-                                <a @onclick="e => EditStory(story.Id)" class="dropdown-item">Edit</a>
-                                @if (story.IsPublished)
-                                {
-                                    <a @onclick="e => UnpublishStory(story.Id)" class="dropdown-item">Unpublish</a>
-                                }
-                                else
-                                {
-                                    <a @onclick="e => ShowPublishDialog(story)" class="dropdown-item">Publish</a>
-                                }
-                                <hr class="dropdown-divider">
-                                <a @onclick="e => DeleteStory(story.Id)" class="dropdown-item is-danger">Delete</a>
-                            </div>
-                        </div>
+                <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content">
+                        <a @onclick="e => EditStory(item.Id)" class="dropdown-item">Edit</a>
+                        @if (item.IsPublished)
+                        {
+                            <a @onclick="e => UnpublishStory(item.Id)" class="dropdown-item">Unpublish</a>
+                        }
+                        else
+                        {
+                            <a @onclick="e => ShowPublishDialog(item.Id)" class="dropdown-item">Publish</a>
+                        }
+                        <hr class="dropdown-divider">
+                        <a @onclick="e => DeleteStory(item.Id)" class="dropdown-item is-danger">Delete</a>
                     </div>
                 </div>
             </div>
-        </div>
-    </Virtualize>
+        </TrailingActions>
+    </SharedStoryList>
 }
 @if (_showPublishDialog && _selectedStory != null)
 {
@@ -173,8 +156,14 @@ else if (_stories != null)
         Navigation.NavigateTo($"/stories/{storyId}/edit");
     }
 
-    private void ShowPublishDialog(LinkedOfAuthorStoryItem story)
+    private void ShowPublishDialog(Ulid storyId)
     {
+        var story = _stories?.FirstOrDefault(s => s.Id == storyId);
+        if (story is null)
+        {
+            return;
+        }
+
         _selectedStory = story;
         _publishAll = false;
         _showPublishDialog = true;
@@ -252,6 +241,11 @@ else if (_stories != null)
         }
         _isLoading = false;
         StateHasChanged();
+    }
+
+    private List<StoryListDisplayItem> BuildMyStoryDisplayItems()
+    {
+        return _stories?.Select(StoryListDisplayAdapters.FromAuthorStory).ToList() ?? [];
     }
 
     private static string GetLabel(string storyType) => storyType switch

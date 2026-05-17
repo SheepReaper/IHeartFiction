@@ -110,6 +110,7 @@ builder.Services.AddScoped<ProtectedLocalStorage>();
 builder.Services.AddScoped<BrowserProtectedStorageService>();
 builder.Services.AddScoped<ReaderProgressService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<ViewPreferencesService>();
 builder.Services.AddScoped<StoryEditorService>();
 builder.Services.AddCascadingAuthenticationState();
 

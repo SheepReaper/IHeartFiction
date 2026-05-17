@@ -1,11 +1,15 @@
 @inherits LayoutComponentBase
 @inject Microsoft.Extensions.Hosting.IHostEnvironment HostEnvironment
+@inject IHFiction.SharedWeb.Services.ViewPreferencesService ViewPreferences
+@implements IDisposable
 
 <NavMenu />
 
 <main class="section">
     <div class="container">
-        @Body
+        <CascadingValue Value="ViewPreferences.IsCompact" Name="IsCompact" IsFixed="false">
+            @Body
+        </CascadingValue>
     </div>
 </main>
 
@@ -18,4 +22,39 @@
         <strong>An unhandled error has occurred.</strong>
         <a href="." class="button is-small has-background-danger-soft has-text-danger-bold ml-2">Reload</a>
     </div>
+}
+
+@code {
+    private bool _disposed;
+
+    protected override void OnInitialized()
+    {
+        ViewPreferences.CompactModeChanged += OnCompactModeChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await ViewPreferences.InitializeAsync();
+    }
+
+    private void OnCompactModeChanged(object? sender, IHFiction.SharedWeb.Services.CompactModeChangedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        ViewPreferences.CompactModeChanged -= OnCompactModeChanged;
+        _disposed = true;
+    }
 }

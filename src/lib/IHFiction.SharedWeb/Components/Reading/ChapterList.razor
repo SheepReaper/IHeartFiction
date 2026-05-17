@@ -1,0 +1,47 @@
+@{
+    var orderedChapters = GetOrderedChapters();
+}
+
+@if (orderedChapters.Count > 0)
+{
+    <div class="content">
+        @for (var i = 0; i < orderedChapters.Count; i++)
+        {
+            var chapter = orderedChapters[i];
+            var chapterNumber = i + 1;
+            var chapterHref = ChapterHref(chapter.Id);
+
+            <article @key="chapter.Id" class="box py-4">
+                <div class="media is-align-items-center">
+                    <div class="media-left">
+                        <span class="tag has-background-info-soft has-text-info-bold">Chapter @chapterNumber</span>
+                    </div>
+                    <div class="media-content">
+                        <p class="mb-1 has-text-weight-semibold">
+                            <a href="@chapterHref" class="ihf-card-title-link">@chapter.Title</a>
+                        </p>
+                    </div>
+                    <div class="media-right">
+                        <a href="@chapterHref" class="button is-small has-background-primary-soft has-text-primary-bold">
+                            <span class="icon is-small">
+                                <i class="fas fa-book-open"></i>
+                            </span>
+                            <span>Read</span>
+                        </a>
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+    [Parameter, EditorRequired] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
+
+    private List<ReaderChapterNavItem> GetOrderedChapters() => Chapters
+        .OrderBy(chapter => chapter.Order)
+        .ToList();
+
+    private string ChapterHref(string chapterId) => $"/stories/{StoryId}/chapters/{chapterId}";
+}
