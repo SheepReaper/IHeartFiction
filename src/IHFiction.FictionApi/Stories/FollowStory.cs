@@ -73,11 +73,14 @@ internal sealed class FollowStory(
                 [FromRoute] Ulid id,
                 [AsParameters] FollowStoryQuery query,
                 FollowStory useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Follow Story")
             .WithDescription("Follows a published story for the currently authenticated user. This operation is idempotent.")
@@ -141,11 +144,14 @@ internal sealed class UnfollowStory(
                 [FromRoute] Ulid id,
                 [AsParameters] UnfollowStoryQuery query,
                 UnfollowStory useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Unfollow Story")
             .WithDescription("Unfollows a published story for the currently authenticated user. This operation is idempotent.")
@@ -211,10 +217,13 @@ internal sealed class FollowStoryForDevice(FictionDbContext context) : IUseCase,
                 [FromHeader(Name = DeviceIdHeader.Name)] string? deviceId,
                 [AsParameters] FollowStoryForDeviceQuery query,
                 FollowStoryForDevice useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, deviceId, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Follow Story For Device")
             .WithDescription("Follows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.")
@@ -277,10 +286,13 @@ internal sealed class UnfollowStoryForDevice(FictionDbContext context) : IUseCas
                 [FromHeader(Name = DeviceIdHeader.Name)] string? deviceId,
                 [AsParameters] UnfollowStoryForDeviceQuery query,
                 UnfollowStoryForDevice useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, deviceId, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Unfollow Story For Device")
             .WithDescription("Unfollows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.")

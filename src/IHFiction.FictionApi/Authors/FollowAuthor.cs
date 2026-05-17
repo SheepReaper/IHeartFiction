@@ -69,11 +69,14 @@ internal sealed class FollowAuthor(
                 [FromRoute] Ulid id,
                 [AsParameters] FollowAuthorQuery query,
                 FollowAuthor useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetAuthor.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Follow Author")
             .WithDescription("Follows an author for the currently authenticated user. This operation is idempotent.")
@@ -133,11 +136,14 @@ internal sealed class UnfollowAuthor(
                 [FromRoute] Ulid id,
                 [AsParameters] UnfollowAuthorQuery query,
                 UnfollowAuthor useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetAuthor.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Unfollow Author")
             .WithDescription("Unfollows an author for the currently authenticated user. This operation is idempotent.")
@@ -199,10 +205,13 @@ internal sealed class FollowAuthorForDevice(FictionDbContext context) : IUseCase
                 [FromHeader(Name = DeviceIdHeader.Name)] string? deviceId,
                 [AsParameters] FollowAuthorForDeviceQuery query,
                 FollowAuthorForDevice useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, deviceId, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetAuthor.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Follow Author For Device")
             .WithDescription("Follows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.")
@@ -261,10 +270,13 @@ internal sealed class UnfollowAuthorForDevice(FictionDbContext context) : IUseCa
                 [FromHeader(Name = DeviceIdHeader.Name)] string? deviceId,
                 [AsParameters] UnfollowAuthorForDeviceQuery query,
                 UnfollowAuthorForDevice useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, deviceId, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetAuthor.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Unfollow Author For Device")
             .WithDescription("Unfollows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.")

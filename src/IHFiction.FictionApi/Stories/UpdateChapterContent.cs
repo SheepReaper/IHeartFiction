@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
+using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -162,12 +163,15 @@ internal sealed class UpdateChapterContent(
                 [AsParameters] UpdateChapterContentQuery query,
                 [FromBody] UpdateChapterContentBody body,
                 UpdateChapterContent useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnChapterContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Update Chapter Content")
             .WithDescription("Updates the content of an existing chapter with new markdown content and optional notes. " +

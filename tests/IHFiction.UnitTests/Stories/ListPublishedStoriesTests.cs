@@ -1,3 +1,8 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
@@ -208,5 +213,191 @@ public class ListPublishedStoriesTests
         Assert.Equal(1, response.TotalPages);
         Assert.Single(response.Links);
         Assert.Equal("self", response.Links.Single().Rel);
+    }
+
+    [Fact]
+    public void WithLinks_FirstPage_AddsSelfAndNextOnly()
+    {
+        // Arrange
+        var stories = new[]
+        {
+            new ListPublishedStories.ListPublishedStoriesItem(
+                Ulid.NewUlid(), "Story 1", "Description 1", DateTime.UtcNow, DateTime.UtcNow,
+                true, false, false, false, 0, Ulid.NewUlid(), "Author 1")
+        };
+
+        var paged = new PagedCollection<ListPublishedStories.ListPublishedStoriesItem>(
+            stories.AsQueryable(),
+            25,
+            1,
+            10);
+
+        var linker = CreateLinkService();
+        var query = new ListPublishedStories.ListPublishedStoriesQuery(Page: 1, PageSize: 10, Search: "fantasy", Sort: "publishedAt");
+
+        // Act
+        var linked = paged.WithLinks(
+            linker,
+            ListPublishedStories.EndpointName,
+            item => new(item, Enumerable.Empty<LinkItem>()),
+            query);
+
+        // Assert
+        Assert.Contains(linked.Links, l => l.Rel == "self");
+        Assert.Contains(linked.Links, l => l.Rel == "next-page");
+        Assert.DoesNotContain(linked.Links, l => l.Rel == "previous-page");
+    }
+
+    [Fact]
+    public void WithLinks_MiddlePage_AddsSelfNextAndPrevious()
+    {
+        // Arrange
+        var stories = new[]
+        {
+            new ListPublishedStories.ListPublishedStoriesItem(
+                Ulid.NewUlid(), "Story 1", "Description 1", DateTime.UtcNow, DateTime.UtcNow,
+                true, false, false, false, 0, Ulid.NewUlid(), "Author 1")
+        };
+
+        var paged = new PagedCollection<ListPublishedStories.ListPublishedStoriesItem>(
+            stories.AsQueryable(),
+            25,
+            2,
+            10);
+
+        var linker = CreateLinkService();
+        var query = new ListPublishedStories.ListPublishedStoriesQuery(Page: 2, PageSize: 10, Search: "fantasy", Sort: "publishedAt");
+
+        // Act
+        var linked = paged.WithLinks(
+            linker,
+            ListPublishedStories.EndpointName,
+            item => new(item, Enumerable.Empty<LinkItem>()),
+            query);
+
+        // Assert
+        Assert.Contains(linked.Links, l => l.Rel == "self");
+        Assert.Contains(linked.Links, l => l.Rel == "next-page");
+        Assert.Contains(linked.Links, l => l.Rel == "previous-page");
+    }
+
+    [Fact]
+    public void WithLinks_LastPage_AddsSelfAndPreviousOnly()
+    {
+        // Arrange
+        var stories = new[]
+        {
+            new ListPublishedStories.ListPublishedStoriesItem(
+                Ulid.NewUlid(), "Story 1", "Description 1", DateTime.UtcNow, DateTime.UtcNow,
+                true, false, false, false, 0, Ulid.NewUlid(), "Author 1")
+        };
+
+        var paged = new PagedCollection<ListPublishedStories.ListPublishedStoriesItem>(
+            stories.AsQueryable(),
+            25,
+            3,
+            10);
+
+        var linker = CreateLinkService();
+        var query = new ListPublishedStories.ListPublishedStoriesQuery(Page: 3, PageSize: 10, Search: "fantasy", Sort: "publishedAt");
+
+        // Act
+        var linked = paged.WithLinks(
+            linker,
+            ListPublishedStories.EndpointName,
+            item => new(item, Enumerable.Empty<LinkItem>()),
+            query);
+
+        // Assert
+        Assert.Contains(linked.Links, l => l.Rel == "self");
+        Assert.DoesNotContain(linked.Links, l => l.Rel == "next-page");
+        Assert.Contains(linked.Links, l => l.Rel == "previous-page");
+    }
+
+    private static LinkService CreateLinkService()
+    {
+        var linkGenerator = new FakeLinkGenerator();
+        var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
+
+        return new LinkService(linkGenerator, httpContextAccessor);
+    }
+
+    private sealed class FakeLinkGenerator : LinkGenerator
+    {
+        public override string? GetPathByAddress<TAddress>(
+            TAddress address,
+            RouteValueDictionary values,
+            PathString pathBase = default,
+            FragmentString fragment = default,
+            LinkOptions? options = null)
+            => GetPathByAddress(
+                httpContext: null,
+                address,
+                values,
+                ambientValues: null,
+                pathBase,
+                fragment,
+                options);
+
+        public override string? GetPathByAddress<TAddress>(
+            HttpContext? httpContext,
+            TAddress address,
+            RouteValueDictionary values,
+            RouteValueDictionary? ambientValues = null,
+            PathString? pathBase = null,
+            FragmentString fragment = default,
+            LinkOptions? options = null)
+        {
+            var page = values.TryGetValue(nameof(IPaginationSupport.Page), out var pageValue)
+                ? pageValue?.ToString()
+                : "";
+
+            var pageSize = values.TryGetValue(nameof(IPaginationSupport.PageSize), out var pageSizeValue)
+                ? pageSizeValue?.ToString()
+                : "";
+
+            return $"/stories/published?page={page}&pageSize={pageSize}";
+        }
+
+        public override string? GetUriByAddress<TAddress>(
+            TAddress address,
+            RouteValueDictionary values,
+            string scheme,
+            HostString host,
+            PathString pathBase = default,
+            FragmentString fragment = default,
+            LinkOptions? options = null)
+            => GetUriByAddress(
+                httpContext: null,
+                address,
+                values,
+                ambientValues: null,
+                scheme,
+                host,
+                pathBase,
+                fragment,
+                options);
+
+        public override string? GetUriByAddress<TAddress>(
+            HttpContext? httpContext,
+            TAddress address,
+            RouteValueDictionary values,
+            RouteValueDictionary? ambientValues = null,
+            string? scheme = null,
+            HostString? host = null,
+            PathString? pathBase = null,
+            FragmentString fragment = default,
+            LinkOptions? options = null)
+        {
+            var page = values.TryGetValue(nameof(IPaginationSupport.Page), out var pageValue)
+                ? pageValue?.ToString()
+                : "";
+
+            var pageSize = values.TryGetValue(nameof(IPaginationSupport.PageSize), out var pageSizeValue)
+                ? pageSizeValue?.ToString()
+                : "";
+
+            return $"https://example.test/stories/published?page={page}&pageSize={pageSize}";
+        }
     }
 }

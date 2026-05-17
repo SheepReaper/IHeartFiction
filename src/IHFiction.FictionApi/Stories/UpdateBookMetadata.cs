@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -127,11 +128,14 @@ internal sealed class UpdateBookMetadata(
                 [AsParameters] UpdateBookMetadataQuery query,
                 [FromBody] UpdateBookMetadataBody body,
                 UpdateBookMetadata useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnBookContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Update Book Metadata")
             .WithDescription("Updates a book's title, description, and author notes. Only the story owner or authorized collaborators can update book metadata. Requires authentication and appropriate permissions.")

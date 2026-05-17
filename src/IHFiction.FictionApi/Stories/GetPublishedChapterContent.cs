@@ -139,11 +139,14 @@ internal sealed class GetPublishedChapterContent(
                 [FromRoute] Ulid id,
                 [AsParameters] GetPublishedChapterContentQuery query,
                 GetPublishedChapterContent useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedChapterContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Get Published Chapter Content")
             .WithDescription("Retrieves the content of a published chapter for public reading. " +

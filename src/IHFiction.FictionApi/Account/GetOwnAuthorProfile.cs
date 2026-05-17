@@ -95,7 +95,9 @@ internal sealed class GetOwnAuthorProfile(
             {
                 var result = await useCase.HandleAsync(claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnAuthorProfile.EndpointName)
+                    .ToOkResult(query);
             })
             .WithSummary("Get Own Author Profile")
             .WithDescription("Retrieves the profile and works for the currently authenticated author. This endpoint requires authentication and author registration.")

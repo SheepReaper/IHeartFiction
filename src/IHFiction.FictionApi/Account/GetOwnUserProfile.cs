@@ -60,12 +60,15 @@ internal sealed class GetOwnUserProfile(
             return builder.MapGet("me/profile", async (
                 [AsParameters] GetOwnUserProfileQuery query,
                 GetOwnUserProfile useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnUserProfile.EndpointName)
+                    .ToOkResult(query);
             })
             .WithSummary("Get User Profile")
             .WithDescription("Retrieves the display name and Gravatar email for the currently authenticated user, " +

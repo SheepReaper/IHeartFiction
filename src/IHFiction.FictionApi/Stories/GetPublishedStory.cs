@@ -172,11 +172,14 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
                 [FromRoute] Ulid id,
                 [AsParameters] GetPublishedStoryQuery query,
                 GetPublishedStory useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Get Story by ID")
             .WithDescription("Retrieves detailed information about a specific story including metadata, " +

@@ -112,11 +112,14 @@ internal sealed class GetPublishedStoryContent(
                 [FromRoute] Ulid id,
                 [AsParameters] GetPublishedStoryContentQuery query,
                 GetPublishedStoryContent useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStoryContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Get Published Story Content")
             .WithDescription("Retrieves the content of a published story that has direct content (not chapters or books). " +

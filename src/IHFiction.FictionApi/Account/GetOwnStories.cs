@@ -14,6 +14,7 @@ using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
@@ -167,10 +168,18 @@ internal sealed class GetOwnStories(
                 [AsParameters] GetOwnStoriesQuery query,
                 [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] GetOwnStoriesBody? body,
                 GetOwnStories useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
-                var result = await useCase.HandleAsync(query, body ?? new(), claimsPrincipal, cancellationToken);
+                var result = (await useCase.HandleAsync(query, body ?? new(), claimsPrincipal, cancellationToken))
+                    .WithLinks(
+                        linker,
+                        Name,
+                        story => new(story, new List<LinkItem>() {
+                            linker.Create<GetOwnStoryContent>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", story.Id.ToString()) })
+                        }),
+                        query);
 
                 return result.ToOkResult(query);
             })

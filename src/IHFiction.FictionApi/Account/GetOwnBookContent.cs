@@ -154,12 +154,15 @@ internal sealed class GetOwnBookContent(
                 [FromRoute] Ulid id,
                 [AsParameters] GetOwnBookContentQuery query,
                 GetOwnBookContent useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnBookContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Get My Book Content")
             .WithDescription("Retrieves the content of a book owned by the current user, including unpublished works. " +

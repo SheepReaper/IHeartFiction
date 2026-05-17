@@ -142,12 +142,15 @@ internal sealed class PublishStory(
                 [FromRoute] Ulid id,
                 [AsParameters] PublishStoryQuery query,
                 PublishStory useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Publish Story")
             .WithDescription("Makes a story publicly visible by setting its publication timestamp. " +

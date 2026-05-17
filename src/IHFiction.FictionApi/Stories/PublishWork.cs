@@ -228,11 +228,14 @@ internal sealed class PublishWork(
                 [AsParameters] PublishWorkQuery query,
                 [FromBody] PublishWorkBody body,
                 PublishWork useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, PublishWork.EndpointName, method: HttpMethods.Post, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Publish Work (Story, Book, Chapter, Anthology)")
             .WithDescription("Makes any work publicly visible by setting its publication timestamp. " +

@@ -155,12 +155,15 @@ internal sealed class UpdateOwnAuthorProfile(
                 [AsParameters] UpdateOwnAuthorProfileQuery query,
                 [FromBody] UpdateOwnAuthorProfileBody body,
                 UpdateOwnAuthorProfile useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(body, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnAuthorProfile.EndpointName)
+                    .ToOkResult(query);
             })
             .WithSummary("Update Author Profile")
             .WithDescription("Updates the profile information for the currently authenticated author. " +

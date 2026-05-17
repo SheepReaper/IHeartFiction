@@ -61,11 +61,14 @@ internal sealed class MarkOwnNotificationRead(
                 [FromRoute] Ulid id,
                 [AsParameters] MarkOwnNotificationReadQuery query,
                 MarkOwnNotificationRead useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, MarkOwnNotificationRead.EndpointName, method: HttpMethods.Post, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Mark Notification Read")
             .WithDescription("Marks a notification as read for the currently authenticated user.")

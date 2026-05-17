@@ -99,11 +99,14 @@ internal sealed class GetOwnChapterContent(
                 [FromRoute] Ulid id,
                 [AsParameters] GetOwnChapterContentQuery query,
                 GetOwnChapterContent useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnChapterContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
                 .WithSummary("Get My Chapter Content")
                 .WithDescription("Retrieves the content of a chapter owned by the current user, including unpublished works. " +

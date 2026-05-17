@@ -114,6 +114,30 @@ internal static class PaginationExtensions
             : new Linked<T>(sourceResult.Value, links ?? []);
     }
 
+    public static Result<Linked<T>> WithLinks<T>(
+        this IDomainResult<T> sourceResult,
+        Func<T, IEnumerable<LinkItem>> linksFactory
+    )
+    {
+        return sourceResult.IsFailure
+            ? sourceResult.DomainError!
+            : new Linked<T>(sourceResult.Value, linksFactory(sourceResult.Value));
+    }
+
+    public static Result<Linked<T>> WithLinks<T>(
+        this IDomainResult<T> sourceResult,
+        LinkService linker,
+        string endpointName,
+        string rel = "self",
+        string? method = null,
+        IEnumerable<KeyValuePair<string, string?>>? values = null
+    )
+    {
+        return sourceResult.WithLinks([
+            linker.Create(endpointName, rel, method, values)
+        ]);
+    }
+
     public static LinkedPagedCollection<T> WithLinks<T>(
         this ICollectionPaged<T> pagedCollection,
         LinkService linker,

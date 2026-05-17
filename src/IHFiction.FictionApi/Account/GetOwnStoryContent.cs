@@ -158,12 +158,15 @@ internal sealed class GetOwnStoryContent(
                 [FromRoute] Ulid id,
                 [AsParameters] GetOwnStoryContentQuery query,
                 GetOwnStoryContent useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnStoryContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Get My Story Content")
             .WithDescription("Retrieves the content of a story owned by the current user, including unpublished works. " +

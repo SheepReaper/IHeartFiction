@@ -84,10 +84,13 @@ internal sealed class RegisterDevicePushSubscription(FictionDbContext context) :
                 [FromHeader(Name = DeviceIdHeader.Name)] string? deviceId,
                 [FromBody] RegisterDevicePushSubscriptionBody body,
                 RegisterDevicePushSubscription useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(body, deviceId, cancellationToken);
-                return result.ToOkResult();
+                return result
+                    .WithLinks(linker, RegisterDevicePushSubscription.EndpointName, method: HttpMethods.Put)
+                    .ToOkResult();
             })
             .WithSummary("Register Device Push Subscription")
             .WithDescription("Registers or refreshes a web push subscription for an anonymous browser or installed PWA device.")

@@ -8,6 +8,7 @@ using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 
 namespace IHFiction.FictionApi.Stories;
@@ -100,9 +101,17 @@ internal sealed class ListPublishedStoryChapters(
                 [FromRoute] Ulid id,
                 [AsParameters] ListPublishedStoryChaptersQuery query,
                 ListPublishedStoryChapters useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
-                var result = await useCase.HandleAsync(id, cancellationToken);
+                var result = (await useCase.HandleAsync(id, cancellationToken))
+                    .WithLinks(
+                        linker,
+                        Name,
+                        chapter => new(chapter, new List<LinkItem>() {
+                            linker.Create<GetPublishedChapterContent>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", chapter.ChapterId.ToString()) })
+                        }),
+                        query);
 
                 return result.ToOkResult(query);
             })

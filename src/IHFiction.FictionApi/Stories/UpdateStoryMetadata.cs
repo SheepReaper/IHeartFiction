@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -142,12 +143,15 @@ internal sealed class UpdateStoryMetadata(
                 [AsParameters] UpdateStoryMetadataQuery query,
                 [FromBody] UpdateStoryMetadataBody body,
                 UpdateStoryMetadata useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnStoryContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Update Story Metadata")
             .WithDescription("Updates a story's title and description. Only the story owner or authorized collaborators " +

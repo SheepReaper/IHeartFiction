@@ -91,11 +91,14 @@ internal sealed class RegisterOwnPushSubscription(
             return builder.MapPut("notifications/push-subscription", async (
                 [FromBody] RegisterOwnPushSubscriptionBody body,
                 RegisterOwnPushSubscription useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(body, claimsPrincipal, cancellationToken);
-                return result.ToOkResult();
+                return result
+                    .WithLinks(linker, RegisterOwnPushSubscription.EndpointName, method: HttpMethods.Put)
+                    .ToOkResult();
             })
             .WithSummary("Register Push Subscription")
             .WithDescription("Registers or refreshes a web push subscription for the currently authenticated user.")

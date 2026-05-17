@@ -12,6 +12,7 @@ using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
@@ -138,9 +139,15 @@ internal sealed class ListTags(
                 [AsParameters] ListTagsQuery query,
                 [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ListTagsBody? body,
                 ListTags useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
-                var result = await useCase.HandleAsync(query, body ?? new(), cancellationToken);
+                var result = (await useCase.HandleAsync(query, body ?? new(), cancellationToken))
+                    .WithLinks(
+                        linker,
+                        Name,
+                        tag => new(tag, new List<LinkItem>()),
+                        query);
 
                 return result.ToOkResult(query);
             })

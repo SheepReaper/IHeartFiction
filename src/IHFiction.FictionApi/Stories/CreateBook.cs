@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
+using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -145,12 +146,17 @@ internal sealed class CreateBook(
                 [AsParameters] CreateBookQuery query,
                 [FromBody] CreateBookBody body,
                 CreateBook useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
 
-                return result.ToCreatedResult($"/books/{result.Value?.Id}", query);
+                return result
+                    .WithLinks(created => [
+                        linker.Create<GetOwnBookContent>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", created.Id.ToString())])
+                    ])
+                    .ToCreatedResult($"/books/{result.Value?.Id}", query);
             })
             .WithSummary("Create Book")
             .WithDescription("Creates a new book within a story.")

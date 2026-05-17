@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
+using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -207,12 +208,17 @@ internal sealed class CreateBookChapter(
                 [AsParameters] CreateBookChapterQuery query,
                 [FromBody] CreateBookChapterBody body,
                 CreateBookChapter useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
 
-                return result.ToCreatedResult($"/chapters/{result.Value?.ChapterId}", query);
+                return result
+                    .WithLinks(created => [
+                        linker.Create<GetOwnChapterContent>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", created.ChapterId.ToString())])
+                    ])
+                    .ToCreatedResult($"/chapters/{result.Value?.ChapterId}", query);
             })
             .WithSummary("Add Chapter to Book")
             .WithDescription("Creates a new chapter within a book.")

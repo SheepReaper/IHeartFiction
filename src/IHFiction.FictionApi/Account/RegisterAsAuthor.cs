@@ -112,12 +112,15 @@ internal sealed class RegisterAsAuthor(
                 [AsParameters] RegisterAsAuthorQuery query,
                 [FromBody] RegisterAsAuthorBody body,
                 RegisterAsAuthor useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(claimsPrincipal, cancellationToken);
 
-                return result.ToCreatedResult($"/authors/{result.Value?.Id}", query);
+                return result
+                    .WithLinks(linker, GetOwnAuthorProfile.EndpointName)
+                    .ToCreatedResult($"/authors/{result.Value?.Id}", query);
             })
             .WithSummary("Register as Author")
             .WithDescription("Registers the currently authenticated user as an author, enabling them to create and manage stories. " +

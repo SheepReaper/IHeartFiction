@@ -84,12 +84,15 @@ internal sealed class DeleteStoryCover(
             return builder.MapDelete("stories/{id:ulid}/cover", async (
                 [FromRoute] Ulid id,
                 DeleteStoryCover useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult();
+                return result
+                    .WithLinks(linker, GetStoryCover.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult();
             })
             .WithSummary("Delete Story Cover")
             .WithDescription("Removes the cover image for a story. Only the story owner or authorized collaborators can delete the cover image. Requires authentication.")

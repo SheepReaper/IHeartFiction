@@ -239,12 +239,15 @@ internal sealed class AddTagsToStory(
                 [AsParameters] AddTagsToStoryQuery query,
                 [FromBody] AddTagsToStoryBody body,
                 AddTagsToStory useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, AddTagsToStory.EndpointName, method: HttpMethods.Post, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult(query);
             })
             .WithSummary("Add Tags to Story")
             .WithDescription("Adds one or more tags to a story for categorization and discovery. " +

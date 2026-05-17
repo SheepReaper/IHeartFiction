@@ -83,12 +83,15 @@ internal sealed class UpdateOwnUserProfile(
                 [AsParameters] UpdateOwnUserProfileQuery query,
                 [FromBody] UpdateOwnUserProfileBody body,
                 UpdateOwnUserProfile useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(body, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult(query);
+                return result
+                    .WithLinks(linker, GetOwnUserProfile.EndpointName)
+                    .ToOkResult(query);
             })
             .WithSummary("Update User Profile")
             .WithDescription("Updates the display name and Gravatar email for the currently authenticated user. " +

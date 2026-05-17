@@ -126,12 +126,15 @@ internal sealed class UploadStoryCover(
                 [FromRoute] Ulid id,
                 [FromForm] IFormFile file,
                 UploadStoryCover useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, file, claimsPrincipal, cancellationToken);
 
-                return result.ToOkResult();
+                return result
+                    .WithLinks(linker, GetStoryCover.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .ToOkResult();
             })
             .WithSummary("Upload Story Cover")
             .WithDescription("Uploads or replaces the cover image for a story. Only the story owner or authorized collaborators can update the cover image. Requires authentication.")

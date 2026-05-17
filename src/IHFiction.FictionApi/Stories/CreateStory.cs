@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
+using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
@@ -150,12 +151,17 @@ internal sealed class CreateStory(
                 [AsParameters] CreateStoryQuery query,
                 [FromBody] CreateStoryBody body,
                 CreateStory useCase,
+                LinkService linker,
                 ClaimsPrincipal claimsPrincipal,
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(body, claimsPrincipal, cancellationToken);
 
-                return result.ToCreatedResult($"/stories/{result.Value?.Id}", query);
+                return result
+                    .WithLinks(created => [
+                        linker.Create<GetOwnStoryContent>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", created.Id.ToString())])
+                    ])
+                    .ToCreatedResult($"/stories/{result.Value?.Id}", query);
             })
             .WithSummary("Create Story")
             .WithDescription("Creates a new story with the provided title and description. " +
