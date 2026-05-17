@@ -8,7 +8,7 @@
 <AuthorizeView>
     <Authorized>
         <div class="navbar-item has-dropdown @(_isMenuOpen ? "is-active" : string.Empty)">
-            <a class="navbar-link" role="button" aria-haspopup="true" aria-expanded="@_isMenuOpen" tabindex="0" @onclick="ToggleMenu">
+            <a class="navbar-link" role="button" aria-label="User account menu" aria-haspopup="true" aria-expanded="@_isMenuOpen" tabindex="0" @onclick="ToggleMenu" @onkeydown="HandleMenuKeydown">
                 @if (!string.IsNullOrEmpty(_avatarUrl))
                 {
                     <figure class="image is-24x24">
@@ -90,6 +90,20 @@
     private void CloseMenu()
     {
         _isMenuOpen = false;
+    }
+
+    private void HandleMenuKeydown(KeyboardEventArgs e)
+    {
+        // Close menu on Escape key
+        if (e.Key == "Escape" && _isMenuOpen)
+        {
+            CloseMenu();
+        }
+        // Toggle menu on Enter or Space key
+        else if ((e.Key == "Enter" || e.Key == " ") && !_isMenuOpen)
+        {
+            ToggleMenu();
+        }
     }
 
     private void OnSignUpClick() => OnLoginClick();

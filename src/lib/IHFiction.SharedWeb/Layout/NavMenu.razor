@@ -14,8 +14,8 @@
             <strong>I❤️Fiction</strong>
         </NavLink>
 
-        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample"
-            @onclick="ToggleMobileMenu">
+        <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="@(_isMobileMenuOpen ? "true" : "false")" data-target="navbarBasicExample"
+            @onclick="ToggleMobileMenu" @onkeydown="HandleBurgerKeydown" tabindex="0">
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
@@ -80,10 +80,10 @@
             </div>
             <div class="navbar-item ihf-nav-actions">
                 <div class="buttons">
-                    <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about">
+                    <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about" aria-label="About">
                         <span class="icon"><i class="@CurrentCycleIcon"></i></span>
                     </a>
-                    <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleTheme">
+                    <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleTheme" aria-label="Hit the lights">
                         <span class="icon"><i class="fas fa-@themeIcon"></i></span>
                     </button>
                 </div>
@@ -139,6 +139,15 @@
     private void ToggleMobileMenu()
     {
         _isMobileMenuOpen = !_isMobileMenuOpen;
+    }
+
+    private void HandleBurgerKeydown(KeyboardEventArgs e)
+    {
+        // Toggle menu on Enter or Space key
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            ToggleMobileMenu();
+        }
     }
 
     private async Task ToggleTheme()
