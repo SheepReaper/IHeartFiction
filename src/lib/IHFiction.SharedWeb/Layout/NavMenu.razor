@@ -5,12 +5,14 @@
 @inherits CancellableComponent
 @inject ThemeService theme
 @inject IConfiguration config
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <!DOCTYPE html>
 
-<nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+<nav class="navbar is-primary" role="navigation" aria-label="main navigation" @ref="_navbarRootRef">
     <div class="navbar-brand">
-        <NavLink class="navbar-item" href="" Match="NavLinkMatch.All">
+        <NavLink class="navbar-item" href="" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
             <strong>I❤️Fiction</strong>
         </NavLink>
 
@@ -24,21 +26,21 @@
 
     <div id="navbarBasicExample" class="navbar-menu @(_isMobileMenuOpen ? "is-active" : "")">
         <div class="navbar-start">
-            <NavLink class="navbar-item" href="stories">
+            <NavLink class="navbar-item" href="stories" @onclick="CloseMobileMenu">
                 <span class="icon">
                     <i class="fas fa-book"></i>
                 </span>
                 <span>Stories</span>
             </NavLink>
 
-            <NavLink class="navbar-item" href="authors">
+            <NavLink class="navbar-item" href="authors" @onclick="CloseMobileMenu">
                 <span class="icon">
                     <i class="fas fa-users"></i>
                 </span>
                 <span>Authors</span>
             </NavLink>
 
-            <NavLink class="navbar-item" href="following">
+            <NavLink class="navbar-item" href="following" @onclick="CloseMobileMenu">
                 <span class="icon">
                     <i class="fas fa-bell"></i>
                 </span>
@@ -48,7 +50,7 @@
                 <Authorized>
                     @if (context.User.IsInRole("author"))
                     {
-                        <NavLink class="navbar-item" href="my-stories">
+                        <NavLink class="navbar-item" href="my-stories" @onclick="CloseMobileMenu">
                             <span class="icon">
                                 <i class="fas fa-book-open"></i>
                             </span>
@@ -57,7 +59,7 @@
                     }
                     else
                     {
-                        <NavLink class="navbar-item" href="become-author">
+                        <NavLink class="navbar-item" href="become-author" @onclick="CloseMobileMenu">
                             <span class="icon">
                                 <i class="fas fa-pen-nib"></i>
                             </span>
@@ -70,20 +72,20 @@
 
         <div class="navbar-end">
             <div class="navbar-item">
-                <LoginDisplay />
+                <LoginDisplay OnActionInvoked="CloseMobileMenuAsync" />
             </div>
             <div class="navbar-item ihf-nav-api-docs">
-                <a class="button is-info" href="@DocsUrl" target="_blank" rel="noopener noreferrer">
+                <a class="button is-info" href="@DocsUrl" target="_blank" rel="noopener noreferrer" @onclick="CloseMobileMenu">
                     <span class="icon"><i class="fas fa-book-medical"></i></span>
                     <span>API Docs</span>
                 </a>
             </div>
             <div class="navbar-item ihf-nav-actions">
                 <div class="buttons">
-                    <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about" aria-label="About">
+                    <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about" aria-label="About" @onclick="CloseMobileMenu">
                         <span class="icon"><i class="@CurrentCycleIcon"></i></span>
                     </a>
-                    <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleTheme" aria-label="Hit the lights">
+                    <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleThemeAndCloseMenu" aria-label="Hit the lights">
                         <span class="icon"><i class="fas fa-@themeIcon"></i></span>
                     </button>
                 </div>
@@ -96,6 +98,10 @@
     private bool _isMobileMenuOpen = false;
     private string themeIcon => theme.CurrentTheme == "dark" ? "moon" : "sun";
     private bool _disposed = false;
+    private ElementReference _navbarRootRef;
+    private IJSObjectReference? _module;
+    private IJSObjectReference? _outsideClickListener;
+    private DotNetObjectReference<NavMenu>? _dotNetReference;
 
     private string DocsUrl => config["ApiBaseAddress"] is string apiBaseAddress
         ? $"{apiBaseAddress.TrimEnd('/')}/scalar/v1"
@@ -117,6 +123,7 @@
     protected override Task OnInitializedAsync()
     {
         theme.ThemeChanged += OnThemeChanged;
+        Navigation.LocationChanged += OnLocationChanged;
 
         // start icon rotation (every 3s)
         _iconTimer = new System.Threading.Timer(_ =>
@@ -133,12 +140,39 @@
         if (firstRender)
         {
             await theme.InitializeThemeAsync(CancellationToken);
+
+            _module = await JS.InvokeAsync<IJSObjectReference>(
+                "import",
+                "./_content/IHFiction.SharedWeb/Layout/NavMenu.razor.js");
+
+            _dotNetReference = DotNetObjectReference.Create(this);
+            _outsideClickListener = await _module.InvokeAsync<IJSObjectReference>(
+                "registerOutsideClickListener",
+                _navbarRootRef,
+                _dotNetReference);
         }
     }
 
     private void ToggleMobileMenu()
     {
         _isMobileMenuOpen = !_isMobileMenuOpen;
+    }
+
+    private void CloseMobileMenu()
+    {
+        if (!_isMobileMenuOpen)
+        {
+            return;
+        }
+
+        _isMobileMenuOpen = false;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private Task CloseMobileMenuAsync()
+    {
+        CloseMobileMenu();
+        return InvokeAsync(StateHasChanged);
     }
 
     private void HandleBurgerKeydown(KeyboardEventArgs e)
@@ -150,9 +184,33 @@
         }
     }
 
-    private async Task ToggleTheme()
+    private async Task ToggleThemeAndCloseMenu()
     {
+        await CloseMobileMenuAsync();
         await theme.ToggleThemeAsync(CancellationToken);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (IsCloseExemptLocation(e.Location))
+        {
+            return;
+        }
+
+        CloseMobileMenu();
+    }
+
+    private bool IsCloseExemptLocation(string location)
+    {
+        var relativePath = Navigation.ToBaseRelativePath(location);
+
+        return relativePath.StartsWith("authentication/login", StringComparison.OrdinalIgnoreCase);
+    }
+
+    [JSInvokable]
+    public Task HandleOutsideClick()
+    {
+        return CloseMobileMenuAsync();
     }
 
     private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
@@ -160,16 +218,47 @@
         InvokeAsync(StateHasChanged);
     }
 
-    protected override ValueTask DisposeAsyncCore()
+    protected override async ValueTask DisposeAsyncCore()
     {
-        if(_disposed) return ValueTask.CompletedTask;
+        if(_disposed) return;
 
         theme.ThemeChanged -= OnThemeChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
 
-        _iconTimer?.Dispose();
+        if (_iconTimer is not null)
+        {
+            await _iconTimer.DisposeAsync();
+        }
+
+        if (_outsideClickListener is not null)
+        {
+            try
+            {
+                await _outsideClickListener.InvokeVoidAsync("dispose");
+                await _outsideClickListener.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Blazor is disconnecting and JS runtime is no longer available.
+            }
+        }
+
+        if (_module is not null)
+        {
+            try
+            {
+                await _module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Blazor is disconnecting and JS runtime is no longer available.
+            }
+        }
+
+        _dotNetReference?.Dispose();
 
         _disposed = true;
 
-        return base.DisposeAsyncCore();
+        await base.DisposeAsyncCore();
     }
 }

@@ -56,6 +56,9 @@
     [SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
 
+    [Parameter]
+    public EventCallback OnActionInvoked { get; set; }
+
     private bool _loading;
     private string? _avatarUrl;
     private bool _isMenuOpen;
@@ -115,17 +118,26 @@
         Navigation.NavigateTo($"authentication/login?returnUrl={ReturnUrl ?? Navigation.Uri}", forceLoad: true);
     }
 
-    private void OnLogoutClick()
+    private async Task OnLogoutClick()
     {
         CloseMenu();
+        await NotifyActionInvokedAsync();
         _loading = true;
         LoaderService.Show();
         Navigation.NavigateTo($"authentication/logout", forceLoad: true);
     }
 
-    private void OnAccountSettingsClick()
+    private async Task OnAccountSettingsClick()
     {
         CloseMenu();
+        await NotifyActionInvokedAsync();
         Navigation.NavigateTo("account/settings");
+    }
+
+    private Task NotifyActionInvokedAsync()
+    {
+        return OnActionInvoked.HasDelegate
+            ? OnActionInvoked.InvokeAsync()
+            : Task.CompletedTask;
     }
 }
