@@ -69,4 +69,40 @@ public class ListAuthorsTests
         Assert.True(response.HasNextPage);
         Assert.True(response.HasPreviousPage);
     }
+
+    [Fact]
+    public void PaginatedCollectionResponse_WithFirstPage_HasCorrectPaginationFlags()
+    {
+        // Arrange
+        var authors = Array.Empty<ListAuthors.ListAuthorsItem>();
+
+        // Act
+        var response = new PagedCollection<ListAuthors.ListAuthorsItem>(
+            authors.AsQueryable(),
+            15,
+            1,
+            10);
+
+        // Assert
+        Assert.True(response.HasNextPage);
+        Assert.False(response.HasPreviousPage);
+    }
+
+    [Fact]
+    public void PaginatedCollectionResponse_WithLastPage_HasCorrectPaginationFlags()
+    {
+        // Arrange
+        var authors = Array.Empty<ListAuthors.ListAuthorsItem>();
+
+        // Act
+        var response = new PagedCollection<ListAuthors.ListAuthorsItem>(
+            authors.AsQueryable(),
+            15,
+            2,
+            10);
+
+        // Assert
+        Assert.False(response.HasNextPage);
+        Assert.True(response.HasPreviousPage);
+    }
 }

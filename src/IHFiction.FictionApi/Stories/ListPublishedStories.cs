@@ -9,6 +9,7 @@ using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
@@ -123,9 +124,18 @@ internal sealed class ListPublishedStories(
             return builder.MapGet("stories/published", async (
                 [AsParameters] ListPublishedStoriesQuery query,
                 ListPublishedStories useCase,
+                LinkService linker,
                 CancellationToken cancellationToken) =>
             {
-                var result = await useCase.HandleAsync(query, cancellationToken);
+                var result = (await useCase
+                    .HandleAsync(query, cancellationToken))
+                    .WithLinks(
+                        linker,
+                        Name,
+                        story => new(story, new List<LinkItem>() {
+                            linker.Create<GetPublishedStory>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", story.StoryId.ToString()) })
+                        }),
+                        query);
 
                 return result.ToOkResult(query);
             }

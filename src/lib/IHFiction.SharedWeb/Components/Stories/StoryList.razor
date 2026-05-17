@@ -89,10 +89,12 @@
                     <ul class="pagination-list">
                         @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(stories.TotalPages, currentPage + 2); i++)
                         {
-                            <li @key="i">
+                            var pageNumber = i;
+
+                            <li @key="pageNumber">
                                 <button class="pagination-link @(i == currentPage ? "is-current" : "")"
-                                    @onclick="e => GoToPage(i)">
-                                    @i
+                                    @onclick="() => GoToPage(pageNumber)">
+                                    @pageNumber
                                 </button>
                             </li>
                         }
@@ -187,7 +189,7 @@
 
     private async Task PreviousPage()
     {
-        if (HasNextPage)
+        if (HasPreviousPage)
         {
             currentPage--;
             await LoadStories();

@@ -15,7 +15,7 @@ internal sealed class LinkService(LinkGenerator linkGenerator, IHttpContextAcces
         var href = linkGenerator.GetUriByName(
            httpContextAccessor.HttpContext,
            endpointName,
-           new RouteValueDictionary(values));
+           [with(values)]);
 
         return new LinkItem(
             href ?? throw new ArgumentException("Link generation failed due to uri generation parameters"),
