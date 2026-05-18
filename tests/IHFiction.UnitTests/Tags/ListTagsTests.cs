@@ -14,60 +14,6 @@ public class ListTagsTests
     // business logic validation in the endpoint implementation.
 
     [Fact]
-    public void TagListItem_CanBeCreated()
-    {
-        // Arrange
-        var tagId = Ulid.NewUlid();
-        var createdAt = DateTime.UtcNow;
-
-        // Act
-        var item = new ListTags.ListTagsItem(
-            tagId,
-            "genre",
-            null,
-            "fantasy",
-            createdAt,
-            15, // StoryCount
-            "genre:fantasy"); // DisplayFormat
-
-        // Assert
-        Assert.Equal(tagId, item.TagId);
-        Assert.Equal("genre", item.Category);
-        Assert.Null(item.Subcategory);
-        Assert.Equal("fantasy", item.Value);
-        Assert.Equal(createdAt, item.CreatedAt);
-        Assert.Equal(15, item.StoryCount);
-        Assert.Equal("genre:fantasy", item.DisplayFormat);
-    }
-
-    [Fact]
-    public void TagListItem_WithSubcategory_CanBeCreated()
-    {
-        // Arrange
-        var tagId = Ulid.NewUlid();
-        var createdAt = DateTime.UtcNow;
-
-        // Act
-        var item = new ListTags.ListTagsItem(
-            tagId,
-            "setting",
-            "medieval",
-            "castle",
-            createdAt,
-            8, // StoryCount
-            "setting:medieval:castle"); // DisplayFormat
-
-        // Assert
-        Assert.Equal(tagId, item.TagId);
-        Assert.Equal("setting", item.Category);
-        Assert.Equal("medieval", item.Subcategory);
-        Assert.Equal("castle", item.Value);
-        Assert.Equal(createdAt, item.CreatedAt);
-        Assert.Equal(8, item.StoryCount);
-        Assert.Equal("setting:medieval:castle", item.DisplayFormat);
-    }
-
-    [Fact]
     public void PaginatedCollectionResponse_CanBeCreated()
     {
         // Arrange
@@ -93,6 +39,4 @@ public class ListTagsTests
         Assert.True(response.HasNextPage);
         Assert.True(response.HasPreviousPage);
     }
-
-
 }

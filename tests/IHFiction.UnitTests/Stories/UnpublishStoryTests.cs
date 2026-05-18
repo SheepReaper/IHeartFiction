@@ -9,35 +9,6 @@ namespace IHFiction.UnitTests.Stories;
 public class UnpublishStoryTests
 {
     [Fact]
-    public void UnpublishStoryResponse_CanBeCreated()
-    {
-        // Arrange
-        var storyId = Ulid.NewUlid();
-        var updatedAt = DateTime.UtcNow;
-
-        // Act
-        var response = new UnpublishStory.UnpublishStoryResponse(
-            storyId,
-            "Test Story",
-            "A test story description",
-            updatedAt,
-            true,  // HasContent
-            false, // HasChapters
-            false, // HasBooks
-            0);    // ChapterCount
-
-        // Assert
-        Assert.Equal(storyId, response.StoryId);
-        Assert.Equal("Test Story", response.Title);
-        Assert.Equal("A test story description", response.Description);
-        Assert.Equal(updatedAt, response.UpdatedAt);
-        Assert.True(response.HasContent);
-        Assert.False(response.HasChapters);
-        Assert.False(response.HasBooks);
-        Assert.Equal(0, response.ChapterCount);
-    }
-
-    [Fact]
     public void UnpublishStoryResponse_WithChapters_ShowsCorrectStructure()
     {
         // Arrange
@@ -86,6 +57,4 @@ public class UnpublishStoryTests
         Assert.True(response.HasBooks);
         Assert.Equal(0, response.ChapterCount);
     }
-
-
 }

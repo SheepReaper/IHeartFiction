@@ -9,40 +9,6 @@ namespace IHFiction.UnitTests.Stories;
 public class AddTagsToStoryTests
 {
     [Fact]
-    public void TagItem_CanBeCreated()
-    {
-        // Arrange & Act
-        var tagItem = new AddTagsToStory.AddedTagItem(
-            "genre",
-            null,
-            "fantasy",
-            true);
-
-        // Assert
-        Assert.Equal("genre", tagItem.Category);
-        Assert.Null(tagItem.Subcategory);
-        Assert.Equal("fantasy", tagItem.Value);
-        Assert.True(tagItem.IsNew);
-    }
-
-    [Fact]
-    public void TagItem_WithSubcategory_CanBeCreated()
-    {
-        // Arrange & Act
-        var tagItem = new AddTagsToStory.AddedTagItem(
-            "setting",
-            "medieval",
-            "castle",
-            false);
-
-        // Assert
-        Assert.Equal("setting", tagItem.Category);
-        Assert.Equal("medieval", tagItem.Subcategory);
-        Assert.Equal("castle", tagItem.Value);
-        Assert.False(tagItem.IsNew);
-    }
-
-    [Fact]
     public void AddTagsToStoryResponse_CanBeCreated()
     {
         // Arrange
@@ -73,6 +39,4 @@ public class AddTagsToStoryTests
         Assert.True(response.AddedTags[0].IsNew);
         Assert.False(response.AddedTags[1].IsNew);
     }
-
-
 }

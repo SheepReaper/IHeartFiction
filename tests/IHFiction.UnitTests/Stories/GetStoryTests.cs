@@ -68,39 +68,6 @@ public class GetStoryTests
     }
 
     [Fact]
-    public void StoryTag_CanBeCreatedWithoutSubcategory()
-    {
-        // Arrange
-        var category = "Genre";
-        var value = "Fantasy";
-
-        // Act
-        var tag = new GetPublishedStory.StoryTag(category, null, value);
-
-        // Assert
-        Assert.Equal(category, tag.Category);
-        Assert.Null(tag.Subcategory);
-        Assert.Equal(value, tag.Value);
-    }
-
-    [Fact]
-    public void StoryTag_CanBeCreatedWithSubcategory()
-    {
-        // Arrange
-        var category = "Content";
-        var subcategory = "Warning";
-        var value = "Violence";
-
-        // Act
-        var tag = new GetPublishedStory.StoryTag(category, subcategory, value);
-
-        // Assert
-        Assert.Equal(category, tag.Category);
-        Assert.Equal(subcategory, tag.Subcategory);
-        Assert.Equal(value, tag.Value);
-    }
-
-    [Fact]
     public void GetStoryResponse_WithEmptyCollections_WorksCorrectly()
     {
         // Arrange

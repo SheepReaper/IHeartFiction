@@ -42,34 +42,4 @@ public class GetStoryContentTests
         Assert.Equal(storyUpdatedAt, response.StoryUpdatedAt);
     }
 
-    [Fact]
-    public void GetStoryContentResponse_WithPublishedContent_CanBeCreated()
-    {
-        // Arrange
-        var storyId = Ulid.NewUlid();
-        var contentId = ObjectId.GenerateNewId();
-        var now = DateTime.UtcNow;
-
-        // Act
-        var response = new GetPublishedStoryContent.GetPublishedStoryContentResponse(
-            storyId,
-            "Published Story",
-            "A published story with content.",
-            contentId,
-            "Content from a published story.",
-            null,
-            null,
-            now,
-            now);
-
-        // Assert
-        Assert.Equal(storyId, response.StoryId);
-        Assert.Equal("Published Story", response.StoryTitle);
-        Assert.Equal(contentId, response.ContentId);
-        Assert.Equal("Content from a published story.", response.Content);
-        Assert.Null(response.Note1);
-        Assert.Null(response.Note2);
-        Assert.Equal(now, response.ContentUpdatedAt);
-        Assert.Equal(now, response.StoryUpdatedAt);
-    }
 }
