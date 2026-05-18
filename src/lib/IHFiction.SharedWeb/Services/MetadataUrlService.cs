@@ -41,9 +41,14 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
 
         if (uri.IsAbsoluteUri)
         {
-            if (!string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            if (IsHttpScheme(uri))
             {
                 return uri.ToString();
+            }
+
+            if (!string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Metadata URLs must use HTTP(S) or be relative paths.");
             }
 
             var candidate = string.IsNullOrWhiteSpace(uri.PathAndQuery)
@@ -59,8 +64,24 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
     public string? ToAbsoluteOrNull(string? pathOrUrl) =>
         string.IsNullOrWhiteSpace(pathOrUrl)
             ? null
-            : ToAbsolute(new Uri(pathOrUrl.Trim(), UriKind.RelativeOrAbsolute));
+            : ToAbsoluteOrNull(new Uri(pathOrUrl.Trim(), UriKind.RelativeOrAbsolute));
 
-    public string? ToAbsoluteOrNull(Uri? uri) =>
-        uri is null ? null : ToAbsolute(uri);
+    public string? ToAbsoluteOrNull(Uri? uri)
+    {
+        if (uri is null)
+        {
+            return null;
+        }
+
+        if (uri.IsAbsoluteUri && !IsHttpScheme(uri) && !string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return ToAbsolute(uri);
+    }
+
+    private static bool IsHttpScheme(Uri uri) =>
+        string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
 }
