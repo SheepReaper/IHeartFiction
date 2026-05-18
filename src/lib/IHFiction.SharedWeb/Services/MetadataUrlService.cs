@@ -14,7 +14,7 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
 
             if (baseUri is null)
             {
-                throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
+                throw new InvalidOperationException("BaseUrl must be configured as an absolute HTTP(S) URL.");
             }
 
             return baseUri;
