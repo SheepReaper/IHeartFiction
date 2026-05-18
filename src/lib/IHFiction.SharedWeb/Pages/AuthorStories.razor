@@ -2,12 +2,22 @@
 
 @page "/authors/{authorId}/stories"
 
+<StoryList
+    AuthorId="@AuthorId" />
+
 <SocialPreviewMetadata
     Title="Author Stories - IHeartFiction"
-    Description="Browse published stories from this author on IHeartFiction and jump directly into the latest chapters." />
-
-<StoryList AuthorId="@AuthorId" />
+    Description="Browse published stories from this author on IHeartFiction and jump directly into the latest chapters."
+    CanonicalUrl="@CanonicalUrl" />
 
 @code {
     [Parameter, EditorRequired] public string AuthorId { get; set; }
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    private int NormalizedPage => Page is > 0 ? Page.Value : 1;
+
+    private string CanonicalUrl => NormalizedPage <= 1
+        ? $"/authors/{AuthorId}/stories"
+        : $"/authors/{AuthorId}/stories?page={NormalizedPage}";
 }

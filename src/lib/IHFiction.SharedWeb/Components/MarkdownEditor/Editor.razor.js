@@ -54,3 +54,19 @@ export class BoundToast {
         }
     }
 }
+
+export async function waitForToastUi(timeoutMs = 10000) {
+    if (globalThis.toastui?.Editor) {
+        return;
+    }
+
+    const startedAt = Date.now();
+
+    while (!globalThis.toastui?.Editor) {
+        if (Date.now() - startedAt >= timeoutMs) {
+            throw new Error('Toast UI editor script did not load in time.');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 25));
+    }
+}

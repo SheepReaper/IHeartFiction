@@ -4,6 +4,20 @@
 
 <SocialPreviewMetadata
     Title="Stories - IHeartFiction"
-    Description="Browse published stories across genres, discover new favorites, and start reading instantly on IHeartFiction." />
+    Description="Browse published stories across genres, discover new favorites, and start reading instantly on IHeartFiction."
+    CanonicalUrl="@CanonicalUrl" />
 
-<StoryList AuthorId="@null" />
+<StoryList
+    AuthorId="@null"
+    EmitPaginationHeadLinks="true" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    private int NormalizedPage => Page is > 0 ? Page.Value : 1;
+
+    private string CanonicalUrl => NormalizedPage <= 1
+        ? "/stories"
+        : $"/stories?page={NormalizedPage}";
+}

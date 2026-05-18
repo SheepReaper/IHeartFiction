@@ -9,6 +9,16 @@
     <meta name="description" content="@ResolvedDescription" />
     <link rel="canonical" href="@ResolvedCanonicalUrl" />
 
+    @if (!string.IsNullOrWhiteSpace(ResolvedPreviousUrl))
+    {
+        <link rel="prev" href="@ResolvedPreviousUrl" />
+    }
+
+    @if (!string.IsNullOrWhiteSpace(ResolvedNextUrl))
+    {
+        <link rel="next" href="@ResolvedNextUrl" />
+    }
+
     <meta property="og:title" content="@ResolvedTitle" />
     <meta property="og:description" content="@ResolvedDescription" />
     <meta property="og:url" content="@ResolvedPageUrl" />
@@ -24,6 +34,8 @@
     <meta name="twitter:image" content="@ResolvedImageUrl" />
     <meta name="twitter:image:src" content="@ResolvedImageUrl" />
     <meta property="twitter:image" content="@ResolvedImageUrl" />
+
+    <SectionOutlet SectionName="@AppendSectionName" />
 </HeadContent>
 
 @code {
@@ -33,18 +45,23 @@
     [Parameter, EditorRequired] public string Description { get; set; } = null!;
     [Parameter] public string? PageUrl { get; set; }
     [Parameter] public string? CanonicalUrl { get; set; }
+    [Parameter] public string? PreviousUrl { get; set; }
+    [Parameter] public string? NextUrl { get; set; }
     [Parameter] public string? ImageUrl { get; set; }
     [Parameter] public int ImageWidth { get; set; } = 1200;
     [Parameter] public int ImageHeight { get; set; } = 630;
     [Parameter] public string Type { get; set; } = "website";
     [Parameter] public string SiteName { get; set; } = "IHeartFiction";
     [Parameter] public string TwitterCard { get; set; } = "summary_large_image";
+    [Parameter] public string AppendSectionName { get; set; } = "social-preview-extra-head";
 
     private string ResolvedTitle => Normalize(Title, 60, "IHeartFiction");
     private string ResolvedDescription => Normalize(Description, 200, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedTwitterDescription => Normalize(Description, 199, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedPageUrl => ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
     private string ResolvedCanonicalUrl => ToAbsolute(CanonicalUrl ?? ResolvedPageUrl);
+    private string? ResolvedPreviousUrl => ToAbsoluteOrNull(PreviousUrl);
+    private string? ResolvedNextUrl => ToAbsoluteOrNull(NextUrl);
     private string ResolvedImageUrl => ToAbsolute(ImageUrl ?? DefaultImagePath);
 
     private Uri MetadataBaseUri => GetMetadataBaseUri();
@@ -67,6 +84,16 @@
         }
 
         return new Uri(MetadataBaseUri, candidate).ToString();
+    }
+
+    private string? ToAbsoluteOrNull(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return null;
+        }
+
+        return ToAbsolute(url);
     }
 
     private Uri GetMetadataBaseUri()

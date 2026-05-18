@@ -19,6 +19,16 @@
         <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/theme/toastui-editor-dark.min.css"]" rel="stylesheet"
             nonce="@nonce" />
     }
+
+    @if (Env.IsDevelopment())
+    {
+        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.js"]" nonce="@nonce"></script>
+    }
+    else
+    {
+        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.min.js"]"
+            nonce="@nonce"></script>
+    }
 </HeadContent>
 
 <div @ref="_editorElement"></div>
@@ -113,6 +123,8 @@
             "import",
             CancellationToken,
             scriptPath);
+
+            await _module.InvokeVoidAsync("waitForToastUi", CancellationToken, 10000);
 
             _editor = await _module.InvokeConstructorAsync(
             "BoundToast",

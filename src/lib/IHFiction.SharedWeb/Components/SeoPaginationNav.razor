@@ -1,0 +1,19 @@
+@if (!string.IsNullOrWhiteSpace(PreviousUrl) || !string.IsNullOrWhiteSpace(NextUrl))
+{
+    <nav class="pagination is-centered is-sr-only" role="navigation" aria-label="pagination">
+        @if (!string.IsNullOrWhiteSpace(PreviousUrl))
+        {
+            <a class="pagination-previous" href="@PreviousUrl">Previous</a>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(NextUrl))
+        {
+            <a class="pagination-next" href="@NextUrl">Next page</a>
+        }
+    </nav>
+}
+
+@code {
+    [Parameter] public string? PreviousUrl { get; set; }
+    [Parameter] public string? NextUrl { get; set; }
+}

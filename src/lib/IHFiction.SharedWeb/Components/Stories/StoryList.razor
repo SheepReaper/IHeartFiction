@@ -1,8 +1,30 @@
+@using System.Globalization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives
+
 @inherits CancellableComponent
+@inject NavigationManager Navigation
 @inject StoryService StoryService
+
+@if (EmitPaginationHeadLinks)
+{
+    <SectionContent SectionName="@MetadataSectionName">
+        @if (!string.IsNullOrEmpty(PreviousPageUrl))
+        {
+            <link rel="prev" href="@PreviousPageUrl" />
+        }
+
+        @if (!string.IsNullOrEmpty(NextPageUrl))
+        {
+            <link rel="next" href="@NextPageUrl" />
+        }
+    </SectionContent>
+}
 
 <div class="section">
     <div class="container">
+
         <div class="level">
             <div class="level-left">
                 <div class="level-item">
@@ -14,7 +36,7 @@
                     <div class="field has-addons">
                         <div class="control has-icons-left">
                             <input class="input" type="text" placeholder="Search stories..." @bind="searchQuery"
-                                @onkeypress="OnSearchKeyPress">
+                                   @onkeypress="OnSearchKeyPress">
                             <span class="icon is-small is-left">
                                 <i class="fas fa-search"></i>
                             </span>
@@ -35,7 +57,7 @@
                     <label class="label">Sort by</label>
                     <div class="control">
                         <div class="select is-fullwidth">
-                            <select @bind="sortBy" @bind:after="() => OnSortChanged()">
+                            <select @bind="sortBy" @bind:after="OnSortChanged">
                                 <option value="publishedAt desc">Recently Published</option>
                                 <option value="title">Title (A-Z)</option>
                                 <option value="updatedAt desc">Recently Updated</option>
@@ -69,7 +91,7 @@
         else if (stories?.Data?.Any() == true)
         {
             <div class="columns is-multiline">
-                @foreach (var story in stories.Data)
+                @foreach (var story in displayedStories)
                 {
                     <div @key="story.StoryId" class="column @(IsCompact ? "is-full" : "is-one-third")">
                         <StoryCard Story="story" />
@@ -77,30 +99,21 @@
                 }
             </div>
 
-            @if (stories.TotalPages > 1)
+            @if (!string.IsNullOrEmpty(LoadMoreUrl))
             {
-                <nav class="pagination is-centered" role="navigation" aria-label="pagination">
-                    <button class="pagination-previous" @onclick="PreviousPage" disabled="@(!HasPreviousPage)">
-                        Previous
-                    </button>
-                    <button class="pagination-next" @onclick="NextPage" disabled="@(!HasNextPage)">
-                        Next page
-                    </button>
-                    <ul class="pagination-list">
-                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(stories.TotalPages, currentPage + 2); i++)
-                        {
-                            var pageNumber = i;
-
-                            <li @key="pageNumber">
-                                <button class="pagination-link @(i == currentPage ? "is-current" : "")"
-                                    @onclick="() => GoToPage(pageNumber)">
-                                    @pageNumber
-                                </button>
-                            </li>
-                        }
-                    </ul>
-                </nav>
+                <div class="has-text-centered mt-5">
+                    <a class="button has-background-link-soft has-text-link-bold is-medium @(isLoadingMore ? "is-loading" : string.Empty)"
+                       href="@LoadMoreUrl"
+                       rel="next"
+                       aria-disabled="@isLoadingMore"
+                       @onclick="LoadMoreStories"
+                       @onclick:preventDefault="true">
+                        Load more stories
+                    </a>
+                </div>
             }
+
+            <SeoPaginationNav PreviousUrl="@PreviousPageUrl" NextUrl="@NextPageUrl" />
         }
         else
         {
@@ -119,24 +132,70 @@
 
 @code {
     [Parameter] public string? AuthorId { get; set; } = null;
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? Query { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "sort")]
+    public string? Sort { get; set; }
+
+    [Parameter] public bool EmitPaginationHeadLinks { get; set; } = true;
+    [Parameter] public string MetadataSectionName { get; set; } = "social-preview-extra-head";
+
     [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
+
+    private static readonly string[] AllowedSorts = ["publishedAt desc", "title", "updatedAt desc"];
+    private const string DefaultSort = "publishedAt desc";
 
     private LinkedPagedCollectionOfListPublishedStoriesItem? stories;
     private bool isLoading = true;
+    private bool isLoadingMore;
     private string? errorMessage;
     private string searchQuery = "";
     private string sortBy = "publishedAt desc";
     private int currentPage = 1;
     private const int pageSize = 12;
+    private int _loadedPage = -1;
+    private string? _loadedSearch;
+    private string? _loadedSort;
+    private string? _loadedAuthorId;
+    private List<LinkedOfListPublishedStoriesItem> displayedStories = [];
+    private string? loadMoreUrl;
 
-    protected override async Task OnInitializedAsync()
+    private string? PreviousPageUrl => ResolveLinkedPageUrl("previous-page");
+    private string? NextPageUrl => ResolveLinkedPageUrl("next-page");
+    private string? LoadMoreUrl => loadMoreUrl;
+
+    protected override async Task OnParametersSetAsync()
     {
+        currentPage = NormalizePage(Page);
+        searchQuery = Query ?? string.Empty;
+        sortBy = NormalizeSort(Sort);
+
+        if (currentPage == _loadedPage
+            && string.Equals(searchQuery, _loadedSearch, StringComparison.Ordinal)
+            && string.Equals(sortBy, _loadedSort, StringComparison.Ordinal)
+            && string.Equals(AuthorId, _loadedAuthorId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
         await LoadStories();
+        _loadedPage = currentPage;
+        _loadedSearch = searchQuery;
+        _loadedSort = sortBy;
+        _loadedAuthorId = AuthorId;
     }
 
     private async Task LoadStories()
     {
         isLoading = true;
+        isLoadingMore = false;
         errorMessage = null;
 
         var result = await StoryService.ListPublishedStoriesAsync(
@@ -150,20 +209,24 @@
         if (result.IsSuccess)
         {
             stories = result.Value;
+            displayedStories = stories.Data.ToList();
+            loadMoreUrl = NextPageUrl;
         }
         else
         {
             errorMessage = result.DomainError.Description;
+            displayedStories = [];
+            loadMoreUrl = null;
         }
 
         isLoading = false;
         StateHasChanged();
     }
 
-    private async Task SearchStories()
+    private Task SearchStories()
     {
-        currentPage = 1;
-        await LoadStories();
+        NavigateToPage(1);
+        return Task.CompletedTask;
     }
 
     private async Task OnSearchKeyPress(KeyboardEventArgs e)
@@ -174,33 +237,9 @@
         }
     }
 
-    private async Task OnSortChanged()
+    private void OnSortChanged()
     {
-        await SearchStories();
-    }
-
-    private async Task NextPage()
-    {
-        if (HasNextPage)
-        {
-            currentPage++;
-            await LoadStories();
-        }
-    }
-
-    private async Task PreviousPage()
-    {
-        if (HasPreviousPage)
-        {
-            currentPage--;
-            await LoadStories();
-        }
-    }
-
-    private async Task GoToPage(int page)
-    {
-        currentPage = page;
-        await LoadStories();
+        NavigateToPage(1);
     }
 
     private void ClearError()
@@ -208,6 +247,168 @@
         errorMessage = null;
     }
 
-    private bool HasNextPage => stories?.Links.Any(l => l.Rel == "next-page") ?? false;
-    private bool HasPreviousPage => stories?.Links.Any(l => l.Rel == "previous-page") ?? false;
+    private async Task LoadMoreStories()
+    {
+        if (isLoadingMore || string.IsNullOrWhiteSpace(LoadMoreUrl))
+        {
+            return;
+        }
+
+        var nextPage = TryGetPageFromUiHref(LoadMoreUrl);
+        if (nextPage is null)
+        {
+            Navigation.NavigateTo(LoadMoreUrl);
+            return;
+        }
+
+        isLoadingMore = true;
+        errorMessage = null;
+
+        var result = await StoryService.ListPublishedStoriesAsync(
+            page: nextPage.Value,
+            pageSize: pageSize,
+            search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
+            sort: sortBy,
+            authorId: AuthorId,
+            cancellationToken: CancellationToken);
+
+        if (result.IsSuccess)
+        {
+            foreach (var story in result.Value.Data)
+            {
+                displayedStories.Add(story);
+            }
+
+            loadMoreUrl = ResolveLinkedPageUrl(result.Value, "next-page");
+        }
+        else
+        {
+            errorMessage = result.DomainError.Description;
+        }
+
+        isLoadingMore = false;
+        StateHasChanged();
+    }
+
+    private string? ResolveLinkedPageUrl(string relation)
+    {
+        if (stories is null)
+        {
+            return null;
+        }
+
+        return ResolveLinkedPageUrl(stories, relation);
+    }
+
+    private string? ResolveLinkedPageUrl(LinkedPagedCollectionOfListPublishedStoriesItem source, string relation)
+    {
+        var href = source.Links.FirstOrDefault(l => l.Rel == relation)?.Href;
+        if (string.IsNullOrWhiteSpace(href))
+        {
+            return null;
+        }
+
+        return NormalizeApiHrefToUiListHref(href);
+    }
+
+    private void NavigateToPage(int page)
+    {
+        Navigation.NavigateTo(BuildPageUrl(page));
+    }
+
+    private string BuildPageUrl(int page)
+    {
+        var path = GetCurrentPath();
+        var query = new Dictionary<string, string?>();
+
+        if (page > 1)
+        {
+            query["page"] = page.ToString(CultureInfo.InvariantCulture);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            query["q"] = searchQuery;
+        }
+
+        if (!string.Equals(sortBy, DefaultSort, StringComparison.OrdinalIgnoreCase))
+        {
+            query["sort"] = sortBy;
+        }
+
+        return query.Count == 0
+            ? path
+            : QueryHelpers.AddQueryString(path, query);
+    }
+
+    private string NormalizeApiHrefToUiListHref(string href)
+    {
+        var query = ParseQueryFromHref(href);
+        var path = GetCurrentPath();
+        var normalizedQuery = new Dictionary<string, string?>();
+
+        var pageValue = GetQueryValue(query, "page");
+        if (int.TryParse(pageValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var page) && page > 1)
+        {
+            normalizedQuery["page"] = page.ToString(CultureInfo.InvariantCulture);
+        }
+
+        var searchValue = GetQueryValue(query, "q") ?? GetQueryValue(query, "search");
+        if (!string.IsNullOrWhiteSpace(searchValue))
+        {
+            normalizedQuery["q"] = searchValue;
+        }
+
+        var sortValue = GetQueryValue(query, "sort");
+        if (!string.IsNullOrWhiteSpace(sortValue)
+            && !string.Equals(sortValue, DefaultSort, StringComparison.OrdinalIgnoreCase))
+        {
+            normalizedQuery["sort"] = sortValue;
+        }
+
+        return normalizedQuery.Count == 0
+            ? path
+            : QueryHelpers.AddQueryString(path, normalizedQuery);
+    }
+
+    private Dictionary<string, StringValues> ParseQueryFromHref(string href)
+    {
+        if (Uri.TryCreate(href, UriKind.Absolute, out var absolute))
+        {
+            return QueryHelpers.ParseQuery(absolute.Query);
+        }
+
+        var baseUri = new Uri(Navigation.BaseUri);
+        var resolved = new Uri(baseUri, href);
+        return QueryHelpers.ParseQuery(resolved.Query);
+    }
+
+    private static string? GetQueryValue(Dictionary<string, StringValues> query, string key)
+        => query.TryGetValue(key, out var values)
+            ? values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v))
+            : null;
+
+    private int? TryGetPageFromUiHref(string href)
+    {
+        var query = ParseQueryFromHref(href);
+        var pageValue = GetQueryValue(query, "page");
+
+        return int.TryParse(pageValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var page) && page > 0
+            ? page
+            : null;
+    }
+
+    private string GetCurrentPath()
+    {
+        var relativeUri = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = relativeUri.Split('?', 2)[0];
+
+        return string.IsNullOrWhiteSpace(path)
+            ? "/"
+            : $"/{path.TrimStart('/')}";
+    }
+
+    private static int NormalizePage(int? page) => page is > 0 ? page.Value : 1;
+
+    private static string NormalizeSort(string? sort) => AllowedSorts.Contains(sort) ? sort! : DefaultSort;
 }

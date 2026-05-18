@@ -8,15 +8,16 @@ const chapterId = process.env.SSP_CHAPTER_ID ?? '01K7J887GFPBQEJKE0Z6ACMP1Z';
 const allowInsecureTls = process.env.ALLOW_INSECURE_TLS === 'true';
 
 const routes = [
-  '/',
-  '/about',
-  '/authors',
-  '/stories',
-  `/authors/${authorId}`,
-  `/stories/${storyId}`,
-  `/stories/${chapterStoryId}/chapters/${chapterId}`,
-  `/stories/${storyId}/read`,
-  `/authors/${authorId}/stories`
+  { path: '/' },
+  { path: '/about' },
+  { path: '/authors' },
+  { path: '/stories' },
+  { path: `/authors/${authorId}` },
+  { path: `/stories/${storyId}` },
+  { path: `/stories/${chapterStoryId}/chapters/${chapterId}` },
+  { path: `/stories/${storyId}/read` },
+  { path: `/authors/${authorId}/stories` },
+  { path: '/stories?page=2', expectPrev: true }
 ];
 
 const requiredSnippets = [
@@ -77,6 +78,13 @@ function extractMetaNameContent(html, name) {
   return nameFirst.exec(html)?.[1] ?? contentFirst.exec(html)?.[1] ?? '';
 }
 
+function extractLinkHref(html, rel) {
+  const escapedRel = rel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const relFirst = new RegExp(`<link\\s+[^>]*rel=["']${escapedRel}["'][^>]*href=["']([^"']*)["'][^>]*>`, 'i');
+  const hrefFirst = new RegExp(`<link\\s+[^>]*href=["']([^"']*)["'][^>]*rel=["']${escapedRel}["'][^>]*>`, 'i');
+  return relFirst.exec(html)?.[1] ?? hrefFirst.exec(html)?.[1] ?? '';
+}
+
 function checkTitleLength(html) {
   const ogTitle = extractMetaContent(html, 'og:title');
   if (!ogTitle) {
@@ -122,44 +130,51 @@ async function main() {
   const failures = [];
 
   for (const route of routes) {
-    const url = new URL(route, `${baseUrl}/`).toString();
+    const url = new URL(route.path, `${baseUrl}/`).toString();
 
     let response;
     try {
       response = await getHtml(url);
     } catch (error) {
-      failures.push(`${route}: request error (${error.message})`);
+      failures.push(`${route.path}: request error (${error.message})`);
       continue;
     }
 
     if (response.statusCode < 200 || response.statusCode > 299) {
-      failures.push(`${route}: request failed (${response.statusCode})`);
+      failures.push(`${route.path}: request failed (${response.statusCode})`);
       continue;
     }
 
     const missing = findMissingSnippets(response.body);
     if (missing.length > 0) {
-      failures.push(`${route}: missing ${missing.join(', ')}`);
+      failures.push(`${route.path}: missing ${missing.join(', ')}`);
     }
 
     const title = titleFromHtml(response.body);
     if (!title || /Story Details - IHeartFiction|Reading Chapter - IHeartFiction|Author Profile - IHeartFiction/i.test(title)) {
-      failures.push(`${route}: title is still generic ('${title || '(empty)'}')`);
+      failures.push(`${route.path}: title is still generic ('${title || '(empty)'}')`);
     }
 
     const titleLengthIssue = checkTitleLength(response.body);
     if (titleLengthIssue) {
-      failures.push(`${route}: ${titleLengthIssue}`);
+      failures.push(`${route.path}: ${titleLengthIssue}`);
     }
 
     const descriptionLengthIssue = checkDescriptionLength(response.body);
     if (descriptionLengthIssue) {
-      failures.push(`${route}: ${descriptionLengthIssue}`);
+      failures.push(`${route.path}: ${descriptionLengthIssue}`);
     }
 
     const imageDimensionsIssue = checkImageDimensions(response.body);
     if (imageDimensionsIssue) {
-      failures.push(`${route}: ${imageDimensionsIssue}`);
+      failures.push(`${route.path}: ${imageDimensionsIssue}`);
+    }
+
+    if (route.expectPrev) {
+      const prevHref = extractLinkHref(response.body, 'prev');
+      if (!prevHref) {
+        failures.push(`${route.path}: missing rel=prev link on paginated route`);
+      }
     }
   }
 

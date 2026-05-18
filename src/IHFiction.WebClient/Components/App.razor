@@ -18,6 +18,8 @@
 
     <base href="/" />
 
+    <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]" nonce="@nonce"></script>
+
     <ResourcePreloader />
 
     <link href="@Assets["_content/IHFiction.SharedWeb/font-awesome/6.4.0/css/all.min.css"]" rel="preload" as="style"
@@ -43,16 +45,6 @@
         <Routes @rendermode="InteractiveServer" />
     </CascadingValue>
     <script src="@Assets["_framework/blazor.web.js"]" nonce="@nonce"></script>
-    <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]" nonce="@nonce"></script>
-    @if (Env.IsDevelopment())
-    {
-        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.js"]" nonce="@nonce"></script>
-    }
-    else
-    {
-        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.min.js"]"
-            nonce="@nonce"></script>
-    }
 </body>
 
 </html>

@@ -2,8 +2,21 @@
 
 @page "/authors"
 
+<AuthorList
+    EmitPaginationHeadLinks="true" />
+
 <SocialPreviewMetadata
     Title="Authors - IHeartFiction"
-    Description="Discover fiction authors, browse their profiles, and follow their latest published stories and chapters on IHeartFiction." />
+    Description="Discover fiction authors, browse their profiles, and follow their latest published stories and chapters on IHeartFiction."
+    CanonicalUrl="@CanonicalUrl" />
 
-<AuthorList />
+@code {
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    private int NormalizedPage => Page is > 0 ? Page.Value : 1;
+
+    private string CanonicalUrl => NormalizedPage <= 1
+        ? "/authors"
+        : $"/authors?page={NormalizedPage}";
+}
