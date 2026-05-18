@@ -25,7 +25,14 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
     {
         ArgumentNullException.ThrowIfNull(pathOrUrl);
 
-        return ToAbsolute(new Uri(pathOrUrl.Trim(), UriKind.RelativeOrAbsolute));
+        var normalizedPathOrUrl = pathOrUrl.Trim();
+
+        if (normalizedPathOrUrl.Length == 0)
+        {
+            return BaseUri.ToString();
+        }
+
+        return ToAbsolute(new Uri(normalizedPathOrUrl, UriKind.RelativeOrAbsolute));
     }
 
     public string ToAbsolute(Uri uri)
