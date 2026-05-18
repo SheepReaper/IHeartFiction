@@ -51,23 +51,29 @@ public sealed class MetadataUrlServiceTests
         result.Should().Be("https://example.test/images/cover.png?size=lg#v1");
     }
 
-    [Fact]
-    public void ToAbsolute_WithUnsupportedAbsoluteScheme_Throws()
+    [Theory]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("vbscript:msgbox(\"x\")")]
+    [InlineData("data:text/html,<script>alert(1)</script>")]
+    public void ToAbsolute_WithUnsupportedAbsoluteScheme_Throws(string input)
     {
         var sut = CreateSut();
 
-        var act = () => sut.ToAbsolute(new Uri("javascript:alert(1)", UriKind.Absolute));
+        var act = () => sut.ToAbsolute(new Uri(input, UriKind.Absolute));
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("Metadata URLs must use HTTP(S) or be relative paths.");
     }
 
-    [Fact]
-    public void ToAbsoluteOrNull_WithUnsupportedAbsoluteScheme_ReturnsNull()
+    [Theory]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("vbscript:msgbox(\"x\")")]
+    [InlineData("data:text/html,<script>alert(1)</script>")]
+    public void ToAbsoluteOrNull_WithUnsupportedAbsoluteScheme_ReturnsNull(string input)
     {
         var sut = CreateSut();
 
-        var result = sut.ToAbsoluteOrNull("javascript:alert(1)");
+        var result = sut.ToAbsoluteOrNull(input);
 
         result.Should().BeNull();
     }

@@ -46,7 +46,7 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
                 return uri.ToString();
             }
 
-            if (!string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            if (!IsFileScheme(uri))
             {
                 throw new InvalidOperationException("Metadata URLs must use HTTP(S) or be relative paths.");
             }
@@ -73,7 +73,7 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
             return null;
         }
 
-        if (uri.IsAbsoluteUri && !IsHttpScheme(uri) && !string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+        if (uri.IsAbsoluteUri && !IsSupportedAbsoluteScheme(uri))
         {
             return null;
         }
@@ -81,7 +81,13 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
         return ToAbsolute(uri);
     }
 
+    private static bool IsSupportedAbsoluteScheme(Uri uri) =>
+        IsHttpScheme(uri) || IsFileScheme(uri);
+
     private static bool IsHttpScheme(Uri uri) =>
         string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
         string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsFileScheme(Uri uri) =>
+        string.Equals(uri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase);
 }
