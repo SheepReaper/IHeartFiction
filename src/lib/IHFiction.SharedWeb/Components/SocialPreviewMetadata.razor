@@ -5,7 +5,7 @@
 
 <PageTitle>@ResolvedTitle</PageTitle>
 
-<HeadContent>
+<SectionContent SectionName="@SectionName">
     <meta name="description" content="@ResolvedDescription" />
     <link rel="canonical" href="@ResolvedCanonicalUrl" />
 
@@ -36,7 +36,7 @@
     <meta property="twitter:image" content="@ResolvedImageUrl" />
 
     <SectionOutlet SectionName="@AppendSectionName" />
-</HeadContent>
+</SectionContent>
 
 @code {
     private const string DefaultImagePath = "/_content/IHFiction.SharedWeb/og-image.png";
@@ -53,6 +53,7 @@
     [Parameter] public string Type { get; set; } = "website";
     [Parameter] public string SiteName { get; set; } = "IHeartFiction";
     [Parameter] public string TwitterCard { get; set; } = "summary_large_image";
+    [Parameter] public string SectionName { get; set; } = "app-head-metadata";
     [Parameter] public string AppendSectionName { get; set; } = "social-preview-extra-head";
 
     private string ResolvedTitle => Normalize(Title, 60, "IHeartFiction");

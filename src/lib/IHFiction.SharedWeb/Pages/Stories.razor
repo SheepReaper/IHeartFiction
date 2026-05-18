@@ -1,4 +1,5 @@
 @using IHFiction.SharedWeb.Components.Stories
+@inject NavigationManager Nav
 
 @page "/stories"
 
@@ -6,6 +7,8 @@
     Title="Stories - IHeartFiction"
     Description="Browse published stories across genres, discover new favorites, and start reading instantly on IHeartFiction."
     CanonicalUrl="@CanonicalUrl" />
+
+<StructuredDataMetadata Schema="@StoriesListSchema" />
 
 <StoryList
     AuthorId="@null"
@@ -20,4 +23,22 @@
     private string CanonicalUrl => NormalizedPage <= 1
         ? "/stories"
         : $"/stories?page={NormalizedPage}";
+
+    private object StoriesListSchema => new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "ItemList",
+        ["name"] = "Stories",
+        ["url"] = ToAbsolute(CanonicalUrl)
+    };
+
+    private string ToAbsolute(string path)
+    {
+        if (Uri.TryCreate(path, UriKind.Absolute, out var absolute))
+        {
+            return absolute.ToString();
+        }
+
+        return new Uri(new Uri(Nav.BaseUri), path).ToString();
+    }
 }

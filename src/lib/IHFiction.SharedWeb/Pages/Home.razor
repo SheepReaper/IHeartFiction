@@ -1,11 +1,15 @@
 @page "/"
 @using Sidio.Sitemap.Core
+@inject NavigationManager Nav
+@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 
 @attribute [Sitemap(ChangeFrequency.Yearly, 0.5, "2025-10-02")]
 
 <SocialPreviewMetadata
     Title="I❤️Fiction - And So Do You"
     Description="Discover amazing stories from talented authors around the world. Read new chapters, explore story worlds, and support the creators you love." />
+
+<StructuredDataMetadata Schemas="@HomeSchemas" />
 
 <section class="hero is-primary is-medium">
     <div class="hero-body">
@@ -34,6 +38,36 @@
         </div>
     </div>
 </section>
+
+@code {
+    private IEnumerable<object> HomeSchemas =>
+    [
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "Organization",
+            ["name"] = "IHeartFiction",
+            ["url"] = SiteBaseUrl,
+            ["logo"] = $"{SiteBaseUrl}/_content/IHFiction.SharedWeb/og-image.png",
+            ["description"] = "A modern fiction reading and publishing platform for original and fan fiction."
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "WebSite",
+            ["name"] = "IHeartFiction",
+            ["url"] = SiteBaseUrl,
+            ["potentialAction"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "SearchAction",
+                ["target"] = $"{SiteBaseUrl}/stories?q={{search_term_string}}",
+                ["query-input"] = "required name=search_term_string"
+            }
+        }
+    ];
+
+    private string SiteBaseUrl => SiteUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? Nav.BaseUri.TrimEnd('/');
+}
 
 <section class="section">
     <div class="container">

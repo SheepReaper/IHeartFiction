@@ -1,12 +1,16 @@
 @using Markdig
 @inject ChapterService ChapterService
 @inject MarkdownPipeline mdp
+@inject NavigationManager Nav
+@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
     Description="@MetadataDescription"
     ImageUrl="@CoverImageUrl"
     Type="article" />
+
+<StructuredDataMetadata Schemas="@StructuredDataSchemas" />
 
 
 @if (isLoading)
@@ -156,6 +160,89 @@ else if (chapterContent != null)
 
     private string? CoverImageUrl => chapterContent is {} ? $"/stories/{chapterContent.StoryId}/cover" : null;
 
+    private IEnumerable<object> StructuredDataSchemas
+    {
+        get
+        {
+            if (chapterContent is null)
+            {
+                return [];
+            }
+
+            var chapterUrl = ToAbsolute($"/stories/{chapterContent.StoryId}/chapters/{chapterContent.ChapterId}");
+            var storyUrl = ToAbsolute($"/stories/{chapterContent.StoryId}");
+
+            var chapterSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "Chapter",
+                ["name"] = chapterContent.ChapterTitle,
+                ["headline"] = chapterContent.ChapterTitle,
+                ["url"] = chapterUrl,
+                ["isPartOf"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "CreativeWork",
+                    ["name"] = chapterContent.StoryTitle,
+                    ["url"] = storyUrl
+                },
+                ["author"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Organization",
+                    ["name"] = "IHeartFiction",
+                    ["url"] = SiteBaseUrl
+                },
+                ["publisher"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Organization",
+                    ["name"] = "IHeartFiction",
+                    ["url"] = SiteBaseUrl
+                },
+                ["dateModified"] = chapterContent.ContentUpdatedAt.ToString("O")
+            };
+
+            var breadcrumbSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["itemListElement"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 1,
+                        ["name"] = "Home",
+                        ["item"] = ToAbsolute("/")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 2,
+                        ["name"] = "Stories",
+                        ["item"] = ToAbsolute("/stories")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 3,
+                        ["name"] = chapterContent.StoryTitle,
+                        ["item"] = storyUrl
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 4,
+                        ["name"] = chapterContent.ChapterTitle,
+                        ["item"] = chapterUrl
+                    }
+                }
+            };
+
+            return [chapterSchema, breadcrumbSchema];
+        }
+    }
+
+    private string SiteBaseUrl => SiteUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? Nav.BaseUri.TrimEnd('/');
+
     protected override async Task OnInitializedAsync()
     {
         await LoadChapter();
@@ -190,4 +277,15 @@ else if (chapterContent != null)
     }
 
     private string ChapterHref(string chapterId) => $"/stories/{StoryId}/chapters/{chapterId}";
+
+    private string ToAbsolute(string url)
+    {
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute))
+        {
+            return absolute.ToString();
+        }
+
+        var normalized = url.StartsWith('/') ? url : $"/{url}";
+        return $"{SiteBaseUrl}{normalized}";
+    }
 }

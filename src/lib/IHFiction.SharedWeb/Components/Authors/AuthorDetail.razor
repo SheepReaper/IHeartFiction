@@ -2,6 +2,8 @@
 @using IHFiction.SharedWeb.Components.Stories
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
+@inject NavigationManager Nav
+@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 @using IHFiction.SharedWeb.Components.Notifications
 
 <SocialPreviewMetadata
@@ -9,6 +11,8 @@
     Description="@MetadataDescription"
     ImageUrl="@MetadataImageUrl"
     Type="profile" />
+
+<StructuredDataMetadata Schemas="@StructuredDataSchemas" />
 
 @if (isLoading)
 {
@@ -162,6 +166,82 @@ else if (author != null)
     };
 
     private string? MetadataImageUrl => author?.AvatarUrl;
+
+    private IEnumerable<object> StructuredDataSchemas
+    {
+        get
+        {
+            if (author is null)
+            {
+                return [];
+            }
+
+            var authorUrl = ToAbsolute($"/authors/{AuthorId}");
+            var profileSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "ProfilePage",
+                ["url"] = authorUrl,
+                ["mainEntity"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Person",
+                    ["name"] = author.Name,
+                    ["description"] = string.IsNullOrWhiteSpace(author.Profile.Bio) ? null : author.Profile.Bio,
+                    ["url"] = authorUrl,
+                    ["image"] = string.IsNullOrWhiteSpace(author.AvatarUrl) ? null : ToAbsolute(author.AvatarUrl),
+                    ["sameAs"] = author.Profile.SocialLinks?
+                        .Select(link => link.Value)
+                        .Where(value => !string.IsNullOrWhiteSpace(value))
+                        .ToList()
+                }
+            };
+
+            var breadcrumbSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["itemListElement"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 1,
+                        ["name"] = "Home",
+                        ["item"] = ToAbsolute("/")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 2,
+                        ["name"] = "Authors",
+                        ["item"] = ToAbsolute("/authors")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 3,
+                        ["name"] = author.Name,
+                        ["item"] = authorUrl
+                    }
+                }
+            };
+
+            return [profileSchema, breadcrumbSchema];
+        }
+    }
+
+    private string SiteBaseUrl => SiteUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? Nav.BaseUri.TrimEnd('/');
+
+    private string ToAbsolute(string url)
+    {
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute))
+        {
+            return absolute.ToString();
+        }
+
+        var normalized = url.StartsWith('/') ? url : $"/{url}";
+        return $"{SiteBaseUrl}{normalized}";
+    }
 
     protected override async Task OnInitializedAsync()
     {

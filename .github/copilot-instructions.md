@@ -352,6 +352,36 @@ Blazor Web App in **Interactive Server mode** with typed HTTP client generated f
 
 **Key Components:** `src/lib/IHFiction.SharedWeb/`
 
+### Metadata Composition Guardrail (Mandatory)
+
+When changing SEO/social/structured-data metadata in Blazor:
+
+- Treat `HeadContent` as single-owner for metadata composition.
+- In this repo, the metadata owner is `src/lib/IHFiction.SharedWeb/Components/SocialPreviewMetadata.razor`.
+- Do not add extra metadata `HeadContent` blocks elsewhere (exception: `src/lib/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor` for editor assets).
+
+Reason:
+
+- Multiple `HeadContent` instances overwrite `HeadOutlet` output; they do not append.
+- This can silently drop canonical/OG/Twitter/JSON-LD metadata.
+
+Append strategy:
+
+- Prefer `SectionContent` + `SectionOutlet` for composable metadata.
+- Sections also overwrite if the same named/keyed section is emitted more than once in one render tree branch.
+- Use unique section names per concern or enforce a single writer per section.
+
+InteractiveServer caveats:
+
+- Validate that `SectionOutlet` placement aligns with where `SectionContent` is emitted in the effective render tree.
+- If a route category is missing metadata while others work, investigate layout/render-path differences before assuming serialization/tag issues.
+
+Minimum validation:
+
+1. Inspect `document.head` on `/`, `/stories`, `/authors`, story detail, chapter detail, and author detail.
+2. Verify JSON-LD script counts/types are route-appropriate.
+3. Verify canonical, OG, and Twitter tags remain present after changes.
+
 ### Testing Patterns
 
 **Unit Tests:** Service-based approach without DbContext mocking (see `tests/IHFiction.UnitTests/Authors/GetAuthorServiceTests.cs`)

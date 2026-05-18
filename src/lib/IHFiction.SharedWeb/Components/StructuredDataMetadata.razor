@@ -1,0 +1,48 @@
+@using System.Text.Encodings.Web
+@using System.Text.Json
+@using System.Text.Json.Serialization
+
+<SectionContent SectionName="@SectionName">
+    @foreach (var schemaJson in SerializedSchemas)
+    {
+        <script type="application/ld+json">@((MarkupString)schemaJson)</script>
+    }
+</SectionContent>
+
+@code {
+    [Parameter] public string SectionName { get; set; } = "app-head-structured-data";
+    [Parameter] public object? Schema { get; set; }
+    [Parameter] public IEnumerable<object>? Schemas { get; set; }
+
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
+    private IEnumerable<string> SerializedSchemas
+    {
+        get
+        {
+            if (Schema is not null)
+            {
+                yield return JsonSerializer.Serialize(Schema, SerializerOptions);
+            }
+
+            if (Schemas is null)
+            {
+                yield break;
+            }
+
+            foreach (var schema in Schemas)
+            {
+                if (schema is null)
+                {
+                    continue;
+                }
+
+                yield return JsonSerializer.Serialize(schema, SerializerOptions);
+            }
+        }
+    }
+}

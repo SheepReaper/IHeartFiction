@@ -57,6 +57,40 @@ Use this pattern by default:
 
 This aligns with analyzer expectations and keeps logging style consistent across the repository.
 
+## Head Metadata Composition Guardrail (Mandatory)
+
+For Blazor head metadata in this repository, treat `HeadContent` as a single-owner primitive.
+
+Rules:
+
+- `HeadContent` must appear only once in the effective render tree for SEO metadata composition.
+- Exception: `src/lib/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor` may continue using `HeadContent` for editor assets.
+- The metadata owner component is `src/lib/IHFiction.SharedWeb/Components/SocialPreviewMetadata.razor`.
+- Do not add additional page/component `HeadContent` blocks for SEO/social/JSON-LD metadata.
+
+Why this is mandatory:
+
+- Multiple `HeadContent` instances overwrite `HeadOutlet` output instead of appending.
+- This causes silent metadata loss (OG, Twitter, canonical, JSON-LD) depending on render order.
+
+Append strategy:
+
+- Prefer `SectionContent` + `SectionOutlet` for append-style metadata composition.
+- `SectionContent` also overwrites when the same named/keyed section is emitted more than once in the same render tree branch.
+- Therefore use unique section names per concern (or guarantee single writer per section name).
+
+InteractiveServer considerations (must check when changing metadata plumbing):
+
+- `SectionOutlet` and corresponding `SectionContent` must participate in compatible rendering flow.
+- If metadata appears in detail pages but not list/home pages, suspect render-tree placement/layout path differences.
+- Validate with browser DOM inspection, not assumptions.
+
+Required verification for metadata changes:
+
+1. Confirm expected tags exist in `document.head` on `/`, `/stories`, `/authors`, one story detail, one chapter page, and one author detail page.
+2. Confirm JSON-LD script count/types per route match expectations.
+3. Confirm OG/Twitter/canonical tags remain present after structured-data additions.
+
 ## Cloud Agent Preflight (Mandatory)
 
 Before running `dotnet build --no-restore`, `dotnet test --no-restore`, or git push/fetch commands that assume `origin`, run:
