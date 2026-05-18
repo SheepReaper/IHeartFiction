@@ -1,7 +1,5 @@
-@using IHFiction.SharedWeb.Configuration
-@using Microsoft.Extensions.Options
 @inject NavigationManager Nav
-@inject IOptions<SiteUrlOptions> SiteUrlOptions
+@inject MetadataUrlService MetadataUrls
 
 <PageTitle>@ResolvedTitle</PageTitle>
 
@@ -60,55 +58,11 @@
     private string SafeTitle => ResolvedTitle.Replace("❤️", "Heart");
     private string ResolvedDescription => Normalize(Description, 200, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedTwitterDescription => Normalize(Description, 199, "Read stories and discover authors on IHeartFiction.");
-    private string ResolvedPageUrl => ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
-    private string ResolvedCanonicalUrl => ToAbsolute(CanonicalUrl ?? ResolvedPageUrl);
-    private string? ResolvedPreviousUrl => ToAbsoluteOrNull(PreviousUrl);
-    private string? ResolvedNextUrl => ToAbsoluteOrNull(NextUrl);
-    private string ResolvedImageUrl => ToAbsolute(ImageUrl ?? DefaultImagePath);
-
-    private Uri MetadataBaseUri => GetMetadataBaseUri();
-
-    private string ToAbsolute(string url)
-    {
-        var candidate = url.Trim();
-
-        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
-        {
-            // Keep explicit HTTP(S) absolute URLs as-is.
-            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
-            {
-                return absoluteUri.ToString();
-            }
-
-            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
-                ? "/"
-                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
-        }
-
-        return new Uri(MetadataBaseUri, candidate).ToString();
-    }
-
-    private string? ToAbsoluteOrNull(string? url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return null;
-        }
-
-        return ToAbsolute(url);
-    }
-
-    private Uri GetMetadataBaseUri()
-    {
-        var baseUri = SiteUrlOptions.Value.BaseUrl;
-
-        if (baseUri is null)
-        {
-            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
-        }
-
-        return baseUri;
-    }
+    private string ResolvedPageUrl => MetadataUrls.ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
+    private string ResolvedCanonicalUrl => MetadataUrls.ToAbsolute(CanonicalUrl ?? ResolvedPageUrl);
+    private string? ResolvedPreviousUrl => MetadataUrls.ToAbsoluteOrNull(PreviousUrl);
+    private string? ResolvedNextUrl => MetadataUrls.ToAbsoluteOrNull(NextUrl);
+    private string ResolvedImageUrl => MetadataUrls.ToAbsolute(ImageUrl ?? DefaultImagePath);
 
     private string GetCurrentPathAndQuery()
     {

@@ -112,6 +112,7 @@ builder.Services.AddScoped<ReaderProgressService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<ViewPreferencesService>();
 builder.Services.AddScoped<StoryEditorService>();
+builder.Services.AddScoped<MetadataUrlService>();
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddRazorComponents()
