@@ -1,7 +1,6 @@
 @using Markdig
 @inject ChapterService ChapterService
 @inject MarkdownPipeline mdp
-@inject NavigationManager Nav
 @inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 
 <SocialPreviewMetadata
@@ -176,12 +175,14 @@ else if (chapterContent != null)
             {
                 ["@context"] = "https://schema.org",
                 ["@type"] = "Chapter",
+                ["@id"] = chapterUrl,
                 ["name"] = chapterContent.ChapterTitle,
                 ["headline"] = chapterContent.ChapterTitle,
                 ["url"] = chapterUrl,
                 ["isPartOf"] = new Dictionary<string, object?>
                 {
                     ["@type"] = "CreativeWork",
+                    ["@id"] = storyUrl,
                     ["name"] = chapterContent.StoryTitle,
                     ["url"] = storyUrl
                 },
@@ -189,13 +190,13 @@ else if (chapterContent != null)
                 {
                     ["@type"] = "Organization",
                     ["name"] = "IHeartFiction",
-                    ["url"] = SiteBaseUrl
+                    ["url"] = ToAbsolute("/")
                 },
                 ["publisher"] = new Dictionary<string, object?>
                 {
                     ["@type"] = "Organization",
                     ["name"] = "IHeartFiction",
-                    ["url"] = SiteBaseUrl
+                    ["url"] = ToAbsolute("/")
                 },
                 ["dateModified"] = chapterContent.ContentUpdatedAt.ToString("O")
             };
@@ -204,6 +205,7 @@ else if (chapterContent != null)
             {
                 ["@context"] = "https://schema.org",
                 ["@type"] = "BreadcrumbList",
+                ["@id"] = ToAbsolute($"/stories/{chapterContent.StoryId}/chapters/{chapterContent.ChapterId}#breadcrumb"),
                 ["itemListElement"] = new object[]
                 {
                     new Dictionary<string, object?>
@@ -240,8 +242,6 @@ else if (chapterContent != null)
             return [chapterSchema, breadcrumbSchema];
         }
     }
-
-    private string SiteBaseUrl => SiteUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? Nav.BaseUri.TrimEnd('/');
 
     protected override async Task OnInitializedAsync()
     {
@@ -280,12 +280,32 @@ else if (chapterContent != null)
 
     private string ToAbsolute(string url)
     {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute))
+        var candidate = url.Trim();
+
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
         {
-            return absolute.ToString();
+            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                return absoluteUri.ToString();
+            }
+
+            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
+                ? "/"
+                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
         }
 
-        var normalized = url.StartsWith('/') ? url : $"/{url}";
-        return $"{SiteBaseUrl}{normalized}";
+        return new Uri(GetMetadataBaseUri(), candidate).ToString();
+    }
+
+    private Uri GetMetadataBaseUri()
+    {
+        var baseUri = SiteUrlOptions.Value.BaseUrl;
+
+        if (baseUri is null)
+        {
+            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
+        }
+
+        return baseUri;
     }
 }

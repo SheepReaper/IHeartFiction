@@ -2,7 +2,6 @@
 @using IHFiction.SharedWeb.Components.Stories
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
-@inject NavigationManager Nav
 @inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 @using IHFiction.SharedWeb.Components.Notifications
 
@@ -181,10 +180,12 @@ else if (author != null)
             {
                 ["@context"] = "https://schema.org",
                 ["@type"] = "ProfilePage",
+                ["@id"] = authorUrl,
                 ["url"] = authorUrl,
                 ["mainEntity"] = new Dictionary<string, object?>
                 {
                     ["@type"] = "Person",
+                    ["@id"] = ToAbsolute($"/authors/{AuthorId}#person"),
                     ["name"] = author.Name,
                     ["description"] = string.IsNullOrWhiteSpace(author.Profile.Bio) ? null : author.Profile.Bio,
                     ["url"] = authorUrl,
@@ -200,6 +201,7 @@ else if (author != null)
             {
                 ["@context"] = "https://schema.org",
                 ["@type"] = "BreadcrumbList",
+                ["@id"] = ToAbsolute($"/authors/{AuthorId}#breadcrumb"),
                 ["itemListElement"] = new object[]
                 {
                     new Dictionary<string, object?>
@@ -230,17 +232,35 @@ else if (author != null)
         }
     }
 
-    private string SiteBaseUrl => SiteUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? Nav.BaseUri.TrimEnd('/');
-
     private string ToAbsolute(string url)
     {
-        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute))
+        var candidate = url.Trim();
+
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
         {
-            return absolute.ToString();
+            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                return absoluteUri.ToString();
+            }
+
+            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
+                ? "/"
+                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
         }
 
-        var normalized = url.StartsWith('/') ? url : $"/{url}";
-        return $"{SiteBaseUrl}{normalized}";
+        return new Uri(GetMetadataBaseUri(), candidate).ToString();
+    }
+
+    private Uri GetMetadataBaseUri()
+    {
+        var baseUri = SiteUrlOptions.Value.BaseUrl;
+
+        if (baseUri is null)
+        {
+            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
+        }
+
+        return baseUri;
     }
 
     protected override async Task OnInitializedAsync()

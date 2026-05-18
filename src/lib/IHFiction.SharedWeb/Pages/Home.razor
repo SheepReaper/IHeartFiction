@@ -1,6 +1,5 @@
 @page "/"
 @using Sidio.Sitemap.Core
-@inject NavigationManager Nav
 @inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 
 @attribute [Sitemap(ChangeFrequency.Yearly, 0.5, "2025-10-02")]
@@ -40,33 +39,68 @@
 </section>
 
 @code {
+    private string HomeUrl => ToAbsolute("/");
+
     private IEnumerable<object> HomeSchemas =>
     [
         new Dictionary<string, object?>
         {
             ["@context"] = "https://schema.org",
             ["@type"] = "Organization",
+            ["@id"] = ToAbsolute("/#organization"),
             ["name"] = "IHeartFiction",
-            ["url"] = SiteBaseUrl,
-            ["logo"] = $"{SiteBaseUrl}/_content/IHFiction.SharedWeb/og-image.png",
+            ["url"] = HomeUrl,
+            ["logo"] = ToAbsolute("/_content/IHFiction.SharedWeb/og-image.png"),
             ["description"] = "A modern fiction reading and publishing platform for original and fan fiction."
         },
         new Dictionary<string, object?>
         {
             ["@context"] = "https://schema.org",
             ["@type"] = "WebSite",
+            ["@id"] = ToAbsolute("/#website"),
             ["name"] = "IHeartFiction",
-            ["url"] = SiteBaseUrl,
+            ["url"] = HomeUrl,
             ["potentialAction"] = new Dictionary<string, object?>
             {
                 ["@type"] = "SearchAction",
-                ["target"] = $"{SiteBaseUrl}/stories?q={{search_term_string}}",
+                ["target"] = $"{MetadataBaseUri.ToString().TrimEnd('/')}/stories?q={{search_term_string}}",
                 ["query-input"] = "required name=search_term_string"
             }
         }
     ];
 
-    private string SiteBaseUrl => SiteUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? Nav.BaseUri.TrimEnd('/');
+    private Uri MetadataBaseUri => GetMetadataBaseUri();
+
+    private string ToAbsolute(string url)
+    {
+        var candidate = url.Trim();
+
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
+        {
+            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                return absoluteUri.ToString();
+            }
+
+            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
+                ? "/"
+                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
+        }
+
+        return new Uri(MetadataBaseUri, candidate).ToString();
+    }
+
+    private Uri GetMetadataBaseUri()
+    {
+        var baseUri = SiteUrlOptions.Value.BaseUrl;
+
+        if (baseUri is null)
+        {
+            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
+        }
+
+        return baseUri;
+    }
 }
 
 <section class="section">

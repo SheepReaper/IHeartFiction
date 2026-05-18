@@ -1,5 +1,5 @@
 @using IHFiction.SharedWeb.Components.Authors
-@inject NavigationManager Nav
+@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
 
 @page "/authors"
 
@@ -27,17 +27,39 @@
     {
         ["@context"] = "https://schema.org",
         ["@type"] = "ItemList",
+        ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
         ["name"] = "Authors",
         ["url"] = ToAbsolute(CanonicalUrl)
     };
 
     private string ToAbsolute(string path)
     {
-        if (Uri.TryCreate(path, UriKind.Absolute, out var absolute))
+        var candidate = path.Trim();
+
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
         {
-            return absolute.ToString();
+            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                return absoluteUri.ToString();
+            }
+
+            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
+                ? "/"
+                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
         }
 
-        return new Uri(new Uri(Nav.BaseUri), path).ToString();
+        return new Uri(GetMetadataBaseUri(), candidate).ToString();
+    }
+
+    private Uri GetMetadataBaseUri()
+    {
+        var baseUri = SiteUrlOptions.Value.BaseUrl;
+
+        if (baseUri is null)
+        {
+            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
+        }
+
+        return baseUri;
     }
 }
