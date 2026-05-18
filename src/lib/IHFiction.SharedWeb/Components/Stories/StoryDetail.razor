@@ -1,6 +1,6 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inject StoryService StoryService
-@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
+@inject MetadataUrlService MetadataUrls
 @using IHFiction.SharedWeb.Components.Notifications
 @using IHFiction.SharedWeb.Components.Reading
 
@@ -308,36 +308,7 @@ else if (story != null)
     // Helper to provide a non-null story id string for markup
     private string StoryIdString => story?.Id.ToString() ?? string.Empty;
 
-    private string ToAbsolute(string url)
-    {
-        var candidate = url.Trim();
-
-        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
-        {
-            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
-            {
-                return absoluteUri.ToString();
-            }
-
-            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
-                ? "/"
-                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
-        }
-
-        return new Uri(GetMetadataBaseUri(), candidate).ToString();
-    }
-
-    private Uri GetMetadataBaseUri()
-    {
-        var baseUri = SiteUrlOptions.Value.BaseUrl;
-
-        if (baseUri is null)
-        {
-            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
-        }
-
-        return baseUri;
-    }
+    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
 
     private List<ReaderChapterNavItem> BuildChapterItems()
     {

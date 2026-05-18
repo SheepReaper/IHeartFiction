@@ -1,6 +1,6 @@
 @page "/"
 @using Sidio.Sitemap.Core
-@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.SiteUrlOptions> SiteUrlOptions
+@inject MetadataUrlService MetadataUrls
 
 @attribute [Sitemap(ChangeFrequency.Yearly, 0.5, "2025-10-02")]
 
@@ -63,44 +63,13 @@
             ["potentialAction"] = new Dictionary<string, object?>
             {
                 ["@type"] = "SearchAction",
-                ["target"] = $"{MetadataBaseUri.ToString().TrimEnd('/')}/stories?q={{search_term_string}}",
+                ["target"] = $"{MetadataUrls.BaseUri.ToString().TrimEnd('/')}/stories?q={{search_term_string}}",
                 ["query-input"] = "required name=search_term_string"
             }
         }
     ];
 
-    private Uri MetadataBaseUri => GetMetadataBaseUri();
-
-    private string ToAbsolute(string url)
-    {
-        var candidate = url.Trim();
-
-        if (Uri.TryCreate(candidate, UriKind.Absolute, out var absoluteUri))
-        {
-            if (!string.Equals(absoluteUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
-            {
-                return absoluteUri.ToString();
-            }
-
-            candidate = string.IsNullOrWhiteSpace(absoluteUri.PathAndQuery)
-                ? "/"
-                : string.Concat(absoluteUri.PathAndQuery, absoluteUri.Fragment);
-        }
-
-        return new Uri(MetadataBaseUri, candidate).ToString();
-    }
-
-    private Uri GetMetadataBaseUri()
-    {
-        var baseUri = SiteUrlOptions.Value.BaseUrl;
-
-        if (baseUri is null)
-        {
-            throw new InvalidOperationException("BaseUrl must be configured as an absolute URL.");
-        }
-
-        return baseUri;
-    }
+    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
 }
 
 <section class="section">
