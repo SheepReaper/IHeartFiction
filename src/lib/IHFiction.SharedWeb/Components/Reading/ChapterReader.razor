@@ -138,13 +138,13 @@ else if (chapterContent != null)
     [Parameter] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
 
     public string PageTitle => string.Join(" - ", new[] {
-        chapterContent?.StoryTitle,
+        chapterContent?.ChapterTitle,
         chapterContent?.BookTitle,
-        chapterContent?.ChapterTitle }.Where(s => !string.IsNullOrWhiteSpace(s))) ?? "Reading - I❤️Fiction";
+        chapterContent?.StoryTitle }.Where(s => !string.IsNullOrWhiteSpace(s))) ?? "Reading | I❤️Fiction";
 
     private string MetadataTitle => chapterContent is null
-        ? "Reading Chapter - IHeartFiction"
-        : $"{PageTitle} | IHeartFiction";
+        ? "Reading Chapter | I❤️Fiction"
+        : $"{PageTitle} | I❤️Fiction";
 
     private string MetadataDescription => chapterContent switch
     {

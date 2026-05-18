@@ -1,23 +1,44 @@
 @using IHFiction.SharedWeb.Components.Stories
+@using IHFiction.SharedWeb.Services
+@using IHFiction.SharedKernel.Infrastructure
 
 @page "/authors/{authorId}/stories"
+
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    CanonicalUrl="@CanonicalUrl" />
 
 <StoryList
     AuthorId="@AuthorId" />
 
-<SocialPreviewMetadata
-    Title="Author Stories - IHeartFiction"
-    Description="Browse published stories from this author on IHeartFiction and jump directly into the latest chapters."
-    CanonicalUrl="@CanonicalUrl" />
-
 @code {
+    [Inject] AuthorService AuthorService { get; set; } = default!;
+
     [Parameter, EditorRequired] public string AuthorId { get; set; }
     [SupplyParameterFromQuery(Name = "page")]
     public int? Page { get; set; }
+
+    private LinkedOfGetAuthorResponse? author;
 
     private int NormalizedPage => Page is > 0 ? Page.Value : 1;
 
     private string CanonicalUrl => NormalizedPage <= 1
         ? $"/authors/{AuthorId}/stories"
         : $"/authors/{AuthorId}/stories?page={NormalizedPage}";
+
+    private string MetadataTitle => author?.Name != null
+        ? $"{author.Name} - Stories | I❤️Fiction"
+        : "Author Stories | I❤️Fiction";
+
+    private string MetadataDescription => author?.Name != null
+        ? $"Read stories by {author.Name}. Browse published works and jump directly into the latest chapters."
+        : "Browse published stories from this author on IHeartFiction and jump directly into the latest chapters.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var result = await AuthorService.GetAuthorAsync(AuthorId);
+        author = result.IsSuccess ? result.Value : null;
+        await base.OnParametersSetAsync();
+    }
 }

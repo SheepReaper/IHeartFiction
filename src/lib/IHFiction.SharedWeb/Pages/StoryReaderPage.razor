@@ -12,6 +12,10 @@
 
 <StoryReader StoryId="@StoryId" />
 
+<HeadContent>
+    <meta name="robots" content="noindex">
+</HeadContent>
+
 @code {
     [Parameter] public string StoryId { get; set; } = null!;
 
@@ -20,8 +24,8 @@
     private string CanonicalUrl => $"/stories/{StoryId}";
 
     private string MetadataTitle => story is null
-        ? "Read Story - IHeartFiction"
-        : $"Read {story.Title} | IHeartFiction";
+        ? "Read Story | I❤️Fiction"
+        : $"Read {story.Title} | I❤️Fiction";
 
     private string? CoverImageUrl => $"/stories/{StoryId}/cover";
 

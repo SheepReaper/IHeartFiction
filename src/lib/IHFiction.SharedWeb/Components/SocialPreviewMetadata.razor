@@ -19,7 +19,7 @@
         <link rel="next" href="@ResolvedNextUrl" />
     }
 
-    <meta property="og:title" content="@ResolvedTitle" />
+    <meta property="og:title" content="@SafeTitle" />
     <meta property="og:description" content="@ResolvedDescription" />
     <meta property="og:url" content="@ResolvedPageUrl" />
     <meta property="og:type" content="@Type" />
@@ -57,6 +57,7 @@
     [Parameter] public string AppendSectionName { get; set; } = "social-preview-extra-head";
 
     private string ResolvedTitle => Normalize(Title, 60, "IHeartFiction");
+    private string SafeTitle => ResolvedTitle.Replace("❤️", "Heart");
     private string ResolvedDescription => Normalize(Description, 200, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedTwitterDescription => Normalize(Description, 199, "Read stories and discover authors on IHeartFiction.");
     private string ResolvedPageUrl => ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
