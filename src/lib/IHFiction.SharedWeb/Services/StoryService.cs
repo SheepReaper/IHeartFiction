@@ -5,13 +5,14 @@ using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class StoryService(FictionApiClient client, ILogger<StoryService> logger)
+public partial class StoryService(FictionApiClient client, ILogger<StoryService> logger)
 {
-    private static readonly Action<ILogger, Ulid, Exception?> LogUploadStoryCoverFailed =
-        LoggerMessage.Define<Ulid>(
-            LogLevel.Error,
-            new EventId(1001, nameof(UploadStoryCoverAsync)),
-            "Failed to upload story cover for story {StoryId}");
+    [LoggerMessage(
+        EventId = 1001,
+        Level = LogLevel.Error,
+        Message = "Failed to upload story cover for story {StoryId}")]
+    private partial void LogUploadStoryCoverFailed(Ulid storyId);
+
 
     public async ValueTask<Result> PublishWorkAsync(
         Ulid id,
@@ -229,7 +230,7 @@ public class StoryService(FictionApiClient client, ILogger<StoryService> logger)
             or ObjectDisposedException
             or TaskCanceledException)
         {
-            LogUploadStoryCoverFailed(logger, id, ex);
+            LogUploadStoryCoverFailed(id);
             return new DomainError("StoryService.UploadStoryCover", $"Failed to upload story cover: {ex.GetType().Name}: {ex.Message}");
         }
     }

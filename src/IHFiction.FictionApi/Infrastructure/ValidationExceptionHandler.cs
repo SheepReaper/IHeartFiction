@@ -16,7 +16,7 @@ internal sealed class ValidationExceptionHandler(IProblemDetailsService problemD
 
         if (exception is not ValidationException validationException) return false;
 
-        logger.ValidationError(exception);
+        logger.ValidationError(exception.Message);
 
         httpContext.Response.StatusCode = statusCode;
 

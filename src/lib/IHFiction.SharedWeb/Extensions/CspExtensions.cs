@@ -11,7 +11,10 @@ namespace IHFiction.SharedWeb.Extensions;
 
 public static partial class CspExtensions
 {
-    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "CSP report: documentUri={documentUri}, blockedUri={blockedUri}, violatedDirective={violatedDirective}, bodyHash={bodyHash}, truncated={truncated}")]
+    [LoggerMessage(
+        EventId = 1, 
+        Level = LogLevel.Warning, 
+        Message = "CSP report: documentUri={documentUri}, blockedUri={blockedUri}, violatedDirective={violatedDirective}, bodyHash={bodyHash}, truncated={truncated}")]
     public static partial void LogCspReport(this ILogger logger, string? documentUri, string? blockedUri, string? violatedDirective, string bodyHash, bool truncated);
 
     public static IApplicationBuilder UseCsp(this IApplicationBuilder builder) => builder.Use(async (context, next) =>

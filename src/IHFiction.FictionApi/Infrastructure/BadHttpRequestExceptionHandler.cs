@@ -15,7 +15,7 @@ internal sealed class BadHttpRequestExceptionHandler(IProblemDetailsService prob
 
         if (exception is not BadHttpRequestException badHttpRequestException) return false;
 
-        logger.ValidationError(exception);
+        logger.ValidationError(exception.Message);
 
         httpContext.Response.StatusCode = statusCode;
 
