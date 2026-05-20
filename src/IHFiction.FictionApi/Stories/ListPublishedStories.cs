@@ -81,13 +81,9 @@ internal sealed class ListPublishedStories(
     {
         // Build the base query for published stories
         var stories = context.Stories
-            .Include(s => s.Owner)
-            .Include(s => s.Chapters)
-            .Include(s => s.Books)
-            .Include(s => s.Authors)
+            .AsNoTracking()
             .Where(s => s.PublishedAt != null)
-            .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId))
-            .AsNoTracking();
+            .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId));
 
         // Apply search filter if provided
         stories = stories.SearchIContains(query, s => s.Title, s => s.Description, s => s.Owner.Name);
@@ -102,10 +98,10 @@ internal sealed class ListPublishedStories(
             s.Description,
             s.PublishedAt!.Value, // Safe because we filtered for non-null
             s.UpdatedAt,
-            s.HasContent,
-            s.HasChapters,
-            s.HasBooks,
-            s.Cover != null,
+            s.WorkBodyId != default,
+            s.Chapters.Any(),
+            s.Books.Any(),
+            context.StoryCovers.Any(cover => cover.StoryId == s.Id),
             s.Chapters.Count,
             s.OwnerId,
             s.Owner.Name));
