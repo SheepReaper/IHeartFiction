@@ -12,6 +12,30 @@ namespace IHFiction.FictionApi.Common;
 internal sealed class EntityLoaderService(FictionDbContext context)
 {
     /// <summary>
+    /// Loads a story with only essential metadata.
+    /// Used for endpoints that only need publication status and basic story info.
+    /// This is a lightweight loader that avoids loading authors, tags, chapters, books, etc.
+    /// </summary>
+    public async Task<Story?> LoadStoryMetadataOnlyAsync(
+        Ulid storyId,
+        bool includeDeleted = false,
+        bool asNoTracking = false,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<Story> query = context.Stories;
+
+        if (includeDeleted)
+            query = query.IgnoreQueryFilters();
+
+        if (asNoTracking)
+            query = query.AsNoTracking();
+
+        query = query.Include(s => s.Owner);
+
+        return await query.FirstOrDefaultAsync(s => s.Id == storyId, cancellationToken);
+    }
+
+    /// <summary>
     /// Loads a story with its related author and collaboration data.
     /// Standardizes the story loading pattern used across multiple endpoints.
     /// </summary>
@@ -57,6 +81,8 @@ internal sealed class EntityLoaderService(FictionDbContext context)
         query = query
             .Include(s => s.Owner)
             .Include(s => s.Authors)
+            .ThenInclude(a => a.Profile)
+            .ThenInclude(p => p.SocialLinks)
             .Include(s => s.Cover)
             .Include(s => s.Tags)
             .Include(s => s.Chapters)

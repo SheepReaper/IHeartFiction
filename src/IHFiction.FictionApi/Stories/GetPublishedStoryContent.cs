@@ -66,8 +66,9 @@ internal sealed class GetPublishedStoryContent(
         Ulid id,
         CancellationToken cancellationToken = default)
     {
-        // Load the story with full details using the centralized entity loader
-        var story = await entityLoader.LoadStoryWithFullDetailsAsync(id, asNoTracking: true, cancellationToken: cancellationToken);
+        // Load only story metadata (publication status, WorkBodyId, etc.)
+        // This endpoint doesn't need authors, tags, chapters, or books data
+        var story = await entityLoader.LoadStoryMetadataOnlyAsync(id, asNoTracking: true, cancellationToken: cancellationToken);
 
         if (story is null)
             return Errors.StoryNotFound;
