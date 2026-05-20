@@ -11,6 +11,9 @@ internal sealed class NotificationRecordConfiguration : IEntityTypeConfiguration
     {
         builder.ToTable("notifications");
 
+        builder.HasQueryFilter(notification =>
+            notification.Author.DeletedAt == null);
+
         builder.Property(notification => notification.NotificationKey)
             .HasColumnName("notification_key")
             .HasMaxLength(200);
@@ -73,6 +76,9 @@ internal sealed class UserNotificationDeliveryConfiguration : IEntityTypeConfigu
     {
         builder.ToTable("user_notification_deliveries");
 
+        builder.HasQueryFilter(delivery =>
+            delivery.User.DeletedAt == null);
+
         builder.Property(delivery => delivery.NotificationId)
             .HasColumnName("notification_id");
 
@@ -107,6 +113,9 @@ internal sealed class DeviceNotificationDeliveryConfiguration : IEntityTypeConfi
     public void Configure(EntityTypeBuilder<DeviceNotificationDelivery> builder)
     {
         builder.ToTable("device_notification_deliveries");
+
+        builder.HasQueryFilter(delivery =>
+            delivery.Notification.Author.DeletedAt == null);
 
         builder.Property(delivery => delivery.NotificationId)
             .HasColumnName("notification_id");

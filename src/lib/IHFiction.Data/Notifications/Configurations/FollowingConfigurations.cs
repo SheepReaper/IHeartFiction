@@ -11,6 +11,10 @@ internal sealed class UserAuthorFollowConfiguration : IEntityTypeConfiguration<U
     {
         builder.ToTable("user_author_follows");
 
+        builder.HasQueryFilter(follow =>
+            follow.User.DeletedAt == null &&
+            follow.Author.DeletedAt == null);
+
         builder.Property(follow => follow.UserId)
             .HasColumnName("user_id");
 
@@ -37,6 +41,10 @@ internal sealed class UserStoryFollowConfiguration : IEntityTypeConfiguration<Us
     public void Configure(EntityTypeBuilder<UserStoryFollow> builder)
     {
         builder.ToTable("user_story_follows");
+
+        builder.HasQueryFilter(follow =>
+            follow.User.DeletedAt == null &&
+            follow.Story.DeletedAt == null);
 
         builder.Property(follow => follow.UserId)
             .HasColumnName("user_id");
@@ -65,6 +73,9 @@ internal sealed class DeviceAuthorFollowConfiguration : IEntityTypeConfiguration
     {
         builder.ToTable("device_author_follows");
 
+        builder.HasQueryFilter(follow =>
+            follow.Author.DeletedAt == null);
+
         builder.Property(follow => follow.DeviceId)
             .HasColumnName("device_id")
             .HasMaxLength(100);
@@ -87,6 +98,9 @@ internal sealed class DeviceStoryFollowConfiguration : IEntityTypeConfiguration<
     public void Configure(EntityTypeBuilder<DeviceStoryFollow> builder)
     {
         builder.ToTable("device_story_follows");
+
+        builder.HasQueryFilter(follow =>
+            follow.Story.DeletedAt == null);
 
         builder.Property(follow => follow.DeviceId)
             .HasColumnName("device_id")

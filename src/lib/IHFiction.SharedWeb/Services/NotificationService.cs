@@ -272,7 +272,8 @@ public sealed class NotificationService
         return new NotificationInbox(items, unreadCount);
     }
 
-    private static Ulid ParseUlid(Ulid value) => value;
+    private static Ulid ParseUlid(Ulid? value) =>
+        value ?? throw new InvalidOperationException("Expected notification payload to include a required identifier.");
 }
 
 public sealed record FollowSnapshot(

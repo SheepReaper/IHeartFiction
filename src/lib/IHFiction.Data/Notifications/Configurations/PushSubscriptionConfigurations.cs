@@ -11,6 +11,9 @@ internal sealed class UserPushSubscriptionConfiguration : IEntityTypeConfigurati
     {
         builder.ToTable("user_push_subscriptions");
 
+        builder.HasQueryFilter(subscription =>
+            subscription.User.DeletedAt == null);
+
         builder.Property(subscription => subscription.UserId)
             .HasColumnName("user_id");
 

@@ -9,6 +9,9 @@ internal sealed class StoryCoverConfiguration : IEntityTypeConfiguration<StoryCo
 {
     public void Configure(EntityTypeBuilder<StoryCover> builder)
     {
+        builder.HasQueryFilter(cover =>
+            cover.Story.DeletedAt == null);
+
         builder.Property(cover => cover.StoryId)
             .HasColumnName("story_id")
             .IsRequired();

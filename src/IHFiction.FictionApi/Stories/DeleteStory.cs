@@ -41,8 +41,8 @@ internal sealed class DeleteStory(
 
         var author = authorResult.Value;
 
-        // Load the story using the centralized entity loader (including deleted for delete operations)
-        var story = await entityLoader.LoadStoryWithAuthorsAsync(id, includeDeleted: true, cancellationToken: cancellationToken);
+        // Load the story with minimal data (only Owner for authorization)
+        var story = await entityLoader.LoadStoryMetadataOnlyAsync(id, includeDeleted: true, cancellationToken: cancellationToken);
 
         if (story is null)
             return Errors.StoryNotFound;
