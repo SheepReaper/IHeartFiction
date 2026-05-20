@@ -5,6 +5,7 @@ using FluentAssertions;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Notifications.Domain;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Authors;
 
 namespace IHFiction.UnitTests.Notifications;
@@ -43,11 +44,19 @@ public class DeviceAuthorUnfollowTests
     {
         await using var context = CreateContext();
         var author = new Author { Id = Ulid.NewUlid(), Name = "Author" };
+        var story = new Story
+        {
+            Id = Ulid.NewUlid(),
+            Title = "Story",
+            Description = "A story this device still follows.",
+            OwnerId = author.Id
+        };
         const string deviceId = "device-1";
 
         context.Authors.Add(author);
+        context.Stories.Add(story);
         context.DeviceAuthorFollows.Add(new DeviceAuthorFollow { DeviceId = deviceId, AuthorId = author.Id });
-        context.DeviceStoryFollows.Add(new DeviceStoryFollow { DeviceId = deviceId, StoryId = Ulid.NewUlid() });
+        context.DeviceStoryFollows.Add(new DeviceStoryFollow { DeviceId = deviceId, StoryId = story.Id });
         context.DevicePushSubscriptions.Add(new DevicePushSubscription
         {
             DeviceId = deviceId,

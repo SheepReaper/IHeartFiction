@@ -111,7 +111,8 @@ internal sealed class ListPublishedStoryChapters(
                         chapter => new(chapter, new List<LinkItem>() {
                             linker.Create<GetPublishedChapterContent>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", chapter.ChapterId.ToString()) })
                         }),
-                        query);
+                        query,
+                        routeValues: [new KeyValuePair<string, string?>("id", id.ToString())]);
 
                 return result.ToOkResult(query);
             })

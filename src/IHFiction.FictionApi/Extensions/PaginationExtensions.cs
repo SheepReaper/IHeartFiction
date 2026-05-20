@@ -54,6 +54,7 @@ internal static class PaginationExtensions
         string endpointName,
         Expression<Func<T, Linked<T>>>? itemMapper = null,
         object? queryParams = null,
+        IEnumerable<KeyValuePair<string, string?>>? routeValues = null,
         IEnumerable<LinkItem>? extraCollectionLinks = null)
     {
         if (sourceResult.IsFailure)
@@ -67,6 +68,7 @@ internal static class PaginationExtensions
                 endpointName,
                 itemMapper,
                 queryParams,
+                routeValues,
                 extraCollectionLinks);
 
             return linkValue;
@@ -96,8 +98,9 @@ internal static class PaginationExtensions
         LinkService linker,
         Expression<Func<T, Linked<T>>>? itemMapper = null,
         object? queryParams = null,
+        IEnumerable<KeyValuePair<string, string?>>? routeValues = null,
         IEnumerable<LinkItem>? extraCollectionLinks = null) where TUseCase : INameEndpoint<TUseCase> =>
-            WithLinks(pagedCollection, linker, TUseCase.EndpointName, itemMapper, queryParams, extraCollectionLinks);
+            WithLinks(pagedCollection, linker, TUseCase.EndpointName, itemMapper, queryParams, routeValues, extraCollectionLinks);
 
     // public static Linked<T> WithLinks<T>(
     //     this T sourceItem,
@@ -144,12 +147,17 @@ internal static class PaginationExtensions
         string endpointName,
         Expression<Func<T, Linked<T>>>? itemMapper = null,
         object? queryParams = null,
+        IEnumerable<KeyValuePair<string, string?>>? routeValues = null,
         IEnumerable<LinkItem>? extraCollectionLinks = null)
     {
         itemMapper ??= e => new(e, Enumerable.Empty<LinkItem>());
 
         ExpandoObject valuesObj = new();
         IDictionary<string, object?> values = valuesObj;
+
+        if (routeValues is not null)
+            foreach (var routeValue in routeValues)
+                values.Add(routeValue.Key, routeValue.Value);
 
         values.Add(nameof(IPaginationSupport.Page), pagedCollection.CurrentPage);
         values.Add(nameof(IPaginationSupport.PageSize), pagedCollection.PageSize);
