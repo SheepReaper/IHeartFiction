@@ -72,12 +72,12 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+    [Parameter] public string? StoryId { get; set; }
     [Parameter, EditorRequired] public string CurrentChapterId { get; set; } = null!;
     [Parameter] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
     [Parameter] public bool ShowLabels { get; set; } = false;
 
-    private string ChapterHref(string chapterId) => $"/stories/{StoryId}/chapters/{chapterId}";
+    private static string ChapterHref(string chapterId) => $"/read/{chapterId}";
 
     private static string BuildTargetLabel(string direction, ReaderChapterNavItem target, ReaderChapterNavItem? current)
     {

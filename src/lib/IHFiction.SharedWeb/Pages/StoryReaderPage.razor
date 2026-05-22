@@ -1,84 +1,203 @@
 @using IHFiction.SharedWeb.Components.Reading
 @implements IDisposable
 @inject PersistentComponentState ApplicationState
-@inject StoryService StoryService
+@inject WorkService WorkService
+@inject MetadataUrlService MetadataUrls
 
-@page "/stories/{storyId}/read"
+@page "/read/{WorkId}"
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
     Description="@MetadataDescription"
-    ImageUrl="@CoverImageUrl"
+    ImageUrl="@meta?.CoverImageUrl"
+    PageUrl="@PageUrl"
     CanonicalUrl="@CanonicalUrl"
+    EmitCanonical="@CanIndex"
     Type="article" />
 
-<StoryReader StoryId="@StoryId" />
+@if (!CanIndex)
+{
+    <NoIndex />
+}
 
-<NoIndex />
+<StructuredDataMetadata Schemas="@StructuredDataSchemas" />
+
+<StoryReader WorkId="@WorkId" Meta="@meta" />
 
 @code {
-    [Parameter] public string StoryId { get; set; } = null!;
+    [Parameter] public string WorkId { get; set; } = null!;
 
-    private LinkedOfGetPublishedStoryResponse? story;
-    private string? loadedStoryId;
+    private LinkedOfGetPublishedWorkMetaResponse? meta;
+    private string? loadedWorkId;
     private PersistingComponentStateSubscription persistingSubscription;
 
-    private string CanonicalUrl => $"/stories/{StoryId}";
+    private bool CanIndex => meta?.CanIndex == true;
+    private string PageUrl => meta?.PageUrl ?? $"/read/{WorkId}";
+    private string? CanonicalUrl => CanIndex ? meta?.CanonicalUrl ?? $"/read/{WorkId}" : null;
 
-    private string MetadataTitle => story is null
-        ? "Read Story | I❤️Fiction"
-        : $"Read {story.Title} | I❤️Fiction";
+    private string MetadataTitle => meta is null
+        ? "Read Work | I❤️Fiction"
+        : $"Read {meta.Title} | I❤️Fiction";
 
-    private string? CoverImageUrl => $"/stories/{StoryId}/cover";
-
-    private string MetadataDescription => story switch
+    private string MetadataDescription => meta switch
     {
         null => "Read and share stories on IHeartFiction.",
-        _ when !string.IsNullOrWhiteSpace(story.Description) => story.Description,
-        _ => $"Start reading {story.Title} on IHeartFiction."
+        _ when !string.IsNullOrWhiteSpace(meta.Description) => meta.Description,
+        _ => $"Start reading {meta.Title} on IHeartFiction."
     };
 
     protected override void OnInitialized()
     {
-        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedStoryMetadata);
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedWorkMetadata);
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (story is not null && string.Equals(loadedStoryId, StoryId, StringComparison.Ordinal))
+        if (meta is not null && string.Equals(loadedWorkId, WorkId, StringComparison.Ordinal))
         {
             return;
         }
 
-        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
-            BuildStateKey(StoryId),
-            out var persistedStory)
-            && persistedStory is not null)
+        meta = null;
+        loadedWorkId = null;
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedWorkMetaResponse>(
+            BuildStateKey(WorkId),
+            out var persistedMeta)
+            && persistedMeta is not null)
         {
-            story = persistedStory;
-            loadedStoryId = StoryId;
+            meta = persistedMeta;
+            loadedWorkId = WorkId;
             return;
         }
 
-        var result = await StoryService.GetStoryAsync(StoryId);
+        var result = await WorkService.GetPublishedWorkMetaAsync(WorkId);
 
         if (result.IsSuccess)
         {
-            story = result.Value;
-            loadedStoryId = StoryId;
+            meta = result.Value;
+            loadedWorkId = WorkId;
         }
         else
         {
-            story = null;
-            loadedStoryId = null;
+            meta = null;
+            loadedWorkId = null;
         }
     }
 
-    private Task PersistLoadedStoryMetadata()
+    private IEnumerable<object> StructuredDataSchemas
     {
-        if (story is not null && !string.IsNullOrWhiteSpace(loadedStoryId))
+        get
         {
-            ApplicationState.PersistAsJson(BuildStateKey(loadedStoryId), story);
+            if (meta is null)
+            {
+                return [];
+            }
+
+            var workUrl = ToAbsolute(meta.CanonicalUrl ?? meta.PageUrl);
+            var storyUrl = meta.StoryId is null ? null : ToAbsolute($"/stories/{meta.StoryId}");
+            var authorSchemas = meta.Authors.Select(author => new Dictionary<string, object?>
+            {
+                ["@type"] = "Person",
+                ["name"] = author.Name,
+                ["url"] = ToAbsolute($"/authors/{author.Id}")
+            }).ToList();
+
+            var workSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = meta.WorkType == "Chapter" ? "Chapter" : "CreativeWork",
+                ["@id"] = workUrl,
+                ["name"] = meta.Title,
+                ["headline"] = meta.Title,
+                ["description"] = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
+                ["url"] = workUrl,
+                ["image"] = string.IsNullOrWhiteSpace(meta.CoverImageUrl) ? null : new[] { ToAbsolute(meta.CoverImageUrl) },
+                ["author"] = authorSchemas,
+                ["publisher"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Organization",
+                    ["name"] = "IHeartFiction",
+                    ["url"] = ToAbsolute("/")
+                },
+                ["datePublished"] = meta.PublishedAt?.ToString("O"),
+                ["dateModified"] = meta.UpdatedAt.ToString("O")
+            };
+
+            if (meta.WorkType == "Chapter" && storyUrl is not null)
+            {
+                workSchema["isPartOf"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "CreativeWork",
+                    ["@id"] = storyUrl,
+                    ["name"] = meta.StoryTitle,
+                    ["url"] = storyUrl
+                };
+            }
+
+            var breadcrumbItems = new List<Dictionary<string, object?>>
+            {
+                new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Stories",
+                    ["item"] = ToAbsolute("/stories")
+                }
+            };
+
+            if (storyUrl is not null && meta.WorkType == "Chapter")
+            {
+                breadcrumbItems.Add(new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 3,
+                    ["name"] = meta.StoryTitle,
+                    ["item"] = storyUrl
+                });
+                breadcrumbItems.Add(new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 4,
+                    ["name"] = meta.Title,
+                    ["item"] = workUrl
+                });
+            }
+            else
+            {
+                breadcrumbItems.Add(new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 3,
+                    ["name"] = meta.Title,
+                    ["item"] = workUrl
+                });
+            }
+
+            var breadcrumbSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["@id"] = $"{workUrl}#breadcrumb",
+                ["itemListElement"] = breadcrumbItems
+            };
+
+            return [workSchema, breadcrumbSchema];
+        }
+    }
+
+    private Task PersistLoadedWorkMetadata()
+    {
+        if (meta is not null && !string.IsNullOrWhiteSpace(loadedWorkId))
+        {
+            ApplicationState.PersistAsJson(BuildStateKey(loadedWorkId), meta);
         }
 
         return Task.CompletedTask;
@@ -89,5 +208,7 @@
         persistingSubscription.Dispose();
     }
 
-    private static string BuildStateKey(string storyId) => $"StoryReaderPage:Story:{storyId}";
+    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
+
+    private static string BuildStateKey(string workId) => $"StoryReaderPage:WorkMeta:{workId}";
 }

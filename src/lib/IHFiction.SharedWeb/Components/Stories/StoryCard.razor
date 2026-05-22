@@ -39,7 +39,7 @@
                 </div>
             </div>
             <div class="media-right">
-                <a href="/stories/@Story.StoryId/read" class="button is-small has-background-success-soft has-text-success-bold" aria-label="Read story">
+                <a href="/read/@Story.StoryId" class="button is-small has-background-success-soft has-text-success-bold" aria-label="Read story">
                     <span class="icon is-small"><i class="fas fa-book-open"></i></span>
                 </a>
             </div>
@@ -152,7 +152,7 @@ else
             {
                 @if (Story.HasChapters)
                 {
-                    <a href="/stories/@Story.StoryId/read" class="card-footer-item">
+                    <a href="/read/@Story.StoryId" class="card-footer-item">
                         <span class="icon">
                             <i class="fas fa-book-open"></i>
                         </span>
@@ -161,7 +161,7 @@ else
                 }
                 else
                 {
-                    <a href="/stories/@Story.StoryId/read" class="card-footer-item">
+                    <a href="/read/@Story.StoryId" class="card-footer-item">
                         <span class="icon">
                             <i class="fas fa-book-open"></i>
                         </span>

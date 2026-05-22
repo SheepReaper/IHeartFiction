@@ -43,5 +43,5 @@
         .OrderBy(chapter => chapter.Order)
         .ToList();
 
-    private string ChapterHref(string chapterId) => $"/stories/{StoryId}/chapters/{chapterId}";
+    private static string ChapterHref(string chapterId) => $"/read/{chapterId}";
 }

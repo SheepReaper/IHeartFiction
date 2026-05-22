@@ -1,556 +1,345 @@
 @using Markdig
-@using System.Linq
-@using IHFiction.SharedWeb.Components.Reading
 @using IHFiction.SharedWeb.Services
-@using static IHFiction.Data.Stories.Domain.StoryType
 @inherits CancellableComponent
-@inject StoryService StoryService
+@inject WorkService WorkService
 @inject ReaderProgressService ReaderProgressService
+@inject NavigationManager Navigation
 @inject ThemeService theme
-@inject IJSRuntime js
 @inject MarkdownPipeline mdp
-@inject PersistentComponentState ApplicationState
 
 @if (isLoading)
 {
     <div class="section">
         <div class="content has-text-centered">
             <span class="icon is-large">
-                <i class="fas fa-file-alt fa-3x"></i>
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
             </span>
-            <h2 class="title is-4">No content available</h2>
-            <p>This story doesn't have any content yet.</p>
+            <p>Loading...</p>
         </div>
     </div>
 }
-else if (story != null)
+else if (!string.IsNullOrWhiteSpace(errorMessage))
 {
     <div class="section">
         <div class="container">
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="notification is-danger">
-                    <button class="delete" @onclick="e => errorMessage = null"></button>
-                    @errorMessage
-                </div>
-            }
-            <!-- Story Header -->
-            <div class="level">
+            <div class="notification is-danger">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+    </div>
+}
+else if (Meta is not null)
+{
+    var orderedChildren = BuildNavigationChapters().ToList();
+    var currentChapterIndex = orderedChildren.FindIndex(chapter => chapter.Id == WorkId);
+    var currentChapter = currentChapterIndex >= 0 ? orderedChildren[currentChapterIndex] : null;
+    var nextChapter = currentChapterIndex >= 0 && currentChapterIndex < orderedChildren.Count - 1
+        ? orderedChildren[currentChapterIndex + 1]
+        : null;
+    var isCrossBookTransition =
+        nextChapter is not null
+        && currentChapter is not null
+        && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
+        && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
+    var isEndOfStory = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
+
+    <div class="section">
+        <div class="container">
+            <div class="level ihf-reader-header">
                 <div class="level-left">
                     <div class="level-item">
                         <div>
-                            <h1 class="title is-3">@story?.Title</h1>
-                            <p class="subtitle is-5">
-                                by @foreach (var author in story?.Authors ?? [])
-                                {
-                                    <a @key="author.Id" href="/authors/@author.Id" class="ihf-content-link">@author.Name</a>
-                                    @if (author != story?.Authors.Last())
-                                    {
-                                        <text>, </text>
-                                    }
-                                }
-                            </p>
+                            <h1 class="title is-4 mb-1">@Meta.Title</h1>
+                            @if (!string.IsNullOrWhiteSpace(Byline))
+                            {
+                                <p class="subtitle is-6 mb-0">@Byline</p>
+                            }
                         </div>
                     </div>
                 </div>
                 <div class="level-right">
                     <div class="level-item">
                         <div class="buttons">
-                            @if (story?.Type is MultiBook or MultiChapter)
+                            @if (orderedChildren.Count > 1 && Meta.WorkType == "Chapter")
                             {
-                                <button class="button has-background-primary-soft has-text-primary-bold" @onclick="OpenContentsModal">
+                                <ChapterNavigation
+                                    CurrentChapterId="@WorkId"
+                                    Chapters="@orderedChildren" />
+                            }
+                            @if (Meta.StoryId is not null)
+                            {
+                                <a href="/stories/@Meta.StoryId" class="button has-background-info-soft has-text-info-bold">
                                     <span class="icon">
-                                        <i class="fas fa-list"></i>
+                                        <i class="fas fa-info-circle"></i>
                                     </span>
-                                    <span>Contents</span>
-                                </button>
+                                    <span>Story Details</span>
+                                </a>
                             }
-                            <a href="/stories/@story?.Id" class="button has-background-info-soft has-text-info-bold">
-                                <span class="icon">
-                                    <i class="fas fa-info-circle"></i>
-                                </span>
-                                <span>Story Details</span>
-                            </a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            @switch (story?.Type)
+            @if (content is not null)
             {
-                case MultiBook:
-                    <div class="content">
-                        @if (!string.IsNullOrEmpty(CurrentChapterId))
-                        {
-                            <ChapterReader StoryId="@StoryId" ChapterId="@CurrentChapterId" Chapters="@(navigationChapters ?? [])" />
-                        }
-                        else
-                        {
-                            <div class="content has-text-centered">
-                                <h2 class="title is-4">Select a Chapter</h2>
-                                <p>Open Contents to start reading.</p>
-                            </div>
-                        }
-                    </div>
-                    break;
-                case MultiChapter:
-                    <div class="content">
-                        @if (!string.IsNullOrEmpty(CurrentChapterId))
-                        {
-                            <ChapterReader StoryId="@StoryId" ChapterId="@CurrentChapterId" Chapters="@(chapters ?? [])" />
-                        }
-                        else
-                        {
-                            <div class="content has-text-centered">
-                                <h2 class="title is-4">Select a Chapter</h2>
-                                <p>Open Contents to start reading.</p>
-                            </div>
-                        }
-                    </div>
-                    break;
-                default: // SingleBody
-                    @if (storyContent != null)
+                <div class="content">
+                    @if (!string.IsNullOrWhiteSpace(content.Note1))
                     {
-                        <div class="content">
-                            @if (!string.IsNullOrWhiteSpace(storyContent.Note1))
-                            {
-                                <div class="message is-info">
-                                    <div class="message-header">
-                                        <p>Author's Notes</p>
-                                    </div>
-                                    <div class="message-body">
-                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note1, mdp))</div>
-                                    </div>
-                                </div>
-                            }
-                            <div class="box content">
-                                @((MarkupString)Markdown.ToHtml(storyContent?.Content ?? string.Empty, mdp))
+                        <div class="message is-info">
+                            <div class="message-header">
+                                <p>Author's Notes</p>
                             </div>
-                            @if (!string.IsNullOrWhiteSpace(storyContent?.Note2))
-                            {
-                                <div class="message is-info">
-                                    <div class="message-header">
-                                        <p>Author's Notes</p>
-                                    </div>
-                                    <div class="message-body">
-                                        <div class="content">@((MarkupString)Markdown.ToHtml(storyContent.Note2, mdp))</div>
-                                    </div>
-                                </div>
-                            }
+                            <div class="message-body">
+                                <div class="content">@((MarkupString)Markdown.ToHtml(content.Note1, mdp))</div>
+                            </div>
                         </div>
                     }
-                    else
-                    {
-                        <div class="content has-text-centered">
-                            <span class="icon is-large">
-                                <i class="fas fa-file-alt fa-3x"></i>
-                            </span>
-                            <h2 class="title is-4">No content available</h2>
-                            <p>This story doesn't have any content yet.</p>
-                        </div>
-                    }
-                    break;
-            }
 
-            <div class="modal @(isContentsModalOpen ? "is-active" : string.Empty)">
-                <div class="modal-background" @onclick="CloseContentsModal"></div>
-                <div class="modal-card">
-                    <header class="modal-card-head">
-                        <p class="modal-card-title">Chapter Contents</p>
-                        <button class="delete" aria-label="close" @onclick="CloseContentsModal"></button>
-                    </header>
-                    <section class="modal-card-body">
-                        @if (story?.Type == MultiBook)
-                        {
-                            <aside class="menu">
-                                <p class="menu-label">Books</p>
-                                <ul class="menu-list">
-                                    @if (story.Books?.Any() ?? false)
-                                    {
-                                        foreach (var book in story.Books.OrderBy(b => b.Order))
-                                        {
-                                            <li @key="book.Id">
-                                                <a class="@(book.Id.ToString() == CurrentBookId ? "is-active" : "")"
-                                                   @onclick="e => SelectBook(book.Id.ToString())">
-                                                    @book.Title
-                                                </a>
-                                                @if (book.Chapters?.Any() ?? false)
-                                                {
-                                                    <ul>
-                                                        @foreach (var chapter in book.Chapters.OrderBy(c => c.Order))
-                                                        {
-                                                            <li @key="chapter.Id">
-                                                                <a href="/stories/@story.Id/chapters/@chapter.Id"
-                                                                   class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
-                                                                   @onclick="@(e => SelectChapter(book.Id.ToString(), chapter.Id.ToString()))">
-                                                                    @chapter.Title
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                    </ul>
-                                                }
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </aside>
-                        }
-                        else if (story?.Type == MultiChapter)
-                        {
-                            <aside class="menu">
-                                <p class="menu-label">Chapters</p>
-                                <ul class="menu-list">
-                                    @if (chapters?.Any() ?? false)
-                                    {
-                                        foreach (var chapter in chapters)
-                                        {
-                                            <li @key="chapter.Id">
-                                                <a href="/stories/@story.Id/chapters/@chapter.Id"
-                                                   class="@(chapter.Id.ToString() == CurrentChapterId ? "is-active" : "")"
-                                                   @onclick="e => SelectChapter(null, chapter.Id.ToString())">
-                                                    @chapter.Title
-                                                </a>
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </aside>
-                        }
-                    </section>
-                    <footer class="modal-card-foot">
-                        <button class="button" @onclick="CloseContentsModal">Close</button>
-                    </footer>
+                    <div class="box content ihf-reader-body">
+                        @((MarkupString)Markdown.ToHtml(content.Content, mdp))
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(content.Note2))
+                    {
+                        <div class="message is-info">
+                            <div class="message-header">
+                                <p>Author's Notes</p>
+                            </div>
+                            <div class="message-body">
+                                <div class="content">@((MarkupString)Markdown.ToHtml(content.Note2, mdp))</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (isCrossBookTransition && nextChapter is not null && currentChapter is not null)
+                    {
+                        <div class="notification has-background-info-soft has-text-info-bold">
+                            <p>
+                                You finished @currentChapter.BookTitle. Next up: @nextChapter.BookTitle.
+                            </p>
+                            <p class="mt-2">
+                                <a class="button has-background-primary-soft has-text-primary-bold" href="@ReadHref(nextChapter.Id)">
+                                    Continue to @nextChapter.BookTitle
+                                </a>
+                            </p>
+                        </div>
+                    }
+                    else if (isEndOfStory)
+                    {
+                        <div class="notification has-background-success-soft has-text-success-bold">
+                            <p>You've reached the end of this story.</p>
+                            @if (Meta.StoryId is not null)
+                            {
+                                <p class="mt-2">
+                                    <a class="button has-background-info-soft has-text-info-bold" href="/stories/@Meta.StoryId">
+                                        Back to Story Details
+                                    </a>
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <div class="level mt-6">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <ChapterNavigation
+                                    CurrentChapterId="@WorkId"
+                                    Chapters="@orderedChildren"
+                                    ShowLabels="true" />
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <p class="is-size-7">
+                                    Last updated: @content.ContentUpdatedAt.ToString("MMM dd, yyyy")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
+            else if (Meta.IsDirectlyReadable)
+            {
+                <div class="content has-text-centered">
+                    <span class="icon is-large">
+                        <i class="fas fa-file-alt fa-3x"></i>
+                    </span>
+                    <h2 class="title is-4">No content available</h2>
+                    <p>This work doesn't have any content yet.</p>
+                </div>
+            }
+            else
+            {
+                <div class="content has-text-centered">
+                    <span class="icon is-large">
+                        <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                    </span>
+                    <p>Finding your place...</p>
+                </div>
+            }
         </div>
     </div>
 }
 
 @code {
-    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
-    [Parameter] public string? CurrentChapterId { get; set; }
+    [Parameter, EditorRequired] public string WorkId { get; set; } = null!;
+    [Parameter] public LinkedOfGetPublishedWorkMetaResponse? Meta { get; set; }
 
-    private LinkedOfGetPublishedStoryResponse? story;
-    private IEnumerable<ReaderChapterNavItem>? chapters;
-    private IEnumerable<ReaderChapterNavItem>? navigationChapters;
-    private LinkedOfGetPublishedStoryContentResponse? storyContent;
+    private LinkedOfGetPublishedWorkContentResponse? content;
     private bool isLoading = true;
-    private bool isContentsModalOpen;
     private string? errorMessage;
-    private string? lastSavedChapterId;
-    private bool attemptedProgressRestore;
-    private bool _disposed = false;
-    private string? loadedStoryId;
-    private string? loadedStoryContentStoryId;
-    private PersistingComponentStateSubscription persistingSubscription;
+    private string? loadedContentWorkId;
+    private string? appliedParameterKey;
+    private string? handledParameterKey;
+    private bool _disposed;
 
-    protected override async Task OnInitializedAsync()
+    private string? Byline => Meta?.Authors?.Any() == true
+        ? $"by {string.Join(", ", Meta.Authors.Select(a => a.Name))}"
+        : null;
+
+    protected override void OnInitialized()
     {
         theme.ThemeChanged += OnThemeChanged;
-        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedReaderData);
-        await LoadStory();
-        SetTheme();
     }
 
-    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    protected override void OnParametersSet()
     {
-        SetTheme();
-    }
-
-    private void SetTheme()
-    {
-        InvokeAsync(StateHasChanged);
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (story?.Id.ToString() != StoryId)
+        var parameterKey = BuildParameterKey();
+        if (appliedParameterKey == parameterKey)
         {
-            await LoadStory();
             return;
         }
 
-        if (story?.Type == MultiBook && !string.IsNullOrEmpty(CurrentChapterId))
-        {
-            SyncCurrentBookFromChapter(CurrentChapterId);
-            await SaveReaderProgressAsync(CurrentChapterId);
-        }
-
-        if (story?.Type == MultiChapter && !string.IsNullOrEmpty(CurrentChapterId))
-        {
-            await SaveReaderProgressAsync(CurrentChapterId);
-        }
+        content = null;
+        errorMessage = null;
+        isLoading = Meta is null || Meta.IsDirectlyReadable;
+        appliedParameterKey = parameterKey;
+        handledParameterKey = null;
+        loadedContentWorkId = null;
     }
 
-    private async Task LoadStory()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        var parameterKey = BuildParameterKey();
+        if (Meta is null || handledParameterKey == parameterKey)
+        {
+            return;
+        }
+
+        handledParameterKey = parameterKey;
+
+        if (!Meta.IsDirectlyReadable)
+        {
+            await NavigateToSelectedReadableWorkAsync();
+            return;
+        }
+
+        await LoadContentAsync();
+    }
+
+    private async Task LoadContentAsync()
+    {
+        if (loadedContentWorkId == WorkId)
+        {
+            return;
+        }
+
         isLoading = true;
         errorMessage = null;
-        story = null;
-        chapters = null;
-        navigationChapters = null;
-        storyContent = null;
-        loadedStoryId = null;
-        loadedStoryContentStoryId = null;
-        CurrentBookId = null;
+        StateHasChanged();
 
-        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
-            BuildStoryStateKey(StoryId),
-            out var persistedStory)
-            && persistedStory is not null)
+        try
         {
-            story = persistedStory;
-            loadedStoryId = StoryId;
-            await PrepareLoadedStory();
-            isLoading = false;
-            StateHasChanged();
+            var result = await WorkService.GetPublishedWorkContentAsync(WorkId, cancellationToken: CancellationToken);
+
+            if (result.IsSuccess)
+            {
+                content = result.Value;
+                loadedContentWorkId = WorkId;
+
+                if (Meta?.WorkType == "Chapter" && Meta.StoryId is not null)
+                {
+                    await ReaderProgressService.SetLastReadChapterIdAsync(Meta.StoryId.ToString()!, WorkId);
+                }
+            }
+            else
+            {
+                content = null;
+                errorMessage = result.DomainError.Description;
+            }
+        }
+        catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+        {
             return;
         }
-
-        var storyResult = await StoryService.GetStoryAsync(StoryId);
-
-        if (storyResult.IsSuccess)
+        catch (Exception ex)
         {
-            story = storyResult.Value;
-            loadedStoryId = StoryId;
-            await PrepareLoadedStory();
-        }
-        else
-        {
-            errorMessage = storyResult.DomainError.Description;
+            content = null;
+            errorMessage = $"Failed to load this work's content: {ex.Message}";
         }
 
         isLoading = false;
         StateHasChanged();
     }
 
-    private async Task PrepareLoadedStory()
+    private async Task NavigateToSelectedReadableWorkAsync()
     {
-        if (story?.Type == MultiBook)
+        isLoading = true;
+        StateHasChanged();
+
+        var storyProgressId = Meta?.StoryId?.ToString() ?? WorkId;
+        var targetWorkId = await ReaderProgressService.GetLastReadChapterIdAsync(storyProgressId);
+        var readableChildren = Meta?.ReadableChildren?.ToList() ?? [];
+
+        if (string.IsNullOrWhiteSpace(targetWorkId)
+            || !readableChildren.Any(child => child.Id.ToString() == targetWorkId))
         {
-            if (story.Books?.Any() == true)
-            {
-                navigationChapters = story.Books
-                    .OrderBy(b => b.Order)
-                    .SelectMany(b => (b.Chapters ?? []).OrderBy(c => c.Order)
-                        .Select(c => new ReaderChapterNavItem(
-                            c.Id.ToString(),
-                            c.Title,
-                            c.Order,
-                            b.Title)))
-                    .ToList();
-
-                if (string.IsNullOrEmpty(CurrentChapterId))
-                {
-                    var restoredChapterId = await TryRestoreReaderProgressAsync();
-                    if (!string.IsNullOrEmpty(restoredChapterId))
-                    {
-                        CurrentChapterId = restoredChapterId;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(CurrentChapterId))
-                {
-                    SyncCurrentBookFromChapter(CurrentChapterId);
-                    await SaveReaderProgressAsync(CurrentChapterId);
-                }
-
-                // Auto-select the first book and chapter by Order if no current chapter is set.
-                if (string.IsNullOrEmpty(CurrentBookId))
-                {
-                    var firstBook = story.Books.OrderBy(b => b.Order).First();
-                    CurrentBookId = firstBook.Id.ToString();
-                    chapters = firstBook.Chapters?.OrderBy(c => c.Order)
-                        .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, firstBook.Title))
-                        .ToList();
-
-                    if (string.IsNullOrEmpty(CurrentChapterId) && firstBook.Chapters?.Any() == true)
-                    {
-                        CurrentChapterId = firstBook.Chapters.OrderBy(c => c.Order).First().Id.ToString();
-                        await SaveReaderProgressAsync(CurrentChapterId);
-                    }
-                }
-            }
+            targetWorkId = Meta?.DefaultReadableWorkId?.ToString();
         }
-        else if (story?.Type == MultiChapter)
+
+        if (!string.IsNullOrWhiteSpace(targetWorkId))
         {
-            chapters = story.Chapters?.OrderBy(c => c.Order)
-                .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order))
-                .ToList();
-            navigationChapters = chapters;
-
-            if (string.IsNullOrEmpty(CurrentChapterId))
-            {
-                var restoredChapterId = await TryRestoreReaderProgressAsync();
-                if (!string.IsNullOrEmpty(restoredChapterId))
-                {
-                    CurrentChapterId = restoredChapterId;
-                }
-            }
-
-            // Auto-select the first chapter by Order if none is selected
-            if (string.IsNullOrEmpty(CurrentChapterId) && (chapters?.Any() ?? false))
-            {
-                CurrentChapterId = chapters!.First().Id;
-            }
-
-            if (!string.IsNullOrEmpty(CurrentChapterId))
-            {
-                await SaveReaderProgressAsync(CurrentChapterId);
-            }
+            Navigation.NavigateTo($"/read/{targetWorkId}", replace: true);
+            return;
         }
-        else if (story?.Type == SingleBody)
-        {
-            navigationChapters = [];
 
-            if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryContentResponse>(
-                BuildStoryContentStateKey(StoryId),
-                out var persistedStoryContent)
-                && persistedStoryContent is not null)
-            {
-                storyContent = persistedStoryContent;
-                loadedStoryContentStoryId = StoryId;
-                return;
-            }
+        isLoading = false;
+        errorMessage = "This work does not have any published readable content yet.";
+        StateHasChanged();
+    }
 
-            // Load content for single story
-            var contentResult = await StoryService.GetPublishedStoryContentAsync(StoryId);
+    private IEnumerable<ReaderChapterNavItem> BuildNavigationChapters()
+    {
+        return Meta?.ReadableChildren?
+            .OrderBy(child => child.BookId?.ToString() ?? string.Empty)
+            .ThenBy(child => child.Order)
+            .Select(child => new ReaderChapterNavItem(
+                child.Id.ToString(),
+                child.Title,
+                child.Order,
+                child.BookTitle))
+            .ToList() ?? [];
+    }
 
-            if (contentResult.IsSuccess)
-            {
-                storyContent = contentResult.Value;
-                loadedStoryContentStoryId = StoryId;
-            }
-        }
+    private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     protected override ValueTask DisposeAsyncCore()
     {
-        if (_disposed) return ValueTask.CompletedTask;
+        if (_disposed)
+        {
+            return ValueTask.CompletedTask;
+        }
 
         theme.ThemeChanged -= OnThemeChanged;
-        persistingSubscription.Dispose();
-
         _disposed = true;
 
         return base.DisposeAsyncCore();
     }
-    private string? CurrentBookId;
 
-    private void SyncCurrentBookFromChapter(string chapterId)
-    {
-        if (story?.Books?.Any() != true)
-        {
-            return;
-        }
+    private static string ReadHref(string workId) => $"/read/{workId}";
 
-        var containingBook = story.Books
-            .OrderBy(b => b.Order)
-            .FirstOrDefault(book => book.Chapters?.Any(chapter => chapter.Id.ToString() == chapterId) == true);
-
-        if (containingBook == null)
-        {
-            return;
-        }
-
-        CurrentBookId = containingBook.Id.ToString();
-        chapters = containingBook.Chapters?.OrderBy(c => c.Order)
-            .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, containingBook.Title))
-            .ToList();
-    }
-
-    private void SelectBook(string bookId)
-    {
-        CurrentBookId = bookId;
-        // Auto-select first chapter in the book (by Order) if available
-        var book = story?.Books?.FirstOrDefault(b => b.Id.ToString() == bookId);
-        if (book?.Chapters?.Any() == true)
-        {
-            chapters = book.Chapters.OrderBy(c => c.Order)
-                .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, book.Title))
-                .ToList();
-            CurrentChapterId = book.Chapters.OrderBy(c => c.Order).First().Id.ToString();
-            _ = SaveReaderProgressAsync(CurrentChapterId);
-        }
-        else
-        {
-            CurrentChapterId = null;
-        }
-    }
-
-    private void SelectChapter(string? bookId, string chapterId)
-    {
-        if (bookId != null)
-            CurrentBookId = bookId;
-
-        CurrentChapterId = chapterId;
-        _ = SaveReaderProgressAsync(chapterId);
-        CloseContentsModal();
-    }
-
-    private async Task<string?> TryRestoreReaderProgressAsync()
-    {
-        if (attemptedProgressRestore)
-        {
-            return null;
-        }
-
-        attemptedProgressRestore = true;
-
-        var chapterId = await ReaderProgressService.GetLastReadChapterIdAsync(StoryId);
-        if (string.IsNullOrWhiteSpace(chapterId))
-        {
-            return null;
-        }
-
-        if (navigationChapters?.Any(c => c.Id == chapterId) != true)
-        {
-            await ReaderProgressService.ClearLastReadChapterIdAsync(StoryId);
-            return null;
-        }
-
-        return chapterId;
-    }
-
-    private async Task SaveReaderProgressAsync(string chapterId)
-    {
-        if (string.IsNullOrWhiteSpace(chapterId) || chapterId == lastSavedChapterId)
-        {
-            return;
-        }
-
-        lastSavedChapterId = chapterId;
-        await ReaderProgressService.SetLastReadChapterIdAsync(StoryId, chapterId);
-    }
-
-    private void OpenContentsModal()
-    {
-        isContentsModalOpen = true;
-    }
-
-    private void CloseContentsModal()
-    {
-        isContentsModalOpen = false;
-    }
-
-    private Task PersistLoadedReaderData()
-    {
-        if (story is not null && !string.IsNullOrWhiteSpace(loadedStoryId) && string.IsNullOrEmpty(errorMessage))
-        {
-            ApplicationState.PersistAsJson(BuildStoryStateKey(loadedStoryId), story);
-        }
-
-        if (storyContent is not null
-            && !string.IsNullOrWhiteSpace(loadedStoryContentStoryId)
-            && string.IsNullOrEmpty(errorMessage))
-        {
-            ApplicationState.PersistAsJson(BuildStoryContentStateKey(loadedStoryContentStoryId), storyContent);
-        }
-
-        return Task.CompletedTask;
-    }
-
-    private static string BuildStoryStateKey(string storyId) => $"StoryReader:Story:{storyId}";
-
-    private static string BuildStoryContentStateKey(string storyId) => $"StoryReader:Content:{storyId}";
+    private string BuildParameterKey() => $"{WorkId}:{Meta?.Id.ToString() ?? "none"}";
 }

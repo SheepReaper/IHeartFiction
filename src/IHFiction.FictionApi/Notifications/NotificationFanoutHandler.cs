@@ -135,7 +135,7 @@ public sealed partial class NotificationFanoutHandler(
                 Kind = NotificationKinds.ChapterPublished,
                 Title = Truncate($"New chapter in {storyTitle}", 200),
                 Body = Truncate($"{chapter.Title} by {chapter.Owner.Name} is now live.", 500),
-                TargetPath = $"/stories/{storyId}/chapters/{chapter.Id}",
+                TargetPath = $"/read/{chapter.Id}",
                 EventOccurredAt = chapter.PublishedAt!.Value,
                 AuthorId = chapter.OwnerId,
                 StoryId = storyId,

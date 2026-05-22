@@ -51,6 +51,9 @@
             return;
         }
 
+        author = null;
+        _loadedAuthorId = null;
+
         if (ApplicationState.TryTakeFromJson<LinkedOfGetAuthorResponse>(
             BuildStateKey(AuthorId),
             out var persistedAuthor)

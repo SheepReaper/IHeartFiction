@@ -3603,6 +3603,124 @@
         }
       }
     },
+    "/works/{id}/content": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Published Work Content",
+        "description": "Retrieves body content for a directly readable published work.",
+        "operationId": "GetPublishedWorkContent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetPublishedWorkContentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/works/{id}/meta": {
+      "get": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Get Published Work Metadata",
+        "description": "Retrieves reader metadata for a published story, book, or chapter.",
+        "operationId": "GetPublishedWorkMeta",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedOfGetPublishedWorkMetaResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/stories/published": {
       "get": {
         "tags": [
@@ -6239,6 +6357,247 @@
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
+      "LinkedOfGetPublishedWorkContentResponse": {
+        "required": [
+          "links",
+          "id",
+          "workType",
+          "title",
+          "storyId",
+          "storyTitle",
+          "bookId",
+          "bookTitle",
+          "contentId",
+          "content",
+          "note1",
+          "note2",
+          "contentUpdatedAt",
+          "workUpdatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "workType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "storyId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "storyTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "bookTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentId": {
+            "$ref": "#/components/schemas/ObjectId"
+          },
+          "content": {
+            "type": "string"
+          },
+          "note1": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contentUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "workUpdatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfGetPublishedWorkMetaResponse": {
+        "required": [
+          "links",
+          "id",
+          "workType",
+          "readerKind",
+          "title",
+          "description",
+          "publishedAt",
+          "updatedAt",
+          "isDirectlyReadable",
+          "canIndex",
+          "canonicalUrl",
+          "pageUrl",
+          "coverImageUrl",
+          "coverStoryId",
+          "storyId",
+          "storyTitle",
+          "bookId",
+          "bookTitle",
+          "defaultReadableWorkId",
+          "readableChildren",
+          "authors"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "workType": {
+            "type": "string"
+          },
+          "readerKind": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isDirectlyReadable": {
+            "type": "boolean"
+          },
+          "canIndex": {
+            "type": "boolean"
+          },
+          "canonicalUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pageUrl": {
+            "type": "string"
+          },
+          "coverImageUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "coverStoryId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "storyId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "storyTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "bookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "bookTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "defaultReadableWorkId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "readableChildren": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReadableWorkItem"
+            }
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkAuthor"
+            }
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
       "LinkedOfListAuthorsItem": {
         "required": [
           "links",
@@ -7909,6 +8268,48 @@
           }
         }
       },
+      "ReadableWorkItem": {
+        "required": [
+          "id",
+          "title",
+          "order",
+          "bookId",
+          "bookTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "order": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "bookId": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
+          },
+          "bookTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RegisterAsAuthorBody": {
         "required": [
           "acceptTerms"
@@ -8301,6 +8702,21 @@
           }
         },
         "description": "Request model for updating a story's metadata (title and description)."
+      },
+      "WorkAuthor": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {

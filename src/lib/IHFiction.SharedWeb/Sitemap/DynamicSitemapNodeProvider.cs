@@ -37,14 +37,28 @@ public class DynamicSitemapNodeProvider(FictionDbContext db) : ICustomSitemapNod
         // Stories and Chapters
         foreach (var story in db.Stories
             .Include(s => s.Chapters.Where(c => c.PublishedAt != null))
+            .Include(s => s.Books.Where(b => b.PublishedAt != null))
+                .ThenInclude(b => b.Chapters.Where(c => c.PublishedAt != null))
             .AsNoTracking()
             .Where(s => s.PublishedAt != null))
         {
             yield return new SitemapNode($"/stories/{story.Id}", story.UpdatedAt);
 
-            foreach (var chapter in story.Chapters)
+            if (!story.HasChapters && !story.HasBooks && story.HasContent)
             {
-                yield return new SitemapNode($"/stories/{story.Id}/chapters/{chapter.Id}", chapter.UpdatedAt);
+                yield return new SitemapNode($"/read/{story.Id}", story.UpdatedAt);
+            }
+
+            foreach (var chapter in story.Chapters.Where(c => c.PublishedAt != null))
+            {
+                yield return new SitemapNode($"/read/{chapter.Id}", chapter.UpdatedAt);
+            }
+
+            foreach (var chapter in story.Books
+                .Where(b => b.PublishedAt != null)
+                .SelectMany(b => b.Chapters.Where(c => c.PublishedAt != null)))
+            {
+                yield return new SitemapNode($"/read/{chapter.Id}", chapter.UpdatedAt);
             }
         }
     }

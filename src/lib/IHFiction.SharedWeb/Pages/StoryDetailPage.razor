@@ -1,9 +1,0 @@
-@using IHFiction.SharedWeb.Components.Stories
-
-@page "/stories/{storyId}"
-
-<StoryDetail StoryId="@StoryId" />
-
-@code {
-    [Parameter] public string StoryId { get; set; } = null!;
-}

@@ -60,6 +60,9 @@ builder.Services.AddOptions<SiteUrlOptions>()
 
 builder.Services.AddSingleton<IComponentBaseProvider, ComponentBaseProvider>();
 
+builder.Services.AddRoutingCore()
+    .Configure<RouteOptions>(options => options.SetParameterPolicy<UlidRouteConstraint>("ulid"));
+
 builder.Services.AddDefaultSitemapServices<HttpContextBaseUrlProvider>()
     .AddCustomSitemapNodeProvider<DynamicSitemapNodeProvider>();
 
@@ -229,6 +232,10 @@ app.UseRequestTimeouts();
 app.UseOutputCache();
 
 app.MapStaticAssets();
+
+app.MapGet("/stories/{storyId:ulid}/read", (Ulid storyId) => Results.Redirect($"/read/{storyId}", permanent: true));
+
+app.MapGet("/stories/{storyId:ulid}/chapters/{chapterId:ulid}", (Ulid storyId, Ulid chapterId) => Results.Redirect($"/read/{chapterId}", permanent: true));
 
 app.MapGet("/stories/{id}/cover", async Task<IResult> (
     string id,

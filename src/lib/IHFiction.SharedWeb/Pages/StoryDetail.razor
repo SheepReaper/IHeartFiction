@@ -1,4 +1,5 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
+@page "/stories/{storyId}"
 @inject StoryService StoryService
 @inject MetadataUrlService MetadataUrls
 @inject PersistentComponentState ApplicationState
@@ -99,7 +100,7 @@ else if (story != null)
                                     {
                                         @if (story.Type == MultiChapter)
                                         {
-                                            <a href="/stories/@story.Id/read" class="button is-primary is-fullwidth is-large">
+                                            <a href="/read/@story.Id" class="button is-primary is-fullwidth is-large">
                                                 <span class="icon">
                                                     <i class="fas fa-book-open"></i>
                                                 </span>
@@ -108,7 +109,7 @@ else if (story != null)
                                         }
                                         else
                                         {
-                                            <a href="/stories/@story.Id/read" class="button is-primary is-fullwidth is-large">
+                                            <a href="/read/@story.Id" class="button is-primary is-fullwidth is-large">
                                                 <span class="icon">
                                                     <i class="fas fa-book-open"></i>
                                                 </span>
@@ -348,6 +349,13 @@ else if (story != null)
             return;
         }
 
+        story = null;
+        chapters = null;
+        errorMessage = null;
+        isLoading = true;
+        loadedStoryId = null;
+        loadedChapterListStoryId = null;
+
         if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
             BuildStoryStateKey(StoryId),
             out var persistedStory)
@@ -372,9 +380,6 @@ else if (story != null)
     {
         isLoading = true;
         errorMessage = null;
-        story = null;
-        chapters = null;
-        loadedChapterListStoryId = null;
 
         var storyResult = await StoryService.GetStoryAsync(StoryId);
 

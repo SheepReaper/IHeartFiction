@@ -5,7 +5,10 @@
 
 <SectionContent SectionName="@SectionName">
     <meta name="description" content="@ResolvedDescription" />
-    <link rel="canonical" href="@ResolvedCanonicalUrl" />
+    @if (EmitCanonical)
+    {
+        <link rel="canonical" href="@ResolvedCanonicalUrl" />
+    }
 
     @if (!string.IsNullOrWhiteSpace(ResolvedPreviousUrl))
     {
@@ -43,6 +46,7 @@
     [Parameter, EditorRequired] public string Description { get; set; } = null!;
     [Parameter] public string? PageUrl { get; set; }
     [Parameter] public string? CanonicalUrl { get; set; }
+    [Parameter] public bool EmitCanonical { get; set; } = true;
     [Parameter] public string? PreviousUrl { get; set; }
     [Parameter] public string? NextUrl { get; set; }
     [Parameter] public string? ImageUrl { get; set; }
