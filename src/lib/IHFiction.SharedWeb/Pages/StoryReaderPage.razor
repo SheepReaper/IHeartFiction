@@ -1,3 +1,4 @@
+@using System.Text
 @using IHFiction.SharedWeb.Components.Reading
 @implements IDisposable
 @inject PersistentComponentState ApplicationState
@@ -35,9 +36,25 @@
     private string PageUrl => meta?.PageUrl ?? $"/read/{WorkId}";
     private string? CanonicalUrl => CanIndex ? meta?.CanonicalUrl ?? $"/read/{WorkId}" : null;
 
-    private string MetadataTitle => meta is null
-        ? "Read Work | I❤️Fiction"
-        : $"Read {meta.Title} | I❤️Fiction";
+    private string MetadataTitle
+    {
+        get
+        {
+            if (meta is null) return "Read Work | I❤️Fiction";
+
+            StringBuilder titleBuilder = new(meta.Title);
+
+            if (!string.IsNullOrWhiteSpace(meta.BookTitle))
+                titleBuilder.Append($" | {meta.BookTitle}");
+
+            if (!string.IsNullOrWhiteSpace(meta.StoryTitle))
+                titleBuilder.Append($" | {meta.StoryTitle}");
+
+            titleBuilder.Append(" | I❤️Fiction");
+
+            return titleBuilder.ToString();
+        }
+    }
 
     private string MetadataDescription => meta switch
     {

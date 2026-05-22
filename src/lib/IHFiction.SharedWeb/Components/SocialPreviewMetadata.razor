@@ -1,7 +1,7 @@
 @inject NavigationManager Nav
 @inject MetadataUrlService MetadataUrls
 
-<PageTitle>@ResolvedTitle</PageTitle>
+<PageTitle>@SafeTitle</PageTitle>
 
 <SectionContent SectionName="@SectionName">
     <meta name="description" content="@ResolvedDescription" />
@@ -20,7 +20,7 @@
         <link rel="next" href="@ResolvedNextUrl" />
     }
 
-    <meta property="og:title" content="@SafeTitle" />
+    <meta property="og:title" content="@ResolvedTitle" />
     <meta property="og:description" content="@ResolvedDescription" />
     <meta property="og:url" content="@ResolvedPageUrl" />
     <meta property="og:type" content="@Type" />
