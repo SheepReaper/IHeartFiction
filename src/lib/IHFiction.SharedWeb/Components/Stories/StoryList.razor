@@ -5,6 +5,7 @@
 
 @inherits CancellableComponent
 @inject NavigationManager Navigation
+@inject PersistentComponentState ApplicationState
 @inject StoryService StoryService
 
 @if (EmitPaginationHeadLinks)
@@ -164,12 +165,18 @@
     private string? _loadedSearch;
     private string? _loadedSort;
     private string? _loadedAuthorId;
+    private PersistingComponentStateSubscription _persistingSubscription;
     private List<LinkedOfListPublishedStoriesItem> displayedStories = [];
     private string? loadMoreUrl;
 
     private string? PreviousPageUrl => ResolveLinkedPageUrl("previous-page");
     private string? NextPageUrl => ResolveLinkedPageUrl("next-page");
     private string? LoadMoreUrl => loadMoreUrl;
+
+    protected override void OnInitialized()
+    {
+        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedStories);
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -185,11 +192,18 @@
             return;
         }
 
+        if (ApplicationState.TryTakeFromJson<LinkedPagedCollectionOfListPublishedStoriesItem>(
+            BuildStateKey(currentPage, searchQuery, sortBy, AuthorId),
+            out var persistedStories)
+            && persistedStories is not null)
+        {
+            ApplyStories(persistedStories);
+            MarkLoaded();
+            return;
+        }
+
         await LoadStories();
-        _loadedPage = currentPage;
-        _loadedSearch = searchQuery;
-        _loadedSort = sortBy;
-        _loadedAuthorId = AuthorId;
+        MarkLoaded();
     }
 
     private async Task LoadStories()
@@ -208,9 +222,7 @@
 
         if (result.IsSuccess)
         {
-            stories = result.Value;
-            displayedStories = stories.Data.ToList();
-            loadMoreUrl = NextPageUrl;
+            ApplyStories(result.Value);
         }
         else
         {
@@ -221,6 +233,36 @@
 
         isLoading = false;
         StateHasChanged();
+    }
+
+    private void ApplyStories(LinkedPagedCollectionOfListPublishedStoriesItem loadedStories)
+    {
+        stories = loadedStories;
+        displayedStories = stories.Data.ToList();
+        loadMoreUrl = NextPageUrl;
+        errorMessage = null;
+        isLoading = false;
+        isLoadingMore = false;
+    }
+
+    private Task PersistLoadedStories()
+    {
+        if (stories is not null && _loadedPage > 0 && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(
+                BuildStateKey(_loadedPage, _loadedSearch, _loadedSort, _loadedAuthorId),
+                stories);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void MarkLoaded()
+    {
+        _loadedPage = currentPage;
+        _loadedSearch = searchQuery;
+        _loadedSort = sortBy;
+        _loadedAuthorId = AuthorId;
     }
 
     private Task SearchStories()
@@ -411,4 +453,13 @@
     private static int NormalizePage(int? page) => page is > 0 ? page.Value : 1;
 
     private static string NormalizeSort(string? sort) => AllowedSorts.Contains(sort) ? sort! : DefaultSort;
+
+    private static string BuildStateKey(int page, string? search, string? sort, string? authorId)
+        => $"StoryList:{page}:{search ?? string.Empty}:{sort ?? string.Empty}:{authorId ?? string.Empty}";
+
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        _persistingSubscription.Dispose();
+        await base.DisposeAsyncCore();
+    }
 }

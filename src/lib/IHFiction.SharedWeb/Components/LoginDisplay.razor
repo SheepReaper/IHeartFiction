@@ -1,6 +1,7 @@
 @inject NavigationManager Navigation
 @inject LoaderService LoaderService
 @inject AccountService AccountService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @using System.Security.Cryptography
 @using System.Text
@@ -63,12 +64,24 @@
     private string? _avatarUrl;
     private bool _isMenuOpen;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (authState.User.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
         var result = await AccountService.GetUserProfileAsync();
         if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.Value.GravatarEmail))
         {
             _avatarUrl = BuildGravatarUrl(result.Value.GravatarEmail);
+            StateHasChanged();
         }
     }
 

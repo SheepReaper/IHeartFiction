@@ -1,4 +1,6 @@
 @using IHFiction.SharedWeb.Components.Reading
+@implements IDisposable
+@inject PersistentComponentState ApplicationState
 @inject StoryService StoryService
 
 @page "/stories/{storyId}/read"
@@ -12,14 +14,14 @@
 
 <StoryReader StoryId="@StoryId" />
 
-<HeadContent>
-    <meta name="robots" content="noindex">
-</HeadContent>
+<NoIndex />
 
 @code {
     [Parameter] public string StoryId { get; set; } = null!;
 
     private LinkedOfGetPublishedStoryResponse? story;
+    private string? loadedStoryId;
+    private PersistingComponentStateSubscription persistingSubscription;
 
     private string CanonicalUrl => $"/stories/{StoryId}";
 
@@ -36,9 +38,56 @@
         _ => $"Start reading {story.Title} on IHeartFiction."
     };
 
+    protected override void OnInitialized()
+    {
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedStoryMetadata);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
+        if (story is not null && string.Equals(loadedStoryId, StoryId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
+            BuildStateKey(StoryId),
+            out var persistedStory)
+            && persistedStory is not null)
+        {
+            story = persistedStory;
+            loadedStoryId = StoryId;
+            return;
+        }
+
         var result = await StoryService.GetStoryAsync(StoryId);
-        story = result.IsSuccess ? result.Value : null;
+
+        if (result.IsSuccess)
+        {
+            story = result.Value;
+            loadedStoryId = StoryId;
+        }
+        else
+        {
+            story = null;
+            loadedStoryId = null;
+        }
     }
+
+    private Task PersistLoadedStoryMetadata()
+    {
+        if (story is not null && !string.IsNullOrWhiteSpace(loadedStoryId))
+        {
+            ApplicationState.PersistAsJson(BuildStateKey(loadedStoryId), story);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        persistingSubscription.Dispose();
+    }
+
+    private static string BuildStateKey(string storyId) => $"StoryReaderPage:Story:{storyId}";
 }

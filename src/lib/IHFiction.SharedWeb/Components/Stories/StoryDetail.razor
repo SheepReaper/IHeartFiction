@@ -1,8 +1,10 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
 @inject StoryService StoryService
 @inject MetadataUrlService MetadataUrls
+@inject PersistentComponentState ApplicationState
 @using IHFiction.SharedWeb.Components.Notifications
 @using IHFiction.SharedWeb.Components.Reading
+@implements IDisposable
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -217,6 +219,9 @@ else if (story != null)
     private LinkedPagedCollectionOfListPublishedStoryChaptersItem? chapters;
     private bool isLoading = true;
     private string? errorMessage;
+    private string? loadedStoryId;
+    private string? loadedChapterListStoryId;
+    private PersistingComponentStateSubscription persistingSubscription;
 
     private string MetadataTitle => story is null
         ? "Story Details | I❤️Fiction"
@@ -331,49 +336,135 @@ else if (story != null)
         return [];
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await LoadStory();
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedStoryDetail);
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (story?.Id.ToString() != StoryId)
+        if (story is not null && string.Equals(loadedStoryId, StoryId, StringComparison.Ordinal))
         {
-            await LoadStory();
+            return;
         }
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
+            BuildStoryStateKey(StoryId),
+            out var persistedStory)
+            && persistedStory is not null)
+        {
+            ApplyStory(persistedStory);
+
+            if (story?.Type == MultiChapter)
+            {
+                await RestoreOrLoadChapters();
+            }
+
+            MarkStoryLoaded();
+            return;
+        }
+
+        await LoadStory();
+        MarkStoryLoaded();
     }
 
     private async Task LoadStory()
     {
         isLoading = true;
         errorMessage = null;
+        story = null;
+        chapters = null;
+        loadedChapterListStoryId = null;
 
         var storyResult = await StoryService.GetStoryAsync(StoryId);
 
         if (storyResult.IsSuccess)
         {
-            story = storyResult.Value;
+            ApplyStory(storyResult.Value);
             
             // Load chapters if the story has them
             if (story?.Type == MultiChapter)
             {
-                var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
-
-                if (chaptersResult.IsSuccess)
-                {
-                    chapters = chaptersResult.Value;
-                }
+                await RestoreOrLoadChapters();
             }
         }
         else
         {
             errorMessage = storyResult.DomainError.Description;
+            isLoading = false;
         }
 
-        isLoading = false;
         StateHasChanged();
     }
+
+    private async Task RestoreOrLoadChapters()
+    {
+        if (ApplicationState.TryTakeFromJson<LinkedPagedCollectionOfListPublishedStoryChaptersItem>(
+            BuildChapterListStateKey(StoryId),
+            out var persistedChapters)
+            && persistedChapters is not null)
+        {
+            ApplyChapters(persistedChapters);
+            return;
+        }
+
+        var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
+
+        if (chaptersResult.IsSuccess)
+        {
+            ApplyChapters(chaptersResult.Value);
+        }
+        else
+        {
+            chapters = null;
+            loadedChapterListStoryId = null;
+        }
+    }
+
+    private void ApplyStory(LinkedOfGetPublishedStoryResponse loadedStory)
+    {
+        story = loadedStory;
+        errorMessage = null;
+        isLoading = false;
+
+        if (story.Type != MultiChapter)
+        {
+            chapters = null;
+            loadedChapterListStoryId = null;
+        }
+    }
+
+    private void ApplyChapters(LinkedPagedCollectionOfListPublishedStoryChaptersItem loadedChapters)
+    {
+        chapters = loadedChapters;
+        loadedChapterListStoryId = StoryId;
+    }
+
+    private Task PersistLoadedStoryDetail()
+    {
+        if (story is not null && !string.IsNullOrWhiteSpace(loadedStoryId) && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildStoryStateKey(loadedStoryId), story);
+        }
+
+        if (chapters is not null
+            && !string.IsNullOrWhiteSpace(loadedChapterListStoryId)
+            && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildChapterListStateKey(loadedChapterListStoryId), chapters);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void MarkStoryLoaded()
+    {
+        loadedStoryId = StoryId;
+    }
+
+    private static string BuildStoryStateKey(string storyId) => $"StoryDetail:Story:{storyId}";
+
+    private static string BuildChapterListStateKey(string storyId) => $"StoryDetail:Chapters:{storyId}";
 
     private static string FormatAuthorList(IEnumerable<StoryAuthor> authors)
     {
@@ -384,5 +475,10 @@ else if (story != null)
         }
 
         return names.Count == 1 ? names[0] : string.Join(", ", names.Take(3));
+    }
+
+    public void Dispose()
+    {
+        persistingSubscription.Dispose();
     }
 }

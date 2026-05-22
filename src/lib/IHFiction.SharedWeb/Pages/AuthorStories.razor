@@ -1,6 +1,8 @@
 @using IHFiction.SharedWeb.Components.Stories
 @using IHFiction.SharedWeb.Services
 @using IHFiction.SharedKernel.Infrastructure
+@inject PersistentComponentState ApplicationState
+@implements IDisposable
 
 @page "/authors/{authorId}/stories"
 
@@ -20,6 +22,8 @@
     public int? Page { get; set; }
 
     private LinkedOfGetAuthorResponse? author;
+    private string? _loadedAuthorId;
+    private PersistingComponentStateSubscription _persistingSubscription;
 
     private int NormalizedPage => Page is > 0 ? Page.Value : 1;
 
@@ -35,10 +39,56 @@
         ? $"Read stories by {author.Name}. Browse published works and jump directly into the latest chapters."
         : "Browse published stories from this author on IHeartFiction and jump directly into the latest chapters.";
 
+    protected override void OnInitialized()
+    {
+        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedAuthorMetadata);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
+        if (author is not null && string.Equals(_loadedAuthorId, AuthorId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetAuthorResponse>(
+            BuildStateKey(AuthorId),
+            out var persistedAuthor)
+            && persistedAuthor is not null)
+        {
+            author = persistedAuthor;
+            _loadedAuthorId = AuthorId;
+            return;
+        }
+
         var result = await AuthorService.GetAuthorAsync(AuthorId);
-        author = result.IsSuccess ? result.Value : null;
-        await base.OnParametersSetAsync();
+
+        if (result.IsSuccess)
+        {
+            author = result.Value;
+            _loadedAuthorId = AuthorId;
+        }
+        else
+        {
+            author = null;
+            _loadedAuthorId = null;
+        }
     }
+
+    private Task PersistLoadedAuthorMetadata()
+    {
+        if (author is not null && !string.IsNullOrWhiteSpace(_loadedAuthorId))
+        {
+            ApplicationState.PersistAsJson(BuildStateKey(_loadedAuthorId), author);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _persistingSubscription.Dispose();
+    }
+
+    private static string BuildStateKey(string authorId) => $"AuthorStories:Author:{authorId}";
 }

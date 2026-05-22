@@ -9,6 +9,7 @@
 @inject ThemeService theme
 @inject IJSRuntime js
 @inject MarkdownPipeline mdp
+@inject PersistentComponentState ApplicationState
 
 @if (isLoading)
 {
@@ -239,10 +240,14 @@ else if (story != null)
     private string? lastSavedChapterId;
     private bool attemptedProgressRestore;
     private bool _disposed = false;
+    private string? loadedStoryId;
+    private string? loadedStoryContentStoryId;
+    private PersistingComponentStateSubscription persistingSubscription;
 
     protected override async Task OnInitializedAsync()
     {
         theme.ThemeChanged += OnThemeChanged;
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedReaderData);
         await LoadStory();
         SetTheme();
     }
@@ -281,97 +286,34 @@ else if (story != null)
     {
         isLoading = true;
         errorMessage = null;
+        story = null;
+        chapters = null;
+        navigationChapters = null;
+        storyContent = null;
+        loadedStoryId = null;
+        loadedStoryContentStoryId = null;
+        CurrentBookId = null;
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
+            BuildStoryStateKey(StoryId),
+            out var persistedStory)
+            && persistedStory is not null)
+        {
+            story = persistedStory;
+            loadedStoryId = StoryId;
+            await PrepareLoadedStory();
+            isLoading = false;
+            StateHasChanged();
+            return;
+        }
 
         var storyResult = await StoryService.GetStoryAsync(StoryId);
 
         if (storyResult.IsSuccess)
         {
             story = storyResult.Value;
-
-            if (story?.Type == MultiBook)
-            {
-                if (story.Books?.Any() == true)
-                {
-                    navigationChapters = story.Books
-                        .OrderBy(b => b.Order)
-                        .SelectMany(b => (b.Chapters ?? []).OrderBy(c => c.Order)
-                            .Select(c => new ReaderChapterNavItem(
-                                c.Id.ToString(),
-                                c.Title,
-                                c.Order,
-                                b.Title)))
-                        .ToList();
-
-                    if (string.IsNullOrEmpty(CurrentChapterId))
-                    {
-                        var restoredChapterId = await TryRestoreReaderProgressAsync();
-                        if (!string.IsNullOrEmpty(restoredChapterId))
-                        {
-                            CurrentChapterId = restoredChapterId;
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(CurrentChapterId))
-                    {
-                        SyncCurrentBookFromChapter(CurrentChapterId);
-                        await SaveReaderProgressAsync(CurrentChapterId);
-                    }
-
-                    // Auto-select the first book and chapter by Order if no current chapter is set.
-                    if (string.IsNullOrEmpty(CurrentBookId))
-                    {
-                        var firstBook = story.Books.OrderBy(b => b.Order).First();
-                        CurrentBookId = firstBook.Id.ToString();
-                        chapters = firstBook.Chapters?.OrderBy(c => c.Order)
-                            .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, firstBook.Title))
-                            .ToList();
-
-                        if (string.IsNullOrEmpty(CurrentChapterId) && firstBook.Chapters?.Any() == true)
-                        {
-                            CurrentChapterId = firstBook.Chapters.OrderBy(c => c.Order).First().Id.ToString();
-                            await SaveReaderProgressAsync(CurrentChapterId);
-                        }
-                    }
-                }
-            }
-            else if (story?.Type == MultiChapter)
-            {
-                chapters = story.Chapters?.OrderBy(c => c.Order)
-                    .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order))
-                    .ToList();
-                navigationChapters = chapters;
-
-                if (string.IsNullOrEmpty(CurrentChapterId))
-                {
-                    var restoredChapterId = await TryRestoreReaderProgressAsync();
-                    if (!string.IsNullOrEmpty(restoredChapterId))
-                    {
-                        CurrentChapterId = restoredChapterId;
-                    }
-                }
-
-                // Auto-select the first chapter by Order if none is selected
-                if (string.IsNullOrEmpty(CurrentChapterId) && (chapters?.Any() ?? false))
-                {
-                    CurrentChapterId = chapters!.First().Id;
-                }
-
-                if (!string.IsNullOrEmpty(CurrentChapterId))
-                {
-                    await SaveReaderProgressAsync(CurrentChapterId);
-                }
-            }
-            else if (story?.Type == SingleBody)
-            {
-                navigationChapters = [];
-                // Load content for single story
-                var contentResult = await StoryService.GetPublishedStoryContentAsync(StoryId);
-
-                if (contentResult.IsSuccess)
-                {
-                    storyContent = contentResult.Value;
-                }
-            }
+            loadedStoryId = StoryId;
+            await PrepareLoadedStory();
         }
         else
         {
@@ -382,11 +324,112 @@ else if (story != null)
         StateHasChanged();
     }
 
+    private async Task PrepareLoadedStory()
+    {
+        if (story?.Type == MultiBook)
+        {
+            if (story.Books?.Any() == true)
+            {
+                navigationChapters = story.Books
+                    .OrderBy(b => b.Order)
+                    .SelectMany(b => (b.Chapters ?? []).OrderBy(c => c.Order)
+                        .Select(c => new ReaderChapterNavItem(
+                            c.Id.ToString(),
+                            c.Title,
+                            c.Order,
+                            b.Title)))
+                    .ToList();
+
+                if (string.IsNullOrEmpty(CurrentChapterId))
+                {
+                    var restoredChapterId = await TryRestoreReaderProgressAsync();
+                    if (!string.IsNullOrEmpty(restoredChapterId))
+                    {
+                        CurrentChapterId = restoredChapterId;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(CurrentChapterId))
+                {
+                    SyncCurrentBookFromChapter(CurrentChapterId);
+                    await SaveReaderProgressAsync(CurrentChapterId);
+                }
+
+                // Auto-select the first book and chapter by Order if no current chapter is set.
+                if (string.IsNullOrEmpty(CurrentBookId))
+                {
+                    var firstBook = story.Books.OrderBy(b => b.Order).First();
+                    CurrentBookId = firstBook.Id.ToString();
+                    chapters = firstBook.Chapters?.OrderBy(c => c.Order)
+                        .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order, firstBook.Title))
+                        .ToList();
+
+                    if (string.IsNullOrEmpty(CurrentChapterId) && firstBook.Chapters?.Any() == true)
+                    {
+                        CurrentChapterId = firstBook.Chapters.OrderBy(c => c.Order).First().Id.ToString();
+                        await SaveReaderProgressAsync(CurrentChapterId);
+                    }
+                }
+            }
+        }
+        else if (story?.Type == MultiChapter)
+        {
+            chapters = story.Chapters?.OrderBy(c => c.Order)
+                .Select(c => new ReaderChapterNavItem(c.Id.ToString(), c.Title, c.Order))
+                .ToList();
+            navigationChapters = chapters;
+
+            if (string.IsNullOrEmpty(CurrentChapterId))
+            {
+                var restoredChapterId = await TryRestoreReaderProgressAsync();
+                if (!string.IsNullOrEmpty(restoredChapterId))
+                {
+                    CurrentChapterId = restoredChapterId;
+                }
+            }
+
+            // Auto-select the first chapter by Order if none is selected
+            if (string.IsNullOrEmpty(CurrentChapterId) && (chapters?.Any() ?? false))
+            {
+                CurrentChapterId = chapters!.First().Id;
+            }
+
+            if (!string.IsNullOrEmpty(CurrentChapterId))
+            {
+                await SaveReaderProgressAsync(CurrentChapterId);
+            }
+        }
+        else if (story?.Type == SingleBody)
+        {
+            navigationChapters = [];
+
+            if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryContentResponse>(
+                BuildStoryContentStateKey(StoryId),
+                out var persistedStoryContent)
+                && persistedStoryContent is not null)
+            {
+                storyContent = persistedStoryContent;
+                loadedStoryContentStoryId = StoryId;
+                return;
+            }
+
+            // Load content for single story
+            var contentResult = await StoryService.GetPublishedStoryContentAsync(StoryId);
+
+            if (contentResult.IsSuccess)
+            {
+                storyContent = contentResult.Value;
+                loadedStoryContentStoryId = StoryId;
+            }
+        }
+    }
+
     protected override ValueTask DisposeAsyncCore()
     {
         if (_disposed) return ValueTask.CompletedTask;
 
         theme.ThemeChanged -= OnThemeChanged;
+        persistingSubscription.Dispose();
 
         _disposed = true;
 
@@ -489,4 +532,25 @@ else if (story != null)
     {
         isContentsModalOpen = false;
     }
+
+    private Task PersistLoadedReaderData()
+    {
+        if (story is not null && !string.IsNullOrWhiteSpace(loadedStoryId) && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildStoryStateKey(loadedStoryId), story);
+        }
+
+        if (storyContent is not null
+            && !string.IsNullOrWhiteSpace(loadedStoryContentStoryId)
+            && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildStoryContentStateKey(loadedStoryContentStoryId), storyContent);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static string BuildStoryStateKey(string storyId) => $"StoryReader:Story:{storyId}";
+
+    private static string BuildStoryContentStateKey(string storyId) => $"StoryReader:Content:{storyId}";
 }

@@ -3,7 +3,9 @@
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
 @inject MetadataUrlService MetadataUrls
+@inject PersistentComponentState ApplicationState
 @using IHFiction.SharedWeb.Components.Notifications
+@implements IDisposable
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -152,6 +154,8 @@ else if (author != null)
     private LinkedOfGetAuthorResponse? author;
     private bool isLoading = true;
     private string? errorMessage;
+    private string? _loadedAuthorId;
+    private PersistingComponentStateSubscription _persistingSubscription;
 
     private string MetadataTitle => author is null
         ? "Author Profile | I❤️Fiction"
@@ -234,17 +238,30 @@ else if (author != null)
 
     private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await LoadAuthor();
+        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedAuthor);
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (author?.UserId.ToString() != AuthorId)
+        if (author is not null && string.Equals(_loadedAuthorId, AuthorId, StringComparison.Ordinal))
         {
-            await LoadAuthor();
+            return;
         }
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetAuthorResponse>(
+            BuildStateKey(AuthorId),
+            out var persistedAuthor)
+            && persistedAuthor is not null)
+        {
+            ApplyAuthor(persistedAuthor);
+            MarkLoaded();
+            return;
+        }
+
+        await LoadAuthor();
+        MarkLoaded();
     }
 
     private async Task LoadAuthor()
@@ -256,16 +273,41 @@ else if (author != null)
 
         if (result.IsSuccess)
         {
-            author = result.Value;
+            ApplyAuthor(result.Value);
         }
         else
         {
+            author = null;
             errorMessage = result.DomainError.Description;
+            isLoading = false;
         }
 
-        isLoading = false;
         StateHasChanged();
     }
+
+    private void ApplyAuthor(LinkedOfGetAuthorResponse loadedAuthor)
+    {
+        author = loadedAuthor;
+        errorMessage = null;
+        isLoading = false;
+    }
+
+    private Task PersistLoadedAuthor()
+    {
+        if (author is not null && !string.IsNullOrWhiteSpace(_loadedAuthorId) && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildStateKey(_loadedAuthorId), author);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void MarkLoaded()
+    {
+        _loadedAuthorId = AuthorId;
+    }
+
+    private static string BuildStateKey(string authorId) => $"AuthorDetail:{authorId}";
 
     private List<StoryListDisplayItem> BuildAuthorPublishedStoryItems()
     {
@@ -300,5 +342,10 @@ else if (author != null)
             "patreon" => "fab fa-patreon",
             _ => "fas fa-link"
         };
+    }
+
+    public void Dispose()
+    {
+        _persistingSubscription.Dispose();
     }
 }
