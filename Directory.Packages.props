@@ -62,7 +62,7 @@
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
     <PackageVersion Include="Microsoft.NET.StringTools" Version="18.6.3" />
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.2" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.2.3" />
     <PackageVersion Include="Microsoft.OpenApi" Version="[2.7.4,3.0.0)" />
     <PackageVersion Include="Mongo2Go" Version="4.1.0" />
     <PackageVersion Include="MongoDB.Bson" Version="3.8.1" />
