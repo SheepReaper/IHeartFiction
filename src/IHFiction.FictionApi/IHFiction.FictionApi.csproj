@@ -15,6 +15,10 @@
     <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
+    <OpenApiGenerateDocuments>false</OpenApiGenerateDocuments>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Aspire.KeyCloak.Authentication" />
     <PackageReference Include="Aspire.MongoDB.Driver.v3" />
