@@ -44,6 +44,7 @@
     <PackageReference Include="SharpCompress" />
     <PackageReference Include="WebPush" />
     <PackageReference Include="WolverineFx" />
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
 
   <ItemGroup>
