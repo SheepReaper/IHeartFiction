@@ -111,10 +111,7 @@ public static class Extensions
                 }
             });
 
-        if (!useAuthOtlpExporter)
-            builder.AddOpenTelemetryExporters();
-
-        return builder;
+        return useAuthOtlpExporter ? builder : builder.AddOpenTelemetryExporters();
     }
 
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
