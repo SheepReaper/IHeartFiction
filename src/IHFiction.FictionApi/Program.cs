@@ -34,6 +34,8 @@ using Scalar.AspNetCore;
 
 using Wolverine;
 
+using JasperFx.CodeGeneration.Model;
+
 [assembly: DbContext(typeof(FictionDbContext))]
 
 AppContext.SetSwitch("Npgsql.EnableGss", false);
@@ -48,6 +50,9 @@ builder.Host.UseWolverine(opts =>
     // so we must register it explicitly. Skip during OpenAPI doc generation (build env).
     if (!IsBuildEnvironment())
         opts.Discovery.IncludeType<NotificationFanoutHandler>();
+
+    opts.CodeGeneration.AlwaysUseServiceLocationFor<FictionDbContext>();
+    opts.ServiceLocationPolicy = ServiceLocationPolicy.NotAllowed;
 });
 
 // Slim builder disables https support, add it back in development
