@@ -1,6 +1,6 @@
 <?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
 
-<Project Sdk="Aspire.AppHost.Sdk/13.3.5">
+<Project Sdk="Aspire.AppHost.Sdk/13.4.2">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>c6f7845b-4507-4b76-9d66-de04efbd8180</UserSecretsId>
@@ -17,7 +17,6 @@
     <PackageReference Include="MongoDB.Bson" />
     <PackageReference Include="MongoDB.Driver" />
     <PackageReference Include="Npgsql" />
-    <PackageReference Include="SharpCompress" />
     <PackageReference Include="Shirubasoft.Aspire.Cloudflared" />
     <PackageReference Include="Snappier" />
     <PackageReference Include="WebPush" />
