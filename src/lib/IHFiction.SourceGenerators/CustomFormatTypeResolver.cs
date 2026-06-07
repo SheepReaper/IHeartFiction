@@ -1,7 +1,7 @@
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.CSharp;
 
-namespace IHFiction.ApiClientGenerator;
+namespace IHFiction.SourceGenerators;
 
 internal sealed class CustomFormatTypeResolver(CSharpGeneratorSettings settings) : CSharpTypeResolver(settings)
 {

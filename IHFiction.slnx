@@ -13,7 +13,6 @@
     <Project Path="src/aspire/IHFiction.MigrationService/IHFiction.MigrationService.csproj" />
   </Folder>
   <Folder Name="/src/lib/">
-    <Project Path="src/lib/IHFiction.ApiClientGenerator/IHFiction.ApiClientGenerator.csproj" />
     <Project Path="src/lib/IHFiction.Data/IHFiction.Data.csproj" />
     <Project Path="src/lib/IHFiction.ServiceDefaults/IHFiction.ServiceDefaults.csproj" />
     <Project Path="src/lib/IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />

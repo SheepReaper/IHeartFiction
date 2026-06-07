@@ -34,7 +34,7 @@ public class EndpointRegistrationGenerator : IIncrementalGenerator
             .Combine(useCaseClasses)
             .Select(static (x, _) => (Endpoints: x.Left, UseCases: x.Right));
 
-        context.RegisterSourceOutput(combined, static (spc, source) => Execute(spc, source.Endpoints, source.UseCases));
+        context.RegisterImplementationSourceOutput(combined, static (spc, source) => Execute(spc, source.Endpoints, source.UseCases));
     }
 
     private static bool IsClassDeclaration(SyntaxNode node)
@@ -136,7 +136,9 @@ public class EndpointRegistrationGenerator : IIncrementalGenerator
 
     private static void Execute(SourceProductionContext context, ImmutableArray<ClassInfo> endpoints, ImmutableArray<UseCaseInfo> useCases)
     {
-        // Always generate the file to test if source generator is running
+        if (endpoints.IsEmpty && useCases.IsEmpty)
+            return;
+
         var source = GenerateRegistrationCode(endpoints, useCases);
         context.AddSource("EndpointRegistration.g.cs", source);
     }

@@ -30,6 +30,41 @@ try_add_origin() {
   return 1
 }
 
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source_generator_project="${repo_root}/src/lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj"
+local_package_feed="${repo_root}/.artifacts/packages"
+source_generator_package_id="IHFiction.SourceGenerators"
+source_generator_package_version="0.1.0-local"
+
+remove_source_generator_package_from_global_cache() {
+  global_packages_path="$(dotnet nuget locals global-packages --list | sed -n 's/^global-packages:[[:space:]]*//p' | head -n 1)"
+  if [[ -z "${global_packages_path}" ]]; then
+    return 0
+  fi
+
+  cached_package_path="${global_packages_path}/$(printf '%s' "${source_generator_package_id}" | tr '[:upper:]' '[:lower:]')/${source_generator_package_version}"
+  if [[ -d "${cached_package_path}" ]]; then
+    echo "Removing cached ${source_generator_package_id} ${source_generator_package_version} package..."
+    rm -rf "${cached_package_path}"
+  fi
+}
+
+publish_local_source_generator_package() {
+  mkdir -p "${local_package_feed}"
+  rm -f "${local_package_feed}/${source_generator_package_id}".*.nupkg
+
+  echo "Stopping .NET build servers before repacking local analyzers..."
+  dotnet build-server shutdown
+
+  echo "Restoring source generator package dependencies..."
+  dotnet restore "${source_generator_project}"
+
+  echo "Packing source generator for local restore..."
+  dotnet pack "${source_generator_project}" --no-restore
+
+  remove_source_generator_package_from_global_cache
+}
+
 echo "Running cloud-agent preflight for IHeartFiction..."
 echo "Detected .NET SDK: $(dotnet --version)"
 
@@ -39,6 +74,8 @@ if ! try_add_origin; then
 else
   echo "origin remote: $(git remote get-url origin)"
 fi
+
+publish_local_source_generator_package
 
 echo "Restoring dependencies..."
 dotnet restore

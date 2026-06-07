@@ -40,6 +40,55 @@ function Add-OriginRemoteIfPossible {
   return $false
 }
 
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$sourceGeneratorProject = Join-Path $repoRoot 'src/lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj'
+$localPackageFeed = Join-Path $repoRoot '.artifacts/packages'
+$sourceGeneratorPackageId = 'IHFiction.SourceGenerators'
+$sourceGeneratorPackageVersion = '0.1.0-local'
+
+function Remove-SourceGeneratorPackageFromGlobalCache {
+  $globalPackagesLine = dotnet nuget locals global-packages --list |
+    Where-Object { $_ -like 'global-packages:*' } |
+    Select-Object -First 1
+
+  if ([string]::IsNullOrWhiteSpace($globalPackagesLine)) {
+    return
+  }
+
+  $globalPackagesPath = $globalPackagesLine.Substring($globalPackagesLine.IndexOf(':') + 1).Trim()
+  $cachedPackagePath = Join-Path $globalPackagesPath (Join-Path $sourceGeneratorPackageId.ToLowerInvariant() $sourceGeneratorPackageVersion)
+
+  if (Test-Path -LiteralPath $cachedPackagePath) {
+    Write-Host "Removing cached $sourceGeneratorPackageId $sourceGeneratorPackageVersion package..." -ForegroundColor Cyan
+    Remove-Item -LiteralPath $cachedPackagePath -Recurse -Force
+  }
+}
+
+function Publish-LocalSourceGeneratorPackage {
+  New-Item -ItemType Directory -Force -Path $localPackageFeed | Out-Null
+  Remove-Item -Path (Join-Path $localPackageFeed "$sourceGeneratorPackageId.*.nupkg") -Force -ErrorAction SilentlyContinue
+
+  Write-Host "Stopping .NET build servers before repacking local analyzers..." -ForegroundColor Cyan
+  dotnet build-server shutdown
+  if ($LASTEXITCODE -ne 0) {
+    throw "dotnet build-server shutdown failed."
+  }
+
+  Write-Host "Restoring source generator package dependencies..." -ForegroundColor Cyan
+  dotnet restore $sourceGeneratorProject
+  if ($LASTEXITCODE -ne 0) {
+    throw "source generator restore failed."
+  }
+
+  Write-Host "Packing source generator for local restore..." -ForegroundColor Cyan
+  dotnet pack $sourceGeneratorProject --no-restore
+  if ($LASTEXITCODE -ne 0) {
+    throw "source generator pack failed."
+  }
+
+  Remove-SourceGeneratorPackageFromGlobalCache
+}
+
 Write-Host "Running cloud-agent preflight for IHeartFiction..." -ForegroundColor Green
 
 $dotnetVersion = dotnet --version
@@ -53,6 +102,8 @@ else {
   $originUrl = git remote get-url origin
   Write-Host "origin remote: $originUrl" -ForegroundColor DarkGray
 }
+
+Publish-LocalSourceGeneratorPackage
 
 Write-Host "Restoring dependencies..." -ForegroundColor Cyan
 dotnet restore

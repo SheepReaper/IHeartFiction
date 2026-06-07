@@ -23,7 +23,10 @@
 
 <StructuredDataMetadata Schemas="@StructuredDataSchemas" />
 
-<StoryReader WorkId="@WorkId" Meta="@meta" />
+@if (meta is { } loadedMeta)
+{
+    <StoryReader WorkId="@WorkId" Meta="@loadedMeta" />
+}
 
 @code {
     [Parameter] public string WorkId { get; set; } = null!;

@@ -183,7 +183,7 @@ else if (Meta is not null)
 
 @code {
     [Parameter, EditorRequired] public string WorkId { get; set; } = null!;
-    [Parameter] public LinkedOfGetPublishedWorkMetaResponse? Meta { get; set; }
+    [Parameter, EditorRequired] public LinkedOfGetPublishedWorkMetaResponse Meta { get; set; } = null!;
 
     private LinkedOfGetPublishedWorkContentResponse? content;
     private bool isLoading = true;

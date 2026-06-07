@@ -483,9 +483,6 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Explicit includes
-![Oo]bj/IHFiction.FictionApiClient.cs
-
 # Local publish output
 /infra
 
@@ -495,9 +492,6 @@ $RECYCLE.BIN/
 
 # Production config
 appsettings.Production.json
-
-# Aspire testing
-NuGet.config
 
 # Local Playwright test results
 /.playwright-cli/*
@@ -509,4 +503,4 @@ NuGet.config
 /.artifacts/*
 
 # C# Dev kit language server generated files
-*.lscache 
+*.lscache

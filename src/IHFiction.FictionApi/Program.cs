@@ -44,16 +44,16 @@ static bool IsBuildEnvironment() => Environment.CommandLine.Contains("GetDocumen
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
-builder.Host.UseWolverine(opts =>
-{
-    // NotificationFanoutHandler is internal — Wolverine only scans exported (public) types by default,
-    // so we must register it explicitly. Skip during OpenAPI doc generation (build env).
-    if (!IsBuildEnvironment())
+if(!IsBuildEnvironment())
+    builder.Host.UseWolverine(opts =>
+    {
+        // NotificationFanoutHandler is internal — Wolverine only scans exported (public) types by default,
+        // so we must register it explicitly. Skip during OpenAPI doc generation (build env).
         opts.Discovery.IncludeType<NotificationFanoutHandler>();
 
-    opts.CodeGeneration.AlwaysUseServiceLocationFor<FictionDbContext>();
-    opts.ServiceLocationPolicy = ServiceLocationPolicy.NotAllowed;
-});
+        opts.CodeGeneration.AlwaysUseServiceLocationFor<FictionDbContext>();
+        opts.ServiceLocationPolicy = ServiceLocationPolicy.NotAllowed;
+    });
 
 // Slim builder disables https support, add it back in development
 if (builder.Environment.IsDevelopment())

@@ -5,10 +5,6 @@
     <LangVersion>preview</LangVersion>
 
     <OpenApiInputPath>$(MSBuildProjectDirectory)/../../IHFiction.FictionApi/openapi.json</OpenApiInputPath>
-    <OpenApiClientOutputPath>$(MSBuildProjectDirectory)/obj/$(Configuration)/$(TargetFramework)/openapiClient.cs</OpenApiClientOutputPath>
-    <OpenApiClientGeneratorProject>$(MSBuildProjectDirectory)/../IHFiction.ApiClientGenerator/IHFiction.ApiClientGenerator.csproj</OpenApiClientGeneratorProject>
-    <OpenApiClientGeneratorTargetFramework>net10.0</OpenApiClientGeneratorTargetFramework>
-    <OpenApiClientGeneratorDll>$(MSBuildProjectDirectory)/../IHFiction.ApiClientGenerator/bin/$(Configuration)/$(OpenApiClientGeneratorTargetFramework)/IHFiction.ApiClientGenerator.dll</OpenApiClientGeneratorDll>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.KeyCloak.Authentication" />
+    <PackageReference Include="IHFiction.SourceGenerators" PrivateAssets="all" />
     <PackageReference Include="Markdig" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
@@ -39,50 +36,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../IHFiction.FictionApi/IHFiction.FictionApi.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" />
     <ProjectReference Include="../IHFiction.SharedKernel/IHFiction.SharedKernel.csproj" />
     <ProjectReference Include="../IHFiction.Data/IHFiction.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ApiClientGeneratorInputs Include="../IHFiction.ApiClientGenerator/**/*.cs" />
-    <ApiClientGeneratorInputs Include="../IHFiction.ApiClientGenerator/*.csproj" />
+    <AdditionalFiles Include="$(OpenApiInputPath)" Condition="Exists('$(OpenApiInputPath)')" />
   </ItemGroup>
-
-  <Target Name="BuildApiClientGenerator"
-    Inputs="@(ApiClientGeneratorInputs)"
-    Outputs="$(OpenApiClientGeneratorDll)">
-
-    <MSBuild Projects="$(OpenApiClientGeneratorProject)"
-      Targets="Build"
-      Properties="Configuration=$(Configuration);TargetFramework=$(OpenApiClientGeneratorTargetFramework)"
-      RemoveProperties="RuntimeIdentifier;SelfContained" />
-  </Target>
-
-  <Target Name="GenerateApiClient"
-    BeforeTargets="CoreCompile"
-    DependsOnTargets="BuildApiClientGenerator"
-    Inputs="$(OpenApiInputPath);$(OpenApiClientGeneratorDll)"
-    Outputs="$(OpenApiClientOutputPath)">
-
-    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(OpenApiClientOutputPath)'))" />
-
-    <Message Importance="high"
-      Text="Generating OpenAPI client: $(OpenApiClientOutputPath)" />
-
-    <Exec
-      Command="dotnet &quot;$(OpenApiClientGeneratorDll)&quot; &quot;$(OpenApiInputPath)&quot; &quot;$(OpenApiClientOutputPath)&quot;" />
-  </Target>
-
-  <Target Name="IncludeGeneratedApiClient"
-    BeforeTargets="CoreCompile"
-    DependsOnTargets="GenerateApiClient">
-
-    <ItemGroup>
-      <Compile Include="$(OpenApiClientOutputPath)"
-        AutoGen="true"
-        DesignTime="true"
-        Visible="false" />
-    </ItemGroup>
-  </Target>
 
 </Project>
