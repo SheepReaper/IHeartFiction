@@ -500,7 +500,9 @@ appsettings.Production.json
 /tools/*.txt
 
 # Agent generated artifacts
-/.artifacts/*
+.artifacts/*
+!.artifacts/packages/
+!.artifacts/packages/*.nupkg
 
 # C# Dev kit language server generated files
 *.lscache
