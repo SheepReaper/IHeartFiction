@@ -24,7 +24,6 @@
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="Sidio.Sitemap.Blazor" />
-    <PackageReference Include="Snappier" />
     <PackageReference Include="Ulid" />
   </ItemGroup>
 

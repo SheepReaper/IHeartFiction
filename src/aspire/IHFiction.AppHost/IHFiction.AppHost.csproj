@@ -18,7 +18,6 @@
     <PackageReference Include="MongoDB.Driver" />
     <PackageReference Include="Npgsql" />
     <PackageReference Include="Shirubasoft.Aspire.Cloudflared" />
-    <PackageReference Include="Snappier" />
     <PackageReference Include="WebPush" />
   </ItemGroup>
 
