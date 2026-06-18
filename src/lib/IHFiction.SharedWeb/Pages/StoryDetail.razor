@@ -1,10 +1,12 @@
 @using static IHFiction.Data.Stories.Domain.StoryType
+@using IHFiction.SharedWeb.Components.Disqus
+@using IHFiction.SharedWeb.Components.Notifications
+@using IHFiction.SharedWeb.Components.Reading
+
 @page "/stories/{storyId}"
 @inject StoryService StoryService
 @inject MetadataUrlService MetadataUrls
 @inject PersistentComponentState ApplicationState
-@using IHFiction.SharedWeb.Components.Notifications
-@using IHFiction.SharedWeb.Components.Reading
 @implements IDisposable
 
 <SocialPreviewMetadata
@@ -14,7 +16,6 @@
     Type="article" />
 
 <StructuredDataMetadata Schemas="@StructuredDataSchemas" />
-
 
 @if (isLoading)
 {
@@ -211,6 +212,9 @@ else if (story != null)
             }
         </div>
     </div>
+
+    @* disqus thread  *@
+    <DisqusThread PageIdentifier="@StoryId" />
 }
 
 @code {

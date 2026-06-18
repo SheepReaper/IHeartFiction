@@ -1,5 +1,7 @@
 @using System.Text
+@using IHFiction.SharedWeb.Components.Disqus
 @using IHFiction.SharedWeb.Components.Reading
+
 @implements IDisposable
 @inject PersistentComponentState ApplicationState
 @inject WorkService WorkService
@@ -26,6 +28,7 @@
 @if (meta is { } loadedMeta)
 {
     <StoryReader WorkId="@WorkId" Meta="@loadedMeta" />
+    <DisqusThread PageUrl="@(CanonicalUrl ?? PageUrl)" PageIdentifier="@WorkId" />
 }
 
 @code {

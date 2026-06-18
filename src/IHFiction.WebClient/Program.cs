@@ -19,6 +19,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Notifications;
 using IHFiction.SharedWeb;
+using IHFiction.SharedWeb.Components.Disqus;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Extensions;
 using IHFiction.SharedWeb.Services;
@@ -32,6 +33,7 @@ using Markdig;
 
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core.Services;
+
 const string keycloakAuthenticationScheme = "Keycloak";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -56,6 +58,11 @@ builder.Services.AddOptions<SiteUrlOptions>()
         options => options.BaseUrl is { IsAbsoluteUri: true }
             && (options.BaseUrl.Scheme == Uri.UriSchemeHttps || options.BaseUrl.Scheme == Uri.UriSchemeHttp),
         "BaseUrl must be an absolute HTTP(S) URL.")
+    .ValidateOnStart();
+
+builder.Services.AddOptions<DisqusOptions>()
+    .Bind(builder.Configuration.GetSection(DisqusOptions.SectionName))
+    .Validate(options => !string.IsNullOrWhiteSpace(options.ShortName), "Disqus ShortName must be configured.")
     .ValidateOnStart();
 
 builder.Services.AddSingleton<IComponentBaseProvider, ComponentBaseProvider>();

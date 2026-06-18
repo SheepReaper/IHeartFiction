@@ -1,0 +1,61 @@
+@using Microsoft.Extensions.Options
+@inject IOptions<DisqusOptions> DisqusOptions
+@inject NavigationManager Nav
+@inject MetadataUrlService MetadataUrls
+@inject IJSRuntime JS
+@inherits CancellableComponent
+
+<div id="disqus_thread"></div>
+
+@code {
+    [Parameter]
+    public string? PageUrl { get; set; }
+
+    [Parameter]
+    public required string PageIdentifier { get; set; }
+
+    private string ResolvedPageUrl => MetadataUrls.ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
+
+    private IJSObjectReference? module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Components/Disqus/DisqusThread.razor.js");
+        await module.InvokeVoidAsync("loadDisqus", ResolvedPageUrl, PageIdentifier, DisqusOptions.Value.ShortName);
+    }
+
+    private string GetCurrentPathAndQuery()
+    {
+        if (!Uri.TryCreate(Nav.Uri, UriKind.Absolute, out var currentUri)
+            || string.Equals(currentUri.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+        {
+            return "/";
+        }
+
+        return string.IsNullOrWhiteSpace(currentUri.PathAndQuery)
+            ? "/"
+            : string.Concat(currentUri.PathAndQuery, currentUri.Fragment);
+    }
+
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        if (module is not null)
+        {
+            try
+            {
+                await module.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The JS runtime is already disposed, so we can ignore this exception.
+            }
+        }
+
+        await base.DisposeAsyncCore();
+    }
+}

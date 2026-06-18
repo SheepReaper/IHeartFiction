@@ -105,7 +105,7 @@ if (builder.Environment.IsProduction())
     var registry = builder.AddContainerRegistry("registry", registryUri, repository);
     var cfTunnel = builder.AddCloudflareTunnel("ihfiction-tunnel");
 
-    cfTunnel.WithImageTag("2026.3.0")
+    cfTunnel.WithImageTag("2026.6.0")
         .PublishAsDockerComposeService((resource, service) => service.Name = resource.Name);
 
     builder.ConfigureSwarmCompose();

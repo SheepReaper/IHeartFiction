@@ -95,6 +95,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
+    <PackageVersion Include="StreamJsonRpc" Version="2.25.28" />
     <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.8" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.8" />
     <PackageVersion Include="Testcontainers" Version="4.11.0" />
