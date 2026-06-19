@@ -35,6 +35,7 @@ source_generator_project="${repo_root}/src/lib/IHFiction.SourceGenerators/IHFict
 local_package_feed="${repo_root}/.artifacts/packages"
 source_generator_package_id="IHFiction.SourceGenerators"
 source_generator_package_version="0.1.0-local"
+source_generator_package_file_name="${source_generator_package_id}.${source_generator_package_version}.nupkg"
 
 remove_source_generator_package_from_global_cache() {
   global_packages_path="$(dotnet nuget locals global-packages --list | sed -n 's/^global-packages:[[:space:]]*//p' | head -n 1)"
@@ -49,9 +50,46 @@ remove_source_generator_package_from_global_cache() {
   fi
 }
 
+packages_have_same_content() {
+  local first_package_path="$1"
+  local second_package_path="$2"
+
+  if [[ ! -f "${first_package_path}" || ! -f "${second_package_path}" ]]; then
+    return 1
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$first_package_path" "$second_package_path" <<'PY'
+import hashlib
+import sys
+import zipfile
+
+def entries(path):
+    with zipfile.ZipFile(path) as package:
+        result = []
+        for info in sorted(package.infolist(), key=lambda item: item.filename):
+            if (
+                info.filename == "_rels/.rels"
+                or info.filename.startswith("package/services/metadata/core-properties/")
+                and info.filename.endswith(".psmdcp")
+            ):
+                continue
+
+            with package.open(info) as stream:
+                digest = hashlib.sha256(stream.read()).hexdigest().upper()
+            result.append((info.filename, info.file_size, digest))
+        return result
+
+sys.exit(0 if entries(sys.argv[1]) == entries(sys.argv[2]) else 1)
+PY
+    return $?
+  fi
+
+  cmp -s "${first_package_path}" "${second_package_path}"
+}
+
 publish_local_source_generator_package() {
   mkdir -p "${local_package_feed}"
-  rm -f "${local_package_feed}/${source_generator_package_id}".*.nupkg
 
   echo "Stopping .NET build servers before repacking local analyzers..."
   dotnet build-server shutdown
@@ -60,7 +98,22 @@ publish_local_source_generator_package() {
   dotnet restore "${source_generator_project}"
 
   echo "Packing source generator for local restore..."
-  dotnet pack "${source_generator_project}" --no-restore
+  staging_feed="$(mktemp -d)"
+  staged_package="${staging_feed}/${source_generator_package_file_name}"
+  published_package="${local_package_feed}/${source_generator_package_file_name}"
+  trap 'rm -rf "${staging_feed}"' RETURN
+
+  dotnet pack "${source_generator_project}" --no-restore -p:PackageOutputPath="${staging_feed}"
+
+  if packages_have_same_content "${published_package}" "${staged_package}"; then
+    echo "Local source generator package content is unchanged; keeping existing package."
+  else
+    rm -f "${local_package_feed}/${source_generator_package_id}".*.nupkg
+    cp "${staged_package}" "${published_package}"
+  fi
+
+  rm -rf "${staging_feed}"
+  trap - RETURN
 
   remove_source_generator_package_from_global_cache
 }
