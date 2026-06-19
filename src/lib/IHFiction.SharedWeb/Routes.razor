@@ -1,10 +1,17 @@
-﻿<Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-            <NotAuthorized>
-                <h1>Not Authorized</h1>
-                <p>You are not authorized to access this resource.</p>
-            </NotAuthorized>
-        </AuthorizeRouteView>
-    </Found>
-</Router>
+<CascadingValue Name="CspNonce" Value="Nonce">
+    <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                <NotAuthorized>
+                    <h1>Not Authorized</h1>
+                    <p>You are not authorized to access this resource.</p>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        </Found>
+    </Router>
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public string? Nonce { get; set; }
+}

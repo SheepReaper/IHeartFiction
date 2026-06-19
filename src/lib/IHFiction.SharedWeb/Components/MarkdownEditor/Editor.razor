@@ -68,7 +68,7 @@
     private int _wordCount;
     private int _charCount;
 
-    [CascadingParameter]
+    [CascadingParameter(Name = "CspNonce")]
     public string? nonce { get; set; }
 
     protected override Task OnInitializedAsync()

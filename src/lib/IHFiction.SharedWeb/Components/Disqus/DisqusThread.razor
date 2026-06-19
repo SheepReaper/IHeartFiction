@@ -14,6 +14,9 @@
     [Parameter]
     public required string PageIdentifier { get; set; }
 
+    [CascadingParameter(Name = "CspNonce")]
+    public string? Nonce { get; set; }
+
     private string ResolvedPageUrl => MetadataUrls.ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
 
     private IJSObjectReference? module;
@@ -26,7 +29,7 @@
         }
 
         module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Components/Disqus/DisqusThread.razor.js");
-        await module.InvokeVoidAsync("loadDisqus", ResolvedPageUrl, PageIdentifier, DisqusOptions.Value.ShortName);
+        await module.InvokeVoidAsync("loadDisqus", ResolvedPageUrl, PageIdentifier, DisqusOptions.Value.ShortName, Nonce);
     }
 
     private string GetCurrentPathAndQuery()

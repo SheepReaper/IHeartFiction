@@ -44,9 +44,7 @@
 </head>
 
 <body>
-    <CascadingValue Value="nonce">
-        <Routes @rendermode="InteractiveServer" />
-    </CascadingValue>
+    <Routes Nonce="@nonce" @rendermode="InteractiveServer" />
     <script src="@Assets["_framework/blazor.web.js"]" nonce="@nonce"></script>
 </body>
 
