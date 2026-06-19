@@ -18,4 +18,18 @@
     <PackageReference Include="Npgsql.OpenTelemetry" />
     <PackageReference Include="Sidio.Sitemap.Blazor" />
   </ItemGroup>
+
+  <!--
+    Keep SharedWeb's FictionApi ProjectReference for OpenAPI build ordering, but do not publish
+    FictionApi appsettings into WebClient's container image. Aspire's build-web step uses dotnet
+    publish, and the .NET SDK raises NETSDK1152 when referenced web projects contribute files with
+    the same publish-relative path. See .agents/WORKAROUNDS.md before removing this target.
+  -->
+  <Target Name="RemoveFictionApiConfigurationFromPublishOutput" BeforeTargets="_HandleFileConflictsForPublish">
+    <ItemGroup>
+      <_FictionApiConfigurationPublishItems Include="@(ResolvedFileToPublish)"
+        Condition="$([System.String]::Copy('%(ResolvedFileToPublish.Identity)').Contains('IHFiction.FictionApi')) And $([System.String]::Copy('%(ResolvedFileToPublish.Filename)').StartsWith('appsettings')) And '%(ResolvedFileToPublish.Extension)' == '.json'" />
+      <ResolvedFileToPublish Remove="@(_FictionApiConfigurationPublishItems)" />
+    </ItemGroup>
+  </Target>
 </Project>

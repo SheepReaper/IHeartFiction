@@ -116,3 +116,13 @@ If preflight cannot infer a remote, do not guess. Use the explicit command:
 ```bash
 git remote add origin https://github.com/SheepReaper/IHeartFiction.git
 ```
+
+## Temporary Workaround Registry (Mandatory)
+
+Before removing unusual build targets, suppressions, or workaround-looking code, check:
+
+```text
+.agents/WORKAROUNDS.md
+```
+
+If you add a new temporary workaround, document the symptom, cause, removal criteria, and verification command there.
