@@ -98,9 +98,9 @@
     <PackageVersion Include="StreamJsonRpc" Version="2.25.28" />
     <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.9" />
     <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.9" />
-    <PackageVersion Include="Testcontainers" Version="4.11.0" />
-    <PackageVersion Include="Testcontainers.MongoDb" Version="4.11.0" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageVersion Include="Testcontainers" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.MongoDb" Version="4.12.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.12.0" />
     <PackageVersion Include="Ulid" Version="1.4.1" />
     <PackageVersion Include="Ulid.SystemTextJson" Version="1.4.1" />
     <PackageVersion Include="WebPush" Version="1.0.13" />
