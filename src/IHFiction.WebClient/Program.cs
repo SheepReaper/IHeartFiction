@@ -21,7 +21,9 @@ using IHFiction.SharedKernel.Notifications;
 using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Components.Disqus;
 using IHFiction.SharedWeb.Configuration;
+using IHFiction.SharedWeb.Csp;
 using IHFiction.SharedWeb.Extensions;
+using IHFiction.SharedWeb.Reporting;
 using IHFiction.SharedWeb.Services;
 using IHFiction.SharedWeb.Sitemap;
 using IHFiction.WebClient;
@@ -124,6 +126,7 @@ builder.Services.AddScoped<ViewPreferencesService>();
 builder.Services.AddScoped<StoryEditorService>();
 builder.Services.AddScoped<MetadataUrlService>();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddCspReportStorage();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -179,6 +182,8 @@ builder.Services.AddSingleton(VersionHelper.Get());
 // Register LoaderService for global loading spinner
 builder.Services.AddScoped<LoaderService>();
 
+builder.Services.AddCspProvider();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -215,9 +220,9 @@ if (app.Environment.IsProduction())
     }
 
     app.UseForwardedHeaders(options);
-
-    app.UseCsp();
 }
+
+app.UseCsp();
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 

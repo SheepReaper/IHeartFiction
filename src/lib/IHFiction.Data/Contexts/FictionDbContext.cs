@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
+using IHFiction.Data.BrowserReports.Domain;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Infrastructure;
 using IHFiction.Data.Notifications.Domain;
@@ -33,6 +34,8 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
     public DbSet<DeviceNotificationDelivery> DeviceNotificationDeliveries { get; set; } = null!;
     public DbSet<UserPushSubscription> UserPushSubscriptions { get; set; } = null!;
     public DbSet<DevicePushSubscription> DevicePushSubscriptions { get; set; } = null!;
+    public DbSet<CspViolationReportRecord> CspViolationReports { get; set; } = null!;
+    public DbSet<BrowserReportPayloadRecord> BrowserReportPayloads { get; set; } = null!;
 
     // apply configurations from assembly except for WorkBodyConfiguration
     protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder

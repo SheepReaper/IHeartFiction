@@ -44,5 +44,13 @@ window.theme = {
     }
 };
 
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-blazor-error-dismiss]')) {
+        return;
+    }
+
+    document.getElementById('blazor-error-ui')?.classList.add('is-hidden');
+});
+
 // Immediately apply the theme on script load.
 window.theme.applyInitialTheme();

@@ -16,9 +16,19 @@ public sealed class MetadataUrlServiceTests
     {
         var sut = CreateSut();
 
-        var result = sut.ToAbsolute("/images/cover.png");
+        var result = sut.ToAbsolute("/images/cover.png?size=lg#v1");
 
-        result.Should().Be("https://example.test/images/cover.png");
+        result.Should().Be("https://example.test/images/cover.png#v1");
+    }
+
+    [Fact]
+    public void ToAbsolute_WithRelativePathAndPreserveQueryParameters_ReturnsAbsoluteUrlWithQuery()
+    {
+        var sut = CreateSut();
+
+        var result = sut.ToAbsolute("/images/cover.png?size=lg#v1", preserveQueryParameters: true);
+
+        result.Should().Be("https://example.test/images/cover.png?size=lg#v1");
     }
 
     [Fact]
@@ -32,13 +42,23 @@ public sealed class MetadataUrlServiceTests
     }
 
     [Fact]
-    public void ToAbsolute_WithAbsoluteHttpUrl_PreservesInput()
+    public void ToAbsolute_WithAbsoluteHttpUrl_RemovesQueryParameters()
     {
         var sut = CreateSut();
 
-        var result = sut.ToAbsolute("https://cdn.example.test/cover.png");
+        var result = sut.ToAbsolute("https://cdn.example.test/cover.png?size=lg#v1");
 
-        result.Should().Be("https://cdn.example.test/cover.png");
+        result.Should().Be("https://cdn.example.test/cover.png#v1");
+    }
+
+    [Fact]
+    public void ToAbsolute_WithAbsoluteHttpUrlAndPreserveQueryParameters_PreservesInput()
+    {
+        var sut = CreateSut();
+
+        var result = sut.ToAbsolute("https://cdn.example.test/cover.png?size=lg#v1", preserveQueryParameters: true);
+
+        result.Should().Be("https://cdn.example.test/cover.png?size=lg#v1");
     }
 
     [Fact]
@@ -47,6 +67,16 @@ public sealed class MetadataUrlServiceTests
         var sut = CreateSut();
 
         var result = sut.ToAbsolute(new Uri("file:///images/cover.png?size=lg#v1"));
+
+        result.Should().Be("https://example.test/images/cover.png#v1");
+    }
+
+    [Fact]
+    public void ToAbsolute_WithFileUriAndPreserveQueryParameters_ResolvesAgainstBaseUrlWithQuery()
+    {
+        var sut = CreateSut();
+
+        var result = sut.ToAbsolute(new Uri("file:///images/cover.png?size=lg#v1"), preserveQueryParameters: true);
 
         result.Should().Be("https://example.test/images/cover.png?size=lg#v1");
     }
@@ -86,6 +116,16 @@ public sealed class MetadataUrlServiceTests
         var result = sut.ToAbsoluteOrNull(new Uri("data:text/plain;base64,SGVsbG8=", UriKind.Absolute));
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public void ToAbsoluteOrNull_WithPreserveQueryParameters_ReturnsAbsoluteUrlWithQuery()
+    {
+        var sut = CreateSut();
+
+        var result = sut.ToAbsoluteOrNull("/images/cover.png?size=lg#v1", preserveQueryParameters: true);
+
+        result.Should().Be("https://example.test/images/cover.png?size=lg#v1");
     }
 
     private static MetadataUrlService CreateSut() =>

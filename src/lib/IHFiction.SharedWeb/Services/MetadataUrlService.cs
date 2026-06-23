@@ -21,7 +21,7 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
         }
     }
 
-    public string ToAbsolute(string pathOrUrl)
+    public string ToAbsolute(string pathOrUrl, bool preserveQueryParameters = false)
     {
         ArgumentNullException.ThrowIfNull(pathOrUrl);
 
@@ -32,18 +32,20 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
             return BaseUri.ToString();
         }
 
-        return ToAbsolute(new Uri(normalizedPathOrUrl, UriKind.RelativeOrAbsolute));
+        return ToAbsolute(new Uri(normalizedPathOrUrl, UriKind.RelativeOrAbsolute), preserveQueryParameters);
     }
 
-    public string ToAbsolute(Uri uri)
+    public string ToAbsolute(Uri uri, bool preserveQueryParameters = false)
     {
         ArgumentNullException.ThrowIfNull(uri);
 
+        Uri absoluteUri;
         if (uri.IsAbsoluteUri)
         {
             if (IsHttpScheme(uri))
             {
-                return uri.ToString();
+                absoluteUri = uri;
+                return preserveQueryParameters ? absoluteUri.ToString() : RemoveQueryParameters(absoluteUri);
             }
 
             if (!IsFileScheme(uri))
@@ -51,22 +53,25 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
                 throw new InvalidOperationException("Metadata URLs must use HTTP(S) or be relative paths.");
             }
 
-            var candidate = string.IsNullOrWhiteSpace(uri.PathAndQuery)
+            var path = preserveQueryParameters ? uri.PathAndQuery : uri.AbsolutePath;
+            var candidate = string.IsNullOrWhiteSpace(path)
                 ? "/"
-                : string.Concat(uri.PathAndQuery, uri.Fragment);
+                : string.Concat(path, uri.Fragment);
 
-            return new Uri(BaseUri, candidate).ToString();
+            absoluteUri = new Uri(BaseUri, candidate);
+            return preserveQueryParameters ? absoluteUri.ToString() : RemoveQueryParameters(absoluteUri);
         }
 
-        return new Uri(BaseUri, uri).ToString();
+        absoluteUri = new Uri(BaseUri, uri);
+        return preserveQueryParameters ? absoluteUri.ToString() : RemoveQueryParameters(absoluteUri);
     }
 
-    public string? ToAbsoluteOrNull(string? pathOrUrl) =>
+    public string? ToAbsoluteOrNull(string? pathOrUrl, bool preserveQueryParameters = false) =>
         string.IsNullOrWhiteSpace(pathOrUrl)
             ? null
-            : ToAbsoluteOrNull(new Uri(pathOrUrl.Trim(), UriKind.RelativeOrAbsolute));
+            : ToAbsoluteOrNull(new Uri(pathOrUrl.Trim(), UriKind.RelativeOrAbsolute), preserveQueryParameters);
 
-    public string? ToAbsoluteOrNull(Uri? uri)
+    public string? ToAbsoluteOrNull(Uri? uri, bool preserveQueryParameters = false)
     {
         if (uri is null)
         {
@@ -78,7 +83,17 @@ public sealed class MetadataUrlService(IOptions<SiteUrlOptions> siteUrlOptions)
             return null;
         }
 
-        return ToAbsolute(uri);
+        return ToAbsolute(uri, preserveQueryParameters);
+    }
+
+    private static string RemoveQueryParameters(Uri uri)
+    {
+        var builder = new UriBuilder(uri)
+        {
+            Query = string.Empty
+        };
+
+        return builder.Uri.ToString();
     }
 
     private static bool IsSupportedAbsoluteScheme(Uri uri) =>

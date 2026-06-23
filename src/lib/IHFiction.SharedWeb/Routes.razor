@@ -1,4 +1,6 @@
-<CascadingValue Name="CspNonce" Value="Nonce">
+@using static IHFiction.SharedWeb.Csp.CspConstants;
+
+<CascadingValue Name="@HttpContextItemKey" Value="Nonce">
     <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">

@@ -1,4 +1,3 @@
-@using Microsoft.Extensions.Options
 @inject IOptions<DisqusOptions> DisqusOptions
 @inject NavigationManager Nav
 @inject MetadataUrlService MetadataUrls
@@ -14,8 +13,8 @@
     [Parameter]
     public required string PageIdentifier { get; set; }
 
-    [CascadingParameter(Name = "CspNonce")]
-    public string? Nonce { get; set; }
+    [CascadingParameter(Name = HttpContextItemKey)]
+    private string? Nonce { get; set; }
 
     private string ResolvedPageUrl => MetadataUrls.ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
 

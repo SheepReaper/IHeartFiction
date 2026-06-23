@@ -1,5 +1,3 @@
-@using Markdig
-@using IHFiction.SharedWeb.Services
 @inherits CancellableComponent
 @inject WorkService WorkService
 @inject ReaderProgressService ReaderProgressService
@@ -62,9 +60,7 @@ else if (Meta is not null)
                         <div class="buttons">
                             @if (orderedChildren.Count > 1 && Meta.WorkType == "Chapter")
                             {
-                                <ChapterNavigation
-                                    CurrentChapterId="@WorkId"
-                                    Chapters="@orderedChildren" />
+                                <ChapterNavigation CurrentChapterId="@WorkId" Chapters="@orderedChildren" />
                             }
                             @if (Meta.StoryId is not null)
                             {
@@ -118,7 +114,8 @@ else if (Meta is not null)
                                 You finished @currentChapter.BookTitle. Next up: @nextChapter.BookTitle.
                             </p>
                             <p class="mt-2">
-                                <a class="button has-background-primary-soft has-text-primary-bold" href="@ReadHref(nextChapter.Id)">
+                                <a class="button has-background-primary-soft has-text-primary-bold"
+                                   href="@ReadHref(nextChapter.Id)">
                                     Continue to @nextChapter.BookTitle
                                 </a>
                             </p>
@@ -142,10 +139,7 @@ else if (Meta is not null)
                     <div class="level mt-6">
                         <div class="level-left">
                             <div class="level-item">
-                                <ChapterNavigation
-                                    CurrentChapterId="@WorkId"
-                                    Chapters="@orderedChildren"
-                                    ShowLabels="true" />
+                                <ChapterNavigation CurrentChapterId="@WorkId" Chapters="@orderedChildren" ShowLabels="true" />
                             </div>
                         </div>
                         <div class="level-right">
@@ -181,9 +175,26 @@ else if (Meta is not null)
     </div>
 }
 
+<script type="speculationrules" nonce="@Nonce">
+    {
+        "prerender": [
+            {
+                "source": "document",
+                "where": {
+                    "href_matches": "/read/*"
+                },
+                "eagerness": "eager"
+            }
+        ]
+    }
+</script>
+
 @code {
     [Parameter, EditorRequired] public string WorkId { get; set; } = null!;
     [Parameter, EditorRequired] public LinkedOfGetPublishedWorkMetaResponse Meta { get; set; } = null!;
+
+    [CascadingParameter(Name = HttpContextItemKey)]
+    private string? Nonce { get; set; }
 
     private LinkedOfGetPublishedWorkContentResponse? content;
     private bool isLoading = true;

@@ -1,33 +1,31 @@
 @namespace IHFiction.SharedWeb.Components.MarkdownEditor
-@using Microsoft.AspNetCore.Hosting
-@using Microsoft.AspNetCore.Http
-@using Microsoft.Extensions.Hosting
-@using System.Text.RegularExpressions
-@using System.Linq
+
 @rendermode RenderMode.InteractiveServer
+
 @inherits CancellableComponent
+
 @inject IJSRuntime JSRuntime
 @inject ThemeService Theme
 @inject IWebHostEnvironment Env
 
 <HeadContent>
     <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor.min.css"]" rel="stylesheet"
-        nonce="@nonce" />
+        nonce="@Nonce" />
 
     @if (Theme.CurrentTheme == "dark")
     {
         <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/theme/toastui-editor-dark.min.css"]" rel="stylesheet"
-            nonce="@nonce" />
+            nonce="@Nonce" />
     }
 
     @if (Env.IsDevelopment())
     {
-        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.js"]" nonce="@nonce"></script>
+        <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.js"]" nonce="@Nonce"></script>
     }
     else
     {
         <script src="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor-all.min.js"]"
-            nonce="@nonce"></script>
+            nonce="@Nonce"></script>
     }
 </HeadContent>
 
@@ -68,8 +66,8 @@
     private int _wordCount;
     private int _charCount;
 
-    [CascadingParameter(Name = "CspNonce")]
-    public string? nonce { get; set; }
+    [CascadingParameter(Name = HttpContextItemKey)]
+    private string? Nonce { get; set; }
 
     protected override Task OnInitializedAsync()
     {

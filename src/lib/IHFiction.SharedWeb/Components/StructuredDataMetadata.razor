@@ -1,11 +1,7 @@
-@using System.Text.Encodings.Web
-@using System.Text.Json
-@using System.Text.Json.Serialization
-
 <SectionContent SectionName="@SectionName">
     @foreach (var schemaJson in SerializedSchemas)
     {
-        <script type="application/ld+json">@((MarkupString)schemaJson)</script>
+        <script type="application/ld+json" nonce="@Nonce">@((MarkupString)schemaJson)</script>
     }
 </SectionContent>
 
@@ -13,6 +9,9 @@
     [Parameter] public string SectionName { get; set; } = "app-head-structured-data";
     [Parameter] public object? Schema { get; set; }
     [Parameter] public IEnumerable<object>? Schemas { get; set; }
+
+    [CascadingParameter(Name = HttpContextItemKey)]
+    private string? Nonce { get; set; }
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
