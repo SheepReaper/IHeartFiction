@@ -86,7 +86,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
-    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.7" />
+    <PackageVersion Include="Scalar.AspNetCore" Version="2.16.10" />
     <PackageVersion Include="SharpCompress" Version="0.49.1" />
     <PackageVersion Include="Shirubasoft.Aspire.Cloudflared" Version="1.0.4" />
     <PackageVersion Include="Sidio.Sitemap.Blazor" Version="2.0.2" />
