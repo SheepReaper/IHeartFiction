@@ -68,6 +68,7 @@ internal static class ProductionConfigExtensions
             });
 
             file.Secrets.Add("keycloak-conf", new() { File = $"{SecretsPath}/keycloak.conf" });
+            file.Secrets.Add("cloudflared-tunnel-token", new() { File = $"{SecretsPath}/cloudflared-tunnel-token.secret" });
             file.Secrets.Add("mongodb-root-pass", new() { File = $"{SecretsPath}/mongodb-root-pass.secret" });
             file.Secrets.Add("postgres-pass", new() { File = $"{SecretsPath}/postgres-pass.secret" });
 
@@ -77,7 +78,18 @@ internal static class ProductionConfigExtensions
             file.Secrets.Add("Authentication__Schemes__Keycloak__ClientSecret", new() { File = $"{SecretsPath}/keycloak-frontend-client.secret" });
             file.Secrets.Add("KeycloakAdminClientOptions__AuthClientSecret", new() { File = $"{SecretsPath}/keycloak-admin-client.secret" });
 
+            file.Secrets.Add("WebPush__PrivateKey", new() { File = $"{SecretsPath}/vapid-private-key.secret" });
+            file.Secrets.Add("WebPush__PublicKey", new() { File = $"{SecretsPath}/vapid-public-key.secret" });
+
             file.Secrets.Add("Dashboard__Otlp__PrimaryApiKey", new() { File = $"{SecretsPath}/otlp-api-key.secret" });
+
+            var tunnel = file.Services["ihfiction-tunnel"];
+            tunnel.Environment.Remove("TUNNEL_TOKEN");
+            tunnel.Command.Add("--token-file");
+            tunnel.Command.Add("/run/secrets/cloudflared-tunnel-token");
+            tunnel.Secrets.Add(new() { Source = "cloudflared-tunnel-token" });
+            tunnel.Deploy ??= new();
+            tunnel.Deploy.Replicas = 2;
 
             // Cleanup noise for swarm spec
             foreach (var (_, service) in file.Services)
@@ -95,10 +107,13 @@ internal static class ProductionConfigExtensions
         {
             file.Remove("FICTION_IMAGE");
             file.Remove("FICTION_PORT");
+            file.Remove("IHFICTION_TUNNEL_TUNNEL_TOKEN");
             file.Remove("KEYCLOAK_PASSWORD");
             file.Remove("MIGRATIONS_IMAGE");
             file.Remove("MONGO_PASSWORD");
             file.Remove("POSTGRES_PASSWORD");
+            file.Remove("VAPIDPRIVKEY");
+            file.Remove("VAPIDPUBKEY");
             file.Remove("WEB_IMAGE");
             file.Remove("WEB_PORT");
         });
@@ -117,8 +132,8 @@ internal static class ProductionConfigExtensions
             {
                 Name = "postgres-data",
                 Type = "bind",
-                Source = $"{DataPath}/postgres",
-                Target = "/var/lib/postgresql/data",
+                Source = $"{DataPath}/postgres18-20260804-003207",
+                Target = "/var/lib/postgresql",
                 ReadOnly = false
             });
         });
@@ -144,7 +159,9 @@ internal static class ProductionConfigExtensions
 
     public static IResourceBuilder<KeycloakResource> ConfigureForSwarm(this IResourceBuilder<KeycloakResource> builder) => builder
         .WithEndpoint("http", e => e.TargetPort = 8080)
-        .WithDockerHealthcheck(["CMD-SHELL", "{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"])
+        .WithDockerHealthcheck(
+            ["CMD-SHELL", "{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"],
+            options => options.StartPeriodSeconds = 120)
         .PublishAsDockerComposeService((_, service) =>
         {
             // Using conf file
@@ -216,6 +233,8 @@ internal static class ProductionConfigExtensions
             service.Environment.Remove("ConnectionStrings__stories-db");
             service.Environment.Remove("STORIES_DB_PASSWORD");
             service.Environment.Remove("STORIES_DB_URI");
+            service.Environment.Remove("WebPush__PrivateKey");
+            service.Environment.Remove("WebPush__PublicKey");
 
             var config = builder.ApplicationBuilder.Configuration;
 
@@ -247,6 +266,8 @@ internal static class ProductionConfigExtensions
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
             service.Secrets.Add(new() { Source = "KeycloakAdminClientOptions__AuthClientSecret" });
+            service.Secrets.Add(new() { Source = "WebPush__PrivateKey" });
+            service.Secrets.Add(new() { Source = "WebPush__PublicKey" });
 
             if (builder.Resource.TryGetLastAnnotation<ContainerRegistryReferenceAnnotation>(out var reference))
                 service.Image = $"{reference.ToRegistryStringAsync().GetAwaiter().GetResult()}/{res.Name}:latest";
@@ -262,6 +283,7 @@ internal static class ProductionConfigExtensions
             service.Environment.Remove("FICTION_DB_PASSWORD");
             service.Environment.Remove("FICTION_DB_URI");
             service.Environment.Remove("FICTION_HTTPS");
+            service.Environment.Remove("WebPush__PublicKey");
 
             var config = builder.ApplicationBuilder.Configuration;
 
@@ -289,6 +311,7 @@ internal static class ProductionConfigExtensions
             service.Secrets.Add(new() { Source = "Authentication__Schemes__Keycloak__ClientSecret" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
+            service.Secrets.Add(new() { Source = "WebPush__PublicKey" });
 
             if (builder.Resource.TryGetLastAnnotation<ContainerRegistryReferenceAnnotation>(out var reference))
                 service.Image = $"{reference.ToRegistryStringAsync().GetAwaiter().GetResult()}/{res.Name}:latest";

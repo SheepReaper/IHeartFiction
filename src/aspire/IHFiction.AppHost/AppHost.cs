@@ -27,6 +27,7 @@ var vapidPubKey = builder.AddParameter(
     "VapidPubKey", vapid.DefaultPubKey, secret: true, persist: true);
 
 var postgres = builder.AddPostgres("postgres")
+    .WithImageTag("18.4-trixie")
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgWeb(options => options
         .WithHostPort(8081));
@@ -73,7 +74,7 @@ var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
 
 if (builder.Environment.IsDevelopment())
 {
-    postgres.WithDataVolume("postgres-data");
+    postgres.WithDataVolume("pg18-final-20260804-115347-postgres-data");
 
     mongo.WithDataVolume("mongo-data");
 
