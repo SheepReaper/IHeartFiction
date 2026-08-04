@@ -1,0 +1,4 @@
+interface:
+  display_name: "IHeartFiction Feature Workflow"
+  short_description: "Build complete IHeartFiction feature slices"
+  default_prompt: "Use $ihfiction-feature-workflow to implement this feature end to end."
