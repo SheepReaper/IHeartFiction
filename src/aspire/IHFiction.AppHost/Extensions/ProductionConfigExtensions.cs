@@ -90,6 +90,7 @@ internal static class ProductionConfigExtensions
             tunnel.Secrets.Add(new() { Source = "cloudflared-tunnel-token" });
             tunnel.Deploy ??= new();
             tunnel.Deploy.Replicas = 2;
+            tunnel.AddGracefulUpdate();
 
             // Cleanup noise for swarm spec
             foreach (var (_, service) in file.Services)
@@ -222,7 +223,13 @@ internal static class ProductionConfigExtensions
 
     public static IResourceBuilder<ProjectResource> ConfigureFictionApiForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
         .WithCommonOptions()
-        .WithDockerHealthcheck(configureOptions: options => options.StartIntervalSeconds = 15)
+        .WithDockerHealthcheck(configureOptions: options =>
+        {
+            options.IntervalSeconds = 15;
+            options.TimeoutSeconds = 5;
+            options.StartPeriodSeconds = 300;
+            options.Retries = 3;
+        })
         .WithEndpoint("http", e => e.TargetPort = 8080)
         .PublishAsDockerComposeService((res, service) =>
         {
@@ -275,7 +282,13 @@ internal static class ProductionConfigExtensions
 
     public static IResourceBuilder<ProjectResource> ConfigureWebClientForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
         .WithCommonOptions()
-        .WithDockerHealthcheck()
+        .WithDockerHealthcheck(configureOptions: options =>
+        {
+            options.IntervalSeconds = 15;
+            options.TimeoutSeconds = 5;
+            options.StartPeriodSeconds = 300;
+            options.Retries = 3;
+        })
         .WithEndpoint("http", e => e.TargetPort = 8080)
         .PublishAsDockerComposeService((res, service) =>
         {

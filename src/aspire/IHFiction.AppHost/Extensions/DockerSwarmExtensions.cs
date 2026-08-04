@@ -50,11 +50,11 @@ internal static class DockerSwarmExtensions
         service.Deploy ??= new();
         service.Deploy.UpdateConfig = new()
         {
-            // Parallelism = "1", // BUG: this should actually be an int [Fixed](https://github.com/dotnet/aspire/pull/11706)
+            Parallelism = 1,
             Delay = "10s",
             Monitor = "60s",
             Order = "start-first",
-            // FailOnError = true // BUG: this should actually be a string [Fixed](https://github.com/dotnet/aspire/pull/11706)
+            FailureAction = "rollback"
         };
 
         return service;
