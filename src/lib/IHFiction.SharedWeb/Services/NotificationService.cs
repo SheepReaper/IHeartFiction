@@ -1,5 +1,3 @@
-using System.Globalization;
-
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedWeb.Extensions;
 
@@ -7,16 +5,14 @@ namespace IHFiction.SharedWeb.Services;
 
 public sealed class NotificationService
 {
-    private const string DeviceIdStorageKey = "notifications:device-id";
     private readonly IFictionApiClient _client;
-    private readonly BrowserProtectedStorageService? _storage;
     private readonly Func<Task<string?>> getOrCreateDeviceIdAsync;
 
-    public NotificationService(IFictionApiClient client, BrowserProtectedStorageService storage)
+    public NotificationService(IFictionApiClient client, DeviceIdentityService deviceIdentity)
     {
+        ArgumentNullException.ThrowIfNull(deviceIdentity);
         _client = client;
-        _storage = storage;
-        getOrCreateDeviceIdAsync = GetOrCreateStoredDeviceIdAsync;
+        getOrCreateDeviceIdAsync = deviceIdentity.GetOrCreateAsync;
     }
 
     public NotificationService(IFictionApiClient client, Func<Task<string?>> getOrCreateDeviceIdAsync)
@@ -173,19 +169,6 @@ public sealed class NotificationService
     private async Task<string?> GetOrCreateDeviceIdAsync()
     {
         return await getOrCreateDeviceIdAsync();
-    }
-
-    private async Task<string?> GetOrCreateStoredDeviceIdAsync()
-    {
-        var existing = await _storage!.GetAsync<string>(DeviceIdStorageKey);
-        if (!string.IsNullOrWhiteSpace(existing))
-        {
-            return existing;
-        }
-
-        var created = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
-        await _storage.SetAsync(DeviceIdStorageKey, created);
-        return created;
     }
 
     private static FollowSnapshot MapFollowSnapshot(GetOwnFollowsResponse response) =>

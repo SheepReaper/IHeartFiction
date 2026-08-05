@@ -61,6 +61,7 @@ internal sealed class ListPublishedStories(
     /// <param name="ChapterCount">Number of chapters in the story</param>
     /// <param name="AuthorId">Unique identifier for the story author</param>
     /// <param name="AuthorName">Name of the story author</param>
+    /// <param name="ReadCount">Qualified unique readers</param>
     internal sealed record ListPublishedStoriesItem(
         Ulid StoryId,
         string Title,
@@ -73,7 +74,15 @@ internal sealed class ListPublishedStories(
         bool HasCoverImage,
         int ChapterCount,
         Ulid AuthorId,
-        string AuthorName);
+        string AuthorName,
+        int ReadCount)
+    {
+        public ListPublishedStoriesItem(Ulid storyId, string title, string description, DateTime publishedAt,
+            DateTime updatedAt, bool hasContent, bool hasChapters, bool hasBooks, bool hasCoverImage,
+            int chapterCount, Ulid authorId, string authorName)
+            : this(storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks,
+                hasCoverImage, chapterCount, authorId, authorName, 0) { }
+    }
 
     public async Task<Result<PagedCollection<ListPublishedStoriesItem>>> HandleAsync(
         ListPublishedStoriesQuery query,
@@ -104,7 +113,8 @@ internal sealed class ListPublishedStories(
             context.StoryCovers.Any(cover => cover.StoryId == s.Id),
             s.Chapters.Count,
             s.OwnerId,
-            s.Owner.Name));
+            s.Owner.Name,
+            s.ReadCount));
 
         // Execute paginated query using the centralized service
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);

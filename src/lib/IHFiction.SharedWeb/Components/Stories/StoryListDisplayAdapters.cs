@@ -37,7 +37,8 @@ public static class StoryListDisplayAdapters
             CanRead: story.IsPublished,
             IsPublished: story.IsPublished,
             HasBooks: story.HasBooks,
-            HasChapters: story.HasChapters);
+            HasChapters: story.HasChapters,
+            ReadCount: story.ReadCount);
     }
 
     public static StoryListDisplayItem FromAuthorWorkItem(AuthorWorkItem work)
@@ -54,7 +55,8 @@ public static class StoryListDisplayAdapters
             PrimaryActionLabel: "View",
             PrimaryActionIcon: "eye",
             CanRead: work.PublishedAt is not null,
-            IsPublished: work.PublishedAt is not null);
+            IsPublished: work.PublishedAt is not null,
+            ReadCount: work.ReadCount);
     }
 
     private static List<string> BuildMyStoriesBadges(LinkedOfAuthorStoryItem story)

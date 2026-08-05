@@ -36,6 +36,10 @@
                     {
                         <span class="tag has-background-link-soft has-text-link-bold">One-shot</span>
                     }
+                    <span class="tag has-background-dark-soft has-text-dark-bold" title="@($"{Story.ReadCount:N0} reads")">
+                        <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                        <span>@ReadCountFormatter.Format(Story.ReadCount) reads</span>
+                    </span>
                 </div>
             </div>
             <div class="media-right">
@@ -135,6 +139,10 @@ else
                             <i class="fas fa-calendar"></i>
                         </span>
                         <span>@Story.UpdatedAt.ToString("MMM dd, yyyy")</span>
+                    </span>
+                    <span class="tag has-background-dark-soft has-text-dark-bold" title="@($"{Story.ReadCount:N0} reads")">
+                        <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                        <span>@ReadCountFormatter.Format(Story.ReadCount) reads</span>
                     </span>
                 </div>
             </div>

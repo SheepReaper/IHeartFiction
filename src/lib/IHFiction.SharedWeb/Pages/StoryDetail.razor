@@ -139,6 +139,18 @@ else if (story != null)
 
                                 <div class="level is-mobile">
                                     <div class="level-item has-text-centered">
+                                        <div title="@($"{story.ReadCount:N0} reads")">
+                                            <p class="heading">Readers</p>
+                                            <p class="title is-6">
+                                                <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                                                @ReadCountFormatter.Format(story.ReadCount)
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
                                         <div>
                                             <p class="heading">Status</p>
                                             <p class="title is-6">
@@ -208,6 +220,33 @@ else if (story != null)
                 <div class="section">
                     <h2 class="title is-4">Chapters</h2>
                     <ChapterList StoryId="@StoryIdString" Chapters="BuildChapterItems()" />
+                </div>
+            }
+            else if (story.Type == MultiBook && (story.Books?.Any() ?? false))
+            {
+                <div class="section">
+                    <h2 class="title is-4">Books and Chapters</h2>
+                    @foreach (var book in story.Books.OrderBy(candidate => candidate.Order))
+                    {
+                        <section @key="book.Id" class="mb-6" aria-labelledby="@($"book-{book.Id}")">
+                            <div class="level mb-2">
+                                <div class="level-left">
+                                    <h3 id="@($"book-{book.Id}")" class="title is-5 mb-0">@book.Title</h3>
+                                </div>
+                                <div class="level-right">
+                                    <span class="tag has-background-dark-soft has-text-dark-bold" title="@($"{book.ReadCount:N0} reads")">
+                                        <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                                        <span>@ReadCountFormatter.Format(book.ReadCount) reads</span>
+                                    </span>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(book.Description))
+                            {
+                                <p class="mb-3">@book.Description</p>
+                            }
+                            <ChapterList StoryId="@StoryIdString" Chapters="@BuildBookChapterItems(book)" />
+                        </section>
+                    }
                 </div>
             }
         </div>
@@ -326,7 +365,7 @@ else if (story != null)
         {
             return story.Chapters
                 .OrderBy(chapter => chapter.Order)
-                .Select(chapter => new ReaderChapterNavItem(chapter.Id.ToString(), chapter.Title, chapter.Order))
+                .Select(chapter => new ReaderChapterNavItem(chapter.Id.ToString(), chapter.Title, chapter.Order, ReadCount: chapter.ReadCount))
                 .ToList();
         }
 
@@ -334,12 +373,18 @@ else if (story != null)
         {
             return chapters.Data
                 .OrderBy(chapter => chapter.Order)
-                .Select(chapter => new ReaderChapterNavItem(chapter.ChapterId.ToString(), chapter.Title, chapter.Order))
+                .Select(chapter => new ReaderChapterNavItem(chapter.ChapterId.ToString(), chapter.Title, chapter.Order, ReadCount: chapter.ReadCount))
                 .ToList();
         }
 
         return [];
     }
+
+    private static List<ReaderChapterNavItem> BuildBookChapterItems(BookItem book) => book.Chapters
+        .OrderBy(chapter => chapter.Order)
+        .Select(chapter => new ReaderChapterNavItem(
+            chapter.Id.ToString(), chapter.Title, chapter.Order, book.Title, chapter.ReadCount))
+        .ToList();
 
     protected override void OnInitialized()
     {

@@ -4017,6 +4017,85 @@
         }
       }
     },
+    "/works/{id}/reads": {
+      "post": {
+        "tags": [
+          "Story Discovery"
+        ],
+        "summary": "Record a qualified work read",
+        "description": "Durably queues a qualified unique read for asynchronous recording against a story or chapter and its parent works.",
+        "operationId": "RecordWorkRead",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          },
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordWorkReadBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordWorkReadResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/stories/{id}/unpublish": {
       "post": {
         "tags": [
@@ -4375,11 +4454,6 @@
         "description": "Request model for adding tags to a story."
       },
       "AuthorWorkItem": {
-        "required": [
-          "id",
-          "title",
-          "publishedAt"
-        ],
         "type": "object",
         "properties": {
           "id": {
@@ -4397,6 +4471,15 @@
             ],
             "description": "When the work was published (null if unpublished)",
             "format": "date-time"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
+            "format": "int32"
           }
         },
         "description": "Represents a work (story) created by an author."
@@ -4482,7 +4565,8 @@
           "title",
           "description",
           "order",
-          "chapters"
+          "chapters",
+          "readCount"
         ],
         "type": "object",
         "properties": {
@@ -4513,6 +4597,15 @@
               "$ref": "#/components/schemas/ChapterItem"
             },
             "description": "Collection of chapters within the book"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
+            "format": "int32"
           }
         },
         "description": "Represents a book associated with a story."
@@ -4563,7 +4656,8 @@
         "required": [
           "id",
           "title",
-          "order"
+          "order",
+          "readCount"
         ],
         "type": "object",
         "properties": {
@@ -4582,6 +4676,15 @@
               "string"
             ],
             "description": "Order of the chapter within the book",
+            "format": "int32"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
             "format": "int32"
           }
         },
@@ -5187,22 +5290,7 @@
       },
       "LinkedOfAuthorStoryItem": {
         "required": [
-          "links",
-          "id",
-          "title",
-          "description",
-          "publishedAt",
-          "isPublished",
-          "updatedAt",
-          "createdAt",
-          "isOwned",
-          "collaboratorNames",
-          "tags",
-          "hasCoverImage",
-          "hasContent",
-          "hasChapters",
-          "hasBooks",
-          "isValid"
+          "links"
         ],
         "type": "object",
         "properties": {
@@ -5283,6 +5371,15 @@
           "isValid": {
             "type": "boolean",
             "description": "Whether the story is in a valid state for operations"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
+            "format": "int32"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -6251,22 +6348,7 @@
       },
       "LinkedOfGetPublishedStoryResponse": {
         "required": [
-          "links",
-          "id",
-          "title",
-          "description",
-          "publishedAt",
-          "isPublished",
-          "updatedAt",
-          "createdAt",
-          "ownerId",
-          "ownerName",
-          "type",
-          "hasCoverImage",
-          "authors",
-          "tags",
-          "books",
-          "chapters"
+          "links"
         ],
         "type": "object",
         "properties": {
@@ -6353,6 +6435,15 @@
               "$ref": "#/components/schemas/ChapterItem"
             },
             "description": "Collection of chapters within this story (if applicable)"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
+            "format": "int32"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -6372,7 +6463,8 @@
           "note1",
           "note2",
           "contentUpdatedAt",
-          "workUpdatedAt"
+          "workUpdatedAt",
+          "readCount"
         ],
         "type": "object",
         "properties": {
@@ -6448,6 +6540,14 @@
           "workUpdatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -6474,7 +6574,8 @@
           "bookTitle",
           "defaultReadableWorkId",
           "readableChildren",
-          "authors"
+          "authors",
+          "readCount"
         ],
         "type": "object",
         "properties": {
@@ -6594,6 +6695,14 @@
             "items": {
               "$ref": "#/components/schemas/WorkAuthor"
             }
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -6670,19 +6779,7 @@
       },
       "LinkedOfListPublishedStoriesItem": {
         "required": [
-          "links",
-          "storyId",
-          "title",
-          "description",
-          "publishedAt",
-          "updatedAt",
-          "hasContent",
-          "hasChapters",
-          "hasBooks",
-          "hasCoverImage",
-          "chapterCount",
-          "authorId",
-          "authorName"
+          "links"
         ],
         "type": "object",
         "properties": {
@@ -6746,21 +6843,22 @@
           "authorName": {
             "type": "string",
             "description": "Name of the story author"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
+            "format": "int32"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
       "LinkedOfListPublishedStoryChaptersItem": {
         "required": [
-          "links",
-          "chapterId",
-          "title",
-          "order",
-          "publishedAt",
-          "createdAt",
-          "updatedAt",
-          "hasContent",
-          "contentLength"
+          "links"
         ],
         "type": "object",
         "properties": {
@@ -6816,6 +6914,15 @@
               "string"
             ],
             "description": "Length of the chapter content in characters",
+            "format": "int32"
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Qualified unique readers",
             "format": "int32"
           }
         },
@@ -8274,7 +8381,8 @@
           "title",
           "order",
           "bookId",
-          "bookTitle"
+          "bookTitle",
+          "readCount"
         ],
         "type": "object",
         "properties": {
@@ -8307,6 +8415,51 @@
               "null",
               "string"
             ]
+          },
+          "readCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "RecordWorkReadBody": {
+        "required": [
+          "activeSeconds",
+          "hasMeaningfulInteraction"
+        ],
+        "type": "object",
+        "properties": {
+          "activeSeconds": {
+            "maximum": 3600,
+            "minimum": 10,
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hasMeaningfulInteraction": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecordWorkReadResponse": {
+        "required": [
+          "workId",
+          "qualified"
+        ],
+        "type": "object",
+        "properties": {
+          "workId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "qualified": {
+            "type": "boolean"
           }
         }
       },

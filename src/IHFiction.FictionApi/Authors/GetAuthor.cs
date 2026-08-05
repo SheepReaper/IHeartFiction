@@ -40,7 +40,11 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
     /// <param name="Id">Unique identifier for the work</param>
     /// <param name="Title">Title of the work</param>
     /// <param name="PublishedAt">When the work was published (null if unpublished)</param>
-    internal sealed record AuthorWorkItem(Ulid Id, string Title, DateTime? PublishedAt);
+    /// <param name="ReadCount">Qualified unique readers</param>
+    internal sealed record AuthorWorkItem(Ulid Id, string Title, DateTime? PublishedAt, int ReadCount)
+    {
+        public AuthorWorkItem(Ulid id, string title, DateTime? publishedAt) : this(id, title, publishedAt, 0) { }
+    }
 
     internal sealed record GetAuthorResponse(
         Guid UserId,
@@ -66,7 +70,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
 
         var publishedStories = author.Works
             .Where(w => w is Story && w.PublishedAt != null)
-            .Select(w => new AuthorWorkItem(w.Id, w.Title, w.PublishedAt));
+            .Select(w => new AuthorWorkItem(w.Id, w.Title, w.PublishedAt, w.ReadCount));
 
         var totalStories = author.Works.Count(w => w is Story);
 

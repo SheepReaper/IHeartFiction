@@ -11,6 +11,7 @@ public abstract class Work : DomainUlidEntityWithTimestamp, ISoftDeletable
     public DateTime? PublishedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
     public bool IsPublished => PublishedAt.HasValue;
+    public int ReadCount { get; set; }
 
     private ICollection<Author>? _authors;
     public ICollection<Author> Authors => _authors ??= [];

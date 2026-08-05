@@ -27,8 +27,15 @@
             return;
         }
 
-        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Components/Disqus/DisqusThread.razor.js");
-        await module.InvokeVoidAsync("loadDisqus", ResolvedPageUrl, PageIdentifier, DisqusOptions.Value.ShortName, Nonce);
+        try
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Components/Disqus/DisqusThread.razor.js");
+            await module.InvokeVoidAsync("loadDisqus", ResolvedPageUrl, PageIdentifier, DisqusOptions.Value.ShortName, Nonce);
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit ended while client-side initialization was in flight.
+        }
     }
 
     private string GetCurrentPathAndQuery()

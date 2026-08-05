@@ -46,6 +46,7 @@ internal sealed class ListPublishedStoryChapters(
     /// <param name="UpdatedAt">When the chapter was last updated</param>
     /// <param name="HasContent">Whether the chapter has content written</param>
     /// <param name="ContentLength">Length of the chapter content in characters</param>
+    /// <param name="ReadCount">Qualified unique readers</param>
     internal sealed record ListPublishedStoryChaptersItem(
         Ulid ChapterId,
         string Title,
@@ -54,7 +55,13 @@ internal sealed class ListPublishedStoryChapters(
         DateTime CreatedAt,
         DateTime UpdatedAt,
         bool HasContent,
-        int ContentLength);
+        int ContentLength,
+        int ReadCount)
+    {
+        public ListPublishedStoryChaptersItem(Ulid chapterId, string title, int order, DateTime? publishedAt,
+            DateTime createdAt, DateTime updatedAt, bool hasContent, int contentLength)
+            : this(chapterId, title, order, publishedAt, createdAt, updatedAt, hasContent, contentLength, 0) { }
+    }
 
     public async Task<Result<PagedCollection<ListPublishedStoryChaptersItem>>> HandleAsync(
         Ulid id,
@@ -84,7 +91,8 @@ internal sealed class ListPublishedStoryChapters(
             c.CreatedAt,
             c.UpdatedAt,
             c.WorkBodyId != default,
-            0 // TODO: ContentLength - would need separate query to WorkBody collection
+            0, // TODO: ContentLength - would need separate query to WorkBody collection
+            c.ReadCount
         ));
 
         return await paginator.ExecutePagedQueryAsync(chapterItems, cancellationToken: cancellationToken);

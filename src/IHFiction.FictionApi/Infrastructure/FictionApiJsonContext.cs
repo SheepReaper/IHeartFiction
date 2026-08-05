@@ -122,6 +122,8 @@ namespace IHFiction.FictionApi.Infrastructure;
 
 [JsonSerializable(typeof(GetPublishedWorkMeta.GetPublishedWorkMetaQuery))]
 [JsonSerializable(typeof(Linked<GetPublishedWorkMeta.GetPublishedWorkMetaResponse>))]
+[JsonSerializable(typeof(RecordWorkRead.RecordWorkReadBody))]
+[JsonSerializable(typeof(RecordWorkRead.RecordWorkReadResponse))]
 
 [JsonSerializable(typeof(FollowStory.FollowStoryQuery))]
 [JsonSerializable(typeof(Linked<FollowStory.FollowStoryResponse>))]

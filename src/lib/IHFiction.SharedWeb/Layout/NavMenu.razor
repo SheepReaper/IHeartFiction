@@ -146,17 +146,24 @@
     {
         if (firstRender)
         {
-            await theme.InitializeThemeAsync(CancellationToken);
+            try
+            {
+                await theme.InitializeThemeAsync(CancellationToken);
 
-            _module = await JS.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./_content/IHFiction.SharedWeb/Layout/NavMenu.razor.js");
+                _module = await JS.InvokeAsync<IJSObjectReference>(
+                    "import",
+                    "./_content/IHFiction.SharedWeb/Layout/NavMenu.razor.js");
 
-            _dotNetReference = DotNetObjectReference.Create(this);
-            _outsideClickListener = await _module.InvokeAsync<IJSObjectReference>(
-                "registerOutsideClickListener",
-                _navbarRootRef,
-                _dotNetReference);
+                _dotNetReference = DotNetObjectReference.Create(this);
+                _outsideClickListener = await _module.InvokeAsync<IJSObjectReference>(
+                    "registerOutsideClickListener",
+                    _navbarRootRef,
+                    _dotNetReference);
+            }
+            catch (JSDisconnectedException)
+            {
+                // The circuit ended while client-side initialization was in flight.
+            }
         }
     }
 

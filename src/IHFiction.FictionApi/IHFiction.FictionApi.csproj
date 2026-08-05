@@ -23,6 +23,7 @@
     <PackageReference Include="Aspire.KeyCloak.Authentication" />
     <PackageReference Include="Aspire.MongoDB.Driver.v3" />
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Aspire.StackExchange.Redis" />
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="IHFiction.SourceGenerators">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -47,6 +48,9 @@
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="WebPush" />
     <PackageReference Include="WolverineFx" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+    <PackageReference Include="WolverineFx.Postgresql" />
+    <PackageReference Include="WolverineFx.Redis" />
     <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
 

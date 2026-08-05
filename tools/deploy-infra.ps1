@@ -9,8 +9,8 @@
 
     Secret files are never copied by default. Use -IncludeSecrets to hash-compare and
     install missing files from the local secrets directory with mode 0600. A differing
-    existing source is rejected because active Docker Swarm secrets are immutable and
-    should be rotated with a new versioned name.
+    existing source is left unchanged with a warning because active Docker Swarm secrets
+    are immutable and should be rotated with a new versioned name.
 
 .PARAMETER Source
     Generated infrastructure directory. Defaults to the repository's infra directory.
@@ -26,8 +26,8 @@
 
 .PARAMETER IncludeSecrets
     Hash-compare secret sources, install missing files, and enforce mode 0600. Secret
-    values and hashes are never printed. Differing existing files cause the deployment
-    to stop so their Docker secret names can be rotated intentionally.
+    values and hashes are never printed. Differing existing files are left unchanged and
+    produce a warning so their Docker secret names can be rotated intentionally.
 
 .PARAMETER SkipVerification
     Skip public HTTP, WebSocket, and fresh-log verification after convergence.
@@ -319,10 +319,10 @@ try {
                 Write-Host "Secret unchanged: $($secret.Name)" -ForegroundColor DarkGray
             }
             else {
-                throw (
+                Write-Warning (
                     "Remote secret source '$($secret.Name)' differs from the local file. " +
-                    'Docker Swarm secrets are immutable; version the secret name in the AppHost ' +
-                    'and generated Compose file before deploying the replacement.'
+                    'Leaving the remote source unchanged because Docker Swarm secrets are immutable. ' +
+                    'Version the secret name in the AppHost and generated Compose file to deploy the replacement.'
                 )
             }
         }

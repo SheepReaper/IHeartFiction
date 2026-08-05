@@ -29,7 +29,8 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
         string Title,
         int Order,
         Ulid? BookId,
-        string? BookTitle);
+        string? BookTitle,
+        int ReadCount);
 
     internal sealed record GetPublishedWorkMetaResponse(
         Ulid Id,
@@ -51,7 +52,8 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
         string? BookTitle,
         Ulid? DefaultReadableWorkId,
         IEnumerable<ReadableWorkItem> ReadableChildren,
-        IEnumerable<WorkAuthor> Authors);
+        IEnumerable<WorkAuthor> Authors,
+        int ReadCount);
 
     internal static class Errors
     {
@@ -147,7 +149,7 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
             StoryType.MultiChapter => story.Chapters
                 .Where(c => c.BookId is null && c.IsPublished)
                 .OrderBy(c => c.Order)
-                .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, null, null))
+                .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, null, null, c.ReadCount))
                 .ToList(),
             StoryType.MultiBook => story.Books
                 .Where(b => b.IsPublished)
@@ -155,7 +157,7 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
                 .SelectMany(b => b.Chapters
                     .Where(c => c.IsPublished)
                     .OrderBy(c => c.Order)
-                    .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, b.Id, b.Title)))
+                    .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, b.Id, b.Title, c.ReadCount)))
                 .ToList(),
             _ => []
         };
@@ -180,7 +182,8 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
             null,
             readableChildren.FirstOrDefault()?.Id,
             readableChildren,
-            OrderAuthors(story.Authors, story.OwnerId));
+            OrderAuthors(story.Authors, story.OwnerId),
+            story.ReadCount);
     }
 
     private async Task<List<ReadableWorkItem>> LoadReadableChildrenForChapterAsync(
@@ -191,13 +194,13 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
             ? await context.Chapters
                 .Where(c => c.BookId == chapter.BookId && c.PublishedAt != null)
                 .OrderBy(c => c.Order)
-                .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, chapter.BookId, chapter.Book!.Title))
+                .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, chapter.BookId, chapter.Book!.Title, c.ReadCount))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken)
             : await context.Chapters
                 .Where(c => c.StoryId == chapter.StoryId && c.BookId == null && c.PublishedAt != null)
                 .OrderBy(c => c.Order)
-                .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, null, null))
+                .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, null, null, c.ReadCount))
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
     }
@@ -245,7 +248,8 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
             chapter.Book?.Title,
             null,
             readableChildren,
-            OrderAuthors(story.Authors.Count > 0 ? story.Authors : chapter.Authors, story.OwnerId));
+            OrderAuthors(story.Authors.Count > 0 ? story.Authors : chapter.Authors, story.OwnerId),
+            chapter.ReadCount);
     }
 
     private static Result<GetPublishedWorkMetaResponse> BuildBookMeta(Book book)
@@ -263,7 +267,7 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
         var readableChildren = book.Chapters
             .Where(c => c.IsPublished)
             .OrderBy(c => c.Order)
-            .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, book.Id, book.Title))
+            .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, book.Id, book.Title, c.ReadCount))
             .ToList();
 
         return new GetPublishedWorkMetaResponse(
@@ -286,7 +290,8 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
             book.Title,
             readableChildren.FirstOrDefault()?.Id,
             readableChildren,
-            OrderAuthors(book.Story.Authors.Count > 0 ? book.Story.Authors : book.Authors, book.Story.OwnerId));
+            OrderAuthors(book.Story.Authors.Count > 0 ? book.Story.Authors : book.Authors, book.Story.OwnerId),
+            book.ReadCount);
     }
 
     private static List<WorkAuthor> OrderAuthors(IEnumerable<Data.Authors.Domain.Author> authors, Ulid ownerId)

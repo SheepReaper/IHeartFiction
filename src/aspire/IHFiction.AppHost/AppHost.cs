@@ -37,6 +37,9 @@ var mongo = builder.AddMongoDB("mongo")
     .WithMongoExpress(options => options
         .WithLifetime(ContainerLifetime.Persistent));
 
+var redis = builder.AddRedis("redis")
+    .WithLifetime(ContainerLifetime.Persistent);
+
 var storiesDb = mongo.AddDatabase("stories-db");
 
 var fictionDb = postgres.AddDatabase("fiction-db");
@@ -57,7 +60,9 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithEnvironment("WebPush__PublicKey", vapidPubKey)
     .WithReference(keycloak)
     .WithReference(fictionDb)
+    .WithReference(redis)
     .WithReference(storiesDb)
+    .WaitFor(redis)
     .WaitFor(storiesDb)
     .WaitFor(fictionDb)
     .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
@@ -77,6 +82,8 @@ if (builder.Environment.IsDevelopment())
     postgres.WithDataVolume("pg18-final-20260804-115347-postgres-data");
 
     mongo.WithDataVolume("mongo-data");
+
+    redis.WithDataVolume("redis-data");
 
     keycloak.WithDataVolume("keycloak-data")
         .WithRealmImport("../../../config/fiction-realm.json");
@@ -113,6 +120,7 @@ if (builder.Environment.IsProduction())
 
     postgres.ConfigureForSwarm();
     mongo.ConfigureForSwarm();
+    redis.ConfigureForSwarm();
 
     keycloak.ConfigureForSwarm()
         .WithCloudflareTunnel(cfTunnel, hostname: "auth.iheartfiction.net", endpointName: "http");

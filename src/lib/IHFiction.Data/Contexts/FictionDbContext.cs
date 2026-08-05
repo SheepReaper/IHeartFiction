@@ -11,6 +11,8 @@ using IHFiction.Data.Stories.Domain;
 using MongoDB.Bson;
 using MongoDB.EntityFrameworkCore.Storage.ValueConversion;
 
+using Wolverine.EntityFrameworkCore;
+
 namespace IHFiction.Data.Contexts;
 
 public class FictionDbContext(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
@@ -25,6 +27,7 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
     public DbSet<Tag> Tags { get; set; } = null!;
     public DbSet<Anthology> Anthologies { get; set; } = null!;
     public DbSet<Work> Works { get; set; } = null!;
+    public DbSet<WorkRead> WorkReads { get; set; } = null!;
     public DbSet<UserAuthorFollow> UserAuthorFollows { get; set; } = null!;
     public DbSet<UserStoryFollow> UserStoryFollows { get; set; } = null!;
     public DbSet<DeviceAuthorFollow> DeviceAuthorFollows { get; set; } = null!;
@@ -38,10 +41,17 @@ public class FictionDbContext(DbContextOptions options) : DbContext(options), ID
     public DbSet<BrowserReportPayloadRecord> BrowserReportPayloads { get; set; } = null!;
 
     // apply configurations from assembly except for WorkBodyConfiguration
-    protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder
-        .HasDefaultSchema(Schemas.Application)
-        .ApplyConfigurationsFromAssembly(typeof(FictionDbContext).Assembly,
-            config => !config.IsAssignableTo(typeof(IEntityTypeConfiguration<WorkBody>)));
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder
+            .HasDefaultSchema(Schemas.Application)
+            .ApplyConfigurationsFromAssembly(typeof(FictionDbContext).Assembly,
+                config => !config.IsAssignableTo(typeof(IEntityTypeConfiguration<WorkBody>)));
+
+        // Keep Wolverine's durable inbox/outbox schema under the same EF migration
+        // lifecycle as the rest of the relational model.
+        modelBuilder.MapWolverineEnvelopeStorage(Schemas.Wolverine);
+    }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

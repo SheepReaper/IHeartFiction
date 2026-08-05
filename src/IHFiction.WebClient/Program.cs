@@ -120,6 +120,8 @@ builder.Services.AddAuthorizationBuilder();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
 builder.Services.AddScoped<ProtectedLocalStorage>();
 builder.Services.AddScoped<BrowserProtectedStorageService>();
+builder.Services.AddScoped<DeviceIdentityService>();
+builder.Services.AddScoped<ReadTrackingService>();
 builder.Services.AddScoped<ReaderProgressService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<ViewPreferencesService>();

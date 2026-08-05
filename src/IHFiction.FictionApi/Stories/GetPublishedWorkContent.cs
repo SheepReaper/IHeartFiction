@@ -40,7 +40,8 @@ internal sealed class GetPublishedWorkContent(
         string? Note1,
         string? Note2,
         DateTime ContentUpdatedAt,
-        DateTime WorkUpdatedAt);
+        DateTime WorkUpdatedAt,
+        int ReadCount);
 
     internal static class Errors
     {
@@ -132,7 +133,8 @@ internal sealed class GetPublishedWorkContent(
                 workBody.Note1,
                 workBody.Note2,
                 workBody.UpdatedAt,
-                story.UpdatedAt);
+                story.UpdatedAt,
+                story.ReadCount);
     }
 
     private async Task<Result<GetPublishedWorkContentResponse>> GetChapterContentAsync(
@@ -179,7 +181,8 @@ internal sealed class GetPublishedWorkContent(
                 workBody.Note1,
                 workBody.Note2,
                 workBody.UpdatedAt,
-                chapter.UpdatedAt);
+                chapter.UpdatedAt,
+                chapter.ReadCount);
     }
 
     public static string EndpointName => nameof(GetPublishedWorkContent);

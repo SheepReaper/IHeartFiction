@@ -71,8 +71,10 @@ internal static class ProductionConfigExtensions
             file.Secrets.Add("cloudflared-tunnel-token", new() { File = $"{SecretsPath}/cloudflared-tunnel-token.secret" });
             file.Secrets.Add("mongodb-root-pass", new() { File = $"{SecretsPath}/mongodb-root-pass.secret" });
             file.Secrets.Add("postgres-pass", new() { File = $"{SecretsPath}/postgres-pass.secret" });
+            file.Secrets.Add("redis-pass", new() { File = $"{SecretsPath}/redis-pass.secret" });
 
             file.Secrets.Add("ConnectionStrings__fiction-db", new() { File = $"{SecretsPath}/conn-fiction-db.secret" });
+            file.Secrets.Add("ConnectionStrings__redis", new() { File = $"{SecretsPath}/conn-redis.secret" });
             file.Secrets.Add("ConnectionStrings__stories-db", new() { File = $"{SecretsPath}/conn-stories-db.secret" });
 
             file.Secrets.Add("Authentication__Schemes__Keycloak__ClientSecret", new() { File = $"{SecretsPath}/keycloak-frontend-client.secret" });
@@ -113,6 +115,7 @@ internal static class ProductionConfigExtensions
             file.Remove("MIGRATIONS_IMAGE");
             file.Remove("MONGO_PASSWORD");
             file.Remove("POSTGRES_PASSWORD");
+            file.Remove("REDIS_PASSWORD");
             file.Remove("VAPIDPRIVKEY");
             file.Remove("VAPIDPUBKEY");
             file.Remove("WEB_IMAGE");
@@ -155,6 +158,23 @@ internal static class ProductionConfigExtensions
                 Type = "bind",
                 Source = $"{DataPath}/mongo",
                 Target = "/data/db"
+            });
+        });
+
+    public static IResourceBuilder<RedisResource> ConfigureForSwarm(this IResourceBuilder<RedisResource> builder) => builder
+        .WithDockerHealthcheck(["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/redis-pass)\" ping"])
+        .PublishAsDockerComposeService((_, service) =>
+        {
+            service.Environment.Remove("REDIS_PASSWORD");
+            service.Command = ["-c", "redis-server --requirepass \"$$(cat /run/secrets/redis-pass)\""];
+            service.Secrets.Add(new() { Source = "redis-pass" });
+
+            service.AddVolume(new()
+            {
+                Name = "redis-data",
+                Type = "bind",
+                Source = $"{DataPath}/redis",
+                Target = "/data"
             });
         });
 
@@ -240,6 +260,11 @@ internal static class ProductionConfigExtensions
             service.Environment.Remove("ConnectionStrings__stories-db");
             service.Environment.Remove("STORIES_DB_PASSWORD");
             service.Environment.Remove("STORIES_DB_URI");
+            service.Environment.Remove("ConnectionStrings__redis");
+            service.Environment.Remove("REDIS_HOST");
+            service.Environment.Remove("REDIS_PASSWORD");
+            service.Environment.Remove("REDIS_PORT");
+            service.Environment.Remove("REDIS_URI");
             service.Environment.Remove("WebPush__PrivateKey");
             service.Environment.Remove("WebPush__PublicKey");
 
@@ -270,6 +295,7 @@ internal static class ProductionConfigExtensions
             service.AddGracefulUpdate();
 
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
+            service.Secrets.Add(new() { Source = "ConnectionStrings__redis" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
             service.Secrets.Add(new() { Source = "KeycloakAdminClientOptions__AuthClientSecret" });

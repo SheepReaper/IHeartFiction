@@ -43,12 +43,14 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="Description">Description of the book</param>
     /// <param name="Order">Order of the book within the story</param>
     /// <param name="Chapters">Collection of chapters within the book</param>
+    /// <param name="ReadCount">Qualified unique readers</param>
     internal sealed record BookItem(
         Ulid Id,
         string Title,
         string Description,
         int Order,
-        IEnumerable<ChapterItem> Chapters
+        IEnumerable<ChapterItem> Chapters,
+        int ReadCount
     );
 
     /// <summary>
@@ -57,11 +59,13 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="Id">Unique identifier for the chapter</param>
     /// <param name="Title">Title of the chapter</param>
     /// <param name="Order">Order of the chapter within the book</param>
+    /// <param name="ReadCount">Qualified unique readers</param>
 
     internal sealed record ChapterItem(
         Ulid Id,
         string Title,
-        int Order
+        int Order,
+        int ReadCount
     );
 
     /// <summary>
@@ -82,6 +86,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="Tags">Collection of tags associated with this story</param>
     /// <param name="Books">Collection of books within this story (if applicable)</param>
     /// <param name="Chapters">Collection of chapters within this story (if applicable)</param>
+    /// <param name="ReadCount">Qualified unique readers</param>
     internal sealed record GetPublishedStoryResponse(
         Ulid Id,
         string Title,
@@ -97,8 +102,17 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
         IEnumerable<StoryAuthor> Authors,
         IEnumerable<StoryTag> Tags,
         IEnumerable<BookItem> Books,
-        IEnumerable<ChapterItem> Chapters
-    );
+        IEnumerable<ChapterItem> Chapters,
+        int ReadCount
+    )
+    {
+        public GetPublishedStoryResponse(Ulid id, string title, string description, DateTime? publishedAt,
+            bool isPublished, DateTime updatedAt, DateTime createdAt, Ulid ownerId, string ownerName,
+            string type, bool hasCoverImage, IEnumerable<StoryAuthor> authors, IEnumerable<StoryTag> tags,
+            IEnumerable<BookItem> books, IEnumerable<ChapterItem> chapters)
+            : this(id, title, description, publishedAt, isPublished, updatedAt, createdAt, ownerId, ownerName,
+                type, hasCoverImage, authors, tags, books, chapters, 0) { }
+    }
 
     public async Task<Result<GetPublishedStoryResponse>> HandleAsync(
         Ulid id,
@@ -141,11 +155,12 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
                 .Select(b => new BookItem(b.Id, b.Title, b.Description, b.Order, b.Chapters
                     .Where(c => c.IsPublished)
                     .OrderBy(c => c.Order)
-                    .Select(c => new ChapterItem(c.Id, c.Title, c.Order)))),
+                    .Select(c => new ChapterItem(c.Id, c.Title, c.Order, c.ReadCount)), b.ReadCount)),
             story.Chapters
                 .Where(c => c.BookId == null && c.IsPublished)
                 .OrderBy(c => c.Order)
-                .Select(c => new ChapterItem(c.Id, c.Title, c.Order))
+                .Select(c => new ChapterItem(c.Id, c.Title, c.Order, c.ReadCount)),
+            story.ReadCount
             );
     }
 

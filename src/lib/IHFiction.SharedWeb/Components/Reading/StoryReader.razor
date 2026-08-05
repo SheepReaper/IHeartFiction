@@ -1,9 +1,11 @@
 @inherits CancellableComponent
 @inject WorkService WorkService
 @inject ReaderProgressService ReaderProgressService
+@inject ReadTrackingService ReadTrackingService
 @inject NavigationManager Navigation
 @inject ThemeService theme
 @inject MarkdownPipeline mdp
+@inject IJSRuntime JS
 
 @if (isLoading)
 {
@@ -41,7 +43,7 @@ else if (Meta is not null)
         && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
     var isEndOfStory = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
 
-    <div class="section">
+    <div class="section" @ref="readerElement">
         <div class="container">
             <div class="level ihf-reader-header">
                 <div class="level-left">
@@ -52,6 +54,10 @@ else if (Meta is not null)
                             {
                                 <p class="subtitle is-6 mb-0">@Byline</p>
                             }
+                            <p class="is-size-7 has-text-grey" title="@($"{Meta.ReadCount:N0} reads")">
+                                <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                                <span>@ReadCountFormatter.Format(Meta.ReadCount) reads</span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -203,6 +209,10 @@ else if (Meta is not null)
     private string? appliedParameterKey;
     private string? handledParameterKey;
     private bool _disposed;
+    private ElementReference readerElement;
+    private IJSObjectReference? readTrackingModule;
+    private DotNetObjectReference<StoryReader>? dotNetReference;
+    private string? observedWorkId;
 
     private string? Byline => Meta?.Authors?.Any() == true
         ? $"by {string.Join(", ", Meta.Authors.Select(a => a.Name))}"
@@ -231,6 +241,11 @@ else if (Meta is not null)
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (content is not null && observedWorkId != WorkId)
+        {
+            await StartReadObservationAsync();
+        }
+
         var parameterKey = BuildParameterKey();
         if (Meta is null || handledParameterKey == parameterKey)
         {
@@ -268,10 +283,6 @@ else if (Meta is not null)
                 content = result.Value;
                 loadedContentWorkId = WorkId;
 
-                if (Meta?.WorkType == "Chapter" && Meta.StoryId is not null)
-                {
-                    await ReaderProgressService.SetLastReadChapterIdAsync(Meta.StoryId.ToString()!, WorkId);
-                }
             }
             else
             {
@@ -291,6 +302,27 @@ else if (Meta is not null)
 
         isLoading = false;
         StateHasChanged();
+    }
+
+    private async Task StartReadObservationAsync()
+    {
+        readTrackingModule ??= await JS.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/IHFiction.SharedWeb/Components/Reading/StoryReader.razor.js");
+        dotNetReference ??= DotNetObjectReference.Create(this);
+        await readTrackingModule.InvokeVoidAsync("observe", readerElement, dotNetReference);
+        observedWorkId = WorkId;
+    }
+
+    [JSInvokable]
+    public async Task OnQualifiedRead(int activeSeconds)
+    {
+        if (!Ulid.TryParse(WorkId, out var workId)) return;
+
+        var result = await ReadTrackingService.RecordQualifiedReadAsync(workId, activeSeconds, CancellationToken);
+        if (result.IsSuccess && Meta?.WorkType == "Chapter" && Meta.StoryId is not null)
+        {
+            await ReaderProgressService.SetLastReadChapterIdAsync(Meta.StoryId.ToString()!, WorkId);
+        }
     }
 
     private async Task NavigateToSelectedReadableWorkAsync()
@@ -328,7 +360,8 @@ else if (Meta is not null)
                 child.Id.ToString(),
                 child.Title,
                 child.Order,
-                child.BookTitle))
+                child.BookTitle,
+                child.ReadCount))
             .ToList() ?? [];
     }
 
@@ -337,17 +370,30 @@ else if (Meta is not null)
         InvokeAsync(StateHasChanged);
     }
 
-    protected override ValueTask DisposeAsyncCore()
+    protected override async ValueTask DisposeAsyncCore()
     {
         if (_disposed)
         {
-            return ValueTask.CompletedTask;
+            return;
         }
 
         theme.ThemeChanged -= OnThemeChanged;
+        if (readTrackingModule is not null)
+        {
+            try
+            {
+                await readTrackingModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // The browser circuit is already gone; client-side observation owns its cleanup.
+                observedWorkId = null;
+            }
+        }
+        dotNetReference?.Dispose();
         _disposed = true;
 
-        return base.DisposeAsyncCore();
+        await base.DisposeAsyncCore();
     }
 
     private static string ReadHref(string workId) => $"/read/{workId}";

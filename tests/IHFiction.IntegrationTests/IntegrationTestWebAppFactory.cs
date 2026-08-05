@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 
+using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Containers;
+
 using MongoDB.Driver;
 
 using Npgsql;
@@ -20,6 +23,8 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
 {
     const string PgContainerName = "ihfiction-postgres-tests";
     const string MongoContainerName = "ihfiction-mongo-tests";
+    const string RedisContainerName = "ihfiction-redis-tests";
+    const ushort RedisPort = 6379;
     private readonly PostgreSqlContainer _pgContainer = new PostgreSqlBuilder("library/postgres:17.4")
         .WithDatabase("fiction-db")
         .WithName(PgContainerName)
@@ -33,6 +38,12 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
         .WithLabel("reuse-id", MongoContainerName) // Explicit name for reuse
         .Build();
 
+    private readonly IContainer _redisContainer = new ContainerBuilder("redis:8.2-alpine")
+        .WithName(RedisContainerName)
+        .WithPortBinding(RedisPort, true)
+        .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(RedisPort))
+        .Build();
+
     public string PostgreSqlConnectionString => _pgContainer.GetConnectionString();
 
     public NpgsqlConnectionStringBuilder GetNpgsqlConnectionStringBuilder() => new(_pgContainer.GetConnectionString());
@@ -41,6 +52,7 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
     {
         await _pgContainer.StartAsync(TestContext.Current.CancellationToken);
         await _mongoContainer.StartAsync(TestContext.Current.CancellationToken);
+        await _redisContainer.StartAsync(TestContext.Current.CancellationToken);
         await CleanupLeftoverTestDatabasesAsync();
     }
 
@@ -93,14 +105,22 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        // Stop Wolverine's background durability agents before their PostgreSQL
+        // and Redis dependencies are torn down.
+        await base.DisposeAsync();
         await _pgContainer.StopAsync(TestContext.Current.CancellationToken);
         await _mongoContainer.StopAsync(TestContext.Current.CancellationToken);
+        await _redisContainer.StopAsync(TestContext.Current.CancellationToken);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("ConnectionStrings:fiction-db", _pgContainer.GetConnectionString());
         builder.UseSetting("ConnectionStrings:stories-db", _mongoContainer.GetConnectionString());
-        
+        builder.UseSetting(
+            "ConnectionStrings:redis",
+            $"{_redisContainer.Hostname}:{_redisContainer.GetMappedPublicPort(RedisPort)},abortConnect=false");
+
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton(TimeProvider.System);

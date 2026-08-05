@@ -79,6 +79,7 @@ internal sealed class GetOwnStories(
     /// <param name="HasChapters">Whether the story has chapters</param>
     /// <param name="HasBooks">Whether the story has books</param>
     /// <param name="IsValid">Whether the story is in a valid state for operations</param>
+    /// <param name="ReadCount">Qualified unique readers</param>
     internal sealed record AuthorStoryItem(
         Ulid Id,
         string Title,
@@ -94,7 +95,15 @@ internal sealed class GetOwnStories(
         bool HasContent,
         bool HasChapters,
         bool HasBooks,
-        bool IsValid);
+        bool IsValid,
+        int ReadCount)
+    {
+        public AuthorStoryItem(Ulid id, string title, string description, DateTime? publishedAt, bool isPublished,
+            DateTime updatedAt, DateTime createdAt, bool isOwned, IEnumerable<string> collaboratorNames,
+            IEnumerable<string> tags, bool hasCoverImage, bool hasContent, bool hasChapters, bool hasBooks, bool isValid)
+            : this(id, title, description, publishedAt, isPublished, updatedAt, createdAt, isOwned, collaboratorNames,
+                tags, hasCoverImage, hasContent, hasChapters, hasBooks, isValid, 0) { }
+    }
 
     public async Task<Result<PagedCollection<AuthorStoryItem>>> HandleAsync(
         GetOwnStoriesQuery query,
@@ -150,7 +159,8 @@ internal sealed class GetOwnStories(
                 s.HasContent,
                 s.HasChapters,
                 s.HasBooks,
-                s.IsValid)),
+                s.IsValid,
+                s.ReadCount)),
             pagination,
             cancellationToken);
 

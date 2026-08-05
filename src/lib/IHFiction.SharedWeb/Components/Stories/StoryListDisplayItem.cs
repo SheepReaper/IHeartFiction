@@ -25,4 +25,5 @@ public sealed record StoryListDisplayItem(
     bool CanRead = false,
     bool IsPublished = false,
     bool HasBooks = false,
-    bool HasChapters = false);
+    bool HasChapters = false,
+    int ReadCount = 0);

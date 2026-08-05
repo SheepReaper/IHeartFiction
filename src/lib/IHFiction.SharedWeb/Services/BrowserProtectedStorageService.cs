@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.JSInterop;
+using System.Security.Cryptography;
 
 namespace IHFiction.SharedWeb.Services;
 
@@ -28,6 +29,13 @@ public sealed class BrowserProtectedStorageService(ProtectedLocalStorage storage
         catch (JSDisconnectedException)
         {
             // Circuit was disconnected; return default value.
+            return default;
+        }
+        catch (CryptographicException)
+        {
+            // Data-protection keys can change between deployments or local AppHost runs.
+            // Treat an unreadable browser value as stale instead of terminating the circuit.
+            await DeleteAsync(key);
             return default;
         }
     }

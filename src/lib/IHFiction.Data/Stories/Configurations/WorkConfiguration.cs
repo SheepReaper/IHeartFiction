@@ -27,5 +27,6 @@ internal sealed class WorkConfiguration : IEntityTypeConfiguration<Work>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(work => work.Title);
+        builder.Property(work => work.ReadCount).HasDefaultValue(0);
     }
 }
