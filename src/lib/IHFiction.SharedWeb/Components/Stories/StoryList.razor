@@ -452,7 +452,7 @@
 
     private static int NormalizePage(int? page) => page is > 0 ? page.Value : 1;
 
-    private static string NormalizeSort(string? sort) => AllowedSorts.Contains(sort) ? sort! : DefaultSort;
+    private static string NormalizeSort(string? sort) => AllowedSorts.Contains(sort) ? sort ?? DefaultSort : DefaultSort;
 
     private static string BuildStateKey(int page, string? search, string? sort, string? authorId)
         => $"StoryList:{page}:{search ?? string.Empty}:{sort ?? string.Empty}:{authorId ?? string.Empty}";

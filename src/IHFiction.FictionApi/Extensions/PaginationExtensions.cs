@@ -58,7 +58,7 @@ internal static class PaginationExtensions
         IEnumerable<LinkItem>? extraCollectionLinks = null)
     {
         if (sourceResult.IsFailure)
-            return sourceResult.DomainError!;
+            return sourceResult.DomainError;
 
         try
         {

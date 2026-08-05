@@ -257,7 +257,7 @@ else if (story != null)
 }
 
 @code {
-    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+    [Parameter, EditorRequired] public string StoryId { get; set; } = string.Empty;
 
     private LinkedOfGetPublishedStoryResponse? story;
     private LinkedPagedCollectionOfListPublishedStoryChaptersItem? chapters;

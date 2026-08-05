@@ -15,15 +15,14 @@ internal static class GravatarUrlBuilder
 #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase email and hash
         var normalized = gravatarEmail.Trim().ToLowerInvariant();
 #pragma warning restore CA1308
-
 #pragma warning disable CA5351 // MD5 is required by Gravatar hashing protocol
+#pragma warning disable S4790 // MD5 is required by Gravatar hashing protocol
         var hashBytes = MD5.HashData(Encoding.UTF8.GetBytes(normalized));
+#pragma warning restore S4790
 #pragma warning restore CA5351
-
 #pragma warning disable CA1308 // Gravatar canonicalization requires lowercase email and hash
         var hash = Convert.ToHexString(hashBytes).ToLowerInvariant();
 #pragma warning restore CA1308
-
         return $"https://www.gravatar.com/avatar/{hash}?s=512&d=identicon&r=g";
     }
 }

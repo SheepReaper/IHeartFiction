@@ -130,13 +130,15 @@ internal sealed class GetOwnBookContent(
             wb.UpdatedAt
         ));
 
+        var story = book.Story;
+
         return new GetOwnBookContentResponse(
             book.Id,
             book.Title,
             book.Description ?? string.Empty,
             book.Order,
-            book.Story!.Id,
-            book.Story.Title,
+            story.Id,
+            story.Title,
             chapterBodies,
             book.PublishedAt,
             book.UpdatedAt

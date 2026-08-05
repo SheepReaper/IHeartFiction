@@ -42,8 +42,8 @@
 @code {
     private const string DefaultImagePath = "/_content/IHFiction.SharedWeb/og-image.png";
 
-    [Parameter, EditorRequired] public string Title { get; set; } = null!;
-    [Parameter, EditorRequired] public string Description { get; set; } = null!;
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Description { get; set; } = string.Empty;
     [Parameter] public string? PageUrl { get; set; }
     [Parameter] public string? CanonicalUrl { get; set; }
     [Parameter] public bool EmitCanonical { get; set; } = true;

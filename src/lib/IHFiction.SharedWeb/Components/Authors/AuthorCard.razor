@@ -118,7 +118,7 @@ else
 }
 
 @code {
-    [Parameter, EditorRequired] public LinkedOfListAuthorsItem Author { get; set; } = null!;
+    [Parameter, EditorRequired] public LinkedOfListAuthorsItem Author { get; set; } = new();
     [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 
     private static string GetInitials(string name)

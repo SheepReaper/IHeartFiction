@@ -272,9 +272,9 @@ else
 
                 if (result.IsFailure) _error = result.DomainError;
 
-                if (_error is null && result.Value!.Chapters.Count > 0)
+                if (_error is null && result.Value is { } loadedBook && loadedBook.Chapters.Count > 0)
                 {
-                    var firstChapter = result.Value.Chapters
+                    var firstChapter = loadedBook.Chapters
                     .OrderBy(c => c.Order)
                     .FirstOrDefault();
 
@@ -519,7 +519,7 @@ else
     }
 
     private string GetInitialStoryType() => SupportedStoryTypes.Contains(InitialStoryType ?? string.Empty)
-        ? InitialStoryType!
+        ? InitialStoryType ?? string.Empty
         : SingleBody;
 
     private static string GetLabel(string storyType) => storyType switch

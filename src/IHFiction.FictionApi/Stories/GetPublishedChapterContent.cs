@@ -109,7 +109,7 @@ internal sealed class GetPublishedChapterContent(
 
         var workBody = await cursor.FirstOrDefaultAsync(cancellationToken);
 
-        var story = chapter.Story ?? bookStory!.Story!;
+        var story = chapter.Story ?? bookStory!.Story;
 
         return workBody is null
             ? Errors.ContentNotFound

@@ -32,7 +32,7 @@
 }
 
 @code {
-    [Parameter] public string WorkId { get; set; } = null!;
+    [Parameter] public string WorkId { get; set; } = string.Empty;
 
     private LinkedOfGetPublishedWorkMetaResponse? meta;
     private string? loadedWorkId;

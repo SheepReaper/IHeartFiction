@@ -33,6 +33,9 @@ internal static partial class InputSanitizationService
 
     [GeneratedRegex(@"\n\s*\n\s*\n+", RegexOptions.Multiline)]
     private static partial Regex ExcessiveBlankLinesRegex();
+
+    [GeneratedRegex("^[a-zA-Z0-9._-]{2,100}$", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex PatreonSlugRegex();
     /// <summary>
     /// Sanitizes general text input by trimming and normalizing whitespace.
     /// Used for titles, descriptions, names, and other text fields.
@@ -151,7 +154,7 @@ internal static partial class InputSanitizationService
         }
 
         var slug = segments[0];
-        if (!Regex.IsMatch(slug, "^[a-zA-Z0-9._-]{2,100}$"))
+        if (!PatreonSlugRegex().IsMatch(slug))
         {
             return null;
         }
