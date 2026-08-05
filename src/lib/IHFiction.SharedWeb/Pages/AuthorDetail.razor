@@ -150,7 +150,7 @@ else if (author != null)
 }
 
 @code {
-    [Parameter, EditorRequired] public string AuthorId { get; set; } = null!;
+    [Parameter, EditorRequired] public string AuthorId { get; set; } = string.Empty;
 
     private LinkedOfGetAuthorResponse? author;
     private bool isLoading = true;
@@ -165,7 +165,7 @@ else if (author != null)
     private string MetadataDescription => author switch
     {
         null => "Explore author profiles, published stories, and creator updates on IHeartFiction.",
-        _ when !string.IsNullOrWhiteSpace(author.Profile.Bio) => author.Profile.Bio!,
+        _ when !string.IsNullOrWhiteSpace(author.Profile.Bio) => author.Profile.Bio,
         _ => $"Read stories by {author.Name} on IHeartFiction. {author.PublishedStories.Count} published {(author.PublishedStories.Count == 1 ? "story" : "stories")}."
     };
 

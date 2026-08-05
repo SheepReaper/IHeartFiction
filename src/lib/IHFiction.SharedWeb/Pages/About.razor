@@ -229,21 +229,12 @@
 
     private static string GravatarEmail => "bgonza868@gmail.com";
 
-    private static string GravatarUrl => $"https://www.gravatar.com/avatar/{Md5Hash(GravatarEmail.Trim().ToLowerInvariant())}?s=256&d=identicon&r=g";
+    private static string GravatarUrl => $"https://www.gravatar.com/avatar/{Sha256Hash(GravatarEmail.Trim().ToLowerInvariant())}?s=256&d=identicon&r=g";
 
-    private static string Md5Hash(string input)
+    private static string Sha256Hash(string input)
     {
-        #pragma warning disable CA5351 // Just using it for encoding
-        using var md5 = MD5.Create();
-        #pragma warning restore CA5351
-
         var bytes = Encoding.UTF8.GetBytes(input ?? string.Empty);
-        var hash = md5.ComputeHash(bytes);
-        var sb = new StringBuilder(hash.Length * 2);
-
-        foreach (var b in hash)
-            sb.Append(b.ToString("x2"));
-
-        return sb.ToString();
+        var hash = SHA256.HashData(bytes);
+        return Convert.ToHexStringLower(hash);
     }
 }

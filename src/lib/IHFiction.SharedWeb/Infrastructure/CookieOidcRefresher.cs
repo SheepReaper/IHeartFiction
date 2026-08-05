@@ -88,7 +88,9 @@ public sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> oi
         var oidcOptions = oidcOptionsMonitor.Get(oidcScheme);
         var now = oidcOptions.TimeProvider?.GetUtcNow() ?? throw new InvalidOperationException("No time provider configured in OIDC options.");
 
-        var oidcConfiguration = await oidcOptions.ConfigurationManager!.GetConfigurationAsync(cancellationToken);
+        var configurationManager = oidcOptions.ConfigurationManager
+            ?? throw new InvalidOperationException("No configuration manager configured in OIDC options.");
+        var oidcConfiguration = await configurationManager.GetConfigurationAsync(cancellationToken);
         var tokenEndpoint = oidcConfiguration.TokenEndpoint;
 
         using var body = new FormUrlEncodedContent(new Dictionary<string, string?>

@@ -42,7 +42,7 @@ public sealed class OpenApiClientGenerator : IIncrementalGenerator
         try
         {
             var document = OpenApiDocument
-                .FromJsonAsync(input.Source)
+                .FromJsonAsync(input.Source, context.CancellationToken)
                 .GetAwaiter()
                 .GetResult();
 

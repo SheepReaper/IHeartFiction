@@ -182,6 +182,6 @@ else
 }
 
 @code {
-    [Parameter, EditorRequired] public LinkedOfListPublishedStoriesItem Story { get; set; } = null!;
+    [Parameter, EditorRequired] public LinkedOfListPublishedStoriesItem Story { get; set; } = new();
     [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 }

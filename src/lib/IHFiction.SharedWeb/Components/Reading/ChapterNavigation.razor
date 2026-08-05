@@ -73,7 +73,7 @@
 
 @code {
     [Parameter] public string? StoryId { get; set; }
-    [Parameter, EditorRequired] public string CurrentChapterId { get; set; } = null!;
+    [Parameter, EditorRequired] public string CurrentChapterId { get; set; } = string.Empty;
     [Parameter] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
     [Parameter] public bool ShowLabels { get; set; } = false;
 

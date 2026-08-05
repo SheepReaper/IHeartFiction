@@ -40,7 +40,7 @@
 }
 
 @code {
-    [Parameter, EditorRequired] public string StoryId { get; set; } = null!;
+    [Parameter, EditorRequired] public string StoryId { get; set; } = string.Empty;
     [Parameter, EditorRequired] public IEnumerable<ReaderChapterNavItem> Chapters { get; set; } = [];
 
     private List<ReaderChapterNavItem> GetOrderedChapters() => Chapters

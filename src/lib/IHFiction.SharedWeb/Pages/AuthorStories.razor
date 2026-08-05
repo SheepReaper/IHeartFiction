@@ -2,6 +2,7 @@
 @using IHFiction.SharedWeb.Services
 @using IHFiction.SharedKernel.Infrastructure
 @inject PersistentComponentState ApplicationState
+@inject AuthorService AuthorService
 @implements IDisposable
 
 @page "/authors/{authorId}/stories"
@@ -15,8 +16,6 @@
     AuthorId="@AuthorId" />
 
 @code {
-    [Inject] AuthorService AuthorService { get; set; } = default!;
-
     [Parameter, EditorRequired] public string AuthorId { get; set; }
     [SupplyParameterFromQuery(Name = "page")]
     public int? Page { get; set; }

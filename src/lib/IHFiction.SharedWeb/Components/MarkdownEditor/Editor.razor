@@ -96,7 +96,7 @@
         {
             _charCount = markdown.Length;
             // Split on whitespace and count non-empty tokens
-            var tokens = Regex.Split(markdown.Trim(), "\\s+");
+            var tokens = Regex.Split(markdown.Trim(), "\\s+", RegexOptions.None, TimeSpan.FromSeconds(1));
             _wordCount = tokens.Count(t => !string.IsNullOrWhiteSpace(t));
         }
 

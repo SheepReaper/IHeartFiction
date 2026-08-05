@@ -196,8 +196,8 @@ else if (Meta is not null)
 </script>
 
 @code {
-    [Parameter, EditorRequired] public string WorkId { get; set; } = null!;
-    [Parameter, EditorRequired] public LinkedOfGetPublishedWorkMetaResponse Meta { get; set; } = null!;
+    [Parameter, EditorRequired] public string WorkId { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public LinkedOfGetPublishedWorkMetaResponse Meta { get; set; } = new();
 
     [CascadingParameter(Name = HttpContextItemKey)]
     private string? Nonce { get; set; }
@@ -319,9 +319,9 @@ else if (Meta is not null)
         if (!Ulid.TryParse(WorkId, out var workId)) return;
 
         var result = await ReadTrackingService.RecordQualifiedReadAsync(workId, activeSeconds, CancellationToken);
-        if (result.IsSuccess && Meta?.WorkType == "Chapter" && Meta.StoryId is not null)
+        if (result.IsSuccess && Meta?.WorkType == "Chapter" && Meta.StoryId is { } storyId)
         {
-            await ReaderProgressService.SetLastReadChapterIdAsync(Meta.StoryId.ToString()!, WorkId);
+            await ReaderProgressService.SetLastReadChapterIdAsync(storyId.ToString(), WorkId);
         }
     }
 

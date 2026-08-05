@@ -111,7 +111,13 @@ else
         {
             if (!_isFollowing)
             {
-                var subscription = await module!.InvokeAsync<BrowserPushSubscription?>("requestSubscription", WebPushOptions.Value.PublicKey);
+                if (module is null)
+                {
+                    _error = "Notifications are unavailable right now.";
+                    return;
+                }
+
+                var subscription = await module.InvokeAsync<BrowserPushSubscription?>("requestSubscription", WebPushOptions.Value.PublicKey);
                 if (subscription is null)
                 {
                     _error = "Notifications are not available or permission was not granted.";
