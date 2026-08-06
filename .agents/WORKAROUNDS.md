@@ -86,20 +86,6 @@ Use `aspire do push -o infra -v` only when intentionally pushing images.
 - **Why it is needed:** The production Compose customization clears `depends_on`, `expose`, and container `restart` values that are not useful for Swarm. It also manually sets `deploy.replicas` from Aspire replica annotations because those annotations are not emitted as Swarm replicas in the generated Compose output. `DockerSwarmExtensions.AddGracefulUpdate` avoids fields whose generated schema typing has had upstream issues.
 - **Removal criteria:** Remove the cleanup/manual assignment only after generated Aspire Docker Compose output from the repo's pinned Aspire version can be deployed to Swarm without those edits; update `LIMITATIONS.md` at the same time.
 
-## Temporary transitive vulnerability package overrides
-
-- **Location:** `src/Directory.Build.props`
-- **Symptom:** Transitive dependencies from tooling/analyzers have had vulnerability advisories, and central package overrides are used to force safer versions.
-- **Why it is needed:** The source-level build props currently add direct package references for `SharpCompress`, `Snappier`, and `StreamJsonRpc` with comments pointing to the relevant GitHub security advisories. These references are not domain dependencies; they are temporary dependency-resolution overrides.
-- **Removal criteria:** Remove each direct reference when the packages that originally brought in the vulnerable transitive dependencies have upgraded far enough that `dotnet list package --vulnerable --include-transitive` stays clean without the override.
-
-Suggested check:
-
-```powershell
-dotnet list package --vulnerable --include-transitive
-dotnet build .\src\IHFiction.WebClient\ --no-restore
-```
-
 ## Microsoft.OpenApi 2.x version range pin
 
 - **Location:** `Directory.Packages.props`

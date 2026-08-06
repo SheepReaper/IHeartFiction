@@ -26,6 +26,7 @@ public sealed class RecordWorkReadDispatchTests
 
         Assert.True(result.IsSuccess);
         await bus.Received(1).PublishAsync(Arg.Is<RecordWorkReadRequested>(request =>
+            request != null &&
             request.WorkId == workId
             && request.AuthenticatedUserId == null
             && request.DeviceId == "valid-device-id"
