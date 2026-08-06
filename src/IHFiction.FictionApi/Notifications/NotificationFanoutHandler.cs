@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Notifications.Domain;
+using IHFiction.Data.Stories.Domain;
 
 using IHFiction.SharedKernel.Notifications;
 
@@ -14,6 +15,7 @@ using WebPush;
 namespace IHFiction.FictionApi.Notifications;
 
 public sealed record StoryPublishedNotificationRequested(Ulid StoryId);
+public sealed record StoryCompletedNotificationRequested(Ulid StoryId);
 public sealed record ChapterPublishedNotificationRequested(Ulid ChapterId);
 
 public sealed partial class NotificationFanoutHandler(
@@ -83,6 +85,68 @@ public sealed partial class NotificationFanoutHandler(
 
         var deviceIds = await context.DeviceAuthorFollows
             .Where(follow => follow.AuthorId == story.OwnerId)
+            .Select(follow => follow.DeviceId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        await AddMissingUserDeliveriesAsync(notification.Id, userIds, notification.EventOccurredAt, cancellationToken);
+        await AddMissingDeviceDeliveriesAsync(notification.Id, deviceIds, notification.EventOccurredAt, cancellationToken);
+        await SendDevicePushNotificationsAsync(deviceIds, notification, cancellationToken);
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task Handle(
+        StoryCompletedNotificationRequested message,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        var story = await context.Stories
+            .Include(candidate => candidate.Owner)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                candidate => candidate.Id == message.StoryId
+                    && candidate.PublishedAt != null
+                    && candidate.CompletionStatus == StoryCompletionStatus.Complete,
+                cancellationToken);
+
+        if (story is null)
+        {
+            return;
+        }
+
+        var notification = await context.Notifications
+            .FirstOrDefaultAsync(candidate => candidate.NotificationKey == BuildStoryCompletedNotificationKey(story.Id), cancellationToken);
+
+        if (notification is null)
+        {
+            notification = new NotificationRecord
+            {
+                NotificationKey = BuildStoryCompletedNotificationKey(story.Id),
+                Kind = NotificationKinds.StoryCompleted,
+                Title = Truncate($"{story.Title} is complete", 200),
+                Body = Truncate($"{story.Owner.Name} marked {story.Title} as complete.", 500),
+                TargetPath = $"/stories/{story.Id}",
+                EventOccurredAt = story.UpdatedAt,
+                AuthorId = story.OwnerId,
+                StoryId = story.Id
+            };
+
+            context.Notifications.Add(notification);
+        }
+
+        var userIds = await context.UserStoryFollows
+            .Where(follow => follow.StoryId == story.Id && follow.UserId != story.OwnerId)
+            .Select(follow => follow.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var deviceIds = await context.DeviceStoryFollows
+            .Where(follow => follow.StoryId == story.Id)
             .Select(follow => follow.DeviceId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -329,6 +393,8 @@ public sealed partial class NotificationFanoutHandler(
     }
 
     private static string BuildStoryNotificationKey(Ulid storyId) => $"{NotificationKinds.StoryPublished}:{storyId}";
+
+    private static string BuildStoryCompletedNotificationKey(Ulid storyId) => $"{NotificationKinds.StoryCompleted}:{storyId}";
 
     private static string BuildChapterNotificationKey(Ulid chapterId) => $"{NotificationKinds.ChapterPublished}:{chapterId}";
 

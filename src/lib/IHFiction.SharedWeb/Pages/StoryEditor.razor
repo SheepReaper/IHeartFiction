@@ -77,6 +77,22 @@ else
         </div>
         <div class="column">
             <div class="box">
+                <h2 class="subtitle">Completion status</h2>
+                <div class="field">
+                    <label class="label" for="completion-status">Story status</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="completion-status" @bind="EditorService.CurrentStory.CompletionStatus" disabled="@_isBusy">
+                                <option value="@StoryCompletionStatus.InProgress">In progress</option>
+                                <option value="@StoryCompletionStatus.Complete">Complete</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="help">Readers can use this status to find finished stories.</p>
+                </div>
+            </div>
+
+            <div class="box">
                 <h3 class="subtitle">Cover Image</h3>
 
                 @if (EditorService.CurrentCoverPreviewUrl is { } coverPreviewUrl)

@@ -12,6 +12,12 @@ internal sealed class StoryConfiguration : IEntityTypeConfiguration<Story>
             .HasColumnName("description")
             .IsRequired();
 
+        builder.Property(story => story.CompletionStatus)
+            .HasColumnName("completion_status")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.HasOne(story => story.Cover)
             .WithOne(cover => cover.Story)
             .HasForeignKey<StoryCover>(cover => cover.StoryId)

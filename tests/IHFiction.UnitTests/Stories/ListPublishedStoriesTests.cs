@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
+using IHFiction.Data.Authors.Domain;
+using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
+using IHFiction.Data.Stories.Domain;
 
 namespace IHFiction.UnitTests.Stories;
 
@@ -53,6 +58,44 @@ public class ListPublishedStoriesTests
         Assert.False(item.HasChapters);
         Assert.False(item.HasBooks);
         Assert.Equal(0, item.ChapterCount);
+        Assert.Equal("InProgress", item.CompletionStatus);
+    }
+
+    [Theory]
+    [InlineData(StoryCompletionStatus.InProgress, "InProgress")]
+    [InlineData(StoryCompletionStatus.Complete, "Complete")]
+    public void PublishedStoryItem_ExposesCompletionStatus(StoryCompletionStatus status, string expected)
+    {
+        var item = new ListPublishedStories.ListPublishedStoriesItem(
+            Ulid.NewUlid(), "Story", "Description", DateTime.UtcNow, DateTime.UtcNow,
+            true, false, false, false, 0, Ulid.NewUlid(), "Author", 0, status.ToString());
+
+        Assert.Equal(expected, item.CompletionStatus);
+    }
+
+    [Fact]
+    public async Task HandleAsync_CompletionFilter_ReturnsOnlyMatchingStories()
+    {
+        await using var context = CreateContext();
+        var author = new Author { Id = Ulid.NewUlid(), UserId = Guid.NewGuid(), Name = "Author" };
+        context.AddRange(
+            author,
+            CreatePublishedStory(author, "Ongoing", StoryCompletionStatus.InProgress),
+            CreatePublishedStory(author, "Finished", StoryCompletionStatus.Complete));
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(CompletionStatus: "Complete"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Data);
+        Assert.Equal("Finished", item.Title);
+        Assert.Equal("Complete", item.CompletionStatus);
     }
 
     [Fact]
@@ -320,6 +363,28 @@ public class ListPublishedStoriesTests
         var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
 
         return new LinkService(linkGenerator, httpContextAccessor);
+    }
+
+    private static Story CreatePublishedStory(
+        Author owner,
+        string title,
+        StoryCompletionStatus completionStatus) => new()
+    {
+        Title = title,
+        Description = $"{title} story description.",
+        OwnerId = owner.Id,
+        Owner = owner,
+        PublishedAt = DateTime.UtcNow,
+        CompletionStatus = completionStatus
+    };
+
+    private static FictionDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<FictionDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        return new FictionDbContext(options);
     }
 
     private sealed class FakeLinkGenerator : LinkGenerator

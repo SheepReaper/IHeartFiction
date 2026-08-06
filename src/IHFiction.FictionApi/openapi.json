@@ -3727,7 +3727,7 @@
           "Story Discovery"
         ],
         "summary": "List Published Stories",
-        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Stories can be sorted by publication date, title, or last update date. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
+        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Results can be filtered by completion status. Stories can be sorted by publication date, title, or last update date. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
         "operationId": "ListPublishedStories",
         "parameters": [
           {
@@ -3812,6 +3812,14 @@
               "description": "Universally Unique Lexicographically Sortable Identifier",
               "format": "ulid",
               "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+            }
+          },
+          {
+            "name": "CompletionStatus",
+            "in": "query",
+            "schema": {
+              "pattern": "^(InProgress|Complete)$",
+              "type": "string"
             }
           }
         ],
@@ -4821,7 +4829,8 @@
         "required": [
           "title",
           "description",
-          "storyType"
+          "storyType",
+          "completionStatus"
         ],
         "type": "object",
         "properties": {
@@ -4850,6 +4859,15 @@
             ],
             "description": "The physical structure of the story",
             "default": "SingleBody"
+          },
+          "completionStatus": {
+            "pattern": "^(InProgress|Complete)$",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Whether the story is in progress or complete",
+            "default": "InProgress"
           }
         },
         "description": "Request model for creating a new story."
@@ -5380,6 +5398,10 @@
             ],
             "description": "Qualified unique readers",
             "format": "int32"
+          },
+          "completionStatus": {
+            "type": "string",
+            "description": "Whether the story is in progress or complete"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -5624,6 +5646,7 @@
           "id",
           "title",
           "description",
+          "completionStatus",
           "updatedAt",
           "ownerId",
           "ownerName"
@@ -5647,6 +5670,10 @@
           "description": {
             "type": "string",
             "description": "Description of the created story"
+          },
+          "completionStatus": {
+            "type": "string",
+            "description": "Completion status of the created story"
           },
           "updatedAt": {
             "type": "string",
@@ -6065,6 +6092,7 @@
           "storyId",
           "storyTitle",
           "storyDescription",
+          "completionStatus",
           "isPublished",
           "contentId",
           "content",
@@ -6095,6 +6123,10 @@
           "storyDescription": {
             "type": "string",
             "description": "Description of the story."
+          },
+          "completionStatus": {
+            "type": "string",
+            "description": "Whether the story is in progress or complete."
           },
           "isPublished": {
             "type": "boolean",
@@ -6369,6 +6401,10 @@
           "description": {
             "type": "string",
             "description": "Description of the story"
+          },
+          "completionStatus": {
+            "type": "string",
+            "description": "Whether the story is in progress or complete"
           },
           "publishedAt": {
             "type": [
@@ -6852,6 +6888,10 @@
             ],
             "description": "Qualified unique readers",
             "format": "int32"
+          },
+          "completionStatus": {
+            "type": "string",
+            "description": "Whether the story is in progress or complete"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -7657,6 +7697,7 @@
           "id",
           "title",
           "description",
+          "completionStatus",
           "updatedAt",
           "ownerId",
           "ownerName"
@@ -7680,6 +7721,10 @@
           "description": {
             "type": "string",
             "description": "Updated description of the story"
+          },
+          "completionStatus": {
+            "type": "string",
+            "description": "Updated story completion status"
           },
           "updatedAt": {
             "type": "string",
@@ -8831,7 +8876,8 @@
       "UpdateStoryMetadataBody": {
         "required": [
           "title",
-          "description"
+          "description",
+          "completionStatus"
         ],
         "type": "object",
         "properties": {
@@ -8852,6 +8898,14 @@
               "string"
             ],
             "description": "The updated description of the story"
+          },
+          "completionStatus": {
+            "pattern": "^(InProgress|Complete)$",
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Whether the story is in progress or complete"
           }
         },
         "description": "Request model for updating a story's metadata (title and description)."

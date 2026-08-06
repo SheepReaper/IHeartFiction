@@ -43,6 +43,7 @@ internal sealed class CreateStory(
     /// <param name="Title">The title of the story</param>
     /// <param name="Description">A detailed description of the story</param>
     /// <param name="StoryType">The physical structure of the story</param>
+    /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     internal sealed record CreateStoryBody(
         [property: Required(ErrorMessage = "Title is required.")]
         [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 200 characters.")]
@@ -58,7 +59,11 @@ internal sealed class CreateStory(
 
         [property: Required(ErrorMessage = "StoryType is required.")]
         [property: AllowedValues([StoryType.SingleBody, StoryType.MultiChapter, StoryType.MultiBook], ErrorMessage = "Invalid value for StoryType.")]
-        string? StoryType = StoryType.SingleBody
+        string? StoryType = StoryType.SingleBody,
+
+        [property: Required(ErrorMessage = "Completion status is required.")]
+        [property: RegularExpression("^(InProgress|Complete)$", ErrorMessage = "Completion status must be InProgress or Complete.")]
+        string? CompletionStatus = nameof(StoryCompletionStatus.InProgress)
     );
 
     internal sealed record CreateStoryQuery(
@@ -73,6 +78,7 @@ internal sealed class CreateStory(
     /// <param name="Id">Unique identifier for the created story</param>
     /// <param name="Title">Title of the created story</param>
     /// <param name="Description">Description of the created story</param>
+    /// <param name="CompletionStatus">Completion status of the created story</param>
     /// <param name="UpdatedAt">When the story was created/last updated</param>
     /// <param name="OwnerId">Unique identifier of the story owner</param>
     /// <param name="OwnerName">Display name of the story owner</param>
@@ -80,6 +86,7 @@ internal sealed class CreateStory(
         Ulid Id,
         string Title,
         string Description,
+        string CompletionStatus,
         DateTime UpdatedAt,
         Ulid OwnerId,
         string OwnerName);
@@ -112,6 +119,7 @@ internal sealed class CreateStory(
         {
             Title = sanitizedTitle,
             Description = sanitizedDescription,
+            CompletionStatus = Enum.Parse<StoryCompletionStatus>(body.CompletionStatus!, ignoreCase: false),
             Owner = author,
             OwnerId = author.Id
         };
@@ -134,6 +142,7 @@ internal sealed class CreateStory(
             story.Id,
             story.Title,
             story.Description,
+            story.CompletionStatus.ToString(),
             story.UpdatedAt,
             story.OwnerId,
             author.Name);

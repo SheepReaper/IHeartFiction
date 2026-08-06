@@ -6,22 +6,26 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Account;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Notifications;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Validation;
 
 using Error = IHFiction.SharedKernel.Infrastructure.DomainError;
+using Wolverine;
 
 namespace IHFiction.FictionApi.Stories;
 
 internal sealed class UpdateStoryMetadata(
     FictionDbContext context,
-    AuthorizationService authorizationService) : IUseCase, INameEndpoint<UpdateStoryMetadata>
+    AuthorizationService authorizationService,
+    IMessageBus messageBus) : IUseCase, INameEndpoint<UpdateStoryMetadata>
 {
     internal static class Errors
     {
@@ -39,6 +43,7 @@ internal sealed class UpdateStoryMetadata(
     /// </summary>
     /// <param name="Title">The updated title of the story</param>
     /// <param name="Description">The updated description of the story</param>
+    /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     internal sealed record UpdateStoryMetadataBody(
         [property: Required(ErrorMessage = "Title is required.")]
         [property: StringLength(200, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 200 characters.")]
@@ -50,7 +55,11 @@ internal sealed class UpdateStoryMetadata(
         [property: StringLength(2000, MinimumLength = 10, ErrorMessage = "Description must be between 10 and 2000 characters.")]
         [property: NoExcessiveWhitespace(5)]
         [property: NoHarmfulContent]
-        string? Description = null
+        string? Description = null,
+
+        [property: Required(ErrorMessage = "Completion status is required.")]
+        [property: RegularExpression("^(InProgress|Complete)$", ErrorMessage = "Completion status must be InProgress or Complete.")]
+        string? CompletionStatus = null
     );
 
     internal sealed record UpdateStoryMetadataQuery(
@@ -65,6 +74,7 @@ internal sealed class UpdateStoryMetadata(
     /// <param name="Id">Unique identifier for the updated story</param>
     /// <param name="Title">Updated title of the story</param>
     /// <param name="Description">Updated description of the story</param>
+    /// <param name="CompletionStatus">Updated story completion status</param>
     /// <param name="UpdatedAt">When the story was last updated</param>
     /// <param name="OwnerId">Unique identifier of the story owner</param>
     /// <param name="OwnerName">Display name of the story owner</param>
@@ -72,6 +82,7 @@ internal sealed class UpdateStoryMetadata(
         Ulid Id,
         string Title,
         string Description,
+        string CompletionStatus,
         DateTime UpdatedAt,
         Ulid OwnerId,
         string OwnerName);
@@ -105,9 +116,14 @@ internal sealed class UpdateStoryMetadata(
                 return Errors.TitleExists;
         }
 
+        var completionStatus = Enum.Parse<StoryCompletionStatus>(body.CompletionStatus!, ignoreCase: false);
+        var becameComplete = story.CompletionStatus != StoryCompletionStatus.Complete
+            && completionStatus == StoryCompletionStatus.Complete;
+
         // Update the story
         story.Title = sanitizedTitle;
         story.Description = sanitizedDescription;
+        story.CompletionStatus = completionStatus;
 
         try
         {
@@ -122,10 +138,16 @@ internal sealed class UpdateStoryMetadata(
             return Errors.DatabaseError;
         }
 
+        if (becameComplete && story.IsPublished)
+        {
+            await messageBus.PublishAsync(new StoryCompletedNotificationRequested(story.Id));
+        }
+
         return new UpdateStoryMetadataResponse(
             story.Id,
             story.Title,
             story.Description,
+            story.CompletionStatus.ToString(),
             story.UpdatedAt,
             story.OwnerId,
             story.Owner.Name);

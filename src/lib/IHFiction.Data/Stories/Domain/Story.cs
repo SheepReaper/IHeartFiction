@@ -6,6 +6,8 @@ public sealed class Story : Work
 {
     public string Description { get; set; } = default!;
 
+    public StoryCompletionStatus CompletionStatus { get; set; } = StoryCompletionStatus.InProgress;
+
     public StoryCover? Cover { get; set; }
 
     public ObjectId? WorkBodyId { get; set; }

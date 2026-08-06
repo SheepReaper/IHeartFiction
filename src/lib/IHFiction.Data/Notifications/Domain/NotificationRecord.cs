@@ -7,6 +7,7 @@ namespace IHFiction.Data.Notifications.Domain;
 public static class NotificationKinds
 {
     public const string StoryPublished = "story_published";
+    public const string StoryCompleted = "story_completed";
     public const string ChapterPublished = "chapter_published";
 }
 

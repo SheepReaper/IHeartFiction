@@ -103,8 +103,9 @@ public partial class StoryService(FictionApiClient client, ILogger<StoryService>
         string? sort = null,
         string? fields = null,
         string? authorId = null,
+        string? completionStatus = null,
         CancellationToken cancellationToken = default
-    ) => await client.ListPublishedStoriesAsync(page, pageSize, search, sort, fields, authorId, cancellationToken).HandleApiException();
+    ) => await client.ListPublishedStoriesAsync(page, pageSize, search, sort, fields, authorId, completionStatus, cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedPagedCollectionOfAuthorStoryItem>> GetCurrentAuthorStoriesAsync(
         GetOwnStoriesBody body,

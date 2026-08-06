@@ -77,6 +77,8 @@ public static class StoryListDisplayAdapters
             badges.Add($"{story.CollaboratorNames.Count} collaborators");
         }
 
+        badges.Add(story.CompletionStatus == "Complete" ? "Complete" : "In progress");
+
         return badges;
     }
 }

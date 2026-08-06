@@ -44,6 +44,24 @@ Do this first:
 3. Wait for the migration service to finish.
 4. Only then debug API, EF, LINQ, serialization, or frontend symptoms.
 
+## Stateful Credential Drift Guardrail (Mandatory)
+
+For persistent PostgreSQL, MongoDB, Redis, or Keycloak containers, treat credentials as cluster state, not just environment configuration.
+
+When a resource is mounted to an existing data volume:
+
+- A changed Aspire secret or container env value does not automatically rewrite existing in-database password hashes.
+- A correct volume mount and healthy process startup do not prove credential alignment.
+
+If authentication fails (`28P01`, SCRAM storedKey mismatch, or equivalent):
+
+1. Verify mount/source first with `docker inspect` and service logs before changing secrets.
+2. Confirm actual runtime credential behavior with an explicit auth probe against the running container.
+3. Prefer in-place credential realignment on the persisted data over destructive volume replacement.
+4. Re-check `aspire describe` and service logs after repair before debugging higher layers.
+
+Do not assume auth failures are caused by wrong volume, migration defects, or feature code until this guardrail is exhausted.
+
 ## WolverineFx Guidance (Mandatory For New Work)
 
 For new features in this repository, WolverineFx is the primary mechanism when asynchronous, queued, or cross-domain messaging behavior is needed.
@@ -143,6 +161,8 @@ If preflight cannot infer a remote, do not guess. Use the explicit command:
 ```bash
 git remote add origin https://github.com/SheepReaper/IHeartFiction.git
 ```
+
+When validating behavior changes after code edits, ensure the running resources are rebuilt/restarted from fresh binaries. On Windows, stale locked assemblies can make runtime responses lag behind source changes even after a successful build.
 
 ## Temporary Workaround Registry (Mandatory)
 

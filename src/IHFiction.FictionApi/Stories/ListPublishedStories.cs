@@ -38,7 +38,10 @@ internal sealed class ListPublishedStories(
         [property: ShapesType<ListPublishedStoriesItem>]
         string Fields = "",
 
-        Ulid? AuthorId = null
+        Ulid? AuthorId = null,
+
+        [property: RegularExpression("^(InProgress|Complete)$", ErrorMessage = "Completion status must be InProgress or Complete.")]
+        string? CompletionStatus = null
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [
@@ -62,6 +65,7 @@ internal sealed class ListPublishedStories(
     /// <param name="AuthorId">Unique identifier for the story author</param>
     /// <param name="AuthorName">Name of the story author</param>
     /// <param name="ReadCount">Qualified unique readers</param>
+    /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     internal sealed record ListPublishedStoriesItem(
         Ulid StoryId,
         string Title,
@@ -75,13 +79,14 @@ internal sealed class ListPublishedStories(
         int ChapterCount,
         Ulid AuthorId,
         string AuthorName,
-        int ReadCount)
+        int ReadCount,
+        string CompletionStatus)
     {
         public ListPublishedStoriesItem(Ulid storyId, string title, string description, DateTime publishedAt,
             DateTime updatedAt, bool hasContent, bool hasChapters, bool hasBooks, bool hasCoverImage,
             int chapterCount, Ulid authorId, string authorName)
             : this(storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks,
-                hasCoverImage, chapterCount, authorId, authorName, 0) { }
+                hasCoverImage, chapterCount, authorId, authorName, 0, StoryCompletionStatus.InProgress.ToString()) { }
     }
 
     public async Task<Result<PagedCollection<ListPublishedStoriesItem>>> HandleAsync(
@@ -89,10 +94,15 @@ internal sealed class ListPublishedStories(
         CancellationToken cancellationToken = default)
     {
         // Build the base query for published stories
+        var completionStatus = string.IsNullOrWhiteSpace(query.CompletionStatus)
+            ? (StoryCompletionStatus?)null
+            : Enum.Parse<StoryCompletionStatus>(query.CompletionStatus, ignoreCase: false);
+
         var stories = context.Stories
             .AsNoTracking()
             .Where(s => s.PublishedAt != null)
-            .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId));
+            .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId))
+            .Where(s => completionStatus == null || s.CompletionStatus == completionStatus);
 
         // Apply search filter if provided
         stories = stories.SearchIContains(query, s => s.Title, s => s.Description, s => s.Owner.Name);
@@ -114,7 +124,8 @@ internal sealed class ListPublishedStories(
             s.Chapters.Count,
             s.OwnerId,
             s.Owner.Name,
-            s.ReadCount));
+            s.ReadCount,
+            s.CompletionStatus == StoryCompletionStatus.Complete ? "Complete" : "InProgress"));
 
         // Execute paginated query using the centralized service
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
@@ -149,6 +160,7 @@ internal sealed class ListPublishedStories(
                 .WithSummary("List Published Stories")
                 .WithDescription("Retrieves a paginated list of all publicly published stories. " +
                 "Supports searching by title, description, or author name. " +
+                "Results can be filtered by completion status. " +
                 "Stories can be sorted by publication date, title, or last update date. " +
                 "This is a public endpoint that does not require authentication and only " +
                 "returns stories that have been explicitly published by their authors.")
