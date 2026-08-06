@@ -289,6 +289,7 @@ public partial class StoryEditorService(
         var storyModel = StoryEditorModel.Create(
             storyType,
             apiResult.IsPublished,
+            Enum.Parse<IHFiction.Data.Stories.Domain.StoryCompletionStatus>(apiResult.CompletionStatus, ignoreCase: false),
             apiResult.StoryId,
             apiResult.StoryTitle,
             apiResult.StoryDescription,
@@ -354,7 +355,8 @@ public partial class StoryEditorService(
             {
                 Title = CurrentStory.Title,
                 Description = CurrentStory.Description,
-                StoryType = CurrentStory.StoryType
+                StoryType = CurrentStory.StoryType,
+                CompletionStatus = CurrentStory.CompletionStatus.ToString()
             };
 
             var createResult = await storyService.CreateStoryAsync(createBody, null, cancellationToken);
@@ -370,13 +372,19 @@ public partial class StoryEditorService(
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
                 CurrentStory.Description = apiResult.Description;
                 CurrentStory.Title = apiResult.Title;
+                CurrentStory.CompletionStatus = Enum.Parse<IHFiction.Data.Stories.Domain.StoryCompletionStatus>(apiResult.CompletionStatus, ignoreCase: false);
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
             }
         }
         else
         {
             // Save Story Metadata (only if not a new story or if metadata changed after initial creation)
-            var updateMetadataBody = new UpdateStoryMetadataBody() { Title = CurrentStory.Title, Description = CurrentStory.Description };
+            var updateMetadataBody = new UpdateStoryMetadataBody()
+            {
+                Title = CurrentStory.Title,
+                Description = CurrentStory.Description,
+                CompletionStatus = CurrentStory.CompletionStatus.ToString()
+            };
             var result = await storyService.UpdateStoryMetadataAsync(CurrentStory.Id.Value, updateMetadataBody, null, cancellationToken);
 
             if (result.IsFailure) return result.DomainError;
@@ -389,6 +397,7 @@ public partial class StoryEditorService(
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
                 CurrentStory.Description = apiResult.Description;
                 CurrentStory.Title = apiResult.Title;
+                CurrentStory.CompletionStatus = Enum.Parse<IHFiction.Data.Stories.Domain.StoryCompletionStatus>(apiResult.CompletionStatus, ignoreCase: false);
                 CurrentStory.StoryUpdatedAt = apiResult.UpdatedAt.UtcDateTime;
             }
         }

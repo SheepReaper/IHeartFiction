@@ -191,6 +191,9 @@ if (!IsBuildEnvironment())
         opts.PublishMessage<StoryPublishedNotificationRequested>()
             .ToRedisStream(notificationStream)
             .UseDurableOutbox();
+        opts.PublishMessage<StoryCompletedNotificationRequested>()
+            .ToRedisStream(notificationStream)
+            .UseDurableOutbox();
         opts.PublishMessage<ChapterPublishedNotificationRequested>()
             .ToRedisStream(notificationStream)
             .UseDurableOutbox();

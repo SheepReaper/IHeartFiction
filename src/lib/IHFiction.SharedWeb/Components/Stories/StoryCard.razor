@@ -24,6 +24,14 @@
                     by <a href="/authors/@Story.AuthorId" class="ihf-card-link">@Story.AuthorName</a>
                 </p>
                 <div class="tags">
+                    @if (Story.CompletionStatus == "Complete")
+                    {
+                        <span class="tag has-background-success-soft has-text-success-bold">Complete</span>
+                    }
+                    else
+                    {
+                        <span class="tag has-background-warning-soft has-text-warning-bold">In progress</span>
+                    }
                     @if (Story.HasChapters)
                     {
                         <span class="tag has-background-info-soft has-text-info-bold">@Story.ChapterCount chapters</span>
@@ -87,6 +95,20 @@ else
                 </p>
 
                 <div class="tags mt-4">
+                    @if (Story.CompletionStatus == "Complete")
+                    {
+                        <span class="tag has-background-success-soft has-text-success-bold">
+                            <span class="icon is-small"><i class="fas fa-check" aria-hidden="true"></i></span>
+                            <span>Complete</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="tag has-background-warning-soft has-text-warning-bold">
+                            <span class="icon is-small"><i class="fas fa-pen" aria-hidden="true"></i></span>
+                            <span>In progress</span>
+                        </span>
+                    }
                     @* @if (Story.PublishedAt < DateTime.UtcNow)
                     {
                         <span class="tag is-success">

@@ -2,6 +2,23 @@
 
 This file records intentional temporary workarounds and unusual build plumbing. Check it before removing code that looks like a local band aid.
 
+## Persistent database credential drift on reused volumes
+
+- **Location:** runtime operations for `src/aspire/IHFiction.AppHost/AppHost.cs`, and `tools/database-migrations.ps1` (`Preflight`, credential probe, and in-place PostgreSQL repair helpers).
+- **Symptom:** services start with existing data volumes, but authentication fails (for example PostgreSQL `28P01` or MongoDB SCRAM storedKey mismatch) despite seemingly correct env/secret values.
+- **Why it is needed:** when a container reuses existing data, credential hashes stored inside the database remain authoritative; updated Aspire secrets or container env vars do not automatically rewrite those hashes. This can surface as unhealthy dependencies unrelated to the feature being implemented.
+- **Current handling:** validate mount identity and logs first, probe auth explicitly, then prefer in-place credential realignment over volume resets. `tools/database-migrations.ps1 -Action Preflight` is the non-mutating first check for PostgreSQL alignment.
+- **Removal criteria:** remove this guidance only if the resource provisioning flow guarantees deterministic credential synchronization between persisted state and configured secrets across restarts and upgrades.
+
+Quick verification commands:
+
+```powershell
+aspire describe
+aspire logs postgres --tail 120
+aspire logs mongo --tail 120
+./tools/database-migrations.ps1 -Action Preflight
+```
+
 ## WebClient publish filters FictionApi appsettings
 
 - **Location:** `src/IHFiction.WebClient/IHFiction.WebClient.csproj`, target `RemoveFictionApiConfigurationFromPublishOutput`

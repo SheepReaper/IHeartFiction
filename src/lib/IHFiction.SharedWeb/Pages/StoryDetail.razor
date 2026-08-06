@@ -152,15 +152,15 @@ else if (story != null)
                                 <div class="level is-mobile">
                                     <div class="level-item has-text-centered">
                                         <div>
-                                            <p class="heading">Status</p>
+                                            <p class="heading">Completion</p>
                                             <p class="title is-6">
-                                                @if (story.IsPublished)
+                                                @if (story.CompletionStatus == "Complete")
                                                 {
-                                                    <span class="tag is-success">Published</span>
+                                                    <span class="tag has-background-success-soft has-text-success-bold">Complete</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="tag is-warning">Draft</span>
+                                                    <span class="tag has-background-warning-soft has-text-warning-bold">In progress</span>
                                                 }
                                             </p>
                                         </div>

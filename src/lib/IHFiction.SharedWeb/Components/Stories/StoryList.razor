@@ -67,8 +67,19 @@
                     </div>
                 </div>
             </div>
-            <div class="column">
-                <!-- Filter options can be added here in the future -->
+            <div class="column is-narrow">
+                <div class="field">
+                    <label class="label" for="completion-filter">Completion</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select id="completion-filter" @bind="completionFilter" @bind:after="OnCompletionChanged">
+                                <option value="">Any status</option>
+                                <option value="InProgress">In progress</option>
+                                <option value="Complete">Complete</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -145,6 +156,10 @@
     [SupplyParameterFromQuery(Name = "sort")]
     public string? Sort { get; set; }
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "completion")]
+    public string? Completion { get; set; }
+
     [Parameter] public bool EmitPaginationHeadLinks { get; set; } = true;
     [Parameter] public string MetadataSectionName { get; set; } = "social-preview-extra-head";
 
@@ -159,12 +174,14 @@
     private string? errorMessage;
     private string searchQuery = "";
     private string sortBy = "publishedAt desc";
+    private string completionFilter = "";
     private int currentPage = 1;
     private const int pageSize = 12;
     private int _loadedPage = -1;
     private string? _loadedSearch;
     private string? _loadedSort;
     private string? _loadedAuthorId;
+    private string? _loadedCompletion;
     private PersistingComponentStateSubscription _persistingSubscription;
     private List<LinkedOfListPublishedStoriesItem> displayedStories = [];
     private string? loadMoreUrl;
@@ -183,17 +200,19 @@
         currentPage = NormalizePage(Page);
         searchQuery = Query ?? string.Empty;
         sortBy = NormalizeSort(Sort);
+        completionFilter = NormalizeCompletion(Completion);
 
         if (currentPage == _loadedPage
             && string.Equals(searchQuery, _loadedSearch, StringComparison.Ordinal)
             && string.Equals(sortBy, _loadedSort, StringComparison.Ordinal)
-            && string.Equals(AuthorId, _loadedAuthorId, StringComparison.Ordinal))
+            && string.Equals(AuthorId, _loadedAuthorId, StringComparison.Ordinal)
+            && string.Equals(completionFilter, _loadedCompletion, StringComparison.Ordinal))
         {
             return;
         }
 
         if (ApplicationState.TryTakeFromJson<LinkedPagedCollectionOfListPublishedStoriesItem>(
-            BuildStateKey(currentPage, searchQuery, sortBy, AuthorId),
+            BuildStateKey(currentPage, searchQuery, sortBy, AuthorId, completionFilter),
             out var persistedStories)
             && persistedStories is not null)
         {
@@ -218,6 +237,7 @@
         search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
         sort: sortBy,
         authorId: AuthorId,
+        completionStatus: ParseCompletionStatus(completionFilter),
         cancellationToken: CancellationToken);
 
         if (result.IsSuccess)
@@ -250,7 +270,7 @@
         if (stories is not null && _loadedPage > 0 && string.IsNullOrEmpty(errorMessage))
         {
             ApplicationState.PersistAsJson(
-                BuildStateKey(_loadedPage, _loadedSearch, _loadedSort, _loadedAuthorId),
+                BuildStateKey(_loadedPage, _loadedSearch, _loadedSort, _loadedAuthorId, _loadedCompletion),
                 stories);
         }
 
@@ -263,6 +283,7 @@
         _loadedSearch = searchQuery;
         _loadedSort = sortBy;
         _loadedAuthorId = AuthorId;
+        _loadedCompletion = completionFilter;
     }
 
     private Task SearchStories()
@@ -280,6 +301,11 @@
     }
 
     private void OnSortChanged()
+    {
+        NavigateToPage(1);
+    }
+
+    private void OnCompletionChanged()
     {
         NavigateToPage(1);
     }
@@ -312,6 +338,7 @@
             search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
             sort: sortBy,
             authorId: AuthorId,
+            completionStatus: ParseCompletionStatus(completionFilter),
             cancellationToken: CancellationToken);
 
         if (result.IsSuccess)
@@ -378,6 +405,11 @@
             query["sort"] = sortBy;
         }
 
+        if (!string.IsNullOrWhiteSpace(completionFilter))
+        {
+            query["completion"] = completionFilter;
+        }
+
         return query.Count == 0
             ? path
             : QueryHelpers.AddQueryString(path, query);
@@ -406,6 +438,13 @@
             && !string.Equals(sortValue, DefaultSort, StringComparison.OrdinalIgnoreCase))
         {
             normalizedQuery["sort"] = sortValue;
+        }
+
+        var completionValue = GetQueryValue(query, "completionStatus") ?? GetQueryValue(query, "completion");
+        completionValue = NormalizeCompletion(completionValue);
+        if (!string.IsNullOrWhiteSpace(completionValue))
+        {
+            normalizedQuery["completion"] = completionValue;
         }
 
         return normalizedQuery.Count == 0
@@ -454,8 +493,18 @@
 
     private static string NormalizeSort(string? sort) => AllowedSorts.Contains(sort) ? sort ?? DefaultSort : DefaultSort;
 
-    private static string BuildStateKey(int page, string? search, string? sort, string? authorId)
-        => $"StoryList:{page}:{search ?? string.Empty}:{sort ?? string.Empty}:{authorId ?? string.Empty}";
+    private static string NormalizeCompletion(string? completion) => completion switch
+    {
+        "InProgress" => "InProgress",
+        "Complete" => "Complete",
+        _ => string.Empty
+    };
+
+    private static string? ParseCompletionStatus(string completion)
+        => string.IsNullOrWhiteSpace(completion) ? null : completion;
+
+    private static string BuildStateKey(int page, string? search, string? sort, string? authorId, string? completion)
+        => $"StoryList:{page}:{search ?? string.Empty}:{sort ?? string.Empty}:{authorId ?? string.Empty}:{completion ?? string.Empty}";
 
     protected override async ValueTask DisposeAsyncCore()
     {

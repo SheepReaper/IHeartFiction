@@ -80,6 +80,7 @@ internal sealed class GetOwnStories(
     /// <param name="HasBooks">Whether the story has books</param>
     /// <param name="IsValid">Whether the story is in a valid state for operations</param>
     /// <param name="ReadCount">Qualified unique readers</param>
+    /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     internal sealed record AuthorStoryItem(
         Ulid Id,
         string Title,
@@ -96,13 +97,14 @@ internal sealed class GetOwnStories(
         bool HasChapters,
         bool HasBooks,
         bool IsValid,
-        int ReadCount)
+        int ReadCount,
+        string CompletionStatus)
     {
         public AuthorStoryItem(Ulid id, string title, string description, DateTime? publishedAt, bool isPublished,
             DateTime updatedAt, DateTime createdAt, bool isOwned, IEnumerable<string> collaboratorNames,
             IEnumerable<string> tags, bool hasCoverImage, bool hasContent, bool hasChapters, bool hasBooks, bool isValid)
             : this(id, title, description, publishedAt, isPublished, updatedAt, createdAt, isOwned, collaboratorNames,
-                tags, hasCoverImage, hasContent, hasChapters, hasBooks, isValid, 0) { }
+                tags, hasCoverImage, hasContent, hasChapters, hasBooks, isValid, 0, StoryCompletionStatus.InProgress.ToString()) { }
     }
 
     public async Task<Result<PagedCollection<AuthorStoryItem>>> HandleAsync(
@@ -160,7 +162,8 @@ internal sealed class GetOwnStories(
                 s.HasChapters,
                 s.HasBooks,
                 s.IsValid,
-                s.ReadCount)),
+                s.ReadCount,
+                s.CompletionStatus == StoryCompletionStatus.Complete ? "Complete" : "InProgress")),
             pagination,
             cancellationToken);
 

@@ -61,6 +61,7 @@ internal sealed class GetOwnStoryContent(
     /// <param name="StoryId">Unique identifier for the story.</param>
     /// <param name="StoryTitle">Title of the story.</param>
     /// <param name="StoryDescription">Description of the story.</param>
+    /// <param name="CompletionStatus">Whether the story is in progress or complete.</param>
     /// <param name="IsPublished">Whether the story is published.</param>
     /// <param name="ContentId">Unique identifier for the content document.</param>
     /// <param name="Content">The content of the story.</param>
@@ -75,6 +76,7 @@ internal sealed class GetOwnStoryContent(
         Ulid StoryId,
         string StoryTitle,
         string StoryDescription,
+        string CompletionStatus,
         bool IsPublished,
         ObjectId ContentId,
         string? Content,
@@ -133,6 +135,7 @@ internal sealed class GetOwnStoryContent(
             story.Id,
             story.Title,
             story.Description,
+            story.CompletionStatus.ToString(),
             story.IsPublished,
             contentId ?? ObjectId.Empty,
             content,

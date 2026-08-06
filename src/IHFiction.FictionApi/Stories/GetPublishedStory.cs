@@ -74,6 +74,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="Id">Unique identifier for the story</param>
     /// <param name="Title">Title of the story</param>
     /// <param name="Description">Description of the story</param>
+    /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     /// <param name="PublishedAt">When the story was published (null if unpublished)</param>
     /// <param name="IsPublished">Whether the story is currently published</param>
     /// <param name="UpdatedAt">When the story was last updated</param>
@@ -91,6 +92,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
         Ulid Id,
         string Title,
         string Description,
+        string CompletionStatus,
         DateTime? PublishedAt,
         bool IsPublished,
         DateTime UpdatedAt,
@@ -110,7 +112,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             bool isPublished, DateTime updatedAt, DateTime createdAt, Ulid ownerId, string ownerName,
             string type, bool hasCoverImage, IEnumerable<StoryAuthor> authors, IEnumerable<StoryTag> tags,
             IEnumerable<BookItem> books, IEnumerable<ChapterItem> chapters)
-            : this(id, title, description, publishedAt, isPublished, updatedAt, createdAt, ownerId, ownerName,
+            : this(id, title, description, StoryCompletionStatus.InProgress.ToString(), publishedAt, isPublished, updatedAt, createdAt, ownerId, ownerName,
                 type, hasCoverImage, authors, tags, books, chapters, 0) { }
     }
 
@@ -134,6 +136,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             story.Id,
             story.Title,
             story.Description,
+            story.CompletionStatus.ToString(),
             story.PublishedAt,
             story.IsPublished,
             story.UpdatedAt,

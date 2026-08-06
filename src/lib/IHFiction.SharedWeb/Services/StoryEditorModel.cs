@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 using IHFiction.SharedKernel.Stories;
+using IHFiction.Data.Stories.Domain;
 
 using MongoDB.Bson;
 
@@ -32,6 +33,16 @@ public class StoryEditorModel : INotifyPropertyChanged
     }
 
     public bool IsPublished { get; set; }
+    public StoryCompletionStatus CompletionStatus
+    {
+        get;
+        set
+        {
+            if (value == field) return;
+            field = value;
+            OnPropertyChanged();
+        }
+    }
     public ObjectId? ContentId { get; set; }
     public DateTime? ContentUpdatedAt { get; set; }
     public DateTime? StoryUpdatedAt { get; set; }
@@ -145,6 +156,7 @@ public class StoryEditorModel : INotifyPropertyChanged
     private StoryEditorModel(
         string storyType,
         bool isPublished,
+        StoryCompletionStatus completionStatus,
         Ulid? storyId,
         string? title,
         string? description,
@@ -159,6 +171,7 @@ public class StoryEditorModel : INotifyPropertyChanged
     {
         Id = storyId;
         IsPublished = isPublished;
+        CompletionStatus = completionStatus;
         ContentId = contentId;
         ContentUpdatedAt = contentUpdatedAt;
         StoryUpdatedAt = storyUpdatedAt;
@@ -207,6 +220,7 @@ public class StoryEditorModel : INotifyPropertyChanged
     public static StoryEditorModel Create(
         string storyType,
         bool isPublished,
+        StoryCompletionStatus completionStatus,
         Ulid storyId,
         string? title,
         string? description,
@@ -220,6 +234,7 @@ public class StoryEditorModel : INotifyPropertyChanged
     ) => new(
         storyType,
         isPublished,
+        completionStatus,
         storyId,
         title,
         description,
@@ -233,7 +248,7 @@ public class StoryEditorModel : INotifyPropertyChanged
     )
     { _initializing = false };
 
-    public static StoryEditorModel Create(string storyType) => new(storyType, false, null, null, null, false, null, null, null, null, null, null) { _initializing = false };
+    public static StoryEditorModel Create(string storyType) => new(storyType, false, StoryCompletionStatus.InProgress, null, null, null, false, null, null, null, null, null, null) { _initializing = false };
     public static StoryEditorModel CreateSingleBody() => Create(SingleBody);
     public static StoryEditorModel CreateMultiBook() => Create(MultiBook);
     public static StoryEditorModel CreateMultiChapter() => Create(MultiChapter);

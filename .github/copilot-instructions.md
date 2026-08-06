@@ -57,6 +57,8 @@ aspire describe
 
 Use `dotnet run --project src/aspire/IHFiction.AppHost` as a foreground fallback. Inspect `aspire describe` for actual resource names and supported commands. A resource `restart` does not compile changed source; use its `rebuild` command. On Windows, stop all consumers holding shared WebClient/FictionApi/SharedWeb assemblies before rebuilding. If a stopped resource still owns files, recover with `aspire stop`, `aspire start`, then rebuild.
 
+For persistent resource auth failures, treat secret/env values and in-database credential hashes as potentially drifted. Verify mounted volume + logs + explicit auth probe before rotating secrets or replacing data volumes. Prefer in-place credential realignment to destructive resets.
+
 The development migration resource is named `migrations` and is explicit-start. After an EF model/migration change, start it and wait for completion before debugging missing table, column, relation, index, or constraint failures. In non-development environments, the API waits for migration completion.
 
 Development Keycloak imports `config/fiction-realm.json`. Configure the two AppHost parameter secrets when prompted by Aspire, or use:
@@ -106,6 +108,7 @@ Prefer source-generated `[LoggerMessage]` partial methods. Make the containing c
 - Use Bulma classes and the repository's theme tokens; follow the installed Bulma styling/color guidance instead of adding isolated hard-coded palettes.
 - `SocialPreviewMetadata.razor` is the single SEO `HeadContent` owner. The only existing exception is `Components/MarkdownEditor/Editor.razor` for editor assets. Use uniquely owned `SectionContent`/`SectionOutlet` concerns for append-style metadata.
 - Use Playwright for browser-observable changes. For Blazor, prefer `domcontentloaded` plus an explicit visible-element wait over `networkidle`. Treat `/_blazor/disconnect` failures as expected only when they correlate with navigation or circuit teardown.
+- If UI/API behavior does not match inspected source, verify runtime freshness before debugging feature logic: rebuild affected projects, restart/rebuild resources, and re-check the live payload/endpoint output.
 - For theme checks, use `?theme=light` or `?theme=dark` unless storage persistence itself is under test.
 - Metadata changes must inspect `document.head` on `/`, `/stories`, `/authors`, a story detail, chapter detail, and author detail route; verify route-appropriate JSON-LD plus canonical, Open Graph, and Twitter tags.
 
