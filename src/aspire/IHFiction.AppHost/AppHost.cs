@@ -5,8 +5,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
-using Aspire.Cloudflared;
-
 using IHFiction.AppHost.Extensions;
 var builder = DistributedApplication.CreateBuilder(args);
 
