@@ -13,14 +13,13 @@ The architecture of IHeartFiction is guided by several key principles:
 
 ## Why .NET 10?
 
-Choosing to build on a pre-release version of .NET 10 (`<TargetFramework>net10.0</TargetFramework>`) is a deliberate, forward-looking decision. It allows us to build with the latest tooling and take advantage of modern C# and ASP.NET Core features that streamline development, improve performance, and enhance code clarity.
+The repository targets .NET 10 (`<TargetFramework>net10.0</TargetFramework>`) and pins its supported SDK policy in `global.json`. This provides the current C# and ASP.NET Core features used throughout the vertical slices while keeping local and CI tooling reproducible.
 
 Unlike previous versions, .NET 10 provides first-class features that directly simplify our vertical slice architecture. Here are several specific examples:
 
 ### Enhanced Validation
 
 - **Built-in Minimal API Validation**: .NET 10 introduces streamlined validation support. We leverage this globally by registering it with `builder.Services.AddValidation()`. This service automatically validates request models, including **record types**, based on their `DataAnnotation` attributes, returning a standardized `ProblemDetails` response on failure. This removes boilerplate code from our handlers and integrates perfectly with our architecture.
-- **Improved Form Validation**: The framework also enhances server-side validation for form submissions, providing a structured way to return errors that can be easily bound to client-side forms. While not yet implemented, this provides a powerful option for future UIs.
 
 ### Advanced OpenAPI Integration
 
@@ -30,12 +29,6 @@ Unlike previous versions, .NET 10 provides first-class features that directly si
 ### Modern C# 14 Language Features
 
 - The codebase takes advantage of new C# 14 features that improve clarity and reduce verbosity. For example, we use the new ability to apply the `nameof()` operator to **unbound generic types** (e.g., `nameof(List<>)`), which is useful in logging and reflection scenarios.
-
-### Future-Proofing the Architecture
-
-By building on .NET 10, we are also positioned to easily adopt other powerful upcoming features with minimal friction. Features we plan to implement soon include:
-- **Passkey Support**: Leveraging the new WebAuthn and FIDO2 standards built into ASP.NET Core Identity for passwordless authentication.
-- **JSON Patch**: Implementing partial resource updates using `application/json-patch+json` for more efficient API interactions.
 
 ## Architectural API Features
 

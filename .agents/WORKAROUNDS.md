@@ -28,8 +28,8 @@ aspire do build-web -o infra -v --non-interactive
 
 - **Location:** `tools/agent-bootstrap.ps1`, `tools/agent-bootstrap.sh`, `src/lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj`, `.artifacts/packages/IHFiction.SourceGenerators.0.1.0-local.nupkg`
 - **Symptom:** Consumers of `IHFiction.SourceGenerators` need the latest local analyzer/source-generator code before normal repo restore/build. A plain project reference is not enough because analyzers are consumed through NuGet analyzer assets.
-- **Why it is needed:** The repo packages `IHFiction.SourceGenerators` as version `0.1.0-local` into a local feed under `.artifacts/packages`, then restores projects that reference that package. The bootstrap scripts also clear the global NuGet cache for that local version so restore does not reuse a stale analyzer package.
-- **Unusual plumbing:** NuGet `.nupkg` output is not byte-for-byte deterministic because generated package metadata entries such as `_rels/.rels` and `package/services/metadata/core-properties/*.psmdcp` change between packs. The bootstrap scripts therefore pack into a temp feed, compare normalized package payload entries while ignoring those metadata entries, and only replace the tracked local package when real content changed.
+- **Why it is needed:** The repo packages `IHFiction.SourceGenerators` as version `0.1.0-local` into a local feed under `.artifacts/packages`, then restores projects that reference that package. Bootstrap publishes only when no `IHFiction.SourceGenerators*.nupkg` artifact exists, regardless of its version/suffix. Pass `-ForceSourceGeneratorPackage` to `agent-bootstrap.ps1` or `--force-source-generator-package` to `agent-bootstrap.sh` to repack after source-generator changes; publication also clears the global NuGet cache for the configured local version so restore does not reuse a stale analyzer package.
+- **Unusual plumbing:** NuGet `.nupkg` output is not byte-for-byte deterministic because generated package metadata entries such as `_rels/.rels` and `package/services/metadata/core-properties/*.psmdcp` change between packs. The bootstrap scripts therefore pack into a temp feed, compare normalized package payload entries while ignoring those metadata entries, and only replace the tracked local package when real content changed. The Bash implementation requires `python3` for equivalent ZIP-aware comparison and uses a subshell `EXIT` trap so its temporary feed is removed on both success and failure.
 - **Why the workaround is narrow:** The normalized comparison ignores only NuGet-generated package metadata. Analyzer DLLs and packaged dependency payloads still participate in the content hash comparison.
 - **Removal criteria:** Remove this local package/feed flow only after source generators are consumed in a way that does not require a local NuGet package, or after `IHFiction.SourceGenerators` is published to a real package feed with a versioning workflow that replaces `0.1.0-local`.
 
@@ -42,6 +42,16 @@ dotnet build .\src\IHFiction.WebClient\ --no-restore
 ```
 
 Running bootstrap twice without source-generator changes should not dirty `.artifacts/packages/IHFiction.SourceGenerators.0.1.0-local.nupkg`.
+
+To explicitly refresh the package after source-generator changes:
+
+```powershell
+./tools/agent-bootstrap.ps1 -ForceSourceGeneratorPackage
+```
+
+```bash
+./tools/agent-bootstrap.sh --force-source-generator-package
+```
 
 ## SharedWeb OpenAPI source-generator build edge
 
@@ -56,7 +66,7 @@ Running bootstrap twice without source-generator changes should not dirty `.arti
 - **Location:** `src/aspire/IHFiction.AppHost/AppHost.cs`, `src/aspire/IHFiction.AppHost/Extensions/ProductionConfigExtensions.cs`, `src/aspire/IHFiction.AppHost/Extensions/DockerComposeExtensions.cs`, `src/aspire/IHFiction.AppHost/Extensions/WellKnownTests.cs`, `src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj`
 - **Symptom:** Production deployment needs Docker Compose/Swarm output that Aspire's stable abstractions do not fully model yet, including OCI multi-platform image output, Docker health checks, Swarm deployment shape, Traefik labels, Docker secrets, and Cloudflare tunnel service customization.
 - **Why it is needed:** The AppHost relies on Aspire APIs that are marked evaluation/preview, so warnings such as `ASPIREPIPELINES003`, `ASPIRECOMPUTE003`, `ASPIREDOCKERFILEBUILDER001`, `ASPIREPROBES001`, and `ASPIRE004` are explicitly suppressed. The production extensions then post-process generated Docker Compose resources for Swarm-specific behavior.
-- **Related upstream limitations:** `LIMITATIONS.md` tracks several deployment limitations and upstream fixes, including Docker Swarm label behavior and schema typing issues around `Parallelism` and `FailOnError`.
+- **Related deployment constraints:** `LIMITATIONS.md` describes the production environment and the Swarm-specific output still required by this repository.
 - **Removal criteria:** Revisit on every Aspire major/minor upgrade. Remove suppressions and custom publish mutations when Aspire exposes stable APIs that produce the required Docker Compose/Swarm output directly.
 
 Verification should include:
@@ -74,7 +84,7 @@ Use `aspire do push -o infra -v` only when intentionally pushing images.
 - **Location:** `src/aspire/IHFiction.AppHost/Extensions/ProductionConfigExtensions.cs`, `src/aspire/IHFiction.AppHost/Extensions/DockerSwarmExtensions.cs`, `LIMITATIONS.md`
 - **Symptom:** Aspire's Docker Compose output is close to what Swarm needs but includes fields Swarm ignores or parses differently, and some deployment fields are not generated from Aspire annotations.
 - **Why it is needed:** The production Compose customization clears `depends_on`, `expose`, and container `restart` values that are not useful for Swarm. It also manually sets `deploy.replicas` from Aspire replica annotations because those annotations are not emitted as Swarm replicas in the generated Compose output. `DockerSwarmExtensions.AddGracefulUpdate` avoids fields whose generated schema typing has had upstream issues.
-- **Removal criteria:** Remove the cleanup/manual assignment only after generated Aspire Docker Compose output can be deployed to Swarm without those edits and `LIMITATIONS.md` confirms the upstream fixes are present in the repo's pinned Aspire version.
+- **Removal criteria:** Remove the cleanup/manual assignment only after generated Aspire Docker Compose output from the repo's pinned Aspire version can be deployed to Swarm without those edits; update `LIMITATIONS.md` at the same time.
 
 ## Temporary transitive vulnerability package overrides
 

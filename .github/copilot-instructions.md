@@ -1,460 +1,114 @@
 # Copilot Instructions for IHeartFiction
 
-## Repository Overview
+IHeartFiction is a .NET 10 fiction reading and publishing platform. It uses ASP.NET Core Minimal APIs, a Blazor Web App in Interactive Server mode, .NET Aspire orchestration, PostgreSQL/EF Core for relational metadata, MongoDB for document bodies, Redis/WolverineFx for distributed messaging, and Keycloak for authentication.
 
-**IHeartFiction** is a modern, cloud-native fiction reading and publishing platform built on .NET 10 (pre-release) using .NET Aspire for orchestration. The platform supports both original and fan fiction with a focus on clean UX, powerful authoring tools, and strong community features.
+Treat `AGENTS.md` as the canonical repository guardrail file. Read it before changing code, and read `.agents/WORKAROUNDS.md` before removing unusual build targets, package plumbing, suppressions, or deployment transformations. For end-to-end feature work, follow `.agents/skills/ihfiction-feature-workflow/SKILL.md` and load only the references relevant to the task.
 
-**Key Statistics:**
-- ~8MB repository size
-- 234 C# source files, 277 total project files
-- 39 test files across unit and integration tests
-- Target Framework: .NET 10.0 (net10.0)
-- Architecture: Vertical Slice Architecture with CQRS Lite pattern
+## Start every task from repository evidence
 
-## Critical Prerequisites
+- Preserve unrelated changes in the working tree.
+- Read the files being changed, their tests, and one nearby complete analogue before designing a new pattern.
+- Prefer targeted `rg` searches over broad directory reads.
+- Use `Directory.Packages.props` for package versions; this solution uses Central Package Management.
+- Use the SDK selected by `global.json` (currently .NET SDK 10.0.302 with `latestFeature` roll-forward). Do not substitute .NET 8 or 9.
+- Repository-local `Aspire.Cli` and `dotnet-ef` versions are pinned in `.config/dotnet-tools.json` and restored by the bootstrap scripts.
 
-### Required Software
+## Bootstrap, build, and test
 
-**ALWAYS verify these are installed before attempting any build operations:**
-
-1. **.NET 10 SDK RC (10.0.100-rc.1 or later)** - This is MANDATORY. The project uses .NET 10 RC features.
-   - Download: https://dotnet.microsoft.com/download/dotnet/10.0
-   - Check version: `dotnet --version`
-   - The project WILL NOT build with .NET 8 or .NET 9
-
-2. **Docker Desktop** - Required for running the application stack (PostgreSQL, MongoDB, Keycloak)
-   - Download: https://www.docker.com/products/docker-desktop/
-
-3. **(Optional) Aspire CLI** - Simplifies running the application
-   - Install: `dotnet workload install aspire`
-
-### Verification Steps
-
-Before making any code changes, ALWAYS run:
-```bash
-dotnet --version  # Must show 10.0.100-rc.1 or later
-docker --version  # Confirm Docker is installed
-```
-
-If .NET 10 SDK is not installed, STOP and inform the user. Do not attempt to build with older SDKs.
-
-## Build and Test Commands
-
-## Agent Workflow
-
-When Serena tools are available, prefer them for codebase exploration, symbol-aware edits, and memory management.
-
-- Use Serena or symbol-aware tooling before broad file reads when practical.
-- Prefer repository memory for durable codebase facts and session memory for task plans or temporary execution context.
-- Fall back to generic grep, file, and terminal tools when Serena is not a good fit for the task.
-
-### Command Policy (Strict)
-
-For EF Core migration creation in this repository, agents MUST use the exact canonical command below.
-
-- Canonical command (required):
-   - `dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFiction.Data.csproj --context FictionDbContext`
-- Disallowed for migration creation in this repo:
-   - Running from any alternate `--project` target.
-- If an agent runs a non-canonical variant, it must immediately rerun using the canonical command and report the correction.
-
-### Project Structure
-
-The solution uses **Central Package Management** via `Directory.Packages.props` in the repository root. All package versions are centrally managed.
-
-### Build Process
-
-**IMPORTANT:** Always build in Debug configuration first to match CI/CD pipeline:
+Before any `dotnet build --no-restore`, `dotnet test --no-restore`, or remote operation that assumes `origin`, run the platform-appropriate bootstrap:
 
 ```bash
-# Step 1: For cloud/ephemeral agents, run preflight first
 ./tools/agent-bootstrap.sh
-
-# Step 2: Restore dependencies
-dotnet restore
-
-# Step 3: Build in Debug configuration (matches CI workflow)
-dotnet build --configuration Debug --no-restore
-
-# Step 4: Run tests (if code changes were made)
-dotnet test -c Release --no-restore
 ```
-
-Windows PowerShell preflight equivalent:
 
 ```powershell
 ./tools/agent-bootstrap.ps1
 ```
 
-**Build Warnings:**
-- The build has `TreatWarningsAsErrors=true` for all configurations
-- Code analysis is enabled with `AnalysisMode=All`
-- SonarAnalyzer is enabled for all projects
-- Analysis is DISABLED for Release builds (`RunAnalyzers=false` in Release)
+Bootstrap restores local tools and NuGet dependencies, validates or infers `origin`, and reuses an existing `.artifacts/packages/IHFiction.SourceGenerators*.nupkg`. After changing source-generator code, force a package refresh:
 
-### Running Tests
-
-The project uses **xUnit v3** with the following test frameworks:
-- FluentAssertions (pinned to v7.x due to licensing)
-- NSubstitute for mocking
-- Testcontainers for integration tests (PostgreSQL, MongoDB)
-- GitHub Actions Test Logger for CI
-
-**Run all tests:**
 ```bash
-dotnet test -c Release
+./tools/agent-bootstrap.sh --force-source-generator-package
 ```
 
-**Integration tests** use Testcontainers and require Docker to be running. If Docker is not available, integration tests will fail.
+```powershell
+./tools/agent-bootstrap.ps1 -ForceSourceGeneratorPackage
+```
 
-## Running the Application
+The Bash publication path requires `python3`. On Windows, use PowerShell for the normal bootstrap. Use Ubuntu WSL to validate Bash behavior when Git Bash cannot find `dotnet`; do not pass raw `/mnt/...` paths to Windows `dotnet.exe`/MSBuild.
 
-### Development Mode
+CI builds Debug and tests Release. Match it with:
 
-**Method 1: Using .NET CLI (Recommended)**
 ```bash
-dotnet run --project src/aspire/IHFiction.AppHost
+dotnet build --configuration Debug --no-restore
+dotnet test --configuration Release --no-restore
 ```
 
-**Method 2: Using Aspire CLI (if installed)**
+Warnings are errors and full analyzers run for Debug builds. Release disables analyzers. Integration tests require Docker and use real PostgreSQL, MongoDB, and Redis Testcontainers; do not describe them as verified when Docker was unavailable.
+
+## Run and observe the application
+
+Prefer the repository-local Aspire CLI:
+
 ```bash
-aspire run
+aspire start
+aspire describe
 ```
 
-### Migration Service First For Schema Changes
+Use `dotnet run --project src/aspire/IHFiction.AppHost` as a foreground fallback. Inspect `aspire describe` for actual resource names and supported commands. A resource `restart` does not compile changed source; use its `rebuild` command. On Windows, stop all consumers holding shared WebClient/FictionApi/SharedWeb assemblies before rebuilding. If a stopped resource still owns files, recover with `aspire stop`, `aspire start`, then rebuild.
 
-For local Aspire runs, `src/aspire/IHFiction.MigrationService` applies EF Core migrations.
+The development migration resource is named `migrations` and is explicit-start. After an EF model/migration change, start it and wait for completion before debugging missing table, column, relation, index, or constraint failures. In non-development environments, the API waits for migration completion.
 
-Treat these as migration-first signals:
-- `relation ... does not exist`
-- missing table, column, index, or constraint errors
-- failures that begin immediately after EF model or migration changes
+Development Keycloak imports `config/fiction-realm.json`. Configure the two AppHost parameter secrets when prompted by Aspire, or use:
 
-Required order:
-1. Start or verify the AppHost.
-2. Start or verify the migration resource.
-3. Wait for migration completion.
-4. Only then debug API, EF query translation, serialization, or frontend behavior that depends on the new schema.
-
-### First-Time Setup (CRITICAL)
-
-After the first run, you MUST configure Keycloak secrets:
-
-1. **Access Aspire Dashboard** - Opens automatically after `dotnet run`
-2. **Get Keycloak admin credentials** - Found in Keycloak resource properties in Dashboard
-3. **Wait for Keycloak to be healthy** - Check status in Dashboard (can take 1-2 minutes)
-4. **Access Keycloak admin console** - Click the Keycloak link in Dashboard
-5. **Navigate to fiction realm** → Clients
-6. **Regenerate secrets for:**
-   - `fiction-admin-client`
-   - `fiction-frontend`
-7. **Set secrets using dotnet CLI:**
-   ```bash
-   dotnet user-secrets --project ./src/aspire/IHFiction.AppHost/ set Parameters:KeycloakAdminClientSecret <SECRET_1>
-   dotnet user-secrets --project ./src/aspire/IHFiction.AppHost/ set Parameters:ApiOidcClientSecret <SECRET_2>
-   ```
-
-**Note:** The Aspire Dashboard will prompt for missing secrets on subsequent runs.
-
-### Playwright + Aspire Verification Workflow
-
-When validating UI changes with Playwright in this repository, use this sequence to avoid flaky runs:
-
-1. Ensure the apphost is running (`aspire start` or `dotnet run --project src/aspire/IHFiction.AppHost`).
-2. Verify resource readiness before browser automation:
-   - `aspire describe`
-   - `aspire wait web`
-3. Prefer `playwright-cli run-code` over ad-hoc Node scripts.
-   - The repository environment may not have `playwright` resolvable from plain `node` scripts.
-   - For deterministic theme validation, prefer `?theme=light` or `?theme=dark` in the URL over mutating browser storage. Use storage mutation only when testing persistence behavior itself.
-4. For Blazor pages, do **not** default to `networkidle` waits.
-   - Use `waitUntil: 'domcontentloaded'` and then explicitly wait for `main` to be visible.
-5. Treat `/_blazor/disconnect` request failures as expected noise during navigation/state changes.
-
-If a previously healthy sweep starts timing out at `/` after edits:
-
-1. Restart only the web resource first:
-   - `aspire resource web restart --non-interactive -l Debug`
-2. Re-run a targeted Playwright check on recently changed routes.
-3. Re-run the full sweep only after targeted checks pass.
-
-If stale static-web-asset fingerprints appear in console (`_content/...bundle.scp.css` 404), restart or rebuild the affected resource before trusting contrast/readability results.
-
-## Project Architecture
-
-### Architectural Patterns
-
-1. **Vertical Slice Architecture** - Features organized by business capability, not technical layers
-2. **CQRS Lite** - Separation of Commands (writes) and Queries (reads)
-3. **Shared Kernel** - Common code in `IHFiction.SharedKernel`
-4. **Primary Keys: ULIDs** - Lexicographically sortable, URL-safe identifiers
-5. **Async Messaging: WolverineFx** - Primary mechanism for new asynchronous workflows, inter-domain messaging, and queue-based parallel work
-
-### WolverineFx Policy For New Work
-
-- For new features, prefer WolverineFx when requests can return immediately and complete work asynchronously.
-- For new service/domain communication, use WolverineFx messages/events instead of tightly coupled direct calls.
-- For queued work that can run across multiple instances, prefer WolverineFx durable queues and idempotent handlers.
-- Do not retrofit existing features to WolverineFx unless explicitly asked.
-
-### Solution Structure
-
-```
-/
-├── src/
-│   ├── IHFiction.FictionApi/          # ASP.NET Core Minimal APIs backend
-│   ├── IHFiction.WebClient/           # Blazor Web App frontend
-│   ├── aspire/
-│   │   ├── IHFiction.AppHost/         # .NET Aspire orchestration (ENTRYPOINT)
-│   │   └── IHFiction.MigrationService/ # EF Core migrations runner
-│   └── lib/
-│       ├── IHFiction.Data/            # EF Core entities, DbContexts, migrations
-│       ├── IHFiction.ServiceDefaults/ # Shared service configuration
-│       ├── IHFiction.SharedKernel/    # Common validation, domain logic
-│       └── IHFiction.SharedWeb/       # Shared Blazor components
-├── tests/
-│   ├── IHFiction.UnitTests/           # xUnit unit tests
-│   └── IHFiction.IntegrationTests/    # Integration tests with Testcontainers
-├── config/
-│   └── fiction-realm.json             # Keycloak realm configuration
-└── .github/workflows/                 # CI/CD pipelines
-```
-
-### Key Project Files
-
-- **Entrypoint:** `src/aspire/IHFiction.AppHost/AppHost.cs` - Defines the application stack
-- **API:** `src/IHFiction.FictionApi/Program.cs` - Minimal API endpoints
-- **Web:** `src/IHFiction.WebClient/Program.cs` - Blazor app configuration
-- **Data:** `src/lib/IHFiction.Data/Contexts/FictionDbContext.cs` - PostgreSQL context
-
-### Database Migrations
-
-EF Core migrations are in `src/lib/IHFiction.Data/Migrations/`. The MigrationService applies them automatically in non-development environments.
-
-**To add a new migration (PostgreSQL):**
 ```bash
-dotnet ef migrations add <MigrationName> --project src/lib/IHFiction.Data/IHFiction.Data.csproj --context FictionDbContext
+dotnet user-secrets --project src/aspire/IHFiction.AppHost set Parameters:ApiKeycloakAdminClientSecret <admin-client-secret>
+dotnet user-secrets --project src/aspire/IHFiction.AppHost set Parameters:ApiOidcClientSecret <frontend-client-secret>
 ```
 
-**Do not use alternate variants for this repository.**
+Never commit secret values.
 
-## Configuration Files
+## Architecture and ownership
 
-### Code Style and Analysis
+- `src/aspire/IHFiction.AppHost/`: runtime topology and production deployment composition.
+- `src/aspire/IHFiction.MigrationService/`: PostgreSQL migration application.
+- `src/IHFiction.FictionApi/<Area>/`: Minimal API vertical slices.
+- `src/lib/IHFiction.Data/<Area>/Domain/` and `Configurations/`: relational domain and EF mappings.
+- `src/lib/IHFiction.SharedKernel/`: shared contracts, validation, links, filtering, sorting, and shaping.
+- `src/lib/IHFiction.SharedWeb/`: shared Blazor pages, components, services, metadata, and typed API client consumer.
+- `src/IHFiction.WebClient/`: Interactive Server host and authentication composition.
+- `tests/IHFiction.UnitTests/` and `tests/IHFiction.IntegrationTests/`: xUnit v3 tests using Microsoft.Testing.Platform.
 
-- **`.editorconfig`** - C# code style rules (4-space indent, file-scoped namespaces, etc.)
-- **`Directory.Packages.props`** - Central package version management
-- **`global.json`** - SDK version pinned to 10.0.100-rc.1
+Follow vertical slices and CQRS-lite conventions. ULIDs are the standard domain identifiers. PostgreSQL owns relational metadata; follow existing MongoDB-driver analogues for document bodies and do not create a second source of truth.
 
-### Logging Pattern Preference
+## API, persistence, and generated contracts
 
-For C# logging, prefer source-generated `LoggerMessage` attributes over cached delegates from `LoggerMessage.Define(...)`.
+- Keep validation and authorization at the server boundary even when UI affordances are hidden.
+- Use the shared pagination, sorting, searching, filtering, shaping, link, and validation primitives rather than duplicating them.
+- Return the repository's established `ProblemDetails` and hypermedia response shapes.
+- Use the exact EF migration command in `AGENTS.md`; no alternate project path is permitted.
+- API C# is the contract source. `src/IHFiction.FictionApi/openapi.json` is generated input for the SharedWeb client. Never hand-edit generated client output.
+- After an API contract change, perform the normal host-runtime API build that refreshes `openapi.json`, then build its SharedWeb consumer.
+- When EF retry resilience and a user transaction are both required, wrap the entire unit in `Database.CreateExecutionStrategy().ExecuteInTransactionAsync(...)`; keep mutable attempt state inside the delegate and accept tracked changes only after a confirmed commit. Follow `ConvertStoryType`.
 
-Default implementation pattern:
-- Make the containing class `partial`.
-- Use `private partial void` logging methods (no bodies) annotated with `[LoggerMessage(...)]`.
-- Keep event IDs/messages explicit and stable.
+## WolverineFx and logging
 
-Only use delegate-based logging if there is a specific reason that source generation cannot be used.
+Use WolverineFx for asynchronous work, cross-domain messaging, or work that should scale across instances. Keep immediate local work synchronous and do not retrofit existing features solely for consistency.
 
-### Application Settings
+For queued HTTP mutations, validate synchronously, publish resolved identifiers/timestamps rather than request objects, return `202 Accepted`, and make handlers idempotent across distinct envelopes for the same client action. Redis Streams are the cross-instance transport; PostgreSQL owns durable inbox/outbox/local-queue storage. Preserve `AddResourceSetupOnStartup()`, `MapWolverineEnvelopeStorage(...)`, and `TransactionMiddlewareMode.Lightweight` behavior unless the task explicitly changes that architecture.
 
-- `appsettings.json` - Base configuration
-- `appsettings.Development.json` - Development overrides
-- User secrets for sensitive data (Keycloak secrets)
+Prefer source-generated `[LoggerMessage]` partial methods. Make the containing class `partial`; do not introduce cached `LoggerMessage.Define(...)` delegates without a specific need.
 
-## CI/CD Workflows
+## Blazor, styling, metadata, and browser verification
 
-### Build Workflow (`.github/workflows/build.yml`)
+- The UI is Blazor Interactive Server. Invoke JavaScript only after interactive rendering from `OnAfterRenderAsync`.
+- Treat `JSDisconnectedException` during initialization/disposal as a normal circuit race where appropriate.
+- Use Bulma classes and the repository's theme tokens; follow the installed Bulma styling/color guidance instead of adding isolated hard-coded palettes.
+- `SocialPreviewMetadata.razor` is the single SEO `HeadContent` owner. The only existing exception is `Components/MarkdownEditor/Editor.razor` for editor assets. Use uniquely owned `SectionContent`/`SectionOutlet` concerns for append-style metadata.
+- Use Playwright for browser-observable changes. For Blazor, prefer `domcontentloaded` plus an explicit visible-element wait over `networkidle`. Treat `/_blazor/disconnect` failures as expected only when they correlate with navigation or circuit teardown.
+- For theme checks, use `?theme=light` or `?theme=dark` unless storage persistence itself is under test.
+- Metadata changes must inspect `document.head` on `/`, `/stories`, `/authors`, a story detail, chapter detail, and author detail route; verify route-appropriate JSON-LD plus canonical, Open Graph, and Twitter tags.
 
-**Triggers:** Push to main, tags (v*), pull requests
+## Verification and handoff
 
-**Steps:**
-1. Checkout code
-2. Setup .NET SDK (uses global.json)
-3. **Build:** `dotnet build --configuration Debug` (NOT Release!)
-4. **Test:** `dotnet test -c Release`
-5. Analyze tags for release detection
-
-**IMPORTANT:** CI builds in Debug but tests in Release.
-
-### CodeQL Workflow (`.github/workflows/codeql.yml`)
-
-**Triggers:** Push to main, pull requests, weekly schedule
-
-**Steps:**
-1. Initialize CodeQL for C# and JavaScript/TypeScript
-2. **Restore:** `dotnet restore`
-3. **Build:** `dotnet build --no-restore --configuration Release`
-4. Perform security analysis
-
-**Note:** CodeQL builds in Release configuration.
-
-## Known Limitations and Workarounds
-
-### 1. .NET Aspire Docker Swarm Bug
-
-**Problem:** Aspire incorrectly generates `additional_labels` instead of `labels` in swarm deployment sections.
-
-**Workaround:** See `LIMITATIONS.md` for docker-compose override approach.
-
-**Status:** Fixed in Aspire 9.5/9.4.3 (PR https://github.com/dotnet/aspire/pull/11204 merged)
-
-**Notes:** The long-form workaround previously documented in `LIMITATIONS.md` has been removed from the repo (see commit history) now that the upstream fix is merged. If you are using an older Aspire CLI, the override documented in `LIMITATIONS.md` may still be required.
-
-**Related upstream work:** Other Swarm-schema issues (for example, `Parallelism` and `FailOnError` typing mismatches) were addressed in a follow-up Aspire PR (see https://github.com/dotnet/aspire/pull/11706). Those fixes may not have propagated to all Aspire releases yet; check your Aspire CLI version if you hit related issues.
-
-### 2. Production Configuration
-
-Production deployment uses Docker Swarm with:
-- External network `t3_proxy` (environment-specific)
-- Docker secrets from `./secrets/` directory (paths are hardcoded)
-- Manual replica count configuration (workaround for Aspire bug)
-- HTTP-only endpoints (TLS termination at reverse proxy)
-
-See `src/aspire/IHFiction.AppHost/Extensions/ProductionConfigExtensions.cs` for full configuration.
-
-### 3. Known BUG Comments in Code
-
-Several `BUG:` comments exist in `ProductionConfigExtensions.cs`:
-- Swarm parser incompatibilities with depends_on long-format
-- Replica count not auto-set from ReplicaAnnotation
-- Parallelism and FailOnError type mismatches in schema
-
-These are tracked Aspire SDK issues with documented workarounds in place.
-
-## Development Guidelines
-
-### API Development
-
-The FictionApi uses **ASP.NET Core Minimal APIs** organized by feature slices:
-- `src/IHFiction.FictionApi/Authors/` - Author management endpoints
-- `src/IHFiction.FictionApi/Stories/` - Story CRUD operations
-- `src/IHFiction.FictionApi/Tags/` - Tagging system
-
-**Endpoint Pattern:**
-```csharp
-internal sealed class CreateStoryRequest { ... }
-internal sealed class CreateStory { ... }  // Use case handler
-```
-
-**Built-in Validation:** .NET 10 automatically validates `DataAnnotation` attributes on request models.
-
-**Query Parameters:** Use interfaces from `IHFiction.SharedKernel/Validation/` for consistent parameter patterns:
-- `IPaginationSupport` - Page, PageSize
-- `ISortingSupport` - SortBy, SortOrder
-- `ISearchSupport` - Search query
-- `IFilterSupport` - Filtering
-
-### Frontend Development
-
-Blazor Web App in **Interactive Server mode** with typed HTTP client generated from OpenAPI schema at build time.
-
-**Key Components:** `src/lib/IHFiction.SharedWeb/`
-
-### Metadata Composition Guardrail (Mandatory)
-
-When changing SEO/social/structured-data metadata in Blazor:
-
-- Treat `HeadContent` as single-owner for metadata composition.
-- In this repo, the metadata owner is `src/lib/IHFiction.SharedWeb/Components/SocialPreviewMetadata.razor`.
-- Do not add extra metadata `HeadContent` blocks elsewhere (exception: `src/lib/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor` for editor assets).
-
-Reason:
-
-- Multiple `HeadContent` instances overwrite `HeadOutlet` output; they do not append.
-- This can silently drop canonical/OG/Twitter/JSON-LD metadata.
-
-Append strategy:
-
-- Prefer `SectionContent` + `SectionOutlet` for composable metadata.
-- Sections also overwrite if the same named/keyed section is emitted more than once in one render tree branch.
-- Use unique section names per concern or enforce a single writer per section.
-
-InteractiveServer caveats:
-
-- Validate that `SectionOutlet` placement aligns with where `SectionContent` is emitted in the effective render tree.
-- If a route category is missing metadata while others work, investigate layout/render-path differences before assuming serialization/tag issues.
-
-Minimum validation:
-
-1. Inspect `document.head` on `/`, `/stories`, `/authors`, story detail, chapter detail, and author detail.
-2. Verify JSON-LD script counts/types are route-appropriate.
-3. Verify canonical, OG, and Twitter tags remain present after changes.
-
-### Testing Patterns
-
-**Unit Tests:** Service-based approach without DbContext mocking (see `tests/IHFiction.UnitTests/Authors/GetAuthorServiceTests.cs`)
-
-**Integration Tests:** Use Testcontainers for real database instances.
-
-### Validation Attributes
-
-Custom validation attributes in `src/lib/IHFiction.SharedKernel/Validation/`:
-- `ValidMarkdownAttribute` - Validates markdown content security
-- `NoHarmfulContentAttribute` - XSS/script injection protection
-- `NoExcessiveWhitespaceAttribute` - Prevents whitespace abuse
-
-## Common Pitfalls
-
-1. **Building without .NET 10 SDK** - Will fail with NETSDK1045 error
-2. **Not configuring Keycloak secrets** - App will not start properly after first run
-3. **Docker not running** - Integration tests and app stack will fail
-4. **Building in wrong configuration** - CI builds Debug first, then tests Release
-5. **Missing migrations** - MigrationService must complete before API starts
-6. **Treating warnings as errors** - All warnings must be resolved for successful build
-7. **Using `networkidle` for Blazor verification** - can hang/flap due to persistent connections; prefer `domcontentloaded` + explicit UI readiness checks
-8. **Assuming all console errors are regressions** - filter known `/_blazor/disconnect` noise before deciding a sweep failed
-
-## Quick Reference
-
-**Start development:**
-```bash
-dotnet run --project src/aspire/IHFiction.AppHost
-```
-
-**Run tests:**
-```bash
-dotnet test -c Release
-```
-
-**Check for issues:**
-```bash
-dotnet build --configuration Debug  # Matches CI
-```
-
-**Add migration:**
-```bash
-dotnet ef migrations add <Name> --project src/lib/IHFiction.Data/IHFiction.Data.csproj --context FictionDbContext
-```
-
-## Browser and UI validation requirements
-
-When implementing or modifying UI behavior, routing, rendering, metadata generation, social-preview tags, SEO tags, or browser-observable behavior:
-
-- Use Playwright as the primary validation tool.
-- Do not replace Playwright with unit tests, manual testing notes, curl-only checks, or “future work.”
-- The implementation plan must include concrete Playwright tests or Playwright MCP/browser-validation steps.
-- If Playwright is not already installed, the plan must include installing and configuring it.
-- If a local dev server is needed, the plan must include how it is started and how Playwright connects to it.
-- For social preview / SEO / metadata work, validate the rendered HTML seen by a browser or by an HTTP request that observes prerendered output, and assert the relevant Open Graph, Twitter Card, canonical, and redirect behavior.
-
-## Social Share Preview (SSP) standards
-
-When implementing or updating social metadata, enforce these defaults unless a route has a strong reason to override them:
-
-- `og:title` and `twitter:title`: target 30-60 characters, hard max 60.
-- `og:description` and `twitter:description`: target 55-200 characters, hard max 200.
-- Put the primary topic and CTA within the first ~110 characters of descriptions for mobile-safe truncation.
-- `twitter:card` must remain `summary_large_image`.
-- Default social image must be 1200x630 (1.91:1) and reusable across Open Graph and Twitter.
-- Keep default social image asset lightweight (prefer <= 1 MB) and available via an absolute URL at render time.
-
-## Trust These Instructions
-
-These instructions have been carefully validated. Only search for additional information if:
-1. These instructions are incomplete for your specific task
-2. You encounter errors not documented here
-3. Prerequisites or commands have been updated since this was written
-
-For architecture details, see `ARCHITECTURE.md`. For deployment limitations, see `LIMITATIONS.md`.
+Use the cheapest test that proves each behavior, then verify affected boundaries. Compilation alone does not verify browser behavior, authentication, migration application, generated API compatibility, or distributed delivery. Report the commands run, their results, anything not verified, generated artifacts/migrations produced, and any manual deployment or secret step remaining.

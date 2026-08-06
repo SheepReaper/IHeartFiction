@@ -10,25 +10,27 @@ To get the project running locally, you'll need the following installed:
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- (Optional) [Aspire CLI](https://learn.microsoft.com/en-us/dotnet/aspire/fundamentals/setup-tooling?tabs=unix%2Cwindows&pivots=dotnet-cli#-aspire-cli)
+- `python3` on Linux when forcing a local source-generator package refresh
 
-Once the prerequisites are installed, you can run the project using the .NET CLI:
-
-```bash
-dotnet run --project src/aspire/IHFiction.AppHost
-```
-
-OR (If the AppHost is set up as the default startup project)
+Restore the repository-local Aspire CLI and `dotnet-ef`, restore dependencies, and validate the environment:
 
 ```bash
-dotnet run
+./tools/agent-bootstrap.sh
 ```
 
-Alternatively, you can run the project using the Aspire CLI (if you have it installed).
+On Windows PowerShell:
+
+```powershell
+./tools/agent-bootstrap.ps1
+```
+
+Then start the AppHost in the background:
 
 ```bash
-aspire run
+aspire start
 ```
+
+Use `dotnet run --project src/aspire/IHFiction.AppHost` when a foreground process is preferable.
 
 ### After the stack starts (First-time Set-up)
 
@@ -38,8 +40,8 @@ The Keycloak realm `fiction` is pre-configured by the realm import file. However
 1. Once the Keycloak service status shows healthy in the Aspire Dashboard, click the link to the Keycloak server. Once in, access the fiction realm and its clients.
 1. Regenerate and copy the credential (secret) for `fiction-admin-client`.
 1. The first time the Aspire Dashboard launches for you, you should be prompted to provide missing secrets. You can click this message to provide the secret you just generated.
-1. (Alternatively) Use the dotnet cli to update the secret `dotnet user-secrets --project ./src/aspire/IHFiction.AppHost/ set Parameters:KeycloakAdminClientSecret <YOUR_SECRET_HERE>`
-1. Repeat the last two steps for `fiction-frontend` client to set the `Parameters:KeycloakAdminClientSecret` value.
+1. (Alternatively) Set the admin-client secret with `dotnet user-secrets --project ./src/aspire/IHFiction.AppHost set Parameters:ApiKeycloakAdminClientSecret <YOUR_SECRET_HERE>`.
+1. Repeat the last two steps for `fiction-frontend`, using `Parameters:ApiOidcClientSecret`.
 
 ## Software Stack
 

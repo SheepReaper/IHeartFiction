@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param()
+param(
+  [switch]$ForceSourceGeneratorPackage
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -46,6 +48,15 @@ $localPackageFeed = Join-Path $repoRoot '.artifacts/packages'
 $sourceGeneratorPackageId = 'IHFiction.SourceGenerators'
 $sourceGeneratorPackageVersion = '0.1.0-local'
 $sourceGeneratorPackageFileName = "$sourceGeneratorPackageId.$sourceGeneratorPackageVersion.nupkg"
+
+function Get-LocalSourceGeneratorPackage {
+  if (-not (Test-Path -LiteralPath $localPackageFeed)) {
+    return $null
+  }
+
+  return Get-ChildItem -LiteralPath $localPackageFeed -Filter "$sourceGeneratorPackageId*.nupkg" -File |
+    Select-Object -First 1
+}
 
 function Remove-SourceGeneratorPackageFromGlobalCache {
   $globalPackagesLine = dotnet nuget locals global-packages --list |
@@ -173,6 +184,12 @@ Write-Host "Running cloud-agent preflight for IHeartFiction..." -ForegroundColor
 $dotnetVersion = dotnet --version
 Write-Host "Detected .NET SDK: $dotnetVersion" -ForegroundColor DarkGray
 
+Write-Host "Restoring repository tools..." -ForegroundColor Cyan
+dotnet tool restore
+if ($LASTEXITCODE -ne 0) {
+  throw "dotnet tool restore failed."
+}
+
 if (-not (Add-OriginRemoteIfPossible)) {
   Write-Warning "Could not infer origin remote automatically."
   Write-Host "Run: git remote add origin https://github.com/SheepReaper/IHeartFiction.git" -ForegroundColor Yellow
@@ -182,7 +199,17 @@ else {
   Write-Host "origin remote: $originUrl" -ForegroundColor DarkGray
 }
 
-Publish-LocalSourceGeneratorPackage
+$existingSourceGeneratorPackage = Get-LocalSourceGeneratorPackage
+if ($ForceSourceGeneratorPackage -or $null -eq $existingSourceGeneratorPackage) {
+  if ($ForceSourceGeneratorPackage) {
+    Write-Host "Forcing local source generator package publication..." -ForegroundColor Cyan
+  }
+
+  Publish-LocalSourceGeneratorPackage
+}
+else {
+  Write-Host "Local source generator package already exists; skipping publication: $($existingSourceGeneratorPackage.Name)" -ForegroundColor DarkGray
+}
 
 Write-Host "Restoring dependencies..." -ForegroundColor Cyan
 dotnet restore

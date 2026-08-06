@@ -1,5 +1,16 @@
 # Agent Command Guardrails
 
+## Repository Context (Mandatory)
+
+Before changing code:
+
+1. Preserve unrelated working-tree changes.
+2. Read the target files, their tests, and one nearby complete analogue.
+3. For vertical feature work, follow `.agents/skills/ihfiction-feature-workflow/SKILL.md` and load only the references relevant to the task.
+4. Read `.agents/WORKAROUNDS.md` before changing workaround-looking code or build/deployment plumbing.
+
+The solution uses vertical slices and CQRS-lite. PostgreSQL/EF Core owns relational metadata, MongoDB driver collections own document bodies where existing slices use them, Redis/WolverineFx owns distributed messaging, and SharedWeb consumes the API contract generated from FictionApi. Do not introduce a second source of truth or hand-edit generated client output.
+
 ## EF Core Migration Creation (Mandatory)
 
 For this repository, the migration creation command is fixed.
@@ -108,8 +119,24 @@ On Windows PowerShell, run:
 Preflight guarantees:
 
 - `origin` remote is validated and configured when it can be inferred.
+- Repository-local tools from `.config/dotnet-tools.json` are restored at their pinned versions.
 - `dotnet restore` has completed so `project.assets.json` is present.
 - The current .NET SDK version is printed for diagnostics.
+- A matching `.artifacts/packages/IHFiction.SourceGenerators*.nupkg` is reused without repacking, regardless of its version/suffix.
+
+After changing `IHFiction.SourceGenerators`, explicitly refresh its local package:
+
+```bash
+./tools/agent-bootstrap.sh --force-source-generator-package
+```
+
+```powershell
+./tools/agent-bootstrap.ps1 -ForceSourceGeneratorPackage
+```
+
+The Bash publication path requires `python3` so package comparison can ignore nondeterministic NuGet metadata without degrading to bytewise comparison.
+
+On Windows, a Git Bash `dotnet: command not found` error is an environment limitation, not evidence that the Bash script is defective. Use PowerShell for the normal Windows preflight and Ubuntu WSL for Bash behavior. If WSL has no Linux .NET SDK, Windows `dotnet.exe` may be used for verification only through a wrapper that converts `/mnt/...` and Linux temporary paths with `wslpath -w`; do not pass WSL paths directly to MSBuild.
 
 If preflight cannot infer a remote, do not guess. Use the explicit command:
 

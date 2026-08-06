@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+force_source_generator_package=false
+
+while (($# > 0)); do
+  case "$1" in
+    --force-source-generator-package)
+      force_source_generator_package=true
+      ;;
+    -h|--help)
+      echo "Usage: $0 [--force-source-generator-package]"
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $0 [--force-source-generator-package]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
 origin_configured() {
   git remote get-url origin >/dev/null 2>&1
 }
@@ -37,6 +57,10 @@ source_generator_package_id="IHFiction.SourceGenerators"
 source_generator_package_version="0.1.0-local"
 source_generator_package_file_name="${source_generator_package_id}.${source_generator_package_version}.nupkg"
 
+find_local_source_generator_package() {
+  find "${local_package_feed}" -maxdepth 1 -type f -name "${source_generator_package_id}*.nupkg" -print -quit 2>/dev/null || true
+}
+
 remove_source_generator_package_from_global_cache() {
   global_packages_path="$(dotnet nuget locals global-packages --list | sed -n 's/^global-packages:[[:space:]]*//p' | head -n 1)"
   if [[ -z "${global_packages_path}" ]]; then
@@ -58,8 +82,12 @@ packages_have_same_content() {
     return 1
   fi
 
-  if command -v python3 >/dev/null 2>&1; then
-    python3 - "$first_package_path" "$second_package_path" <<'PY'
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "ERROR: python3 is required to compare local source generator packages." >&2
+    return 127
+  fi
+
+  python3 - "$first_package_path" "$second_package_path" <<'PY'
 import hashlib
 import sys
 import zipfile
@@ -82,13 +110,14 @@ def entries(path):
 
 sys.exit(0 if entries(sys.argv[1]) == entries(sys.argv[2]) else 1)
 PY
-    return $?
-  fi
-
-  cmp -s "${first_package_path}" "${second_package_path}"
 }
 
 publish_local_source_generator_package() {
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "ERROR: python3 is required to publish the local source generator package." >&2
+    return 127
+  fi
+
   mkdir -p "${local_package_feed}"
 
   echo "Stopping .NET build servers before repacking local analyzers..."
@@ -97,29 +126,31 @@ publish_local_source_generator_package() {
   echo "Restoring source generator package dependencies..."
   dotnet restore "${source_generator_project}"
 
-  echo "Packing source generator for local restore..."
-  staging_feed="$(mktemp -d)"
-  staged_package="${staging_feed}/${source_generator_package_file_name}"
-  published_package="${local_package_feed}/${source_generator_package_file_name}"
-  trap 'rm -rf "${staging_feed}"' RETURN
+  (
+    echo "Packing source generator for local restore..."
+    staging_feed="$(mktemp -d)"
+    staged_package="${staging_feed}/${source_generator_package_file_name}"
+    published_package="${local_package_feed}/${source_generator_package_file_name}"
+    trap 'rm -rf "${staging_feed}"' EXIT
 
-  dotnet pack "${source_generator_project}" --no-restore -p:PackageOutputPath="${staging_feed}"
+    dotnet pack "${source_generator_project}" --no-restore -p:PackageOutputPath="${staging_feed}"
 
-  if packages_have_same_content "${published_package}" "${staged_package}"; then
-    echo "Local source generator package content is unchanged; keeping existing package."
-  else
-    rm -f "${local_package_feed}/${source_generator_package_id}".*.nupkg
-    cp "${staged_package}" "${published_package}"
-  fi
-
-  rm -rf "${staging_feed}"
-  trap - RETURN
+    if packages_have_same_content "${published_package}" "${staged_package}"; then
+      echo "Local source generator package content is unchanged; keeping existing package."
+    else
+      rm -f "${local_package_feed}/${source_generator_package_id}".*.nupkg
+      cp "${staged_package}" "${published_package}"
+    fi
+  )
 
   remove_source_generator_package_from_global_cache
 }
 
 echo "Running cloud-agent preflight for IHeartFiction..."
 echo "Detected .NET SDK: $(dotnet --version)"
+
+echo "Restoring repository tools..."
+dotnet tool restore
 
 if ! try_add_origin; then
   echo "WARNING: Could not infer origin remote automatically."
@@ -128,7 +159,16 @@ else
   echo "origin remote: $(git remote get-url origin)"
 fi
 
-publish_local_source_generator_package
+existing_source_generator_package="$(find_local_source_generator_package)"
+if [[ "${force_source_generator_package}" == true || -z "${existing_source_generator_package}" ]]; then
+  if [[ "${force_source_generator_package}" == true ]]; then
+    echo "Forcing local source generator package publication..."
+  fi
+
+  publish_local_source_generator_package
+else
+  echo "Local source generator package already exists; skipping publication: $(basename "${existing_source_generator_package}")"
+fi
 
 echo "Restoring dependencies..."
 dotnet restore
