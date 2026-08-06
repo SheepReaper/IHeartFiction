@@ -18,7 +18,7 @@
     <PackageReference Include="MongoDB.Bson" />
     <PackageReference Include="MongoDB.Driver" />
     <PackageReference Include="Npgsql" />
-    <PackageReference Include="Shirubasoft.Aspire.Cloudflared" />
+    <PackageReference Include="Shirubasoft.Aspire.CloudflareTunnels" />
     <PackageReference Include="WebPush" />
   </ItemGroup>
 
