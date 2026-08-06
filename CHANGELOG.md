@@ -8,6 +8,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+
+## [v1.0.0] - 2026-08-06
+
+
 ### Added
 
 - Add read tracking functionality and read count formatting
