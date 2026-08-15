@@ -95,7 +95,7 @@
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.24.6" />
     <PackageVersion Include="WolverineFx.Redis" Version="6.24.6" />
     <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.24.6" />
-    <PackageVersion Include="xunit.v3.mtp-v2" Version="3.2.2" />
+    <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 </Project>
