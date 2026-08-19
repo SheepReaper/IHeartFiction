@@ -90,11 +90,11 @@
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.14.0" />
     <PackageVersion Include="Ulid" Version="1.4.1" />
     <PackageVersion Include="WebPush" Version="1.0.13" />
-    <PackageVersion Include="WolverineFx" Version="6.24.6" />
-    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.24.6" />
-    <PackageVersion Include="WolverineFx.Postgresql" Version="6.24.6" />
-    <PackageVersion Include="WolverineFx.Redis" Version="6.24.6" />
-    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.24.6" />
+    <PackageVersion Include="WolverineFx" Version="6.29.0" />
+    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.29.0" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="6.29.0" />
+    <PackageVersion Include="WolverineFx.Redis" Version="6.29.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.29.0" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
