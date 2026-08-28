@@ -74,9 +74,9 @@
     <PackageVersion Include="OpenTelemetry.Api" Version="1.18.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.1" />
     <PackageVersion Include="Shirubasoft.Aspire.CloudflareTunnels" Version="1.1.3" />
     <PackageVersion Include="Sidio.Sitemap.Blazor" Version="2.0.2" />
