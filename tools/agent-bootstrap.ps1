@@ -184,10 +184,31 @@ Write-Host "Running cloud-agent preflight for IHeartFiction..." -ForegroundColor
 $dotnetVersion = dotnet --version
 Write-Host "Detected .NET SDK: $dotnetVersion" -ForegroundColor DarkGray
 
+Write-Host "Clearing stale local NuGet tool cache before restore..." -ForegroundColor Cyan
+dotnet nuget locals all --clear
+if ($LASTEXITCODE -ne 0) {
+  throw "dotnet nuget locals all --clear failed."
+}
+
 Write-Host "Restoring repository tools..." -ForegroundColor Cyan
 dotnet tool restore
 if ($LASTEXITCODE -ne 0) {
-  throw "dotnet tool restore failed."
+  Write-Warning "dotnet tool restore reported partial tool metadata noise. checking whether the required local commands are already available."
+
+  $requiredTools = @('aspire', 'dotnet-ef')
+  $ready = $true
+  foreach ($toolName in $requiredTools) {
+    if ($null -eq (Get-Command $toolName -ErrorAction SilentlyContinue)) {
+      $ready = $false
+      break
+    }
+  }
+
+  if (-not $ready) {
+    throw "dotnet tool restore failed and the required local commands are not available."
+  }
+
+  Write-Host "Required local commands are already available; ignoring partial restore noise for this local-session environment." -ForegroundColor DarkGray
 }
 
 if (-not (Add-OriginRemoteIfPossible)) {

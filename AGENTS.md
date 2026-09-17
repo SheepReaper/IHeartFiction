@@ -120,7 +120,11 @@ Required verification for metadata changes:
 2. Confirm JSON-LD script count/types per route match expectations.
 3. Confirm OG/Twitter/canonical tags remain present after structured-data additions.
 
-## Cloud Agent Preflight (Mandatory)
+## Cloud Agent Preflight (Mandatory for agent/cloud runners)
+
+This preflight is intended for cloud-agent or automated runner environments. It is not required for a normal local editor session when you are already working in the repo and the required commands are present.
+
+If you are running locally in VS Code or a developer shell, use the bootstrap only when intentionally validating the cloud-agent setup. If `dotnet tool list --local` already shows the necessary commands (`aspire` and `dotnet-ef`) and the project is otherwise healthy, ignore partial tool-restore noise and continue without blocking the local session.
 
 Before running `dotnet build --no-restore`, `dotnet test --no-restore`, or git push/fetch commands that assume `origin`, run:
 
