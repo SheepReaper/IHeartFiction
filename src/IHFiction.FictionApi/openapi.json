@@ -3804,14 +3804,16 @@
             "name": "AuthorId",
             "in": "query",
             "schema": {
+              "examples": [
+                "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+              ],
               "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
               "type": [
                 "null",
                 "string"
               ],
               "description": "Universally Unique Lexicographically Sortable Identifier",
-              "format": "ulid",
-              "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+              "format": "ulid"
             }
           },
           {
@@ -8140,11 +8142,13 @@
         }
       },
       "ObjectId": {
+        "examples": [
+          "507f191e810c19729de860ea"
+        ],
         "pattern": "^[a-fA-F0-9]{24}$",
         "type": "string",
         "description": "MongoDB ObjectId",
-        "format": "objectid",
-        "example": "507f191e810c19729de860ea"
+        "format": "objectid"
       },
       "OwnAuthorProfile": {
         "required": [
@@ -8650,11 +8654,13 @@
         "description": "Represents a tag associated with a story."
       },
       "Ulid": {
+        "examples": [
+          "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+        ],
         "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
         "type": "string",
         "description": "Universally Unique Lexicographically Sortable Identifier",
-        "format": "ulid",
-        "example": "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+        "format": "ulid"
       },
       "UoapAuthorProfile": {
         "required": [
