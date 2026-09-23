@@ -24,8 +24,18 @@
   "packageRules": [
     {
       "matchManagers": ["nuget"],
-      "matchPackageNames": ["FluentAssertions", "IHFiction.SourceGenerators"],
+      "matchPackageNames": ["IHFiction.SourceGenerators"],
       "enabled": false
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["FluentAssertions"],
+      "allowedVersions": "<8.0.0"
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["Microsoft.Build.Tasks.Core"],
+      "allowedVersions": "<18.10.0"
     },
     {
       "matchPackageNames": ["GitHubActionsTestLogger"],
