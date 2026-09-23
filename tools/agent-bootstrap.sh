@@ -50,6 +50,10 @@ try_add_origin() {
   return 1
 }
 
+required_local_tools_available() {
+  command -v aspire >/dev/null 2>&1 && command -v dotnet-ef >/dev/null 2>&1
+}
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source_generator_project="${repo_root}/src/lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj"
 local_package_feed="${repo_root}/.artifacts/packages"
@@ -149,8 +153,12 @@ publish_local_source_generator_package() {
 echo "Running cloud-agent preflight for IHeartFiction..."
 echo "Detected .NET SDK: $(dotnet --version)"
 
-echo "Restoring repository tools..."
-dotnet tool restore
+if required_local_tools_available; then
+  echo "Required local commands are already available; skipping tool restore."
+else
+  echo "Restoring repository tools..."
+  dotnet tool restore --no-http-cache
+fi
 
 if ! try_add_origin; then
   echo "WARNING: Could not infer origin remote automatically."

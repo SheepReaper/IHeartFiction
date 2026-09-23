@@ -33,7 +33,7 @@ Create a short impact checklist from applicable sections. A feature is complete 
 - Integration tests prove database mappings/queries, HTTP contract, authorization, and multi-store behavior where applicable.
 - Wolverine tests prove message publication/handling and idempotency where applicable.
 - Browser verification covers route rendering, interaction, responsive/theme states, authentication redirects, JS interop, and `document.head` when applicable.
-- The required bootstrap precedes `--no-restore`; focused projects build, relevant tests pass, and generated artifacts are reviewed for freshness.
+- Cloud/automated runners complete the required bootstrap before `--no-restore`; configured local shells use ordinary restoring builds unless bootstrap behavior itself is under test. Focused projects build, relevant tests pass, and generated artifacts are reviewed for freshness.
 - Schema mismatches are checked against AppHost and migration-service completion before higher-layer debugging.
 - Unusual plumbing is checked against `.agents/WORKAROUNDS.md` before removal.
 

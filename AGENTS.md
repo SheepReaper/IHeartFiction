@@ -126,7 +126,7 @@ This preflight is intended for cloud-agent or automated runner environments. It 
 
 If you are running locally in VS Code or a developer shell, use the bootstrap only when intentionally validating the cloud-agent setup. If `dotnet tool list --local` already shows the necessary commands (`aspire` and `dotnet-ef`) and the project is otherwise healthy, ignore partial tool-restore noise and continue without blocking the local session.
 
-Before running `dotnet build --no-restore`, `dotnet test --no-restore`, or git push/fetch commands that assume `origin`, run:
+In a cloud-agent or automated runner, run the preflight before `dotnet build --no-restore`, `dotnet test --no-restore`, or git push/fetch commands that assume `origin`. In an already-configured local developer shell, prefer a normal restoring build/test; do not invoke the cloud preflight solely to use `--no-restore`.
 
 ```bash
 ./tools/agent-bootstrap.sh
@@ -145,6 +145,8 @@ Preflight guarantees:
 - `dotnet restore` has completed so `project.assets.json` is present.
 - The current .NET SDK version is printed for diagnostics.
 - A matching `.artifacts/packages/IHFiction.SourceGenerators*.nupkg` is reused without repacking, regardless of its version/suffix.
+
+The preflight must not clear the global NuGet package cache. If dependency isolation is needed for diagnosis, pass a task-specific temporary `RestorePackagesPath` to restore/build instead of disrupting packages used by active IDE or build-server processes.
 
 After changing `IHFiction.SourceGenerators`, explicitly refresh its local package:
 

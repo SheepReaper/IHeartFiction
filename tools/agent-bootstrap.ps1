@@ -42,6 +42,16 @@ function Add-OriginRemoteIfPossible {
   return $false
 }
 
+function Test-RequiredLocalToolsAvailable {
+  foreach ($toolName in @('aspire', 'dotnet-ef')) {
+    if ($null -eq (Get-Command $toolName -ErrorAction SilentlyContinue)) {
+      return $false
+    }
+  }
+
+  return $true
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $sourceGeneratorProject = Join-Path $repoRoot 'src/lib/IHFiction.SourceGenerators/IHFiction.SourceGenerators.csproj'
 $localPackageFeed = Join-Path $repoRoot '.artifacts/packages'
@@ -184,31 +194,15 @@ Write-Host "Running cloud-agent preflight for IHeartFiction..." -ForegroundColor
 $dotnetVersion = dotnet --version
 Write-Host "Detected .NET SDK: $dotnetVersion" -ForegroundColor DarkGray
 
-Write-Host "Clearing stale local NuGet tool cache before restore..." -ForegroundColor Cyan
-dotnet nuget locals all --clear
-if ($LASTEXITCODE -ne 0) {
-  throw "dotnet nuget locals all --clear failed."
+if (Test-RequiredLocalToolsAvailable) {
+  Write-Host "Required local commands are already available; skipping tool restore." -ForegroundColor DarkGray
 }
-
-Write-Host "Restoring repository tools..." -ForegroundColor Cyan
-dotnet tool restore
-if ($LASTEXITCODE -ne 0) {
-  Write-Warning "dotnet tool restore reported partial tool metadata noise. checking whether the required local commands are already available."
-
-  $requiredTools = @('aspire', 'dotnet-ef')
-  $ready = $true
-  foreach ($toolName in $requiredTools) {
-    if ($null -eq (Get-Command $toolName -ErrorAction SilentlyContinue)) {
-      $ready = $false
-      break
-    }
-  }
-
-  if (-not $ready) {
+else {
+  Write-Host "Restoring repository tools..." -ForegroundColor Cyan
+  dotnet tool restore --no-http-cache
+  if ($LASTEXITCODE -ne 0 -and -not (Test-RequiredLocalToolsAvailable)) {
     throw "dotnet tool restore failed and the required local commands are not available."
   }
-
-  Write-Host "Required local commands are already available; ignoring partial restore noise for this local-session environment." -ForegroundColor DarkGray
 }
 
 if (-not (Add-OriginRemoteIfPossible)) {
