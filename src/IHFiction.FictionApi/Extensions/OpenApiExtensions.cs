@@ -102,7 +102,7 @@ internal static class OpenApiExtensions
             schema.Type = JsonSchemaType.String | (isNullable ? JsonSchemaType.Null : 0);
             schema.Description = "Universally Unique Lexicographically Sortable Identifier";
             schema.Format = "ulid";
-            schema.Example = "01ARZ3NDEKTSV4RRFFQ69G5FAV";
+            schema.Examples = ["01ARZ3NDEKTSV4RRFFQ69G5FAV"];
             schema.Pattern = "^[0-9A-HJKMNP-TV-Z]{26}$";
         }
 
@@ -111,7 +111,7 @@ internal static class OpenApiExtensions
             schema.Type = JsonSchemaType.String | (isNullable ? JsonSchemaType.Null : 0);
             schema.Description = "MongoDB ObjectId";
             schema.Format = "objectid";
-            schema.Example = "507f191e810c19729de860ea";
+            schema.Examples = ["507f191e810c19729de860ea"];
             schema.Pattern = "^[a-fA-F0-9]{24}$";
         }
 
@@ -269,7 +269,6 @@ internal static class OpenApiExtensions
     public static OpenApiParameter With(this IOpenApiParameter parameter, string? description = null, string? example = null) => new()
     {
         Name = parameter.Name,
-        AllowEmptyValue = parameter.AllowEmptyValue,
         AllowReserved = parameter.AllowReserved,
         Content = parameter.Content,
         Deprecated = parameter.Deprecated,
