@@ -1,6 +1,6 @@
 # I❤️Fiction
 
-[![build](https://github.com/SheepReaper/IHeartFiction/actions/workflows/build.yml/badge.svg)](https://github.com/SheepReaper/IHeartFiction/actions/workflows/build.yml)
+[![build](https://github.com/SheepReaper/IHeartFiction/actions/workflows/build.yml/badge.svg)](https://github.com/SheepReaper/IHeartFiction/actions/workflows/build.yml) <a href="https://stats.uptimerobot.com/1uMnPit0yS?utm_source=status_badge&utm_medium=referral" target="_blank" rel="noopener"><picture><source media="(prefers-color-scheme: dark)" srcset="https://badge.uptimerobot.com/psp/099ef2c7c2afdc0f08b72a8492d3f42b.svg?style=logo&theme=dark"><img src="https://badge.uptimerobot.com/psp/099ef2c7c2afdc0f08b72a8492d3f42b.svg?style=logo&theme=light" alt="I❤️Fiction"></picture></a>
 
 I❤️Fiction is an ambitious open-source project to build a modern, feature-rich platform for both original and fan fiction. Built on a .NET and ASP.NET Core backend with a Blazor frontend, it aims to be a viable competitor to established platforms by focusing on a clean user experience, powerful authoring tools, and a strong community.
 
