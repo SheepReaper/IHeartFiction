@@ -8,11 +8,129 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 
+### Maintenance
+
+- **deps:** Update aspire monorepo to 13.5.4
+
+- **deps:** Update dependency microsoft.testing.platform to 2.4.1
+
+- **deps:** Update github/codeql-action digest to 1c5b675
+
+- **deps:** Update orhun/git-cliff-action digest to a9a9552
+
+- **deps:** Update dependency mongodb.entityframeworkcore to 10.0.4
+
+- **deps:** Update dependency markdig to 1.4.0
+
+
+
+## [v1.0.1] - 2026-09-17
+
+
+### Added
+
+- Update application name and description in web manifest
+
+
 ### Documentation
 
 - **changelog:** Update generated changelog
 
 - **changelog:** Update generated changelog
+
+- **changelog:** Update generated changelog
+
+
+### Maintenance
+
+- **deps:** Pin dependencies
+
+- **deps:** Update github/codeql-action digest to 5595cca
+
+- **deps:** Update actions/attest action to v4.2.2
+
+- **deps:** Update actions/checkout action to v7
+
+- **deps:** Update dependency scalar.aspnetcore to 2.16.18
+
+- **deps:** Update dependency nsubstitute to 6.1.0
+
+- **deps:** Update dependency sonaranalyzer.csharp to 10.32.0.713
+
+- **deps:** Update dotnet monorepo
+
+- **deps:** Update dependency nsubstitute to 6.2.0
+
+- **deps:** Update dependency xunit.v3.mtp-v2 to v4
+
+- **deps:** Update github/codeql-action digest to ff2f1c6
+
+- **deps:** Update dependency scalar.aspnetcore to 2.16.20
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.11.0
+
+- **deps:** Update testcontainers-dotnet monorepo to 4.14.0
+
+- **deps:** Update dotnet monorepo to 5.9.0
+
+- **deps:** Update wolverine monorepo to 6.29.0
+
+- **deps:** Update dependency scalar.aspnetcore to 2.17.1
+
+- **deps:** Update dependency mongodb.entityframeworkcore to 10.0.3
+
+- **deps:** Update github/codeql-action digest to db488dd
+
+- **deps:** Update wolverine monorepo to 6.29.2
+
+- **deps:** Update aspire monorepo to 13.5.2
+
+- **deps:** Update dependency sonaranalyzer.csharp to 10.33.0.1635
+
+- **deps:** Update opentelemetry-dotnet monorepo to 1.18.0
+
+- **deps:** Update aspire monorepo to 13.5.3
+
+- **deps:** Update github/codeql-action digest to cdf488f
+
+- **deps:** Update opentelemetry-dotnet-contrib monorepo to 1.18.0
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.11.1
+
+- **deps:** Update dependency scalar.aspnetcore to 2.17.2
+
+- **deps:** Update wolverine monorepo to 6.30.3
+
+- **deps:** Update dependency microsoft.entityframeworkcore.dynamiclinq to 10.7.4
+
+- **deps:** Update orhun/git-cliff-action digest to 3d96a18
+
+- **deps:** Update wolverine monorepo to 6.33.0
+
+- **deps:** Update dependency shirubasoft.aspire.cloudflaretunnels to 1.1.8
+
+- **deps:** Update dependency microsoft.testing.platform to 2.4.0
+
+- **deps:** Update testcontainers-dotnet monorepo to 4.15.0
+
+- **deps:** Update dependency scalar.aspnetcore to 2.17.3
+
+- **deps:** Update wolverine monorepo to 6.35.0
+
+- **deps:** Update github/codeql-action digest to b96794f
+
+- **deps:** Update dependency sonaranalyzer.csharp to 10.34.0.3385
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.11.2
+
+- **deps:** Update dependency xunit.v3.mtp-v2 to 4.0.1
+
+- **deps:** Update wolverine monorepo to 6.38.0
+
+
+### Other
+
+- Fix local bootstrap tool detection
 
 
 
