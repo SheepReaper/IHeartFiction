@@ -6,6 +6,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 using IHFiction.AppHost.Extensions;
+
+// Windows resolves "localhost" to both ::1 and 127.0.0.1, but container ports are published
+// on 127.0.0.1 only. Force IPv4-only resolution so this process's own resource health checks
+// (Redis, Keycloak, HTTP probes) don't fail by connecting to ::1 first. Must be set before any
+// DNS resolution/connection happens in this process.
+if(OperatingSystem.IsWindows())
+    Environment.SetEnvironmentVariable("DOTNET_SYSTEM_NET_DISABLEIPV6", "1");
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var vapid = new VapidKeysDefaultProvider();
