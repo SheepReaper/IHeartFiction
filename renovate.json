@@ -38,7 +38,7 @@
       "allowedVersions": "<18.10.0"
     },
     {
-      "matchPackageNames": ["GitHubActionsTestLogger"],
+      "matchPackageNames": ["GitHubActionsTestLogger", "Ulid"],
       "abandonmentThreshold": "2 years"
     }
   ]
