@@ -103,20 +103,6 @@ Use `aspire do push -o infra -v` only when intentionally pushing images.
 - **Why it is needed:** The production Compose customization clears `depends_on`, `expose`, and container `restart` values that are not useful for Swarm. It also manually sets `deploy.replicas` from Aspire replica annotations because those annotations are not emitted as Swarm replicas in the generated Compose output. `DockerSwarmExtensions.AddGracefulUpdate` avoids fields whose generated schema typing has had upstream issues.
 - **Removal criteria:** Remove the cleanup/manual assignment only after generated Aspire Docker Compose output from the repo's pinned Aspire version can be deployed to Swarm without those edits; update `LIMITATIONS.md` at the same time.
 
-## Microsoft.OpenApi 2.x version range pin
-
-- **Location:** `Directory.Packages.props`
-- **Symptom:** OpenAPI generation/source-generation depends on the .NET 10 OpenAPI stack, which expects Microsoft.OpenApi 2.x APIs.
-- **Why it is needed:** `Microsoft.OpenApi` is pinned to `[2.7.5,3.0.0)` so dependency resolution does not float to 3.x and break the generator/tooling API surface.
-- **Removal criteria:** Remove or widen this range only after the .NET OpenAPI generator and `IHFiction.SourceGenerators` support the newer Microsoft.OpenApi major version.
-
-Verification:
-
-```powershell
-./tools/agent-bootstrap.ps1
-dotnet build .\src\IHFiction.WebClient\ --no-restore
-```
-
 ## FictionApi OpenAPI generation disabled for cross-runtime and CI builds
 
 - **Location:** `src/IHFiction.FictionApi/IHFiction.FictionApi.csproj`

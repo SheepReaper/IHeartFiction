@@ -24,7 +24,7 @@
   "packageRules": [
     {
       "matchManagers": ["nuget"],
-      "matchPackageNames": ["FluentAssertions", "IHFiction.SourceGenerators", "Microsoft.OpenApi"],
+      "matchPackageNames": ["FluentAssertions", "IHFiction.SourceGenerators"],
       "enabled": false
     },
     {
