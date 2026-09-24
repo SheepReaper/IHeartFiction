@@ -302,6 +302,8 @@ public partial class StoryEditorService(
             apiResult.ContentUpdatedAt?.UtcDateTime
         );
 
+        foreach (var tag in apiResult.Tags) storyModel.Tags.Add(tag);
+
         if (apiResult.Books.Count > 0 || apiResult.Chapters.Count > 0)
         {
             await using (storyModel.SuppressDirty())

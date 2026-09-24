@@ -70,6 +70,7 @@ internal sealed class GetOwnStoryContent(
     /// <param name="ContentUpdatedAt">When the content was last updated.</param>
     /// <param name="StoryUpdatedAt">When the story was last updated.</param>
     /// <param name="HasCoverImage">Whether the story currently has a cover image.</param>
+    /// <param name="Tags">Canonical display values assigned to the story.</param>
     /// <param name="Chapters">List of chapters within the story.</param>
     /// <param name="Books">List of books within the story.</param>
     internal sealed record GetOwnStoryContentResponse(
@@ -85,6 +86,7 @@ internal sealed class GetOwnStoryContent(
         DateTime? ContentUpdatedAt,
         DateTime StoryUpdatedAt,
         bool HasCoverImage,
+        IReadOnlyCollection<string> Tags,
         ICollection<ChapterSummaryItem> Chapters,
         ICollection<BookSummaryItem> Books
     );
@@ -144,6 +146,7 @@ internal sealed class GetOwnStoryContent(
             contentUpdatedAt,
             story.UpdatedAt,
             story.Cover is not null,
+            [.. story.Tags.Select(tag => tag.ResolveCanonical().ToString()).Distinct(StringComparer.OrdinalIgnoreCase).Order()],
             chapterSummaries,
             bookSummaries
         );

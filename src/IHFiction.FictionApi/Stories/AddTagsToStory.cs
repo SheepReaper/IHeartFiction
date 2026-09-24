@@ -12,7 +12,6 @@ using IHFiction.Data.Searching.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
-using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -39,18 +38,18 @@ internal sealed class AddTagsToStory(
         public static readonly DomainError NoTagsProvided = new("AddTagsToStory.NoTagsProvided", "At least one tag must be provided.");
         public static readonly DomainError InvalidTagFormat = new("AddTagsToStory.InvalidTagFormat", "Tag format is invalid. Expected format: 'category:value' or 'category:subcategory:value'.");
         public static readonly DomainError TagTooLong = new("AddTagsToStory.TagTooLong", "Tag components must be 50 characters or less.");
-        public static readonly DomainError TagNotFound = new("AddTagsToStory.TagNotFound", "One or more tags do not exist. Only existing tags can be added to stories.");
+        public static readonly DomainError DuplicateTag = new("AddTagsToStory.DuplicateTag", "The request contains equivalent tag values.");
     }
 
 
     /// <summary>
     /// Request model for adding tags to a story.
     /// </summary>
-    /// <param name="Tags">List of tag strings to add to the story</param>
+    /// <param name="Tags">Complete set of tags that should be assigned to the story.</param>
     internal sealed record AddTagsToStoryBody(
         [property: Required(ErrorMessage = "Tags are required.")]
-        [property: StringLength(50, MinimumLength = 1, ErrorMessage = "At least one tag must be provided.")]
-        string Tags
+        [property: MaxLength(50, ErrorMessage = "A story can have at most 50 tags.")]
+        IReadOnlyCollection<string> Tags
     );
 
     internal sealed record AddTagsToStoryQuery(
@@ -77,14 +76,12 @@ internal sealed class AddTagsToStory(
     /// </summary>
     /// <param name="StoryId">Unique identifier of the story</param>
     /// <param name="StoryTitle">Title of the story</param>
-    /// <param name="AddedTags">List of tags that were successfully added</param>
-    /// <param name="SkippedTags">List of tag strings that were skipped (already existed)</param>
-    /// <param name="TotalTags">Total number of tags now associated with the story</param>
+    /// <param name="Tags">Final canonical tag set assigned to the story.</param>
+    /// <param name="TotalTags">Total number of tags associated with the story.</param>
     internal sealed record AddTagsToStoryResponse(
         Ulid StoryId,
         string StoryTitle,
-        IReadOnlyList<AddedTagItem> AddedTags,
-        IReadOnlyList<string> SkippedTags,
+        IReadOnlyList<AddedTagItem> Tags,
         int TotalTags);
 
     public async Task<Result<AddTagsToStoryResponse>> HandleAsync(
@@ -99,11 +96,7 @@ internal sealed class AddTagsToStory(
 
         var currentUser = authorResult.Value;
 
-        string[] tags = [.. body.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-
-        // Validate tags are provided
-        if (tags.Length == 0)
-            return Errors.NoTagsProvided;
+        ArgumentNullException.ThrowIfNull(body.Tags);
 
         try
         {
@@ -125,82 +118,65 @@ internal sealed class AddTagsToStory(
                 return Errors.AccessDenied;
 
             // Parse and validate tags
-            var parsedTags = new List<(string Category, string? Subcategory, string Value)>();
-            var skippedTags = new List<string>();
+            var parsedTags = new List<(string Category, string? Subcategory, string Value, string NormalizedKey)>();
+            var requestedKeys = new HashSet<string>(StringComparer.Ordinal);
 
-            foreach (var tagString in tags)
+            foreach (var tagString in body.Tags)
             {
                 var parseResult = ParseTag(tagString);
                 if (parseResult.IsFailure)
                 {
-                    skippedTags.Add(tagString);
-                    continue;
+                    return parseResult.DomainError;
                 }
 
                 var (category, subcategory, value) = parseResult.Value;
-                parsedTags.Add((
-                    InputSanitizationService.SanitizeTag(category),
-                    subcategory is null ? null : InputSanitizationService.SanitizeTag(subcategory),
-                    InputSanitizationService.SanitizeTag(value)));
-            }
+                category = InputSanitizationService.SanitizeTag(category);
+                subcategory = subcategory is null ? null : InputSanitizationService.SanitizeTag(subcategory);
+                value = InputSanitizationService.SanitizeTag(value);
+                var normalizedKey = Tag.BuildNormalizedKey(category, subcategory, value);
 
-            // Get existing tags for the story to avoid duplicates across canonicalized variants
-            var existingTagKeys = story.Tags
-                .Select(tag => TagCanonicalizationService.BuildKey(tag.Category, tag.Subcategory, tag.Value))
-                .Where(key => !string.IsNullOrWhiteSpace(key))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            // Find or create canonical tags
-            var addedTags = new List<AddedTagItem>();
-            var tagsToAdd = new List<Tag>();
-            var createdTagIds = new List<Ulid>();
-
-            foreach (var (category, subcategory, value) in parsedTags)
-            {
-                var tagString = subcategory is null ? $"{category}:{value}" : $"{category}:{subcategory}:{value}";
-                var tagKey = TagCanonicalizationService.BuildKey(category, subcategory, value);
-
-                // Skip if an equivalent tag already exists on story
-                if (!string.IsNullOrWhiteSpace(tagKey) && existingTagKeys.Contains(tagKey))
+                if (!requestedKeys.Add(normalizedKey))
                 {
-                    skippedTags.Add(tagString);
-                    continue;
+                    return Errors.DuplicateTag;
                 }
 
-                var tagCandidates = await context.Tags
-                    .Where(t =>
-                        t.Category == category &&
-                        t.Subcategory == subcategory)
-                    .ToListAsync(cancellationToken);
+                parsedTags.Add((category, subcategory, value, normalizedKey));
+            }
 
-                var tagMatch = tagCandidates
-                    .FirstOrDefault(candidate =>
-                        TagCanonicalizationService.Matches(
-                            candidate.Category,
-                            candidate.Subcategory,
-                            candidate.Value,
-                            category,
-                            subcategory,
-                            value));
+            var resolvedTags = new List<CanonicalTag>();
+            var createdTagIds = new List<Ulid>();
+
+            foreach (var (category, subcategory, value, normalizedKey) in parsedTags)
+            {
+                var tagMatch = await context.Tags
+                    .FirstOrDefaultAsync(tag => tag.NormalizedKey == normalizedKey, cancellationToken);
 
                 if (tagMatch is not null)
                 {
-                    var tagToAttach = tagMatch.ResolveCanonical();
-                    tagsToAdd.Add(tagToAttach);
-                    addedTags.Add(new AddedTagItem(tagToAttach.Category, tagToAttach.Subcategory, tagToAttach.Value, false));
+                    if (tagMatch is SynonymTag synonym)
+                    {
+                        await context.Entry(synonym)
+                            .Reference(tag => tag.CanonicalTag)
+                            .LoadAsync(cancellationToken);
+                    }
+
+                    resolvedTags.Add((CanonicalTag)tagMatch.ResolveCanonical());
                 }
                 else
                 {
                     var createdTag = Tag.CreateCanonical(category, subcategory, value);
                     context.Tags.Add(createdTag);
-                    tagsToAdd.Add(createdTag);
+                    resolvedTags.Add(createdTag);
                     createdTagIds.Add(createdTag.Id);
-                    addedTags.Add(new AddedTagItem(category, subcategory, value, true));
                 }
             }
 
-            // Add tags to story
-            foreach (var tag in tagsToAdd)
+            foreach (var tag in story.Tags.Where(tag => !resolvedTags.Any(resolved => resolved.Id == tag.ResolveCanonical().Id)).ToArray())
+            {
+                story.Tags.Remove(tag);
+            }
+
+            foreach (var tag in resolvedTags.Where(tag => !story.Tags.Any(existing => existing.ResolveCanonical().Id == tag.Id)))
             {
                 story.Tags.Add(tag);
             }
@@ -215,8 +191,7 @@ internal sealed class AddTagsToStory(
             return new AddTagsToStoryResponse(
                 story.Id,
                 story.Title,
-                addedTags,
-                skippedTags,
+                [.. resolvedTags.Select(tag => new AddedTagItem(tag.Category, tag.Subcategory, tag.Value, createdTagIds.Contains(tag.Id)))],
                 story.Tags.Count);
         }
         catch (InvalidOperationException)
@@ -258,7 +233,7 @@ internal sealed class AddTagsToStory(
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
-            return builder.MapPost("stories/{id:ulid}/tags", async (
+            return builder.MapPut("stories/{id:ulid}/tags", async (
                 [FromRoute] Ulid id,
                 [AsParameters] AddTagsToStoryQuery query,
                 [FromBody] AddTagsToStoryBody body,
@@ -270,19 +245,19 @@ internal sealed class AddTagsToStory(
                 var result = await useCase.HandleAsync(id, body, claimsPrincipal, cancellationToken);
 
                 return result
-                    .WithLinks(linker, AddTagsToStory.EndpointName, method: HttpMethods.Post, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .WithLinks(linker, AddTagsToStory.EndpointName, method: HttpMethods.Put, values: [new KeyValuePair<string, string?>("id", id.ToString())])
                     .ToOkResult(query);
             })
-            .WithSummary("Add Tags to Story")
-            .WithDescription("Adds one or more tags to a story for categorization and discovery. " +
+            .WithSummary("Replace Story Tags")
+            .WithDescription("Replaces a story's complete tag set for categorization and discovery. " +
                 "Tags must be in the format 'category:value' or 'category:subcategory:value'. " +
-                "Only story owners and authorized collaborators can add tags. " +
-                "Existing tags are skipped, and only new tags are added. " +
+                "Only story owners and authorized collaborators can replace tags. " +
+                "An empty collection removes every tag. Equivalent duplicate values are rejected. " +
                 "Requires authentication and appropriate permissions.")
             .WithTags(ApiTags.Stories.Management)
             .RequireAuthorization("author") // Authentication required
             .WithStandardResponses(conflict: false)
-            .Produces<Linked<AddTagsToStoryResponse>>(StatusCodes.Status201Created)
+            .Produces<Linked<AddTagsToStoryResponse>>()
             .Accepts<AddTagsToStoryBody>(MediaTypeNames.Application.Json);
         }
     }

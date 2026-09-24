@@ -274,6 +274,11 @@ else
             var result = await EditorService.LoadStoryAsync(storyId, CancellationToken);
 
             if (result.IsFailure) _error = result.DomainError;
+            else
+            {
+                _selectedTags.Clear();
+                _selectedTags.AddRange(result.Value.Tags);
+            }
         }
         else
         {
@@ -412,7 +417,7 @@ else
 
         if (result.IsSuccess && andPublish) result = await EditorService.PublishStoryAsync();
 
-        if (result.IsSuccess && EditorService.CurrentStory?.Id is { } storyId && _selectedTags.Count > 0)
+        if (result.IsSuccess && EditorService.CurrentStory?.Id is { } storyId)
         {
             var tagResult = await StoryService.AddTagsToStoryAsync(storyId, _selectedTags, CancellationToken);
             if (tagResult.IsFailure)
@@ -465,6 +470,7 @@ else
     {
         _selectedTags.Clear();
         _selectedTags.AddRange(tags);
+        if (EditorService.CurrentStory is not null) EditorService.CurrentStory.Dirty = true;
         return Task.CompletedTask;
     }
 

@@ -58,6 +58,11 @@ internal static class ApiTags
         /// Tag browsing and management endpoints.
         /// </summary>
         public const string Discovery = "Tag Discovery";
+
+        /// <summary>
+        /// Administrator-only canonical tag and synonym management.
+        /// </summary>
+        public const string Administration = "Tag Administration";
     }
 
     /// <summary>
@@ -100,7 +105,8 @@ internal static class ApiTags
         new(Stories.Discovery, "Public story browsing, search, and discovery. No authentication required.", 1),
         new(Authors.Discovery, "Public author information, profiles, and discovery. No authentication required.", 2),
         new(Tags.Discovery, "Tag browsing and filtering for content discovery. No authentication required.", 3),
-        new(Account.CurrentUser, "Current user profile and account management. Requires authentication.", 4),
+        new(Tags.Administration, "Canonical tag and synonym management. Requires the admin role.", 4),
+        new(Account.CurrentUser, "Current user profile and account management. Requires authentication.", 5),
         new(Authors.Management, "Author profile management and registration. Requires authentication.", 5),
         new(Stories.Management, "Story creation, editing, and management. Requires authentication and author role.", 6),
         new(Books.Management, "Book creation, editing, and management. Requires authentication and appropriate permissions.", 7),
@@ -113,6 +119,7 @@ internal static class ApiTags
     /// <returns>Array of tag names that require authentication</returns>
     public static string[] GetAuthenticatedTags() =>
     [
+        Tags.Administration,
         Account.CurrentUser,
         Authors.Management,
         Stories.Management,

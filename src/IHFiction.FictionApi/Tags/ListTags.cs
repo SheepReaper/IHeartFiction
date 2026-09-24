@@ -95,7 +95,8 @@ internal sealed class ListTags(
     {
         var tags = await context.Tags
             .AsNoTracking()
-            .Where(tag => EF.Property<Ulid?>(tag, "CanonicalTagId") == null)
+            .OfType<CanonicalTag>()
+            .Include(tag => tag.Synonyms)
             .ToListAsync(cancellationToken);
 
         var categoryFilter = InputSanitizationService.SanitizeTag(body.Category);
@@ -111,7 +112,8 @@ internal sealed class ListTags(
 
             tags = [.. tags
                 .Where(tag =>
-                    MatchesTagSearch(tag, parsedSearch, searchFilter))];
+                    MatchesTagSearch(tag, parsedSearch, searchFilter)
+                    || tag.Synonyms.Any(synonym => MatchesTagSearch(synonym, parsedSearch, searchFilter)))];
         }
 
         var proj = tags

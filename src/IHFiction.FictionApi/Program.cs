@@ -278,7 +278,8 @@ builder.Services.AddOpenTelemetry()
     });
 
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy("author", p => p.RequireRole("author"));
+    .AddPolicy("author", p => p.RequireRole("author"))
+    .AddPolicy("admin", p => p.RequireRole("admin"));
 
 builder.Services.AddKeycloakAuthorization(options =>
 {

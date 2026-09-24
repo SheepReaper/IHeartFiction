@@ -3,6 +3,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Searching.Domain;
 using IHFiction.FictionApi.Stories;
 
 namespace IHFiction.FictionApi.Tags;
@@ -22,25 +23,20 @@ public sealed class TagCanonicalReconciliationHandler(FictionDbContext context)
             return;
         }
 
-        var candidateTags = await context.Tags
-            .Where(tag => tag.Id != createdTag.Id)
+        if (createdTag is SynonymTag)
+        {
+            return;
+        }
+
+        var candidateTags = await context.Tags.OfType<CanonicalTag>()
+            .Where(tag => tag.Id != createdTag.Id && tag.NormalizedKey == createdTag.NormalizedKey)
+            .Include(tag => tag.Synonyms)
             .Include(tag => tag.Works)
             .OrderBy(tag => tag.CreatedAt)
             .ThenBy(tag => tag.Id)
             .ToListAsync(cancellationToken);
 
-        var duplicates = candidateTags
-            .Where(tag =>
-                tag.Category == createdTag.Category
-                && tag.Subcategory == createdTag.Subcategory
-                && TagCanonicalizationService.Matches(
-                    tag.Category,
-                    tag.Subcategory,
-                    tag.Value,
-                    createdTag.Category,
-                    createdTag.Subcategory,
-                    createdTag.Value))
-            .ToList();
+        var duplicates = candidateTags.ToList();
 
         if (duplicates.Count == 0)
         {
@@ -48,12 +44,12 @@ public sealed class TagCanonicalReconciliationHandler(FictionDbContext context)
         }
 
         var canonicalTag = duplicates
-            .Append(createdTag)
+            .Append((CanonicalTag)createdTag)
             .OrderBy(tag => tag.CreatedAt)
             .ThenBy(tag => tag.Id)
             .First();
 
-        foreach (var duplicateTag in duplicates.Where(tag => tag.Id != canonicalTag.Id).ToArray())
+        foreach (var duplicateTag in duplicates.Append((CanonicalTag)createdTag).Where(tag => tag.Id != canonicalTag.Id).ToArray())
         {
             foreach (var work in duplicateTag.Works.ToArray())
             {
@@ -65,7 +61,20 @@ public sealed class TagCanonicalReconciliationHandler(FictionDbContext context)
                 work.Tags.Remove(duplicateTag);
             }
 
+            foreach (var synonym in duplicateTag.Synonyms)
+            {
+                synonym.CanonicalTag = canonicalTag;
+                synonym.CanonicalTagId = canonicalTag.Id;
+            }
+
+            var category = duplicateTag.Category;
+            var subcategory = duplicateTag.Subcategory;
+            var value = duplicateTag.Value;
+
+            await context.SaveChangesAsync(cancellationToken);
             context.Tags.Remove(duplicateTag);
+            await context.SaveChangesAsync(cancellationToken);
+            context.Tags.Add(Tag.CreateSynonym(canonicalTag, category, subcategory, value));
         }
 
         await context.SaveChangesAsync(cancellationToken);

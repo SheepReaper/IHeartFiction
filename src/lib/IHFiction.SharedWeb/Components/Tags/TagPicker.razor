@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Components.Web
 @using IHFiction.SharedWeb.Services
+@implements IAsyncDisposable
 @inject StoryService StoryService
 
 <div class="field">
@@ -44,6 +45,10 @@
                 </div>
             </div>
         }
+        else if (!string.IsNullOrWhiteSpace(_searchError))
+        {
+            <p class="help has-text-danger">@_searchError</p>
+        }
     </div>
     <p class="help">Suggestions are canonical-only. If no canonical match exists, you can add a new tag value.</p>
 </div>
@@ -52,6 +57,7 @@
     private readonly List<LinkedOfListTagsItem> _suggestions = [];
     private string _searchText = string.Empty;
     private bool _isLoading;
+    private string? _searchError;
     private CancellationTokenSource? _searchCts;
 
     [Parameter, EditorRequired] public ICollection<string> SelectedTags { get; set; } = [];
@@ -88,17 +94,32 @@
         }
 
         _isLoading = true;
+        _searchError = null;
         StateHasChanged();
 
-        var result = await StoryService.ListTagsAsync(_searchText.Trim(), 8, _searchCts.Token);
-        if (result.IsSuccess)
+        try
         {
-            _suggestions.Clear();
-            _suggestions.AddRange(result.Value.Data);
+            await Task.Delay(250, _searchCts.Token);
+            var result = await StoryService.ListTagsAsync(_searchText.Trim(), 8, _searchCts.Token);
+            if (result.IsSuccess)
+            {
+                _suggestions.Clear();
+                _suggestions.AddRange(result.Value.Data);
+            }
+            else
+            {
+                _searchError = result.DomainError.Description;
+            }
         }
-
-        _isLoading = false;
-        StateHasChanged();
+        catch (OperationCanceledException) when (_searchCts.IsCancellationRequested)
+        {
+            return;
+        }
+        finally
+        {
+            _isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task SelectSuggestion(LinkedOfListTagsItem tag)
@@ -125,7 +146,8 @@
 
     private void AddTag(string tagText)
     {
-        if (SelectedTags.Contains(tagText, StringComparer.OrdinalIgnoreCase))
+        var normalizedKey = Normalize(tagText);
+        if (SelectedTags.Any(tag => string.Equals(Normalize(tag), normalizedKey, StringComparison.Ordinal)))
         {
             return;
         }
@@ -142,5 +164,16 @@
         }
 
         await SelectedTagsChanged.InvokeAsync(SelectedTags.ToArray());
+    }
+
+    private static string Normalize(string value) => string.Concat(
+        value.Where(character => character == ':' || char.IsLetterOrDigit(character))
+            .Select(char.ToLowerInvariant));
+
+    public ValueTask DisposeAsync()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

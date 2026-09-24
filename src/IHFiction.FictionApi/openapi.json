@@ -1771,12 +1771,12 @@
       }
     },
     "/stories/{id}/tags": {
-      "post": {
+      "put": {
         "tags": [
           "Story Management"
         ],
-        "summary": "Add Tags to Story",
-        "description": "Adds one or more tags to a story for categorization and discovery. Tags must be in the format 'category:value' or 'category:subcategory:value'. Only story owners and authorized collaborators can add tags. Existing tags are skipped, and only new tags are added. Requires authentication and appropriate permissions.",
+        "summary": "Replace Story Tags",
+        "description": "Replaces a story's complete tag set for categorization and discovery. Tags must be in the format 'category:value' or 'category:subcategory:value'. Only story owners and authorized collaborators can replace tags. An empty collection removes every tag. Equivalent duplicate values are rejected. Requires authentication and appropriate permissions.",
         "operationId": "AddTagsToStory",
         "parameters": [
           {
@@ -1851,8 +1851,8 @@
               }
             }
           },
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
@@ -4294,6 +4294,126 @@
         }
       }
     },
+    "/admin/tags": {
+      "get": {
+        "tags": [
+          "Tag Administration"
+        ],
+        "summary": "List Tags for Administration",
+        "description": "Lists canonical tags, their synonyms, and published usage counts for administrators.",
+        "operationId": "ListAdminTags",
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "1-indexed page number for pagination",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            },
+            "example": "1"
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Number of items to return per page",
+            "schema": {
+              "maximum": 200,
+              "minimum": 1,
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            },
+            "example": "50"
+          },
+          {
+            "name": "Search",
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
+            "name": "Fields",
+            "in": "query",
+            "description": "Comma-separated list of fields to include in the response",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string",
+              "default": ""
+            },
+            "example": "name,createdAt"
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkedPagedCollectionOfAdminTagItem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tags": {
       "get": {
         "tags": [
@@ -4413,6 +4533,180 @@
           }
         }
       }
+    },
+    "/admin/tags/merge": {
+      "post": {
+        "tags": [
+          "Tag Administration"
+        ],
+        "summary": "Merge Canonical Tags",
+        "description": "Atomically merges one or more source canonical families into a selected canonical family, preserving alternate spellings as synonyms. Requires an administrative reason.",
+        "operationId": "MergeCanonicalTags",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeCanonicalTagsBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergeCanonicalTagsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/tags/{id}": {
+      "put": {
+        "tags": [
+          "Tag Administration"
+        ],
+        "summary": "Rename Canonical Tag",
+        "description": "Renames a canonical tag while retaining its previous spelling as a synonym. Requires an administrative reason.",
+        "operationId": "RenameCanonicalTag",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Ulid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameCanonicalTagBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenameCanonicalTagResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4455,10 +4749,12 @@
         "type": "object",
         "properties": {
           "tags": {
-            "maxLength": 50,
-            "minLength": 1,
-            "type": "string",
-            "description": "List of tag strings to add to the story"
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Complete set of tags that should be assigned to the story."
           }
         },
         "description": "Request model for adding tags to a story."
@@ -5262,8 +5558,7 @@
           "links",
           "storyId",
           "storyTitle",
-          "addedTags",
-          "skippedTags",
+          "tags",
           "totalTags"
         ],
         "type": "object",
@@ -5282,19 +5577,12 @@
             "type": "string",
             "description": "Title of the story"
           },
-          "addedTags": {
+          "tags": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AddedTagItem"
             },
-            "description": "List of tags that were successfully added"
-          },
-          "skippedTags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of tag strings that were skipped (already existed)"
+            "description": "Final canonical tag set assigned to the story."
           },
           "totalTags": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -5302,7 +5590,61 @@
               "integer",
               "string"
             ],
-            "description": "Total number of tags now associated with the story",
+            "description": "Total number of tags associated with the story.",
+            "format": "int32"
+          }
+        },
+        "description": "A Response model decorated with a collection of hyperlinks under the Links property."
+      },
+      "LinkedOfAdminTagItem": {
+        "required": [
+          "links",
+          "tagId",
+          "category",
+          "subcategory",
+          "value",
+          "displayFormat",
+          "synonyms",
+          "publishedWorkCount"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            }
+          },
+          "tagId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "subcategory": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "displayFormat": {
+            "type": "string"
+          },
+          "synonyms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "publishedWorkCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
             "format": "int32"
           }
         },
@@ -6103,6 +6445,7 @@
           "contentUpdatedAt",
           "storyUpdatedAt",
           "hasCoverImage",
+          "tags",
           "chapters",
           "books"
         ],
@@ -6175,6 +6518,13 @@
           "hasCoverImage": {
             "type": "boolean",
             "description": "Whether the story currently has a cover image."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Canonical display values assigned to the story."
           },
           "chapters": {
             "type": "array",
@@ -7772,6 +8122,69 @@
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
       },
+      "LinkedPagedCollectionOfAdminTagItem": {
+        "required": [
+          "links",
+          "totalCount",
+          "currentPage",
+          "pageSize",
+          "data"
+        ],
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkItem"
+            },
+            "description": "Collection-level hypermedia links"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The total number of items in the collection",
+            "format": "int32"
+          },
+          "currentPage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The current page number",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items per page",
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "Total number of pages based on total count and page size.",
+            "format": "int32"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LinkedOfAdminTagItem"
+            },
+            "description": "The collection of items"
+          }
+        },
+        "description": "A paginated collection response of TData items with hypermedia links."
+      },
       "LinkedPagedCollectionOfAuthorStoryItem": {
         "required": [
           "links",
@@ -8138,6 +8551,71 @@
           "readAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "MergeCanonicalTagsBody": {
+        "required": [
+          "canonicalTagId",
+          "sourceTagIds",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "canonicalTagId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "sourceTagIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        }
+      },
+      "MergeCanonicalTagsResponse": {
+        "required": [
+          "canonicalTagId",
+          "displayFormat",
+          "synonyms",
+          "workCount",
+          "mergedTagCount"
+        ],
+        "type": "object",
+        "properties": {
+          "canonicalTagId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "displayFormat": {
+            "type": "string"
+          },
+          "synonyms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "mergedTagCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -8609,6 +9087,77 @@
           }
         }
       },
+      "RenameCanonicalTagBody": {
+        "required": [
+          "category",
+          "subcategory",
+          "value",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "subcategory": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        }
+      },
+      "RenameCanonicalTagResponse": {
+        "required": [
+          "tagId",
+          "category",
+          "subcategory",
+          "value",
+          "displayFormat",
+          "synonyms"
+        ],
+        "type": "object",
+        "properties": {
+          "tagId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "subcategory": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "displayFormat": {
+            "type": "string"
+          },
+          "synonyms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "StoryAuthor": {
         "required": [
           "id",
@@ -8962,6 +9511,9 @@
     },
     {
       "name": "Story Management"
+    },
+    {
+      "name": "Tag Administration"
     },
     {
       "name": "Tag Discovery"

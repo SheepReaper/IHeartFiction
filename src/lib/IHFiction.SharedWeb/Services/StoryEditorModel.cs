@@ -66,6 +66,7 @@ public class StoryEditorModel : INotifyPropertyChanged
 
     public ObservableCollection<ChapterEditorModel> Chapters { get; } = [];
     public ObservableCollection<BookEditorModel> Books { get; } = [];
+    public Collection<string> Tags { get; } = [];
 
     public bool HasChapters => Chapters.Any();
     public bool HasBooks => Books.Any();

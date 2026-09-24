@@ -45,7 +45,7 @@ public partial class StoryService(FictionApiClient client, ILogger<StoryService>
 
         return await client.AddTagsToStoryAsync(
             storyId,
-            new AddTagsToStoryBody { Tags = string.Join(", ", tags) },
+            new AddTagsToStoryBody { Tags = [.. tags] },
             null,
             cancellationToken).HandleApiException();
     }

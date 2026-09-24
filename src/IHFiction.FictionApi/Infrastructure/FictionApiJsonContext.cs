@@ -185,6 +185,12 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(ListTags.ListTagsQuery))]
 [JsonSerializable(typeof(ListTags.ListTagsBody))]
 [JsonSerializable(typeof(LinkedPagedCollection<ListTags.ListTagsItem>))]
+[JsonSerializable(typeof(ListAdminTags.ListAdminTagsQuery))]
+[JsonSerializable(typeof(LinkedPagedCollection<ListAdminTags.AdminTagItem>))]
+[JsonSerializable(typeof(RenameCanonicalTag.RenameCanonicalTagBody))]
+[JsonSerializable(typeof(RenameCanonicalTag.RenameCanonicalTagResponse))]
+[JsonSerializable(typeof(MergeCanonicalTags.MergeCanonicalTagsBody))]
+[JsonSerializable(typeof(MergeCanonicalTags.MergeCanonicalTagsResponse))]
 
 
 // Notifications

@@ -20,6 +20,15 @@ internal sealed class TagConfiguration : IEntityTypeConfiguration<Tag>
             .HasColumnName("value")
             .IsRequired();
 
+        builder.Property(tag => tag.NormalizedKey)
+            .HasColumnName("normalized_key")
+            .HasMaxLength(152)
+            .IsRequired();
+
+        builder.HasIndex(tag => tag.NormalizedKey)
+            .IsUnique()
+            .HasFilter("\"discriminator\" = 'CanonicalTag'");
+
         builder.HasMany(tag => tag.Works)
             .WithMany(work => work.Tags);
     }

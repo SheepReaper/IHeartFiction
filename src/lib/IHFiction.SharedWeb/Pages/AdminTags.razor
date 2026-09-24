@@ -1,0 +1,315 @@
+@using Microsoft.AspNetCore.Authorization
+@implements IAsyncDisposable
+
+@page "/admin/tags"
+
+@attribute [Authorize(Roles = "admin")]
+@inject AdminService AdminService
+
+<PageTitle>Admin - Tags</PageTitle>
+
+<NoIndex />
+
+<section class="section">
+    <div class="container">
+        <h1 class="title">Tag Administration</h1>
+        <p class="subtitle">Canonical tags, their synonyms, and published usage.</p>
+
+        <div class="field">
+            <div class="control">
+                <input class="input" type="search" placeholder="Search tags..." value="@_search" @oninput="SearchChangedAsync" />
+            </div>
+        </div>
+
+        @if (_isLoading)
+        {
+            <div class="container has-text-centered">
+                <span class="icon is-large">
+                    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                </span>
+                <p>Loading tags...</p>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="notification is-danger">
+                <strong>Error:</strong> @_errorMessage
+            </div>
+        }
+        else if (_tags is not null)
+        {
+            <div class="level mb-3">
+                <div class="level-left">
+                    @if (_selectedMergeTags.Count == 0)
+                    {
+                        <p class="help">Select two or more tags to merge.</p>
+                    }
+                    else
+                    {
+                        <p class="help"><strong>@_selectedMergeTags.Count selected:</strong> @string.Join(" + ", _selectedMergeTags.Select(tag => tag.DisplayFormat))</p>
+                    }
+                </div>
+                <div class="level-right">
+                    <button class="button is-warning" type="button" @onclick="BeginMergeSelected" disabled="@(_selectedMergeTags.Count < 2 || _isSaving)">
+                        Merge selected
+                    </button>
+                </div>
+            </div>
+            <div class="is-clipped">
+                <div class="table-container">
+                    <table class="table is-fullwidth is-striped">
+                    <thead>
+                        <tr>
+                            <th><span class="is-sr-only">Select for merge</span></th>
+                            <th>Tag</th>
+                            <th>Synonyms</th>
+                            <th>Published works</th>
+                            <th><span class="is-sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tag in _tags)
+                        {
+                            <tr @key="tag.TagId">
+                                <td>
+                                    <input type="checkbox"
+                                           aria-label="Select @tag.DisplayFormat for merge"
+                                           checked="@IsSelectedForMerge(tag)"
+                                           disabled="@_isSaving"
+                                           @onchange="args => ToggleMergeSelection(tag, args)" />
+                                </td>
+                                <td>@tag.DisplayFormat</td>
+                                <td>@(tag.Synonyms.Count == 0 ? "—" : string.Join(", ", tag.Synonyms))</td>
+                                <td>@tag.PublishedWorkCount</td>
+                                <td>
+                                    <button class="button is-small is-link is-light" @onclick="() => BeginEdit(tag)" disabled="@_isSaving">Rename</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+
+            @if (_tags.Count == 0)
+            {
+                <p>No tags found.</p>
+            }
+
+            @if (_totalPages > 1)
+            {
+                <nav class="pagination mt-4" aria-label="Tag pages">
+                    <button class="pagination-previous" @onclick="PreviousPageAsync" disabled="@(_page <= 1 || _isLoading)">Previous</button>
+                    <button class="pagination-next" @onclick="NextPageAsync" disabled="@(_page >= _totalPages || _isLoading)">Next</button>
+                    <span class="pagination-list">Page @_page of @_totalPages</span>
+                </nav>
+            }
+        }
+
+        @if (_editingTag is not null)
+        {
+            <div class="box mt-5">
+                <h2 class="title is-4">Rename @_editingTag.DisplayFormat</h2>
+                <div class="columns">
+                    <div class="column"><label class="label" for="rename-category">Category</label><input id="rename-category" class="input" @bind="_category" @bind:event="oninput" /></div>
+                    <div class="column"><label class="label" for="rename-subcategory">Subcategory</label><input id="rename-subcategory" class="input" @bind="_subcategory" @bind:event="oninput" /></div>
+                    <div class="column"><label class="label" for="rename-value">Value</label><input id="rename-value" class="input" @bind="_value" @bind:event="oninput" /></div>
+                </div>
+                <div class="field"><label class="label" for="rename-reason">Reason</label><textarea id="rename-reason" class="textarea" @bind="_reason" @bind:event="oninput"></textarea></div>
+                <div class="buttons">
+                    <button class="button is-link" @onclick="RenameAsync" disabled="@(_isSaving || !CanRename)">Save rename</button>
+                    <button class="button is-light" @onclick="CancelAction" disabled="@_isSaving">Cancel</button>
+                </div>
+            </div>
+        }
+
+        @if (_isMergeDialogOpen)
+        {
+            <div class="modal is-active" role="dialog" aria-modal="true" aria-labelledby="merge-dialog-title">
+                <div class="modal-background" @onclick="CancelAction"></div>
+                <div class="modal-card">
+                    <header class="modal-card-head">
+                        <h2 id="merge-dialog-title" class="modal-card-title">Merge tag families</h2>
+                        <button class="delete" type="button" aria-label="Close merge dialog" @onclick="CancelAction" disabled="@_isSaving"></button>
+                    </header>
+                    <section class="modal-card-body">
+                        <div class="notification has-background-warning-soft has-text-warning-bold">All names, synonyms, and work relationships will move under the canonical tag you select. This action cannot be undone from this screen.</div>
+                        @if (!string.IsNullOrWhiteSpace(_mergeErrorMessage))
+                        {
+                            <div class="notification is-danger"><strong>Error:</strong> @_mergeErrorMessage</div>
+                        }
+                        <fieldset class="field">
+                            <legend class="label">Keep as canonical</legend>
+                            @foreach (var tag in _selectedMergeTags)
+                            {
+                                <label @key="tag.TagId" class="box is-clickable mb-3">
+                                    <input type="radio" name="canonical-tag" value="@tag.TagId" checked="@(_mergeCanonicalTagId == tag.TagId)" @onchange="() => _mergeCanonicalTagId = tag.TagId" />
+                                    <strong class="ml-2">@tag.DisplayFormat</strong>
+                                    <span class="is-block ml-5 has-text-grey">@tag.PublishedWorkCount published works; @tag.Synonyms.Count synonyms</span>
+                                </label>
+                            }
+                        </fieldset>
+                        <div class="field">
+                            <label class="label" for="merge-reason">Reason</label>
+                            <textarea id="merge-reason" class="textarea" @bind="_reason" @bind:event="oninput"></textarea>
+                        </div>
+                    </section>
+                    <footer class="modal-card-foot">
+                        <div class="buttons mb-0">
+                            <button class="button is-warning" @onclick="MergeAsync" disabled="@(_isSaving || !CanMerge)">Confirm merge</button>
+                            <button class="button has-background-light-soft has-text-light-bold" @onclick="CancelAction" disabled="@_isSaving">Cancel</button>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private string _search = "";
+    private bool _isLoading = true;
+    private bool _isSaving;
+    private string? _errorMessage;
+    private ICollection<LinkedOfAdminTagItem>? _tags;
+    private LinkedOfAdminTagItem? _editingTag;
+    private readonly List<LinkedOfAdminTagItem> _selectedMergeTags = [];
+    private bool _isMergeDialogOpen;
+    private Ulid? _mergeCanonicalTagId;
+    private string? _mergeErrorMessage;
+    private string _category = "";
+    private string? _subcategory;
+    private string _value = "";
+    private string _reason = "";
+    private int _page = 1;
+    private int _totalPages = 1;
+    private CancellationTokenSource? _searchCts;
+
+    private bool CanRename => !string.IsNullOrWhiteSpace(_category) && !string.IsNullOrWhiteSpace(_value) && _reason.Trim().Length >= 3;
+    private bool CanMerge => _selectedMergeTags.Count >= 2 && _mergeCanonicalTagId is not null && _reason.Trim().Length >= 3;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTagsAsync();
+    }
+
+    private async Task LoadTagsAsync()
+    {
+        _isLoading = true;
+        _errorMessage = null;
+
+        var result = await AdminService.ListAdminTagsAsync(search: string.IsNullOrWhiteSpace(_search) ? null : _search, page: _page);
+
+        if (result.IsSuccess)
+        {
+            _tags = result.Value.Data;
+            _totalPages = Math.Max(1, result.Value.TotalPages);
+        }
+        else
+        {
+            _errorMessage = result.DomainError.Description;
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task SearchChangedAsync(ChangeEventArgs args)
+    {
+        _search = args.Value?.ToString() ?? "";
+        _page = 1;
+        if (_searchCts is not null) await _searchCts.CancelAsync();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(300, _searchCts.Token);
+            await LoadTagsAsync();
+        }
+        catch (OperationCanceledException) when (_searchCts.IsCancellationRequested)
+        {
+            return;
+        }
+    }
+
+    private void BeginEdit(LinkedOfAdminTagItem tag)
+    {
+        _editingTag = tag;
+        _isMergeDialogOpen = false;
+        _category = tag.Category;
+        _subcategory = tag.Subcategory;
+        _value = tag.Value;
+        _reason = "";
+        _errorMessage = null;
+    }
+
+    private bool IsSelectedForMerge(LinkedOfAdminTagItem tag) =>
+        _selectedMergeTags.Any(selected => selected.TagId == tag.TagId);
+
+    private void ToggleMergeSelection(LinkedOfAdminTagItem tag, ChangeEventArgs args)
+    {
+        var selected = args.Value is true;
+        if (selected && !IsSelectedForMerge(tag))
+        {
+            _selectedMergeTags.Add(tag);
+        }
+        else if (!selected)
+        {
+            _selectedMergeTags.RemoveAll(candidate => candidate.TagId == tag.TagId);
+        }
+    }
+
+    private void BeginMergeSelected()
+    {
+        if (_selectedMergeTags.Count < 2) return;
+        _editingTag = null;
+        _mergeCanonicalTagId = null;
+        _mergeErrorMessage = null;
+        _reason = "";
+        _errorMessage = null;
+        _isMergeDialogOpen = true;
+    }
+
+    private async Task RenameAsync()
+    {
+        if (_editingTag is null || !CanRename) return;
+        _isSaving = true;
+        var result = await AdminService.RenameCanonicalTagAsync(_editingTag.TagId, _category, _subcategory, _value, _reason);
+        _isSaving = false;
+        if (result.IsFailure) { _errorMessage = result.DomainError.Description; return; }
+        CancelAction();
+        await LoadTagsAsync();
+    }
+
+    private async Task MergeAsync()
+    {
+        if (!CanMerge) return;
+        var canonicalTag = _selectedMergeTags.Single(tag => tag.TagId == _mergeCanonicalTagId);
+        var sourceTagIds = _selectedMergeTags.Where(tag => tag.TagId != canonicalTag.TagId).Select(tag => tag.TagId).ToArray();
+        _isSaving = true;
+        var result = await AdminService.MergeCanonicalTagsAsync(canonicalTag.TagId, sourceTagIds, _reason);
+        _isSaving = false;
+        if (result.IsFailure) { _mergeErrorMessage = result.DomainError.Description; return; }
+        _selectedMergeTags.Clear();
+        CancelAction();
+        await LoadTagsAsync();
+    }
+
+    private void CancelAction()
+    {
+        _editingTag = null;
+        _isMergeDialogOpen = false;
+        _mergeCanonicalTagId = null;
+        _mergeErrorMessage = null;
+        _reason = "";
+    }
+
+    private async Task PreviousPageAsync() { if (_page > 1) { _page--; await LoadTagsAsync(); } }
+    private async Task NextPageAsync() { if (_page < _totalPages) { _page++; await LoadTagsAsync(); } }
+
+    public ValueTask DisposeAsync()
+    {
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

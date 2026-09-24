@@ -19,26 +19,22 @@ public class AddTagsToStoryTests
             new("genre", null, "fantasy", true),
             new("theme", null, "adventure", false)
         };
-        var skippedTags = new List<string> { "invalid-format", "duplicate:tag" };
-
         // Act
         var response = new AddTagsToStory.AddTagsToStoryResponse(
             storyId,
             "My Story",
             addedTags,
-            skippedTags,
             5);
 
         // Assert
         Assert.Equal(storyId, response.StoryId);
         Assert.Equal("My Story", response.StoryTitle);
-        Assert.Equal(2, response.AddedTags.Count);
-        Assert.Equal(2, response.SkippedTags.Count);
+        Assert.Equal(2, response.Tags.Count);
         Assert.Equal(5, response.TotalTags);
-        Assert.Equal("genre", response.AddedTags[0].Category);
-        Assert.Equal("fantasy", response.AddedTags[0].Value);
-        Assert.True(response.AddedTags[0].IsNew);
-        Assert.False(response.AddedTags[1].IsNew);
+        Assert.Equal("genre", response.Tags[0].Category);
+        Assert.Equal("fantasy", response.Tags[0].Value);
+        Assert.True(response.Tags[0].IsNew);
+        Assert.False(response.Tags[1].IsNew);
     }
 
     [Fact]
@@ -52,5 +48,30 @@ public class AddTagsToStoryTests
         Assert.Equal(canonicalKeyA, canonicalKeyB);
         Assert.Equal(canonicalKeyA, canonicalKeyC);
         Assert.True(TagCanonicalizationService.Matches("universe", null, "HarryPotter", "universe", null, "harry_potter"));
+    }
+
+    [Theory]
+    [InlineData("Universe", null, "Harry Potter", "universe:harrypotter")]
+    [InlineData("genre", "Urban Fantasy", "Magic-Punk", "genre:urbanfantasy:magicpunk")]
+    public void Tag_NormalizedKey_IsStableAcrossDisplayFormatting(
+        string category,
+        string? subcategory,
+        string value,
+        string expected)
+    {
+        Assert.Equal(expected, Data.Searching.Domain.Tag.BuildNormalizedKey(category, subcategory, value));
+    }
+
+    [Fact]
+    public void CanonicalTag_Rename_UpdatesDisplayValuesAndNormalizedKey()
+    {
+        var tag = Data.Searching.Domain.Tag.CreateCanonical("genre", null, "Sci Fi");
+
+        tag.Rename("Genre", "Speculative", "Science-Fiction");
+
+        Assert.Equal("Genre", tag.Category);
+        Assert.Equal("Speculative", tag.Subcategory);
+        Assert.Equal("Science-Fiction", tag.Value);
+        Assert.Equal("genre:speculative:sciencefiction", tag.NormalizedKey);
     }
 }

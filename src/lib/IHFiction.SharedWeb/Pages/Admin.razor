@@ -1,0 +1,40 @@
+@using Microsoft.AspNetCore.Authorization
+
+@page "/admin"
+
+@attribute [Authorize(Roles = "admin")]
+
+<PageTitle>Admin</PageTitle>
+
+<NoIndex />
+
+<section class="section">
+    <div class="container">
+        <h1 class="title">Administration</h1>
+        <p class="subtitle">Manage shared taxonomy and platform-wide content operations.</p>
+
+        <div class="columns is-multiline">
+            <div class="column is-half">
+                <article class="box">
+                    <h2 class="title is-4">Tags</h2>
+                    <p>Review canonical tags and manage synonym relationships.</p>
+                    <a class="button is-link mt-4" href="admin/tags">Open tag management</a>
+                </article>
+            </div>
+            <div class="column is-half">
+                <article class="box">
+                    <h2 class="title is-4">Works</h2>
+                    <p>Review publication state and ownership across the platform.</p>
+                    <button class="button is-link mt-4" disabled>Open work moderation</button>
+                </article>
+            </div>
+            <div class="column is-half">
+                <article class="box">
+                    <h2 class="title is-4">Audit history</h2>
+                    <p>Inspect administrative actions and their reasons.</p>
+                    <button class="button is-link mt-4" disabled>Open audit history</button>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>

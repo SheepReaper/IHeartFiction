@@ -67,6 +67,16 @@
                             <span>Start Writing</span>
                         </NavLink>
                     }
+
+                    @if (context.User.IsInRole("admin"))
+                    {
+                        <NavLink class="navbar-item" href="admin" @onclick="CloseMobileMenu">
+                            <span class="icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </span>
+                            <span>Admin</span>
+                        </NavLink>
+                    }
                 </Authorized>
             </AuthorizeView>
         </div>

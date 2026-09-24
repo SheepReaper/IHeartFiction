@@ -46,6 +46,7 @@ internal static class ErrorExtensions
         "ALREADYDELETED" => StatusCodes.Status404NotFound,
         "CONFLICT" => StatusCodes.Status409Conflict,
         "EXISTS" => StatusCodes.Status409Conflict,
+        var suffix when suffix?.StartsWith("INVALID", StringComparison.Ordinal) == true => StatusCodes.Status400BadRequest,
         "CONCURRENCYCONFLICT" => StatusCodes.Status500InternalServerError,
         "SAVEFAILED" => StatusCodes.Status500InternalServerError,
         "CONNECTIONFAILED" => StatusCodes.Status500InternalServerError,

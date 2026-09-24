@@ -167,6 +167,7 @@ builder.Services.AddHttpClient<FictionApiClient>(client =>
 builder.Services.AddTransient<IFictionApiClient>(services => services.GetRequiredService<FictionApiClient>());
 
 builder.Services.AddTransient<AccountService>();
+builder.Services.AddTransient<AdminService>();
 builder.Services.AddTransient<AuthorService>();
 builder.Services.AddTransient<BookService>();
 builder.Services.AddTransient<ChapterService>();
