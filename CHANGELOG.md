@@ -8,6 +8,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Fixed
+
+- **openapi:** Migrate deprecated example metadata
+
+- **dev:** Docker on windows localhost resolution shenanigans
+
+
 ### Maintenance
 
 - **deps:** Update aspire monorepo to 13.5.4
@@ -21,6 +33,24 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **deps:** Update dependency mongodb.entityframeworkcore to 10.0.4
 
 - **deps:** Update dependency markdig to 1.4.0
+
+- Remove explicit Microsoft.OpenApi dependency
+
+- Make agent bootstrap non-disruptive
+
+- **deps:** Update dependency minver to v8
+
+- **deps:** Update dependency shirubasoft.aspire.cloudflaretunnels to v2
+
+- **deps:** Update dotnet monorepo
+
+- **deps:** Constrain incompatible major upgrades
+
+- **aspire:** Enable the CLI bundle
+
+- **deps:** Supress abandonment warning for Ulid package
+
+- **repo:** Add uptime status badge
 
 
 
@@ -319,7 +349,7 @@ Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
 
 
 
-## [v1.0.0-alpha6] - 2026-06-19
+## [v1.0.0-alpha.6] - 2026-06-19
 
 
 ### Other
@@ -400,7 +430,7 @@ Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
 
 
 
-## [v1.0.0-alpha5] - 2026-05-22
+## [v1.0.0-alpha.5] - 2026-05-22
 
 
 ### Added
@@ -471,7 +501,7 @@ Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
 
 
 
-## [v1.0.0-alpha4] - 2026-05-18
+## [v1.0.0-alpha.4] - 2026-05-18
 
 
 ### Added
@@ -480,7 +510,7 @@ Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
 
 
 
-## [v1.0.0-alpha3] - 2026-05-18
+## [v1.0.0-alpha.3] - 2026-05-18
 
 
 ### Added
@@ -491,7 +521,7 @@ Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
 
 
 
-## [v1.0.0-alpha2] - 2026-05-17
+## [v1.0.0-alpha.2] - 2026-05-17
 
 
 ### Other
@@ -522,122 +552,7 @@ Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
 
 
 
-## [v1.0.0-alpha1] - 2026-05-15
-
-
-### Added
-
-- Enhance source generator integration by copying analyzers to intermediate output
-
-- Add dry-refactor-pr skill for focused DRY refactoring
-
-
-### Changed
-
-- Update CodeQL workflow to remove manual build mode for C# and clean up unnecessary steps; add notes to WIP document
-
-
-### Fixed
-
-- Update attest action to v4.1.0 for build provenance
-
-
-### Maintenance
-
-- **deps:** Pin actions/attest action to 59d8942
-
-- **deps:** Update dependency scalar.aspnetcore to 2.14.11
-
-- **deps:** Update dependency microsoft.sourcelink.github to v10
-
-- **deps:** Update dependency minver to v7
-
-- **deps:** Update github/codeql-action digest to 68bde55
-
-- **deps:** Update dependency wolverinefx to 5.39.0
-
-- **deps:** Update mongo-csharp-driver monorepo to 3.8.1
-
-- **deps:** Update dotnet monorepo
-
-- **deps:** Update dependency markdig to 1.2.0
-
-
-### Other
-
-- Remove outdated Playwright CLI documentation and references; update dependencies to version 13.3.0; add SharpCompress package across multiple projects; introduce MCP server configuration.
-
-- Refactor integration test service setup
-
-- Documents preferred logging patterns
-
-Clarifies the default C# logging style so new work follows analyzer-friendly source generation instead of older delegate caching.
-
-Keeps contributor guidance and local ignore rules aligned with the current tooling setup.
-
-- Splits notification handlers by concern
-
-Separates unrelated notification behaviors into focused units so the area is easier to navigate, review, and extend.
-
-Reduces coupling between inbox queries and push registration flows without changing their external behavior.
-
-- Cleans up stale device subscriptions
-
-Removes anonymous push subscriptions when a device no longer follows anything, which prevents orphaned records and avoids sending notifications that no longer have a reason to exist.
-
-Adds regression coverage so the cleanup only happens when the last follow is gone.
-
-- Adds web push fanout support
-
-Extends notification delivery beyond stored inbox rows so browser subscribers can be notified immediately.
-
-Wires VAPID configuration through the application stack, handles expired subscriptions gracefully, and adopts source-generated logging for clearer operational signals.
-
-- Fixes local authority configuration
-
-Applies the configured identity authority in every environment so local and build-time runs do not silently skip it.
-
-Pins the local identity host to a stable address to keep token validation and client setup predictable.
-
-- Improves web client routing flow
-
-Makes navigation and error handling more predictable by adding an explicit not-found route and updating middleware order around redirects, auth, caching, and static assets.
-
-Also prepares the shell for broader resource loading and service worker scope handling.
-
-- Moves push UI to JS modules
-
-Replaces global push helpers with module-based interop so subscription logic is loaded on demand and cleaned up with the component lifecycle.
-
-Consolidates service worker assets into shared content and removes duplicated browser-side push code.
-
-- Merges device and account notifications
-
-Preserves continuity after sign-in by combining anonymous and authenticated follow and inbox data instead of treating them as separate worlds.
-
-Introduces client interfaces and focused tests so the notification service becomes easier to substitute and verify.
-
-- Normalizes path separators
-
-Uses slash-based paths so build configuration and contributor guidance stay consistent across shells and operating systems.
-
-Reduces avoidable command and copy-target issues when working outside Windows.
-
-- Shares web push options
-
-Moves notification settings into a shared location so server and client code rely on the same configuration contract.
-
-Updates imports and option wiring to support reuse, and removes API-specific visibility assumptions that no longer fit a shared model.
-
-- Configures push subscription keys
-
-Replaces the hardcoded browser push key with injected configuration so each deployment can provide the correct value without editing shipped assets.
-
-Keeps the subscription flow aligned between Razor components and the JavaScript helper.
-
-
-
-## [v1.0.0-test1] - 2026-05-09
+## [v1.0.0-alpha.1] - 2026-05-15
 
 
 ### Added
@@ -732,10 +647,16 @@ fix: correct spelling of "Ko-fi" in About.razor
 
 - Update build configuration and dependencies for improved CI support and versioning
 
+- Enhance source generator integration by copying analyzers to intermediate output
+
+- Add dry-refactor-pr skill for focused DRY refactoring
+
 
 ### Changed
 
 - Update author-related queries to include all works and improve pagination descriptions
+
+- Update CodeQL workflow to remove manual build mode for C# and clean up unnecessary steps; add notes to WIP document
 
 
 ### Fixed
@@ -763,6 +684,8 @@ fix: correct spelling of "Ko-fi" in About.razor
 - Update coverlet.collector version to 8.0.1 and adjust settings for terminal auto-approval
 
 - Update Markdig version to 1.1.2
+
+- Update attest action to v4.1.0 for build provenance
 
 
 ### Maintenance
@@ -1179,6 +1102,24 @@ fix: correct spelling of "Ko-fi" in About.razor
 
 - **deps:** Update dependency scalar.aspnetcore to 2.14.10
 
+- **deps:** Pin actions/attest action to 59d8942
+
+- **deps:** Update dependency scalar.aspnetcore to 2.14.11
+
+- **deps:** Update dependency microsoft.sourcelink.github to v10
+
+- **deps:** Update dependency minver to v7
+
+- **deps:** Update github/codeql-action digest to 68bde55
+
+- **deps:** Update dependency wolverinefx to 5.39.0
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.8.1
+
+- **deps:** Update dotnet monorepo
+
+- **deps:** Update dependency markdig to 1.2.0
+
 
 ### Other
 
@@ -1386,6 +1327,76 @@ Co-authored-by: Copilot Autofix powered by AI <62310815+github-advanced-security
 - Created CustomFormatTypeResolver to handle custom formats for Ulid and ObjectId in API client generation.
 - Updated services to replace IFictionApiClient with the new FictionApiClient, ensuring type safety with Ulid.
 - Enhanced StoryService and WorkService to utilize Ulid directly instead of string representations.
+
+- Remove outdated Playwright CLI documentation and references; update dependencies to version 13.3.0; add SharpCompress package across multiple projects; introduce MCP server configuration.
+
+- Refactor integration test service setup
+
+- Documents preferred logging patterns
+
+Clarifies the default C# logging style so new work follows analyzer-friendly source generation instead of older delegate caching.
+
+Keeps contributor guidance and local ignore rules aligned with the current tooling setup.
+
+- Splits notification handlers by concern
+
+Separates unrelated notification behaviors into focused units so the area is easier to navigate, review, and extend.
+
+Reduces coupling between inbox queries and push registration flows without changing their external behavior.
+
+- Cleans up stale device subscriptions
+
+Removes anonymous push subscriptions when a device no longer follows anything, which prevents orphaned records and avoids sending notifications that no longer have a reason to exist.
+
+Adds regression coverage so the cleanup only happens when the last follow is gone.
+
+- Adds web push fanout support
+
+Extends notification delivery beyond stored inbox rows so browser subscribers can be notified immediately.
+
+Wires VAPID configuration through the application stack, handles expired subscriptions gracefully, and adopts source-generated logging for clearer operational signals.
+
+- Fixes local authority configuration
+
+Applies the configured identity authority in every environment so local and build-time runs do not silently skip it.
+
+Pins the local identity host to a stable address to keep token validation and client setup predictable.
+
+- Improves web client routing flow
+
+Makes navigation and error handling more predictable by adding an explicit not-found route and updating middleware order around redirects, auth, caching, and static assets.
+
+Also prepares the shell for broader resource loading and service worker scope handling.
+
+- Moves push UI to JS modules
+
+Replaces global push helpers with module-based interop so subscription logic is loaded on demand and cleaned up with the component lifecycle.
+
+Consolidates service worker assets into shared content and removes duplicated browser-side push code.
+
+- Merges device and account notifications
+
+Preserves continuity after sign-in by combining anonymous and authenticated follow and inbox data instead of treating them as separate worlds.
+
+Introduces client interfaces and focused tests so the notification service becomes easier to substitute and verify.
+
+- Normalizes path separators
+
+Uses slash-based paths so build configuration and contributor guidance stay consistent across shells and operating systems.
+
+Reduces avoidable command and copy-target issues when working outside Windows.
+
+- Shares web push options
+
+Moves notification settings into a shared location so server and client code rely on the same configuration contract.
+
+Updates imports and option wiring to support reuse, and removes API-specific visibility assumptions that no longer fit a shared model.
+
+- Configures push subscription keys
+
+Replaces the hardcoded browser push key with injected configuration so each deployment can provide the correct value without editing shipped assets.
+
+Keeps the subscription flow aligned between Razor components and the JavaScript helper.
 
 
 ### Tests
