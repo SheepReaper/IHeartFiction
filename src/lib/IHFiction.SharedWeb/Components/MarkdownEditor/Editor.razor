@@ -12,11 +12,8 @@
     <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/toastui-editor.min.css"]" rel="stylesheet"
         nonce="@Nonce" />
 
-    @if (Theme.CurrentTheme == "dark")
-    {
-        <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/theme/toastui-editor-dark.min.css"]" rel="stylesheet"
-            nonce="@Nonce" />
-    }
+    <link href="@Assets["_content/IHFiction.SharedWeb/editor/3.2.2/theme/toastui-editor-dark.min.css"]" rel="stylesheet"
+        nonce="@Nonce" />
 
     @if (Env.IsDevelopment())
     {
@@ -32,16 +29,16 @@
 <div @ref="_editorElement"></div>
 
 <!-- Editor status: word count always shown; character count shown when CharacterLimit is set -->
-<div class="editor-status is-size-7 has-text-dark" aria-live="polite" role="status"
+<div class="editor-status is-size-7 has-text-text" aria-live="polite" role="status"
     style="margin-top:0.5rem; display:flex; justify-content:flex-end; gap:0.75rem;">
     <div class="word-count">Words: @_wordCount</div>
     @if (CharacterLimit.HasValue)
     {
         var exceeded = _charCount > CharacterLimit.Value;
         <div class="char-count">
-            <span class="has-text-weight-semibold @(exceeded ? "has-text-danger" : "has-text-dark")">@_charCount</span>
-            <span class="has-text-dark">/</span>
-            <span class="has-text-dark">@CharacterLimit</span>
+            <span class="has-text-weight-semibold @(exceeded ? "has-text-danger-bold" : null)">@_charCount</span>
+            <span>/</span>
+            <span>@CharacterLimit</span>
         </div>
     }
 </div>
@@ -143,6 +140,7 @@
             _dotNetObjectReference = DotNetObjectReference.Create(this);
             Options.Element = _editorElement;
             Options.InitialValue = Value ?? string.Empty;
+            Options.Theme = Theme.CurrentTheme;
 
             if (RendererInfo.IsInteractive)
                 await InitScriptsAsync();
@@ -175,7 +173,25 @@
 
     private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)
     {
-        InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(() => ApplyThemeAsync(e.Theme));
+    }
+
+    private async Task ApplyThemeAsync(string theme)
+    {
+        Options.Theme = theme;
+        if (_editor is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _editor.InvokeVoidAsync("setTheme", theme);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Theme changes can race with navigation or circuit shutdown.
+        }
     }
 
     protected override async Task OnParametersSetAsync()

@@ -3,6 +3,7 @@ export class BoundToast {
     
     constructor(options, dotNetObjectReference) {
         this.dotNetObjectReference = dotNetObjectReference;
+        this.element = options.el;
 
         // Debounce change events so very large single-paste payloads don't immediately
         // get sent over SignalR/Blazor server and cause disconnects.
@@ -45,6 +46,11 @@ export class BoundToast {
 
     setMarkdown(markdown) {
         this.editor.setMarkdown(markdown);
+    }
+
+    setTheme(theme) {
+        const editorRoot = this.element?.querySelector('.toastui-editor-defaultUI');
+        editorRoot?.classList.toggle('toastui-editor-dark', theme === 'dark');
     }
 
     destroy() {

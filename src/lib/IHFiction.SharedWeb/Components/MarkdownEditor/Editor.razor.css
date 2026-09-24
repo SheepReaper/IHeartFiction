@@ -1,0 +1,11 @@
+::deep .toastui-editor-popup-add-image .toastui-editor-tabs .tab-item.active {
+    color: var(--bulma-link-bold);
+}
+
+::deep .toastui-editor-popup-body .toastui-editor-file-name {
+    color: var(--bulma-text);
+}
+
+::deep .toastui-editor-defaultUI:has(.toastui-editor-toolbar-icons:focus) .toastui-editor-tooltip {
+    visibility: hidden;
+}

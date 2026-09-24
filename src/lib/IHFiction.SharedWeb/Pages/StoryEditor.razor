@@ -101,13 +101,13 @@ else
 
                 @if (EditorService.CurrentCoverPreviewUrl is { } coverPreviewUrl)
                 {
-                    <figure class="image is-4by3 mb-4">
+                    <figure class="image is-16by9 mb-4">
                         <img src="@coverPreviewUrl" alt="Story cover preview" style="object-fit: cover; height: 100%; width: 100%;" />
                     </figure>
                 }
                 else
                 {
-                    <figure class="image is-4by3 mb-4">
+                    <figure class="image is-16by9 mb-4">
                         <div class="has-background-link-soft has-text-link-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
                             <span class="has-text-weight-semibold">No cover selected</span>
                         </div>
