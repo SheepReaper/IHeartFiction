@@ -64,10 +64,10 @@ internal sealed class ListTags(
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [
-        new(nameof(Tag.Category)),
-        new(nameof(Tag.Value)),
-        new(nameof(Tag.Works.Count)),
-        new(nameof(Tag.CreatedAt))];
+        new(nameof(ListTagsItem.Category)),
+        new(nameof(ListTagsItem.Value)),
+        new(nameof(ListTagsItem.StoryCount)),
+        new(nameof(ListTagsItem.CreatedAt))];
 
     /// <summary>
     /// Represents a single tag item in the tags list response.
@@ -93,37 +93,72 @@ internal sealed class ListTags(
         ListTagsBody body,
         CancellationToken cancellationToken = default)
     {
-        // Build the base query for all tags (includes both canonical and synonym tags)
-        // In a full implementation, we'd filter for canonical tags only
-        var tags = context.Tags
-            .AsNoTracking();
+        var tags = await context.Tags
+            .AsNoTracking()
+            .Where(tag => EF.Property<Ulid?>(tag, "CanonicalTagId") == null)
+            .ToListAsync(cancellationToken);
 
-        // Apply category filter if provided
-        // if (!string.IsNullOrWhiteSpace(request.Category))
-        // {
-        //     var categoryFilter = request.Category.Trim();
-        //     query = query.Where(t => t.Category.Contains(categoryFilter, StringComparison.OrdinalIgnoreCase));
-        // }
+        var categoryFilter = InputSanitizationService.SanitizeTag(body.Category);
+        if (!string.IsNullOrWhiteSpace(categoryFilter))
+        {
+            tags = [.. tags.Where(tag => tag.Category.Equals(categoryFilter, StringComparison.OrdinalIgnoreCase))];
+        }
 
-        tags = tags.SearchIContains(body.Category, t => t.Category);
+        var searchFilter = InputSanitizationService.SanitizeTag(query.Search);
+        if (!string.IsNullOrWhiteSpace(searchFilter))
+        {
+            var parsedSearch = TryParseTagSearch(searchFilter);
 
-        // Apply search filter if provided
-        tags = tags.SearchIContains(query.Search, t => t.Category, t => t.Subcategory, t => t.Value);
+            tags = [.. tags
+                .Where(tag =>
+                    MatchesTagSearch(tag, parsedSearch, searchFilter))];
+        }
 
-        // Apply sorting
-        tags = tags.ApplySort(query, SortMappings);
+        var proj = tags
+            .Select(t => new ListTagsItem(
+                t.Id,
+                t.Category,
+                t.Subcategory,
+                t.Value,
+                t.CreatedAt,
+                t.Works.Count(w => w.PublishedAt != null),
+                t.ToString()))
+            .AsQueryable();
 
-        // Apply pagination and select results with usage statistics
-        var proj = tags.Select(t => new ListTagsItem(
-            t.Id,
-            t.Category,
-            t.Subcategory,
-            t.Value,
-            t.CreatedAt,
-            t.Works.Count(w => w.PublishedAt != null), // Only count published stories
-            t.ToString()));
+        proj = proj.ApplySort(query, SortMappings);
 
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
+    }
+
+    private static (string Category, string? Subcategory, string Value)? TryParseTagSearch(string search)
+    {
+        var parts = search.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length is < 2 or > 3)
+        {
+            return null;
+        }
+
+        return parts.Length == 2
+            ? (parts[0], null, parts[1])
+            : (parts[0], parts[1], parts[2]);
+    }
+
+    private static bool MatchesTagSearch(Tag tag, (string Category, string? Subcategory, string Value)? parsedSearch, string rawSearch)
+    {
+        if (parsedSearch is { } parsed)
+        {
+            return TagCanonicalizationService.Matches(
+                parsed.Category,
+                parsed.Subcategory,
+                parsed.Value,
+                tag.Category,
+                tag.Subcategory,
+                tag.Value);
+        }
+
+        return tag.Value.StartsWith(rawSearch, StringComparison.OrdinalIgnoreCase) ||
+               tag.Category.StartsWith(rawSearch, StringComparison.OrdinalIgnoreCase) ||
+               (tag.Subcategory is not null && tag.Subcategory.StartsWith(rawSearch, StringComparison.OrdinalIgnoreCase));
     }
 
     public static string EndpointName => nameof(ListTags);

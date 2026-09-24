@@ -13,6 +13,43 @@ public partial class StoryService(FictionApiClient client, ILogger<StoryService>
         Message = "Failed to upload story cover for story {StoryId}")]
     private partial void LogUploadStoryCoverFailed(Ulid storyId);
 
+    public async ValueTask<Result<LinkedPagedCollectionOfListTagsItem>> ListTagsAsync(
+        string? search = null,
+        int? pageSize = 20,
+        CancellationToken cancellationToken = default)
+        => await client.ListTagsAsync(
+            page: 1,
+            pageSize: pageSize,
+            q: search,
+            sort: "value",
+            fields: null,
+            body: new ListTagsBody(),
+            cancellationToken: cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfAddTagsToStoryResponse>> AddTagsToStoryAsync(
+        Ulid storyId,
+        IReadOnlyCollection<string> tags,
+        CancellationToken cancellationToken = default)
+    {
+        if (storyId == Ulid.Empty)
+        {
+            return DomainError.EmptyUlid;
+        }
+
+        ArgumentNullException.ThrowIfNull(tags);
+
+        if (tags.Count == 0)
+        {
+            return new DomainError("StoryService.AddTagsToStory", "At least one tag must be provided.");
+        }
+
+        return await client.AddTagsToStoryAsync(
+            storyId,
+            new AddTagsToStoryBody { Tags = string.Join(", ", tags) },
+            null,
+            cancellationToken).HandleApiException();
+    }
+
 
     public async ValueTask<Result> PublishWorkAsync(
         Ulid id,

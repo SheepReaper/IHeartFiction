@@ -1,3 +1,5 @@
+﻿#pragma warning disable CA1515 // Wolverine discovers public message types.
+
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using System.Security.Claims;
@@ -10,15 +12,20 @@ using IHFiction.Data.Searching.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
+using Wolverine;
 
 namespace IHFiction.FictionApi.Stories;
 
+public sealed record TagCreatedRequested(Ulid TagId);
+
 internal sealed class AddTagsToStory(
     FictionDbContext context,
-    UserService userService) : IUseCase, INameEndpoint<AddTagsToStory>
+    UserService userService,
+    IMessageBus messageBus) : IUseCase, INameEndpoint<AddTagsToStory>
 {
     internal static class Errors
     {
@@ -130,46 +137,65 @@ internal sealed class AddTagsToStory(
                     continue;
                 }
 
-                parsedTags.Add(parseResult.Value);
+                var (category, subcategory, value) = parseResult.Value;
+                parsedTags.Add((
+                    InputSanitizationService.SanitizeTag(category),
+                    subcategory is null ? null : InputSanitizationService.SanitizeTag(subcategory),
+                    InputSanitizationService.SanitizeTag(value)));
             }
 
-            // Get existing tags for the story to avoid duplicates
-            var existingTagStrings = story.Tags.Select(t => t.ToString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            // Get existing tags for the story to avoid duplicates across canonicalized variants
+            var existingTagKeys = story.Tags
+                .Select(tag => TagCanonicalizationService.BuildKey(tag.Category, tag.Subcategory, tag.Value))
+                .Where(key => !string.IsNullOrWhiteSpace(key))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             // Find or create canonical tags
             var addedTags = new List<AddedTagItem>();
             var tagsToAdd = new List<Tag>();
+            var createdTagIds = new List<Ulid>();
 
             foreach (var (category, subcategory, value) in parsedTags)
             {
                 var tagString = subcategory is null ? $"{category}:{value}" : $"{category}:{subcategory}:{value}";
+                var tagKey = TagCanonicalizationService.BuildKey(category, subcategory, value);
 
-                // Skip if tag already exists on story
-                if (existingTagStrings.Contains(tagString))
+                // Skip if an equivalent tag already exists on story
+                if (!string.IsNullOrWhiteSpace(tagKey) && existingTagKeys.Contains(tagKey))
                 {
                     skippedTags.Add(tagString);
                     continue;
                 }
 
-                // Find existing tag or create new one
-                var existingTag = await context.Tags
-                    .FirstOrDefaultAsync(t =>
+                var tagCandidates = await context.Tags
+                    .Where(t =>
                         t.Category == category &&
-                        t.Subcategory == subcategory &&
-                        t.Value == value,
-                        cancellationToken);
+                        t.Subcategory == subcategory)
+                    .ToListAsync(cancellationToken);
 
-                if (existingTag is not null)
+                var tagMatch = tagCandidates
+                    .FirstOrDefault(candidate =>
+                        TagCanonicalizationService.Matches(
+                            candidate.Category,
+                            candidate.Subcategory,
+                            candidate.Value,
+                            category,
+                            subcategory,
+                            value));
+
+                if (tagMatch is not null)
                 {
-                    tagsToAdd.Add(existingTag);
-                    addedTags.Add(new AddedTagItem(category, subcategory, value, false));
+                    var tagToAttach = tagMatch.ResolveCanonical();
+                    tagsToAdd.Add(tagToAttach);
+                    addedTags.Add(new AddedTagItem(tagToAttach.Category, tagToAttach.Subcategory, tagToAttach.Value, false));
                 }
                 else
                 {
-                    // Tag doesn't exist - skip it for now
-                    // In a full implementation, this would create new canonical tags
-                    skippedTags.Add(tagString);
-                    continue;
+                    var createdTag = Tag.CreateCanonical(category, subcategory, value);
+                    context.Tags.Add(createdTag);
+                    tagsToAdd.Add(createdTag);
+                    createdTagIds.Add(createdTag.Id);
+                    addedTags.Add(new AddedTagItem(category, subcategory, value, true));
                 }
             }
 
@@ -180,6 +206,11 @@ internal sealed class AddTagsToStory(
             }
 
             await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var createdTagId in createdTagIds)
+            {
+                await messageBus.PublishAsync(new TagCreatedRequested(createdTagId));
+            }
 
             return new AddTagsToStoryResponse(
                 story.Id,
@@ -215,16 +246,9 @@ internal sealed class AddTagsToStory(
                 return Errors.TagTooLong;
         }
 
-        if (parts.Length == 2)
-        {
-            // Format: category:value
-            return (parts[0], null, parts[1]);
-        }
-        else
-        {
-            // Format: category:subcategory:value
-            return (parts[0], parts[1], parts[2]);
-        }
+        return parts.Length == 2
+            ? (parts[0], null, parts[1])
+            : (parts[0], parts[1], parts[2]);
     }
         public static string EndpointName => nameof(AddTagsToStory);
 

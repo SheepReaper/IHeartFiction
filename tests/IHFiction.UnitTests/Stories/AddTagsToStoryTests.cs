@@ -1,4 +1,5 @@
 using IHFiction.FictionApi.Stories;
+using IHFiction.FictionApi.Tags;
 
 namespace IHFiction.UnitTests.Stories;
 
@@ -38,5 +39,18 @@ public class AddTagsToStoryTests
         Assert.Equal("fantasy", response.AddedTags[0].Value);
         Assert.True(response.AddedTags[0].IsNew);
         Assert.False(response.AddedTags[1].IsNew);
+    }
+
+    [Fact]
+    public void TagCanonicalizationService_NormalizesEquivalentTagVariants()
+    {
+        var canonicalKeyA = TagCanonicalizationService.BuildKey("universe", null, "HarryPotter");
+        var canonicalKeyB = TagCanonicalizationService.BuildKey("universe", null, "harry_potter");
+        var canonicalKeyC = TagCanonicalizationService.BuildKey("universe", null, "harry-potter");
+
+        Assert.Equal("universe:harrypotter", canonicalKeyA);
+        Assert.Equal(canonicalKeyA, canonicalKeyB);
+        Assert.Equal(canonicalKeyA, canonicalKeyC);
+        Assert.True(TagCanonicalizationService.Matches("universe", null, "HarryPotter", "universe", null, "harry_potter"));
     }
 }

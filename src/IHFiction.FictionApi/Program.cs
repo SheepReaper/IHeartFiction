@@ -203,6 +203,15 @@ if (!IsBuildEnvironment())
             .EnableNativeDeadLetterQueue()
             .UseDurableInbox();
 
+        const string tagStream = "ihfiction-tags";
+        opts.PublishMessage<TagCreatedRequested>()
+            .ToRedisStream(tagStream)
+            .UseDurableOutbox();
+        opts.ListenToRedisStream(tagStream, "fiction-tag-reconciler")
+            .StartFromBeginning()
+            .EnableNativeDeadLetterQueue()
+            .UseDurableInbox();
+
         const string workReadStream = "ihfiction-work-reads";
         opts.PublishMessage<RecordWorkReadRequested>()
             .ToRedisStream(workReadStream)

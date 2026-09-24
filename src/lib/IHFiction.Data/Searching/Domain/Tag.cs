@@ -12,5 +12,14 @@ public abstract class Tag : DomainUlidEntityWithTimestamp
     private ICollection<Work>? _works;
     public ICollection<Work> Works => _works ??= [];
 
+    public virtual Tag ResolveCanonical() => this;
+
+    public static Tag CreateCanonical(string category, string? subcategory, string value) => new CanonicalTag
+    {
+        Category = category,
+        Subcategory = subcategory,
+        Value = value
+    };
+
     public override string ToString() => Subcategory is null ? $"{Category}:{Value}" : $"{Category}:{Subcategory}:{Value}";
 }

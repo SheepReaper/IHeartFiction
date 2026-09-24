@@ -1,5 +1,6 @@
 @using IHFiction.SharedKernel.Infrastructure
 @using IHFiction.SharedKernel.Stories
+@using IHFiction.SharedWeb.Components.Tags
 @using IHFiction.SharedWeb.Components.MarkdownEditor
 @using IHFiction.Data.Stories.Domain
 @using Microsoft.AspNetCore.Components.Forms
@@ -15,6 +16,7 @@
 @attribute [Authorize(Roles = "author")]
 @inherits CancellableComponent
 @inject StoryEditorService EditorService
+@inject StoryService StoryService
 @inject NavigationManager Navigation
 
 <h1>@(EditorService.CurrentStory?.Id == default ? "Create New Story" : "Edit Story")</h1>
@@ -74,6 +76,8 @@ else
                         @bind:event="oninput"></textarea>
                 </div>
             </div>
+
+            <TagPicker SelectedTags="@_selectedTags" SelectedTagsChanged="OnSelectedTagsChanged" />
         </div>
         <div class="column">
             <div class="box">
@@ -246,6 +250,7 @@ else
     || EditorService.CurrentChapter?.IsPublished == false;
 
     private bool _disposed;
+    private readonly List<string> _selectedTags = [];
     private string? _errorMessage;
     private bool _isBusy;
 
@@ -407,6 +412,15 @@ else
 
         if (result.IsSuccess && andPublish) result = await EditorService.PublishStoryAsync();
 
+        if (result.IsSuccess && EditorService.CurrentStory?.Id is { } storyId && _selectedTags.Count > 0)
+        {
+            var tagResult = await StoryService.AddTagsToStoryAsync(storyId, _selectedTags, CancellationToken);
+            if (tagResult.IsFailure)
+            {
+                result = tagResult.DomainError;
+            }
+        }
+
         if (result.IsFailure) _errorMessage = result.DomainError.Description;
 
         else if (stayInEditor)
@@ -445,6 +459,13 @@ else
     private void RemoveCover()
     {
         EditorService.MarkCoverForRemoval();
+    }
+
+    private Task OnSelectedTagsChanged(IReadOnlyCollection<string> tags)
+    {
+        _selectedTags.Clear();
+        _selectedTags.AddRange(tags);
+        return Task.CompletedTask;
     }
 
     private async Task<Result> EnsureInitialStructureAsync(string storyType)

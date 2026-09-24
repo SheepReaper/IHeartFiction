@@ -1,0 +1,146 @@
+@using Microsoft.AspNetCore.Components.Web
+@using IHFiction.SharedWeb.Services
+@inject StoryService StoryService
+
+<div class="field">
+    <label class="label">Tags</label>
+    <div class="control">
+        <div class="tags mb-2">
+            @foreach (var tag in SelectedTags)
+            {
+                <span @key="tag" class="tag has-background-link-soft has-text-link-bold">
+                    @tag
+                    <button class="delete is-small" type="button" aria-label="Remove tag" @onclick="() => RemoveTag(tag)"></button>
+                </span>
+            }
+        </div>
+
+        <div class="field has-addons">
+            <div class="control is-expanded">
+                <input class="input" value="@_searchText" @oninput="HandleInput" @onkeydown="HandleKeyDown" placeholder="Start typing a tag value" />
+            </div>
+            <div class="control">
+                <button class="button is-link is-light" type="button" @onclick="AddTypedTag" disabled="@string.IsNullOrWhiteSpace(_searchText)">Add</button>
+            </div>
+        </div>
+
+        @if (_isLoading)
+        {
+            <p class="help">Searching canonical tags…</p>
+        }
+        else if (_suggestions.Count > 0)
+        {
+            <div class="dropdown is-active is-block">
+                <div class="dropdown-menu is-fullwidth" role="menu">
+                    <div class="dropdown-content">
+                        @foreach (var tag in _suggestions)
+                        {
+                            <a @key="tag.TagId" class="dropdown-item" @onclick="() => SelectSuggestion(tag)">
+                                <strong>@tag.DisplayFormat</strong>
+                                <span class="has-text-grey">(@tag.StoryCount stories)</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <p class="help">Suggestions are canonical-only. If no canonical match exists, you can add a new tag value.</p>
+</div>
+
+@code {
+    private readonly List<LinkedOfListTagsItem> _suggestions = [];
+    private string _searchText = string.Empty;
+    private bool _isLoading;
+    private CancellationTokenSource? _searchCts;
+
+    [Parameter, EditorRequired] public ICollection<string> SelectedTags { get; set; } = [];
+    [Parameter] public EventCallback<IReadOnlyCollection<string>> SelectedTagsChanged { get; set; }
+
+    private async Task HandleInput(ChangeEventArgs args)
+    {
+        _searchText = args.Value?.ToString() ?? string.Empty;
+        await SearchAsync();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await AddTypedTag();
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        if (_searchCts is not null)
+        {
+            await _searchCts.CancelAsync();
+        }
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            _suggestions.Clear();
+            _isLoading = false;
+            return;
+        }
+
+        _isLoading = true;
+        StateHasChanged();
+
+        var result = await StoryService.ListTagsAsync(_searchText.Trim(), 8, _searchCts.Token);
+        if (result.IsSuccess)
+        {
+            _suggestions.Clear();
+            _suggestions.AddRange(result.Value.Data);
+        }
+
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task SelectSuggestion(LinkedOfListTagsItem tag)
+    {
+        AddTag(tag.DisplayFormat);
+        _searchText = string.Empty;
+        _suggestions.Clear();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddTypedTag()
+    {
+        var tagText = _searchText.Trim();
+        if (string.IsNullOrWhiteSpace(tagText))
+        {
+            return;
+        }
+
+        AddTag(tagText);
+        _searchText = string.Empty;
+        _suggestions.Clear();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void AddTag(string tagText)
+    {
+        if (SelectedTags.Contains(tagText, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        SelectedTags.Add(tagText);
+        _ = SelectedTagsChanged.InvokeAsync(SelectedTags.ToArray());
+    }
+
+    private async Task RemoveTag(string tagText)
+    {
+        if (!SelectedTags.Remove(tagText))
+        {
+            return;
+        }
+
+        await SelectedTagsChanged.InvokeAsync(SelectedTags.ToArray());
+    }
+}

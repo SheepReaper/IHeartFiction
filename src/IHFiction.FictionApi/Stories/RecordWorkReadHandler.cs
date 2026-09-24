@@ -211,10 +211,13 @@ public sealed partial class RecordWorkReadHandler(
             && (story.Owner.UserId == userId || story.Authors.Any(author => author.UserId == userId)),
             cancellationToken);
 
-    private static HashSet<Guid> AuthorIds(Story story) => story.Authors
-        .Select(author => author.UserId)
-        .Append(story.Owner.UserId)
-        .ToHashSet();
+    private static HashSet<Guid> AuthorIds(Story story) =>
+    [
+        .. story.Authors
+                .Select(author => author.UserId)
+,
+        story.Owner.UserId,
+    ];
 
     private sealed record ReadHierarchy(IReadOnlyList<Work> Works, HashSet<Guid> AuthorUserIds);
 }

@@ -151,14 +151,13 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
                 .OrderBy(c => c.Order)
                 .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, null, null, c.ReadCount))
                 .ToList(),
-            StoryType.MultiBook => story.Books
+            StoryType.MultiBook => [.. story.Books
                 .Where(b => b.IsPublished)
                 .OrderBy(b => b.Order)
                 .SelectMany(b => b.Chapters
                     .Where(c => c.IsPublished)
                     .OrderBy(c => c.Order)
-                    .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, b.Id, b.Title, c.ReadCount)))
-                .ToList(),
+                    .Select(c => new ReadableWorkItem(c.Id, c.Title, c.Order, b.Id, b.Title, c.ReadCount)))],
             _ => []
         };
 
@@ -296,11 +295,10 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
 
     private static List<WorkAuthor> OrderAuthors(IEnumerable<Data.Authors.Domain.Author> authors, Ulid ownerId)
     {
-        return authors
+        return [.. authors
             .Select(a => new WorkAuthor(a.Id, a.Name))
             .OrderBy(a => a.Id, new OwnerFirst(ownerId))
-            .ThenBy(a => a.Id)
-            .ToList();
+            .ThenBy(a => a.Id)];
     }
 
     private static string GetStoryReaderKind(Story story)

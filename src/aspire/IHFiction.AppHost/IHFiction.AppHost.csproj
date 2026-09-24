@@ -4,7 +4,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>c6f7845b-4507-4b76-9d66-de04efbd8180</UserSecretsId>
-    <NoWarn>$(NoWarn);ASPIRE004</NoWarn>
     <LangVersion>preview</LangVersion>
     <AspireUseCliBundle>true</AspireUseCliBundle>
   </PropertyGroup>
