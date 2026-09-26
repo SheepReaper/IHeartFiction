@@ -1,3 +1,5 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 
 namespace IHFiction.UnitTests;
@@ -39,9 +41,14 @@ public class MongoDbFixtureTests(MongoDbFixture fixture) : IClassFixture<MongoDb
         var retrieved = await collection.Find(d => d.Name == "Test").FirstOrDefaultAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(retrieved);
+        Assert.NotEqual(ObjectId.Empty, retrieved.Id);
         Assert.Equal("Test", retrieved.Name);
         Assert.Equal(42, retrieved.Value);
     }
 
-    private record TestDocument(string Name = "", int Value = 0);
+    private sealed record TestDocument(string Name = "", int Value = 0)
+    {
+        [BsonId]
+        public ObjectId Id { get; init; }
+    }
 }
