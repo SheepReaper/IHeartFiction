@@ -5,7 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v1.0.3] - 2026-09-26
+
+
+### Added
+
+- **web:** Add negotiable markdown responses
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Fixed
+
+- **openapi:** Preserve endpoint security metadata
+
+- **tests:** Map Mongo fixture document id
+
+
+### Maintenance
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.12.0
+
+- **deps:** Update opentelemetry-dotnet monorepo to 1.19.1
+
+
+
+## [v1.0.2] - 2026-09-24
+
+
+### Added
+
+- **tags:** Add basic tagging support
+
+- **tags:** Add admin tag management and canonical tag support
 
 
 ### Documentation
@@ -18,6 +53,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **openapi:** Migrate deprecated example metadata
 
 - **dev:** Docker on windows localhost resolution shenanigans
+
+- **editor:** Theme contrast issues
 
 
 ### Maintenance
