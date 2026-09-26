@@ -28,6 +28,7 @@ using IHFiction.SharedWeb.Services;
 using IHFiction.SharedWeb.Sitemap;
 using IHFiction.WebClient;
 using IHFiction.WebClient.Components;
+using IHFiction.WebClient.MarkdownResponses;
 
 using Keycloak.AuthServices.Authorization;
 
@@ -186,6 +187,7 @@ builder.Services.AddSingleton(VersionHelper.Get());
 builder.Services.AddScoped<LoaderService>();
 
 builder.Services.AddCspProvider();
+builder.Services.AddSingleton<HtmlToMarkdownConverter>();
 
 var app = builder.Build();
 
@@ -230,6 +232,8 @@ app.UseCsp();
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseMiddleware<MarkdownResponseMiddleware>();
 
 app.Use(async (context, next) =>
 {

@@ -125,6 +125,7 @@ Use `aspire do push -o infra -v` only when intentionally pushing images.
 - **Symptom:** Minimal APIs do not provide the content negotiation behavior needed to automatically switch between plain JSON and HATEOAS-enhanced JSON based on `Accept` headers.
 - **Why it is needed:** Endpoint `.Produces<T>()` metadata is documentation-oriented and does not provide runtime response selection. Rather than hand-rolling negotiation on every endpoint, the project currently returns hypermedia links universally.
 - **Tradeoff:** Clients always receive link metadata, even when they would otherwise prefer a smaller plain representation.
+- **WebClient exception:** `MarkdownResponseMiddleware` performs centralized `text/markdown` negotiation only for successful Razor component page responses. It extracts the shared layout's marked main-content region and converts rendered HTML to Markdown; it does not negotiate FictionApi response shapes.
 - **Removal criteria:** Revisit if ASP.NET Core Minimal APIs gain first-class response content negotiation and OpenAPI support for multiple response schemas/content types per endpoint, or if the project adopts a separate endpoint/versioning strategy for hypermedia.
 
 ## MongoDB EF Core package retained mostly for ObjectId serialization

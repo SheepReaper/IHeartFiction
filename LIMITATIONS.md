@@ -62,6 +62,8 @@ Due to these limitations, this project has adopted a **universal HATEOAS approac
 
 This decision may be revisited as the framework evolves and better content negotiation support becomes available.
 
+The WebClient is a deliberate, narrow exception. Its centralized middleware can transform successful server-rendered Razor page responses into `text/markdown` when that representation outranks HTML in the request's `Accept` header. This does not change FictionApi response models or its universal HATEOAS policy.
+
 #### Alternative Approaches (If Content Negotiation Needed)
 
 **Manual Content Negotiation:**

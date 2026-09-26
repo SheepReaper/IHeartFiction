@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="IHFiction.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../lib/IHFiction.ServiceDefaults/IHFiction.ServiceDefaults.csproj" />
     <ProjectReference Include="../lib/IHFiction.SharedWeb/IHFiction.SharedWeb.csproj" />
   </ItemGroup>
@@ -16,6 +20,7 @@
     <PackageReference Include="Npgsql.DependencyInjection" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="ReverseMarkdown" />
     <PackageReference Include="Sidio.Sitemap.Blazor" />
   </ItemGroup>
 
