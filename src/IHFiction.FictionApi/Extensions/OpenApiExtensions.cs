@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
@@ -48,7 +49,7 @@ internal static class OpenApiExtensions
 
             document.Security.Add(new()
             {
-                {new("OAuth2"), ["fiction_api"]}
+                {new("OAuth2", document), ["fiction_api"]}
             });
         }
 
@@ -63,7 +64,7 @@ internal static class OpenApiExtensions
 
             document.Security.Add(new()
             {
-                {new("OpenIdConnect"), ["fiction_api"]}
+                {new("OpenIdConnect", document), ["fiction_api"]}
             });
         }
 
@@ -77,7 +78,7 @@ internal static class OpenApiExtensions
 
         document.Security.Add(new()
         {
-            {new("JWT"), []}
+            {new("JWT", document), []}
         });
 
         document.Info = new(document.Info)
@@ -193,6 +194,12 @@ internal static class OpenApiExtensions
 
     private static Task OperationTransformer(OpenApiOperation op, OpenApiOperationTransformerContext context, CancellationToken ct)
     {
+        var allowAnonymous = context.Description.ActionDescriptor.EndpointMetadata
+            .OfType<IAllowAnonymous>()
+            .Any();
+
+        if (allowAnonymous) op.Security = [];
+
         var parameters = op.Parameters ?? [];
 
         for (var i = 0; i < parameters.Count; i++)

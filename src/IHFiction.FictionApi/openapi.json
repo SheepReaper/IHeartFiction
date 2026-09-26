@@ -1185,7 +1185,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       },
       "delete": {
         "tags": [
@@ -1254,7 +1255,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/authors/{id}": {
@@ -1318,7 +1320,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/authors": {
@@ -1422,7 +1425,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/device/follows": {
@@ -1485,7 +1489,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/device/notifications": {
@@ -1563,7 +1568,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/device/notifications/{id}/read": {
@@ -1634,7 +1640,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/notifications/push-subscription/device": {
@@ -1695,7 +1702,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/notifications/push-subscription": {
@@ -2413,7 +2421,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/chapters/{id}": {
@@ -2677,7 +2686,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       },
       "put": {
         "tags": [
@@ -2894,7 +2904,8 @@
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [ ]
       },
       "put": {
         "tags": [
@@ -3219,7 +3230,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       },
       "delete": {
         "tags": [
@@ -3288,7 +3300,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/chapters/{id}/content": {
@@ -3352,7 +3365,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       },
       "put": {
         "tags": [
@@ -3508,7 +3522,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       },
       "put": {
         "tags": [
@@ -3664,7 +3679,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/works/{id}/meta": {
@@ -3718,7 +3734,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/stories/published": {
@@ -3846,7 +3863,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/stories/{id}/publish": {
@@ -4103,7 +4121,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/stories/{id}/unpublish": {
@@ -4531,7 +4550,8 @@
               }
             }
           }
-        }
+        },
+        "security": [ ]
       }
     },
     "/admin/tags/merge": {
@@ -9496,8 +9516,14 @@
     }
   },
   "security": [
-    { },
-    { }
+    {
+      "OpenIdConnect": [
+        "fiction_api"
+      ]
+    },
+    {
+      "JWT": [ ]
+    }
   ],
   "tags": [
     {
