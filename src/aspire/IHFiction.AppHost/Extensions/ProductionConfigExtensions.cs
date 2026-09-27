@@ -182,7 +182,7 @@ internal static class ProductionConfigExtensions
         .WithEndpoint("http", e => e.TargetPort = 8080)
         .WithDockerHealthcheck(
             ["CMD-SHELL", "{ printf 'HEAD /health/ready HTTP/1.0\r\n\r\n' >&0; grep 'HTTP/1.0 200'; } 0<>/dev/tcp/localhost/9000"],
-            options => options.StartPeriodSeconds = 120)
+            options => options.StartPeriodSeconds = 600)
         .PublishAsDockerComposeService((_, service) =>
         {
             // Using conf file
