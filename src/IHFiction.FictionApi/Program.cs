@@ -416,5 +416,6 @@ app.MapScalarApiReference(o =>
 
 app.MapEndpoints();
 app.MapDefaultEndpoints();
+app.MapApiCatalog();
 
 await app.RunAsync();

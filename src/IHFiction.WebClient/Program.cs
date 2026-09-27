@@ -37,6 +37,7 @@ using Markdig;
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core.Services;
 const string keycloakAuthenticationScheme = "Keycloak";
+const string apiCatalogPath = "/.well-known/api-catalog";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -318,6 +319,12 @@ app.MapGet("/robots.txt", (IOptions<SiteUrlOptions> siteUrl, HttpContext ctx) =>
 
     return Results.Text(body, MediaTypeNames.Text.Plain);
 }).CacheOutput("Robots");
+
+app.MapMethods(apiCatalogPath, [HttpMethods.Get, HttpMethods.Head], (IOptions<ApiUrlOptions> apiUrl) =>
+    Results.Redirect(
+        new Uri(apiUrl.Value.BaseUrl!, apiCatalogPath).ToString(),
+        permanent: true,
+        preserveMethod: true));
 
 app.UseSitemap();
 
