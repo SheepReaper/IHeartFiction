@@ -10,10 +10,13 @@ using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Infrastructure;
 
 using MongoDB.Bson;
+using MongoDB.Driver;
+
+using NSubstitute;
 
 namespace IHFiction.UnitTests.Stories;
 
-public class ConvertStoryTypeTests(MongoDbFixture mongoDbFixture) : IClassFixture<MongoDbFixture>
+public class ConvertStoryTypeTests
 {
     [Fact]
     public void UpgradeOneShotToChaptered_MovesWorkBodyIdToNewChapter()
@@ -25,7 +28,7 @@ public class ConvertStoryTypeTests(MongoDbFixture mongoDbFixture) : IClassFixtur
 
         using var fictionContext = new FictionDbContext(fictionOptions);
 
-        var workBodies = mongoDbFixture.Client!.GetDatabase("unit-test").GetCollection<WorkBody>("works");
+        var workBodies = Substitute.For<IMongoCollection<WorkBody>>();
 
         // create author and story with an existing WorkBodyId
         var author = new Author { Id = Ulid.NewUlid(), Name = "Author" };
