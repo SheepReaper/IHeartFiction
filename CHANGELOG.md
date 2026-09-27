@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.4] - 2026-09-27
+
+
+### Added
+
+- **api:** Publish well-known API catalog
+
+- **web:** Add HomepageLinkHeaderMiddleware for agent discovery with WebClient setup and unit tests
+
+
+### Changed
+
+- **config:** Separate public URLs from service discovery
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Fixed
+
+- **auth:** Persist sessions and harden token refresh
+
+- **tests:** Decouple story conversion unit test from MongoDB
+
+- **deploy:** Allow Keycloak startup on ARM
+
+
+
 ## [v1.0.3] - 2026-09-26
 
 
