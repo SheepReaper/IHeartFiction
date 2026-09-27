@@ -27,6 +27,7 @@ using IHFiction.SharedWeb.Reporting;
 using IHFiction.SharedWeb.Services;
 using IHFiction.SharedWeb.Sitemap;
 using IHFiction.WebClient;
+using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
 
@@ -261,6 +262,7 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseMiddleware<MarkdownResponseMiddleware>();
+app.UseMiddleware<HomepageLinkHeaderMiddleware>();
 
 app.Use(async (context, next) =>
 {
