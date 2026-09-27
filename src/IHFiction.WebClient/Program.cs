@@ -94,11 +94,28 @@ builder.AddNpgsqlDbContext<FictionDbContext>(
         .UseNpgsql(options => options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
         .UseSnakeCaseNamingConvention());
 
+var dataProtection = builder.Services.AddDataProtection()
+    .SetApplicationName("IHFiction.WebClient");
+
 if (builder.Environment.IsProduction())
 {
-    builder.Services.AddDataProtection()
-        .PersistKeysToDbContext<FictionDbContext>()
-        .SetApplicationName(builder.Environment.ApplicationName);
+    dataProtection.PersistKeysToDbContext<FictionDbContext>();
+}
+else
+{
+    var userDataDirectory = OperatingSystem.IsWindows()
+        ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+        : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    if (string.IsNullOrWhiteSpace(userDataDirectory))
+        throw new InvalidOperationException("A user data directory is required to persist Data Protection keys.");
+
+    var keyDirectory = OperatingSystem.IsWindows()
+        ? new DirectoryInfo(Path.Combine(userDataDirectory, "ASP.NET", "DataProtection-Keys"))
+        : new DirectoryInfo(Path.Combine(userDataDirectory, ".aspnet", "DataProtection-Keys"));
+    dataProtection.PersistKeysToFileSystem(keyDirectory);
+
+    if (OperatingSystem.IsWindows())
+        dataProtection.ProtectKeysWithDpapi();
 }
 
 builder.Services

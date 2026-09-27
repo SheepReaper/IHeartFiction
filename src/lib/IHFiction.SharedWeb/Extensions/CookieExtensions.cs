@@ -15,6 +15,8 @@ namespace IHFiction.SharedWeb.Extensions;
 
 public static class CookieExtensions
 {
+    private static readonly TimeSpan AuthenticationLifetime = TimeSpan.FromDays(14);
+
     public static IServiceCollection ConfigureCookieOidc(this IServiceCollection services, string cookieScheme, string oidcScheme, double? refreshThresholdSeconds = null)
     {
         services.AddSingleton<CookieOidcRefresher>();
@@ -22,8 +24,9 @@ public static class CookieExtensions
         services.AddOptions<CookieAuthenticationOptions>(cookieScheme).Configure<CookieOidcRefresher>((cookieOptions, refresher) =>
         {
             cookieOptions.Cookie.Name = ".IHFiction.Auth";
-            cookieOptions.Cookie.MaxAge = TimeSpan.FromDays(14);
+            cookieOptions.Cookie.MaxAge = AuthenticationLifetime;
             cookieOptions.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            cookieOptions.ExpireTimeSpan = AuthenticationLifetime;
             cookieOptions.LoginPath = "/authentication/login";
             cookieOptions.AccessDeniedPath = "/sign-in-again";
 

@@ -14,7 +14,7 @@ public static class LoginLogoutEndpointRouteBuilderExtensions
         var group = builder.MapGroup("");
 
         group.MapGet("login", (string? returnUrl, IHttpContextAccessor context) =>
-            TypedResults.Challenge(GetAuthProperties(returnUrl, context.HttpContext))).AllowAnonymous();
+            TypedResults.Challenge(CreateLoginProperties(returnUrl, context.HttpContext))).AllowAnonymous();
 
         group.MapGet("logout", (string? returnUrl, IHttpContextAccessor context) =>
             TypedResults.SignOut(GetAuthProperties(returnUrl, context.HttpContext), [cookieScheme, oidcScheme]));
@@ -54,5 +54,12 @@ public static class LoginLogoutEndpointRouteBuilderExtensions
         }
 
         return new AuthenticationProperties { RedirectUri = returnUrl };
+    }
+
+    internal static AuthenticationProperties CreateLoginProperties(string? returnUrl, HttpContext? context)
+    {
+        var properties = GetAuthProperties(returnUrl, context);
+        properties.IsPersistent = true;
+        return properties;
     }
 }
