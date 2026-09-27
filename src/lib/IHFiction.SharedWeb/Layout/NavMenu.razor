@@ -1,11 +1,12 @@
 @using IHFiction.SharedKernel.Infrastructure
+@using IHFiction.SharedWeb.Configuration
 @using IHFiction.SharedWeb.Services
-@using Microsoft.Extensions.Configuration
+@using Microsoft.Extensions.Options
 @rendermode RenderMode.InteractiveServer
 @inherits CancellableComponent
 @inject ThemeService theme
 @inject ViewPreferencesService viewPreferences
-@inject IConfiguration config
+@inject IOptions<ApiUrlOptions> apiUrlOptions
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -119,9 +120,7 @@
     private IJSObjectReference? _outsideClickListener;
     private DotNetObjectReference<NavMenu>? _dotNetReference;
 
-    private string DocsUrl => config["ApiBaseAddress"] is string apiBaseAddress
-        ? $"{apiBaseAddress.TrimEnd('/')}/scalar/v1"
-        : "#";
+    private string DocsUrl => new Uri(apiUrlOptions.Value.BaseUrl!, "/scalar/v1").ToString();
 
     private System.Threading.Timer? _iconTimer;
     private int _iconIndex = 0;

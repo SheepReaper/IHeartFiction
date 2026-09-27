@@ -41,9 +41,9 @@ using StackExchange.Redis;
 
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
+using Wolverine.Persistence;
 using Wolverine.Postgresql;
 using Wolverine.Redis;
-using Wolverine.Persistence;
 
 [assembly: DbContext(typeof(FictionDbContext))]
 
@@ -103,6 +103,19 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     // Combine with default resolver to support types not yet in the context
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, FictionApiJsonSerializerContext.Default);
 });
+
+// Configure the API's canonical public URL.
+builder.Services.AddOptions<BaseUrlOptions>()
+    .Configure(options =>
+    {
+        var configuredBaseUrl = builder.Configuration["BaseUrl"];
+        options.BaseUrl = Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var uri) ? uri : null;
+    })
+    .Validate(
+        options => options.BaseUrl is { IsAbsoluteUri: true }
+            && (options.BaseUrl.Scheme == Uri.UriSchemeHttps || options.BaseUrl.Scheme == Uri.UriSchemeHttp),
+        "BaseUrl must be an absolute HTTP(S) URL.")
+    .ValidateOnStart();
 
 if (!IsBuildEnvironment() && builder.Environment.IsProduction())
 {
@@ -321,7 +334,18 @@ var app = builder.Build();
 
 // Configure middleware pipeline
 app.UseExceptionHandler();
-app.UseStatusCodePages();
+app.UseStatusCodePages(async statusCodeContext =>
+{
+    var problemDetailsService = statusCodeContext.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>();
+    await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+    {
+        HttpContext = statusCodeContext.HttpContext,
+        ProblemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+        {
+            Status = statusCodeContext.HttpContext.Response.StatusCode
+        }
+    });
+});
 
 if (app.Environment.IsProduction())
 {
@@ -363,6 +387,15 @@ app.UseOutputCache();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments("/scalar", StringComparison.Ordinal),
+    scalar => scalar.Use((context, next) =>
+    {
+        context.Response.Headers.Append("Content-Security-Policy", "frame-ancestors 'none'");
+        return next(context);
+    }));
+
 app.MapOpenApi();
 
 app.MapScalarApiReference(o =>
@@ -383,13 +416,5 @@ app.MapScalarApiReference(o =>
 
 app.MapEndpoints();
 app.MapDefaultEndpoints();
-
-if (builder.Configuration["ApiBaseAddress"] is string apiBaseAddress) app.Use((context, next) =>
-{
-    context.Response.Headers.Append("Content-Security-Policy",
-        "frame-ancestors 'self'" + $" {apiBaseAddress.TrimEnd('/')}");
-
-    return next(context);
-});
 
 await app.RunAsync();

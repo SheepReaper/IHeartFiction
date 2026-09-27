@@ -270,14 +270,17 @@ internal static class ProductionConfigExtensions
 
             var config = builder.ApplicationBuilder.Configuration;
 
-            if (config["Api:AllowedHosts"] is string allowedHosts)
-                service.Environment["AllowedHosts"] = allowedHosts;
+            var allowedHosts = config["Api:AllowedHosts"] ?? "api.iheartfiction.net;localhost;fiction";
+            if (!allowedHosts.Contains("fiction", StringComparison.OrdinalIgnoreCase))
+                allowedHosts = $"{allowedHosts.TrimEnd(';')};fiction";
+
+            service.Environment["AllowedHosts"] = allowedHosts;
 
             if (config["Api:AllowedOrigins"] is string allowedOrigins)
                 service.Environment["AllowedOrigins"] = allowedOrigins;
 
-            if (config["ApiBaseAddress"] is string apiBaseAddress)
-                service.Environment["ApiBaseAddress"] = apiBaseAddress;
+            if (config["Api:BaseUrl"] is string baseUrl)
+                service.Environment["BaseUrl"] = baseUrl;
 
             if (config["OidcAuthority"] is string authority)
                 service.Environment["OidcAuthority"] = authority;
@@ -326,11 +329,17 @@ internal static class ProductionConfigExtensions
 
             var config = builder.ApplicationBuilder.Configuration;
 
-            if (config["WebClient:AllowedHosts"] is string allowedHosts)
-                service.Environment["AllowedHosts"] = allowedHosts;
+            var allowedHosts = config["WebClient:AllowedHosts"] ?? "iheartfiction.net;localhost;web";
+            if (!allowedHosts.Contains("web", StringComparison.OrdinalIgnoreCase))
+                allowedHosts = $"{allowedHosts.TrimEnd(';')};web";
 
-            if (config["ApiBaseAddress"] is string apiBaseAddress)
-                service.Environment["ApiBaseAddress"] = apiBaseAddress;
+            service.Environment["AllowedHosts"] = allowedHosts;
+
+            if (config["WebClient:BaseUrl"] is string baseUrl)
+                service.Environment["BaseUrl"] = baseUrl;
+
+            if (config["Api:BaseUrl"] is string apiBaseUrl)
+                service.Environment["ApiBaseUrl"] = apiBaseUrl;
 
             if (config["OidcAuthority"] is string authority)
                 service.Environment["OidcAuthority"] = authority;

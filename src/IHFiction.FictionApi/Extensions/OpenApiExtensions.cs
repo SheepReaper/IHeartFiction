@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
@@ -263,8 +264,11 @@ internal static class OpenApiExtensions
                 .AddDocumentTransformer(CreatePrimaryDocumentTransformer(oidcScheme))
                 .AddDocumentTransformer((doc, ctx, ct) =>
                 {
-                    if (ctx.ApplicationServices.GetService<IConfiguration>()?["ApiBaseAddress"] is string apiBaseAddress)
-                        doc.Servers = [new() { Url = apiBaseAddress.TrimEnd('/') }];
+                    var baseUrl = ctx.ApplicationServices
+                        .GetRequiredService<IOptions<BaseUrlOptions>>()
+                        .Value.BaseUrl!;
+
+                    doc.Servers = [new() { Url = baseUrl.ToString().TrimEnd('/') }];
 
                     return Task.CompletedTask;
                 })

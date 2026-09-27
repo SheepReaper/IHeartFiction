@@ -78,7 +78,7 @@ var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
     .WithEnvironment("WebPush__PublicKey", vapidPubKey)
     .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
-    .WithReference(fictionApi) // API client uses service discovery if ApiBaseAddress is not set
+    .WithReference(fictionApi) // API transport uses service discovery; ApiBaseUrl is only its public identity
     .WithReference(fictionDb) // Blazor server-side uses db directly via service discovery
     .WithReference(keycloak) // Blazor server-side uses Keycloak directly via service discovery
     .WithReplicas(builder.Configuration.GetValue("Containers:WebClient:ReplicaCount", 1));

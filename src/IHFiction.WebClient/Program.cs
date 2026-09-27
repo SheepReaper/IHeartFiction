@@ -36,7 +36,6 @@ using Markdig;
 
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core.Services;
-
 const string keycloakAuthenticationScheme = "Keycloak";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -61,6 +60,18 @@ builder.Services.AddOptions<SiteUrlOptions>()
         options => options.BaseUrl is { IsAbsoluteUri: true }
             && (options.BaseUrl.Scheme == Uri.UriSchemeHttps || options.BaseUrl.Scheme == Uri.UriSchemeHttp),
         "BaseUrl must be an absolute HTTP(S) URL.")
+    .ValidateOnStart();
+
+builder.Services.AddOptions<ApiUrlOptions>()
+    .Configure(options =>
+    {
+        var configuredBaseUrl = builder.Configuration["ApiBaseUrl"];
+        options.BaseUrl = Uri.TryCreate(configuredBaseUrl, UriKind.Absolute, out var uri) ? uri : null;
+    })
+    .Validate(
+        options => options.BaseUrl is { IsAbsoluteUri: true }
+            && (options.BaseUrl.Scheme == Uri.UriSchemeHttps || options.BaseUrl.Scheme == Uri.UriSchemeHttp),
+        "ApiBaseUrl must be an absolute HTTP(S) URL.")
     .ValidateOnStart();
 
 builder.Services.AddOptions<DisqusOptions>()
@@ -160,9 +171,7 @@ builder.Services.AddOutputCache(options =>
 builder.Services.AddTransient<AuthenticationHandler>();
 
 builder.Services.AddHttpClient<FictionApiClient>(client =>
-    client.BaseAddress = builder.Environment.IsProduction()
-        ? builder.Configuration.GetValue<Uri>("ApiBaseAddress")
-        : new("https+http://fiction"))
+    client.BaseAddress = new("https+http://fiction"))
         .AddHttpMessageHandler<AuthenticationHandler>();
 
 builder.Services.AddTransient<IFictionApiClient>(services => services.GetRequiredService<FictionApiClient>());
