@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.BrowserReports.Domain;
+using IHFiction.Data.AgentAuth.Domain;
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Infrastructure;
 using IHFiction.Data.Notifications.Domain;
@@ -18,6 +19,10 @@ namespace IHFiction.Data.Contexts;
 public class FictionDbContext(DbContextOptions options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
+    public DbSet<AgentIdentityLink> AgentIdentityLinks { get; set; } = null!;
+    public DbSet<AgentRegistration> AgentRegistrations { get; set; } = null!;
+    public DbSet<AgentAccessToken> AgentAccessTokens { get; set; } = null!;
+    public DbSet<AgentAssertionReplay> AgentAssertionReplays { get; set; } = null!;
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Author> Authors { get; set; } = null!;
     public DbSet<Story> Stories { get; set; } = null!;
