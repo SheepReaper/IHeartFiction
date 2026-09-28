@@ -79,6 +79,7 @@ internal static class AgentAuthExtensions
         builder.MapGet(AuthorizationServerPattern, (IOptions<AgentAuthOptions> options) =>
         {
             var issuer = options.Value.Issuer!.AbsoluteUri.TrimEnd('/');
+            var skill = options.Value.SkillUri!.AbsoluteUri;
             return Results.Json(new
             {
                 issuer,
@@ -89,9 +90,10 @@ internal static class AgentAuthExtensions
                 scopes_supported = SupportedScopes,
                 agent_auth = new
                 {
-                    skill = $"{issuer}{AuthMdPattern}",
+                    skill,
                     register_uri = $"{issuer}/agent/identity",
                     claim_uri = $"{issuer}/agent/identity/claim",
+                    revocation_uri = $"{issuer}/oauth2/revoke",
                     identity_endpoint = $"{issuer}/agent/identity",
                     claim_endpoint = $"{issuer}/agent/identity/claim",
                     events_endpoint = $"{issuer}/agent/event/notify",

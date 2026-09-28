@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mime;
+using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -9,6 +10,7 @@ using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Csp;
 using IHFiction.SharedWeb.Extensions;
+using IHFiction.SharedKernel.AgentAuth;
 using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
@@ -20,6 +22,8 @@ namespace IHFiction.WebClient.Extensions;
 internal static class MiddlewarePipelineExtensions
 {
     private const string ApiCatalogPath = "/.well-known/api-catalog";
+    private const string OAuthAuthorizationServerPath = "/.well-known/oauth-authorization-server";
+    private const string OpenIdConfigurationPath = "/.well-known/openid-configuration";
     private const string OAuthProtectedResourcePath = "/.well-known/oauth-protected-resource";
     private const string AuthMdPath = "/auth.md";
 
@@ -146,17 +150,25 @@ internal static class MiddlewarePipelineExtensions
                 permanent: true,
                 preserveMethod: true));
 
-        app.MapMethods(OAuthProtectedResourcePath, [HttpMethods.Get, HttpMethods.Head], (IOptions<ApiUrlOptions> apiUrl) =>
+        app.MapMethods(OAuthAuthorizationServerPath, [HttpMethods.Get, HttpMethods.Head], () =>
             Results.Redirect(
-                new Uri(apiUrl.Value.BaseUrl!, OAuthProtectedResourcePath).ToString(),
+                BuildDiscoveryMetadataUri(configuration, OAuthAuthorizationServerPath),
                 permanent: true,
                 preserveMethod: true));
 
-        app.MapMethods(AuthMdPath, [HttpMethods.Get, HttpMethods.Head], (IOptions<ApiUrlOptions> apiUrl) =>
+        app.MapMethods(OpenIdConfigurationPath, [HttpMethods.Get, HttpMethods.Head], () =>
             Results.Redirect(
-                new Uri(apiUrl.Value.BaseUrl!, AuthMdPath).ToString(),
+                BuildDiscoveryMetadataUri(configuration, OpenIdConfigurationPath),
                 permanent: true,
                 preserveMethod: true));
+
+        app.MapMethods(OAuthProtectedResourcePath, [HttpMethods.Get, HttpMethods.Head], (IOptions<SiteUrlOptions> siteUrl) =>
+            Results.Json(CreateProtectedResourceMetadata(siteUrl.Value.BaseUrl!, configuration)));
+
+        app.MapMethods(AuthMdPath, [HttpMethods.Get, HttpMethods.Head], (IOptions<ApiUrlOptions> apiUrl) =>
+            Results.Text(
+                CreateAuthMd(apiUrl.Value.BaseUrl!, configuration),
+                "text/markdown; charset=utf-8"));
 
         app.UseSitemap();
 
@@ -174,4 +186,33 @@ internal static class MiddlewarePipelineExtensions
 
         return app;
     }
+
+    internal static string BuildDiscoveryMetadataUri(IConfiguration configuration, string discoveryPath)
+    {
+        return $"{GetOidcAuthority(configuration)}{discoveryPath}";
+    }
+
+    internal static SiteOAuthProtectedResourceMetadata CreateProtectedResourceMetadata(
+        Uri siteBaseUrl,
+        IConfiguration configuration) =>
+        new(
+            siteBaseUrl.AbsoluteUri.TrimEnd('/'),
+            [GetOidcAuthority(configuration)],
+            ["openid", "profile", "fiction_api"]);
+
+    internal static string CreateAuthMd(Uri apiBaseUrl, IConfiguration configuration) =>
+        AuthMdContent.Generate(
+            apiBaseUrl.AbsoluteUri,
+            apiBaseUrl.AbsoluteUri,
+            GetOidcAuthority(configuration));
+
+    private static string GetOidcAuthority(IConfiguration configuration) =>
+        (configuration["OidcAuthority"]
+            ?? throw new InvalidOperationException("OidcAuthority configuration is required for identity discovery."))
+        .TrimEnd('/');
+
+    internal sealed record SiteOAuthProtectedResourceMetadata(
+        [property: JsonPropertyName("resource")] string Resource,
+        [property: JsonPropertyName("authorization_servers")] IReadOnlyList<string> AuthorizationServers,
+        [property: JsonPropertyName("scopes_supported")] IReadOnlyList<string> ScopesSupported);
 }

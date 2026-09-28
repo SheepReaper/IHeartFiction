@@ -5,6 +5,7 @@ internal sealed class AgentAuthOptions
     public const string SectionName = "AgentAuth";
 
     public Uri? Issuer { get; set; }
+    public Uri? SkillUri { get; set; }
     public string Audience { get; set; } = "fiction-api";
     public string SigningKeyId { get; set; } = "agent-auth-1";
     public string? SigningKeyPem { get; set; }

@@ -32,6 +32,7 @@ internal static class SecurityExtensions
                     options.Issuer = issuer;
             })
             .Validate(options => options.Issuer is { IsAbsoluteUri: true }, "AgentAuth:Issuer must be an absolute URI.")
+            .Validate(options => options.SkillUri is { IsAbsoluteUri: true }, "AgentAuth:SkillUri must be an absolute URI.")
             .Validate(options => options.ClaimVerificationUri is { IsAbsoluteUri: true }, "AgentAuth:ClaimVerificationUri must be an absolute URI.")
             .Validate(options => options.AccessTokenLifetime > TimeSpan.Zero && options.AccessTokenLifetime <= TimeSpan.FromHours(1),
                 "AgentAuth:AccessTokenLifetime must be greater than zero and no longer than one hour.")
