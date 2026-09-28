@@ -26,7 +26,6 @@ internal static class SecurityExtensions
                 options.Scope.Add("fiction_api");
                 options.ResponseType = OpenIdConnectResponseType.Code;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.Resource = "fiction-api";
 
                 options.TokenValidationParameters.NameClaimType = JwtRegisteredClaimNames.PreferredUsername;
 
