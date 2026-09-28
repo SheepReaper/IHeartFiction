@@ -79,6 +79,7 @@ internal static class ProductionConfigExtensions
 
             file.Secrets.Add("Authentication__Schemes__Keycloak__ClientSecret", new() { File = $"{SecretsPath}/keycloak-frontend-client.secret" });
             file.Secrets.Add("KeycloakAdminClientOptions__AuthClientSecret", new() { File = $"{SecretsPath}/keycloak-admin-client.secret" });
+            file.Secrets.Add("AgentAuth__SigningKeyPem", new() { File = $"{SecretsPath}/agent-auth-signing-key.secret" });
 
             file.Secrets.Add("WebPush__PrivateKey", new() { File = $"{SecretsPath}/vapid-private-key.secret" });
             file.Secrets.Add("WebPush__PublicKey", new() { File = $"{SecretsPath}/vapid-public-key.secret" });
@@ -267,6 +268,7 @@ internal static class ProductionConfigExtensions
             service.Environment.Remove("REDIS_URI");
             service.Environment.Remove("WebPush__PrivateKey");
             service.Environment.Remove("WebPush__PublicKey");
+            service.Environment.Remove("AgentAuth__SigningKeyPem");
 
             var config = builder.ApplicationBuilder.Configuration;
 
@@ -302,6 +304,7 @@ internal static class ProductionConfigExtensions
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
             service.Secrets.Add(new() { Source = "Dashboard__Otlp__PrimaryApiKey" });
             service.Secrets.Add(new() { Source = "KeycloakAdminClientOptions__AuthClientSecret" });
+            service.Secrets.Add(new() { Source = "AgentAuth__SigningKeyPem" });
             service.Secrets.Add(new() { Source = "WebPush__PrivateKey" });
             service.Secrets.Add(new() { Source = "WebPush__PublicKey" });
 

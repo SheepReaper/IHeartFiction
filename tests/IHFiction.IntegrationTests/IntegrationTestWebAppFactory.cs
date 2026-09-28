@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Security.Cryptography;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -25,6 +26,7 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
     const string MongoContainerName = "ihfiction-mongo-tests";
     const string RedisContainerName = "ihfiction-redis-tests";
     const ushort RedisPort = 6379;
+    private static readonly string AgentSigningKeyPem = CreateAgentSigningKey();
     private readonly PostgreSqlContainer _pgContainer = new PostgreSqlBuilder("library/postgres:17.4")
         .WithDatabase("fiction-db")
         .WithName(PgContainerName)
@@ -120,6 +122,7 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
         builder.UseSetting(
             "ConnectionStrings:redis",
             $"{_redisContainer.Hostname}:{_redisContainer.GetMappedPublicPort(RedisPort)},abortConnect=false");
+        builder.UseSetting("AgentAuth:SigningKeyPem", AgentSigningKeyPem);
 
         builder.ConfigureTestServices(services =>
         {
@@ -140,5 +143,11 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
                 type.AsType().GetMethod(nameof(IConfigureServices<>.ConfigureServices))?.Invoke(null, [services]);
             }
         });
+    }
+
+    private static string CreateAgentSigningKey()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        return key.ExportECPrivateKeyPem();
     }
 }

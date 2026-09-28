@@ -26,6 +26,11 @@ internal sealed record ClientRepresentation(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("clientId")] string? ClientId);
 
+internal sealed record KeycloakUserRepresentation(
+    [property: JsonPropertyName("id")] Guid Id,
+    [property: JsonPropertyName("username")] string? Username,
+    [property: JsonPropertyName("email")] string? Email);
+
 internal sealed class KeycloakAdminService(
     IOptions<KeycloakAdminClientOptions> options,
     IHttpClientFactory httpClientFactory,
@@ -40,6 +45,8 @@ internal sealed class KeycloakAdminService(
         public static readonly Error SetResourceRole = new("Keycloak.SetResourceRole", "Failed to set role for user.");
         public static readonly Error GetResourceRole = new("Keycloak.GetResourceRole", "Failed to get role from Keycloak.");
         public static readonly Error GetReource = new("Keycloak.GetResource", "Failed to get resource from Keycloak.");
+        public static readonly Error GetUser = new("Keycloak.GetUser", "Failed to query users in Keycloak.");
+        public static readonly Error CreateUser = new("Keycloak.CreateUser", "Failed to create a user in Keycloak.");
     }
     private const string GrantType = "client_credentials";
     private readonly TimeSpan _tokenRefreshThreshold = options.Value.TokenRefreshThreshold;
@@ -50,6 +57,45 @@ internal sealed class KeycloakAdminService(
     private Uri RealmRolesEndpoint => new(_httpClient.BaseAddress!, $"admin/realms/{options.Value.Realm}/roles/");
     private Uri UsersEndpoint => new(_httpClient.BaseAddress!, $"admin/realms/{options.Value.Realm}/users/");
     private Uri ResourcesEndpoint => new(_httpClient.BaseAddress!, $"admin/realms/{options.Value.Realm}/clients/");
+
+    public async Task<Result<Guid?>> FindUserIdByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var tokenResult = await GetAccessTokenAsync(cancellationToken);
+        if (tokenResult.IsFailure) return tokenResult.DomainError;
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            new Uri(UsersEndpoint, $"?email={Uri.EscapeDataString(email)}&exact=true"));
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.Value);
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode) return Errors.GetUser;
+
+        var users = await response.Content.ReadFromJsonAsync<KeycloakUserRepresentation[]>(cancellationToken);
+        return users is { Length: > 0 } ? (Guid?)users[0].Id : null;
+    }
+
+    public async Task<Result<Guid>> CreateVerifiedUserAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var tokenResult = await GetAccessTokenAsync(cancellationToken);
+        if (tokenResult.IsFailure) return tokenResult.DomainError;
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, UsersEndpoint);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResult.Value);
+        request.Content = JsonContent.Create(new
+        {
+            username = email,
+            email,
+            enabled = true,
+            emailVerified = true,
+        });
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode || response.Headers.Location is not { } location)
+            return Errors.CreateUser;
+
+        var idSegment = location.Segments.LastOrDefault()?.Trim('/');
+        return Guid.TryParse(idSegment, out var id) ? id : Errors.CreateUser;
+    }
 
 
     private string? _token;

@@ -43,6 +43,16 @@ The Keycloak realm `fiction` is pre-configured by the realm import file. However
 1. (Alternatively) Set the admin-client secret with `dotnet user-secrets --project ./src/aspire/IHFiction.AppHost set Parameters:ApiKeycloakAdminClientSecret <YOUR_SECRET_HERE>`.
 1. Repeat the last two steps for `fiction-frontend`, using `Parameters:ApiOidcClientSecret`.
 
+### Agent authentication signing key
+
+Local Aspire runs generate and persist an ECDSA P-256 agent signing key as an AppHost secret. Before deploying the production Compose stack, generate the corresponding Docker secret file on the cluster:
+
+```powershell
+./tools/New-AgentAuthSigningKey.ps1 -OutputPath /mnt/swarm/config/ihfiction/secrets/agent-auth-signing-key.secret
+```
+
+The generated Compose file mounts that file read-only as `AgentAuth__SigningKeyPem`. Keep the private PEM out of source control and back it up. During rotation, move the old public PEM and key ID into `AgentAuth:PreviousVerificationKeys` until every token it signed has expired; JWKS and token validation publish and accept those public keys without retaining old private keys. Configure each trusted provider under `AgentAuth:TrustedProviders` with an exact issuer, explicit JWKS URL, allowed client IDs, and signing algorithms; the default empty list intentionally trusts no provider.
+
 ## Software Stack
 
 The project is built on the .NET platform, embracing a modern, cloud-native architecture.

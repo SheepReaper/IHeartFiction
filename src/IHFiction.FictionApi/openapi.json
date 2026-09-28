@@ -4727,6 +4727,29 @@
           }
         }
       }
+    },
+    "/agent/identity/claim/confirm": {
+      "post": {
+        "tags": [
+          "Agent authentication"
+        ],
+        "operationId": "ConfirmAgentIdentityClaim",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmClaimRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5052,6 +5075,17 @@
           }
         },
         "description": "Represents a summary of a chapter within a story."
+      },
+      "ConfirmClaimRequest": {
+        "required": [
+          "userCode"
+        ],
+        "type": "object",
+        "properties": {
+          "userCode": {
+            "type": "string"
+          }
+        }
       },
       "ConvertStoryTypeBody": {
         "required": [
@@ -9543,6 +9577,9 @@
     },
     {
       "name": "Tag Discovery"
+    },
+    {
+      "name": "Agent authentication"
     }
   ]
 }

@@ -1,0 +1,79 @@
+@page "/agent/claim"
+@attribute [Authorize]
+@inherits CancellableComponent
+@inject FictionApiClient ApiClient
+
+<div class="container is-max-tablet">
+    <h1 class="title">Confirm agent access</h1>
+    <p class="subtitle">Enter the six-digit code shown by your agent.</p>
+
+    <div class="box">
+        @if (_confirmed)
+        {
+            <div class="notification is-success" role="status">
+                The agent identity is now linked to your account. You may return to the agent.
+            </div>
+        }
+        else
+        {
+            <div class="field">
+                <label class="label" for="agent-claim-code">Confirmation code</label>
+                <div class="control">
+                    <input id="agent-claim-code"
+                           class="input is-large"
+                           inputmode="numeric"
+                           autocomplete="one-time-code"
+                           maxlength="7"
+                           placeholder="123456"
+                           @bind="_userCode" />
+                </div>
+            </div>
+
+            @if (_error is not null)
+            {
+                <div class="notification is-danger" role="alert">@_error</div>
+            }
+
+            <button class="button is-primary is-large"
+                    disabled="@(_submitting || NormalizeCode().Length != 6)"
+                    @onclick="ConfirmAsync">
+                @(_submitting ? "Confirming…" : "Confirm access")
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    private string _userCode = string.Empty;
+    private string? _error;
+    private bool _submitting;
+    private bool _confirmed;
+
+    private string NormalizeCode() => _userCode.Replace("-", string.Empty, StringComparison.Ordinal).Trim();
+
+    private async Task ConfirmAsync()
+    {
+        _error = null;
+        _submitting = true;
+        try
+        {
+            await ApiClient.ConfirmAgentIdentityClaimAsync(
+                new ConfirmClaimRequest { UserCode = NormalizeCode() },
+                CancellationToken);
+            _confirmed = true;
+        }
+        catch (ApiException exception)
+        {
+            _error = exception.StatusCode switch
+            {
+                400 => "That code is invalid, expired, or already used.",
+                403 => "This code belongs to a different account.",
+                _ => "The code could not be confirmed. Please try again.",
+            };
+        }
+        finally
+        {
+            _submitting = false;
+        }
+    }
+}

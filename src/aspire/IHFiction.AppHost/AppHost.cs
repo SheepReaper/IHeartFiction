@@ -26,6 +26,12 @@ var keycloakAdminClientSecret = builder.AddParameter(
     "ApiKeycloakAdminClientSecret",
     secret: true);
 
+var agentSigningKey = builder.AddParameter(
+    "AgentAuthSigningKeyPem",
+    AgentSigningKeyDefaultProvider.Default,
+    secret: true,
+    persist: true);
+
 var vapidPrivKey = builder.AddParameter(
     "VapidPrivKey", vapid.DefaultPrivKey, secret: true, persist: true);
 
@@ -51,7 +57,6 @@ var storiesDb = mongo.AddDatabase("stories-db");
 var fictionDb = postgres.AddDatabase("fiction-db");
 
 var keycloak = builder.AddKeycloak("keycloak", 8080)
-    .WithImageTag("26.3")
     .WithLifetime(ContainerLifetime.Persistent);
 
 var migrations = builder.AddProject<Projects.IHFiction_MigrationService>("migrations")
@@ -64,6 +69,7 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
     .WithEnvironment("WebPush__PrivateKey", vapidPrivKey)
     .WithEnvironment("WebPush__PublicKey", vapidPubKey)
+    .WithEnvironment("AgentAuth__SigningKeyPem", agentSigningKey)
     .WithReference(keycloak)
     .WithReference(fictionDb)
     .WithReference(redis)
@@ -119,8 +125,7 @@ if (builder.Environment.IsProduction())
     var registry = builder.AddContainerRegistry("registry", registryUri, repository);
     var cfTunnel = builder.AddCloudflareTunnel("ihfiction-tunnel");
 
-    cfTunnel.WithImageTag("2026.6.0")
-        .PublishAsDockerComposeService((resource, service) => service.Name = resource.Name);
+    cfTunnel.PublishAsDockerComposeService((resource, service) => service.Name = resource.Name);
 
     builder.ConfigureSwarmCompose();
 
