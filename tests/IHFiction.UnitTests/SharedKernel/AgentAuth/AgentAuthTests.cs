@@ -13,7 +13,7 @@ public sealed class AgentAuthTests
     {
         OAuthProtectedResourceMetadata metadata = new(
             Resource: "https://api.iheartfiction.net",
-            AuthorizationServers: ["https://api.iheartfiction.net", "https://auth.iheartfiction.net/realms/fiction"],
+            AuthorizationServers: ["https://api.iheartfiction.net"],
             ScopesSupported: ["agent.read", "profile.read"],
             BearerMethodsSupported: ["header"],
             ResourceDocumentation: "https://api.iheartfiction.net/auth.md");

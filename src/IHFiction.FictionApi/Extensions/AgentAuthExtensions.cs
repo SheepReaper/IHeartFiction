@@ -67,10 +67,9 @@ internal static class AgentAuthExtensions
         {
             var resource = baseUrl.Value.BaseUrl?.ToString().TrimEnd('/') ?? "https://api.iheartfiction.net";
             var agentIssuer = agentOptions.Value.Issuer?.ToString().TrimEnd('/') ?? resource;
-            var keycloak = configuration["OidcAuthority"] ?? DefaultOidcAuthority;
             return Results.Json(new OAuthProtectedResourceMetadata(
                 Resource: resource,
-                AuthorizationServers: [agentIssuer, keycloak],
+                AuthorizationServers: [agentIssuer],
                 ScopesSupported: ["agent.read", "profile.read"],
                 BearerMethodsSupported: ["header"],
                 ResourceDocumentation: $"{resource}/auth.md"));
@@ -91,11 +90,17 @@ internal static class AgentAuthExtensions
                 agent_auth = new
                 {
                     skill = $"{issuer}{AuthMdPattern}",
+                    register_uri = $"{issuer}/agent/identity",
+                    claim_uri = $"{issuer}/agent/identity/claim",
                     identity_endpoint = $"{issuer}/agent/identity",
                     claim_endpoint = $"{issuer}/agent/identity/claim",
                     events_endpoint = $"{issuer}/agent/event/notify",
                     identity_types_supported = SupportedIdentityTypes,
-                    identity_assertion = new { assertion_types_supported = SupportedAssertionTypes },
+                    identity_assertion = new
+                    {
+                        assertion_types_supported = SupportedAssertionTypes,
+                        credential_types_supported = SupportedAssertionTypes,
+                    },
                     events_supported = SupportedEvents,
                 },
             });

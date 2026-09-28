@@ -35,7 +35,7 @@ IHeartFiction supports agent-verified registration using an Identity Assertion J
 ## 1. Discover
 
 1. Read `WWW-Authenticate: Bearer resource_metadata="{{resource}}/.well-known/oauth-protected-resource"` from a 401 response, or fetch that URL directly.
-2. Fetch `{{issuer}}/.well-known/oauth-authorization-server` and read its `agent_auth` block.
+2. Fetch {{issuer}}/.well-known/oauth-authorization-server and read its `agent_auth` block.
 3. Fetch signing keys from `{{issuer}}/.well-known/jwks.json`.
 
 Supported registration type: `identity_assertion`.
