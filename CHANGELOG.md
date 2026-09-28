@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.5] - 2026-09-28
+
+
+### Added
+
+- **data:** Add agent authentication schema and migrations
+
+- **api:** Implement Auth.md agent discovery and ID-JAG registration
+
+- **oauth:** Discovery
+
+
+### Changed
+
+- **api,web:** Modularize service configuration and HTTP pipelines
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Fixed
+
+- **webclient:** Omit RFC 8707 resource parameter in OIDC options
+
+- **authmd:** Remove backticks
+
+
+
 ## [v1.0.4] - 2026-09-27
 
 
