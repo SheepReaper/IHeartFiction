@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
@@ -20,6 +21,29 @@ internal sealed class ListPublishedStories(
     FictionDbContext context,
     IPaginationService paginator) : IUseCase, INameEndpoint<ListPublishedStories>
 {
+    internal static class Errors
+    {
+        public static readonly DomainError InvalidSort = new(
+            "ListPublishedStories.InvalidSort",
+            "Sort must use one or more of: publishedAt, title, updatedAt. Sort direction must be asc or desc.");
+
+        public static readonly DomainError InvalidTagKey = new(
+            "ListPublishedStories.InvalidTagKey",
+            "TagKey must use the normalized category:value or category:subcategory:value format returned by GET /tags.");
+
+        public static DomainError InvalidFields(string detail) => new(
+            "ListPublishedStories.InvalidFields",
+            $"Fields must be a comma-separated list of: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. {detail}");
+    }
+
+    /// <param name="Page">One-based page number.</param>
+    /// <param name="PageSize">Maximum number of stories returned per page.</param>
+    /// <param name="Search">Optional title, description, or author-name search term.</param>
+    /// <param name="Sort">Comma-separated sort terms using publishedAt, title, or updatedAt, each optionally followed by asc or desc.</param>
+    /// <param name="Fields">Optional comma-separated story item fields. The paginated envelope and links are always retained.</param>
+    /// <param name="AuthorId">Optional author identifier.</param>
+    /// <param name="CompletionStatus">Optional InProgress or Complete status.</param>
+    /// <param name="TagKey">Optional normalized canonical or synonym tag key returned by GET /tags.</param>
     internal sealed record ListPublishedStoriesQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
         int Page = 1,
@@ -41,7 +65,10 @@ internal sealed class ListPublishedStories(
         Ulid? AuthorId = null,
 
         [property: RegularExpression("^(InProgress|Complete)$", ErrorMessage = "Completion status must be InProgress or Complete.")]
-        string? CompletionStatus = null
+        string? CompletionStatus = null,
+
+        [property: StringLength(152, ErrorMessage = "Tag key must be 152 characters or less.")]
+        string? TagKey = null
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     private static readonly SortMapping[] SortMappings = [
@@ -93,6 +120,10 @@ internal sealed class ListPublishedStories(
         ListPublishedStoriesQuery query,
         CancellationToken cancellationToken = default)
     {
+        if (!SortMappings.Validate(query)) return Errors.InvalidSort;
+        if (!DataShapingService.TryValidate<ListPublishedStoriesItem>(query.Fields, out var fieldsError))
+            return Errors.InvalidFields(fieldsError.ErrorMessage ?? string.Empty);
+
         // Build the base query for published stories
         var completionStatus = string.IsNullOrWhiteSpace(query.CompletionStatus)
             ? (StoryCompletionStatus?)null
@@ -103,6 +134,26 @@ internal sealed class ListPublishedStories(
             .Where(s => s.PublishedAt != null)
             .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId))
             .Where(s => completionStatus == null || s.CompletionStatus == completionStatus);
+
+        if (!TryNormalizeTagKey(query.TagKey, out var tagKey)) return Errors.InvalidTagKey;
+        if (!string.IsNullOrWhiteSpace(tagKey))
+        {
+            var canonicalTagId = await context.Tags
+                .AsNoTracking()
+                .OfType<CanonicalTag>()
+                .Where(tag => tag.NormalizedKey == tagKey)
+                .Select(tag => (Ulid?)tag.Id)
+                .Concat(context.Tags
+                    .AsNoTracking()
+                    .OfType<SynonymTag>()
+                    .Where(tag => tag.NormalizedKey == tagKey)
+                    .Select(tag => (Ulid?)tag.CanonicalTagId))
+                .SingleOrDefaultAsync(cancellationToken);
+
+            stories = canonicalTagId is null
+                ? stories.Where(_ => false)
+                : stories.Where(story => story.Tags.Any(tag => tag.Id == canonicalTagId.Value));
+        }
 
         // Apply search filter if provided
         stories = stories.SearchIContains(query, s => s.Title, s => s.Description, s => s.Owner.Name);
@@ -130,6 +181,24 @@ internal sealed class ListPublishedStories(
         // Execute paginated query using the centralized service
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
     }
+
+    private static bool TryNormalizeTagKey(string? tagKey, out string? normalizedTagKey)
+    {
+        normalizedTagKey = null;
+        if (string.IsNullOrWhiteSpace(tagKey)) return true;
+
+        var components = tagKey.Split(':', StringSplitOptions.TrimEntries);
+        if (components.Length is < 2 or > 3 || components.Any(string.IsNullOrWhiteSpace)) return false;
+
+        normalizedTagKey = components.Length switch
+        {
+            2 => Tag.BuildNormalizedKey(components[0], null, components[1]),
+            3 => Tag.BuildNormalizedKey(components[0], components[1], components[2]),
+            _ => null
+        };
+        return true;
+    }
+
     public static string EndpointName => nameof(ListPublishedStories);
 
     internal sealed class Endpoint : IEndpoint
@@ -152,7 +221,14 @@ internal sealed class ListPublishedStories(
                         story => new(story, new List<LinkItem>() {
                             linker.Create<GetPublishedStory>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", story.StoryId.ToString()) })
                         }),
-                        query);
+                        query,
+                        routeValues:
+                        [
+                            new(nameof(ListPublishedStoriesQuery.AuthorId), query.AuthorId?.ToString()),
+                            new(nameof(ListPublishedStoriesQuery.CompletionStatus), query.CompletionStatus),
+                            new(nameof(ListPublishedStoriesQuery.Fields), query.Fields),
+                            new(nameof(ListPublishedStoriesQuery.TagKey), query.TagKey)
+                        ]);
 
                 return result.ToOkResult(query);
             }
@@ -160,8 +236,14 @@ internal sealed class ListPublishedStories(
                 .WithSummary("List Published Stories")
                 .WithDescription("Retrieves a paginated list of all publicly published stories. " +
                 "Supports searching by title, description, or author name. " +
-                "Results can be filtered by completion status. " +
-                "Stories can be sorted by publication date, title, or last update date. " +
+                "Results can be filtered by completion status or by a normalized tag key returned from GET /tags. " +
+                "Canonical and synonym tag keys resolve to the same canonical tag family. " +
+                "Sort accepts a comma-separated list of field direction pairs. " +
+                "Valid sort fields: publishedAt, title, updatedAt. Valid directions: asc, desc (default asc). " +
+                "Fields accepts a comma-separated list of response properties to include per item: " +
+                "storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, " +
+                "hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. " +
+                "Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. " +
                 "This is a public endpoint that does not require authentication and only " +
                 "returns stories that have been explicitly published by their authors.")
             .WithTags(ApiTags.Stories.Discovery)

@@ -74,4 +74,28 @@ public class ListAuthorsShapingTests
         var collLinks = ((IEnumerable<LinkItem>)collectionLinksObj!).ToList();
         collLinks.Should().ContainSingle();
     }
+
+    [Fact]
+    public void ShapeData_WithItemFields_PreservesEnvelopeAndShapesEachItem()
+    {
+        var item = new ListAuthors.ListAuthorsItem(
+            Ulid.NewUlid(), "Alice", null, "bio", DateTime.UtcNow, DateTime.UtcNow, 2, 1);
+        var linkedItem = new Linked<ListAuthors.ListAuthorsItem>(
+            item,
+            [new LinkItem($"/authors/{item.Id}", "self", HttpMethods.Get)]);
+        var linked = new LinkedPagedCollection<ListAuthors.ListAuthorsItem>(
+            new[] { linkedItem }.AsQueryable(),
+            1,
+            1,
+            10,
+            [new LinkItem("/authors", "self", HttpMethods.Get)]);
+
+        var shaped = DataShapingService.ShapeData(linked, "id,name");
+        var envelope = (IDictionary<string, object?>)shaped;
+
+        envelope.Should().ContainKeys("Data", "TotalCount", "CurrentPage", "PageSize", "TotalPages");
+        var shapedItem = ((IEnumerable<object>)envelope["Data"]!).Single();
+        var fields = (IDictionary<string, object?>)shapedItem;
+        fields.Keys.Should().BeEquivalentTo("Id", "Name", "links");
+    }
 }

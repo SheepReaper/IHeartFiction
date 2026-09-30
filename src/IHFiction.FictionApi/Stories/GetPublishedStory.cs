@@ -150,7 +150,9 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
                 .OrderBy(a => a.Id, new OwnerFirst(story.OwnerId))
                 .ThenBy(a => a.Id),
             story.Tags
-                .OrderBy(t => t.Value)
+                .OrderBy(t => t.Category)
+                .ThenBy(t => t.Subcategory)
+                .ThenBy(t => t.Value)
                 .Select(t => new StoryTag(t.Category, t.Subcategory, t.Value)),
             story.Books
                 .Where(b => b.IsPublished)

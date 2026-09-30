@@ -3796,26 +3796,26 @@
           {
             "name": "Sort",
             "in": "query",
-            "description": "Comma-separated list of fields and sort directions to sort results by",
+            "description": "Comma-separated sort terms using publishedAt, title, or updatedAt. Append asc or desc to each field; direction defaults to asc.",
             "schema": {
               "maxLength": 50,
               "minLength": 0,
               "type": "string",
               "default": "publishedAt"
             },
-            "example": "name asc, createdAt desc"
+            "example": "title asc,updatedAt desc"
           },
           {
             "name": "Fields",
             "in": "query",
-            "description": "Comma-separated list of fields to include in the response",
+            "description": "Comma-separated story item fields. Supported values: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. The paginated envelope and links are always retained.",
             "schema": {
               "maxLength": 50,
               "minLength": 0,
               "type": "string",
               "default": ""
             },
-            "example": "name,createdAt"
+            "example": "storyId,title,authorName,chapterCount"
           },
           {
             "name": "AuthorId",

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
@@ -202,21 +203,26 @@ internal static class OpenApiExtensions
         if (allowAnonymous) op.Security = [];
 
         var parameters = op.Parameters ?? [];
+        var isPublishedStories = op.OperationId == ListPublishedStories.EndpointName;
 
         for (var i = 0; i < parameters.Count; i++)
         {
             if (parameters[i].Name?.Equals("fields", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 parameters[i] = parameters[i].With(
-                    description: "Comma-separated list of fields to include in the response",
-                    example: "name,createdAt");
+                    description: isPublishedStories
+                        ? "Comma-separated story item fields. Supported values: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. The paginated envelope and links are always retained."
+                        : "Comma-separated list of fields to include in the response",
+                    example: isPublishedStories ? "storyId,title,authorName,chapterCount" : "name,createdAt");
             }
 
             if (parameters[i].Name?.Equals("sort", StringComparison.OrdinalIgnoreCase) ?? false)
             {
                 parameters[i] = parameters[i].With(
-                    description: "Comma-separated list of fields and sort directions to sort results by",
-                    example: "name asc, createdAt desc");
+                    description: isPublishedStories
+                        ? "Comma-separated sort terms using publishedAt, title, or updatedAt. Append asc or desc to each field; direction defaults to asc."
+                        : "Comma-separated list of fields and sort directions to sort results by",
+                    example: isPublishedStories ? "title asc,updatedAt desc" : "name asc, createdAt desc");
             }
 
             if (parameters[i].Name?.Equals("q", StringComparison.OrdinalIgnoreCase) ?? false)

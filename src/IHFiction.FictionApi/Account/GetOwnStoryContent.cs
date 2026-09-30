@@ -146,7 +146,13 @@ internal sealed class GetOwnStoryContent(
             contentUpdatedAt,
             story.UpdatedAt,
             story.Cover is not null,
-            [.. story.Tags.Select(tag => tag.ResolveCanonical().ToString()).Distinct(StringComparer.OrdinalIgnoreCase).Order()],
+            [.. story.Tags
+                .Select(tag => tag.ResolveCanonical())
+                .DistinctBy(tag => tag.Id)
+                .OrderBy(tag => tag.Category, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(tag => tag.Subcategory, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(tag => tag.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(tag => tag.ToString())],
             chapterSummaries,
             bookSummaries
         );

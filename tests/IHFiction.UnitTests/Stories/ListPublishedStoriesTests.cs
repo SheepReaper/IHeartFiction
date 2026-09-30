@@ -98,6 +98,67 @@ public class ListPublishedStoriesTests
         Assert.Equal("Complete", item.CompletionStatus);
     }
 
+    [Theory]
+    [InlineData("notAField")]
+    [InlineData("title sideways")]
+    [InlineData(",")]
+    public async Task HandleAsync_InvalidSort_ReturnsActionableDomainError(string sort)
+    {
+        await using var context = CreateContext();
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(Sort: sort),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("ListPublishedStories.InvalidSort", result.DomainError.Code);
+        Assert.Contains("publishedAt, title, updatedAt", result.DomainError.Description, StringComparison.Ordinal);
+        Assert.Contains("asc or desc", result.DomainError.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData("universe")]
+    [InlineData("universe::kancolle")]
+    [InlineData("universe:kancolle:extra:segment")]
+    public async Task HandleAsync_MalformedTagKey_ReturnsActionableDomainError(string tagKey)
+    {
+        await using var context = CreateContext();
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: tagKey),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("ListPublishedStories.InvalidTagKey", result.DomainError.Code);
+        Assert.Contains("category:value", result.DomainError.Description, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("notAField")]
+    [InlineData("storyId,bogus")]
+    [InlineData(",")]
+    public async Task HandleAsync_InvalidFields_ReturnsActionableDomainError(string fields)
+    {
+        await using var context = CreateContext();
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(Fields: fields),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("ListPublishedStories.InvalidFields", result.DomainError.Code);
+        Assert.Contains("storyId, title, description", result.DomainError.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void PaginatedCollectionResponse_CanBeCreated()
     {
@@ -357,6 +418,46 @@ public class ListPublishedStoriesTests
         Assert.Contains(linked.Links, l => l.Rel == "previous-page");
     }
 
+    [Fact]
+    public void WithLinks_TagFilter_PreservesFilterAcrossCollectionLinks()
+    {
+        var paged = new PagedCollection<ListPublishedStories.ListPublishedStoriesItem>(
+            Array.Empty<ListPublishedStories.ListPublishedStoriesItem>().AsQueryable(),
+            25,
+            1,
+            10);
+        var query = new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "universe:kancolle");
+
+        var linked = paged.WithLinks(
+            CreateLinkService(),
+            ListPublishedStories.EndpointName,
+            item => new(item, Enumerable.Empty<LinkItem>()),
+            query,
+            routeValues: [new(nameof(ListPublishedStories.ListPublishedStoriesQuery.TagKey), query.TagKey)]);
+
+        Assert.All(linked.Links, link => Assert.Contains("TagKey=universe:kancolle", link.Href, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WithLinks_FieldSelection_PreservesSelectionAcrossCollectionLinks()
+    {
+        var paged = new PagedCollection<ListPublishedStories.ListPublishedStoriesItem>(
+            Array.Empty<ListPublishedStories.ListPublishedStoriesItem>().AsQueryable(),
+            25,
+            1,
+            10);
+        var query = new ListPublishedStories.ListPublishedStoriesQuery(Fields: "storyId,title");
+
+        var linked = paged.WithLinks(
+            CreateLinkService(),
+            ListPublishedStories.EndpointName,
+            item => new(item, Enumerable.Empty<LinkItem>()),
+            query,
+            routeValues: [new(nameof(ListPublishedStories.ListPublishedStoriesQuery.Fields), query.Fields)]);
+
+        Assert.All(linked.Links, link => Assert.Contains("Fields=storyId,title", link.Href, StringComparison.Ordinal));
+    }
+
     private static LinkService CreateLinkService()
     {
         var linkGenerator = new FakeLinkGenerator();
@@ -421,7 +522,15 @@ public class ListPublishedStoriesTests
                 ? pageSizeValue?.ToString()
                 : "";
 
-            return $"/stories/published?page={page}&pageSize={pageSize}";
+            var tagKey = values.TryGetValue(nameof(ListPublishedStories.ListPublishedStoriesQuery.TagKey), out var tagKeyValue)
+                ? $"&TagKey={tagKeyValue}"
+                : "";
+
+            var fields = values.TryGetValue(nameof(ListPublishedStories.ListPublishedStoriesQuery.Fields), out var fieldsValue)
+                ? $"&Fields={fieldsValue}"
+                : "";
+
+            return $"/stories/published?page={page}&pageSize={pageSize}{tagKey}{fields}";
         }
 
         public override string? GetUriByAddress<TAddress>(
@@ -462,7 +571,15 @@ public class ListPublishedStoriesTests
                 ? pageSizeValue?.ToString()
                 : "";
 
-            return $"https://example.test/stories/published?page={page}&pageSize={pageSize}";
+            var tagKey = values.TryGetValue(nameof(ListPublishedStories.ListPublishedStoriesQuery.TagKey), out var tagKeyValue)
+                ? $"&TagKey={tagKeyValue}"
+                : "";
+
+            var fields = values.TryGetValue(nameof(ListPublishedStories.ListPublishedStoriesQuery.Fields), out var fieldsValue)
+                ? $"&Fields={fieldsValue}"
+                : "";
+
+            return $"https://example.test/stories/published?page={page}&pageSize={pageSize}{tagKey}{fields}";
         }
     }
 }

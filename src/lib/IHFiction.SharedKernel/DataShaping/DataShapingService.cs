@@ -60,7 +60,17 @@ public static class DataShapingService
             typeof(T),
             t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
 
-        if (fieldSet.Count != 0)
+        var shapesLinkedCollection = propertyInfos.Any(property =>
+        {
+            var enumerable = property.PropertyType.IsGenericType && property.PropertyType.GetGenericTypeDefinition() == typeof(IEnumerable<>)
+                ? property.PropertyType
+                : property.PropertyType.GetInterfaces().FirstOrDefault(candidate =>
+                    candidate.IsGenericType && candidate.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            var elementType = enumerable?.GetGenericArguments()[0];
+            return elementType is { IsGenericType: true } && elementType.GetGenericTypeDefinition() == typeof(Linked<>);
+        });
+
+        if (fieldSet.Count != 0 && !shapesLinkedCollection)
         {
             fieldSet = [.. fieldSet, .. AlwaysIncluded];
             propertyInfos = [.. propertyInfos.Where(p => fieldSet.Contains(p.Name))];
@@ -97,6 +107,10 @@ public static class DataShapingService
                         var innerProperties = PropertiesCache.GetOrAdd(
                             innerType,
                             t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+                        if (fieldSet.Count != 0)
+                        {
+                            innerProperties = [.. innerProperties.Where(innerProperty => fieldSet.Contains(innerProperty.Name))];
+                        }
 
                         var shapedList = new List<ExpandoObject>();
 
@@ -358,6 +372,12 @@ public static class DataShapingService
         var fieldSet = fields
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+
+        if (fieldSet.Count == 0)
+        {
+            errors = new ValidationResult("Fields must include at least one field.");
+            return false;
+        }
 
         PropertyInfo[] propertyInfos = PropertiesCache.GetOrAdd(
             type,

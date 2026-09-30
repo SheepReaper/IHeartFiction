@@ -44,13 +44,33 @@ public static class Extensions
 
         // string[] sortFields = [.. sortParam.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(p => p.Split(' ')[0])];
 
-        string[] invalidFields = [..sortParam.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(p => p.Split(' ')[0])
-            .Where(field => !mappings.Any(m => m.SortField.Equals(field, StringComparison.OrdinalIgnoreCase)))];
+        var sortTerms = sortParam.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(term => term.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .ToArray();
+
+        if (sortTerms.Length == 0)
+        {
+            errors = new ValidationResult("Sort must include at least one field.");
+            return false;
+        }
+
+        string[] invalidFields = [.. sortTerms
+            .Where(parts => parts.Length == 0 || !mappings.Any(mapping =>
+                mapping.SortField.Equals(parts[0], StringComparison.OrdinalIgnoreCase)))
+            .Select(parts => parts.Length == 0 ? string.Empty : parts[0])];
 
         if (invalidFields.Length > 0)
         {
             errors = new ValidationResult("Sort field is invalid.", invalidFields);
+            return false;
+        }
+
+        if (sortTerms.Any(parts => parts.Length > 2 ||
+            (parts.Length == 2 &&
+             !parts[1].Equals("asc", StringComparison.OrdinalIgnoreCase) &&
+             !parts[1].Equals("desc", StringComparison.OrdinalIgnoreCase))))
+        {
+            errors = new ValidationResult("Sort direction must be 'asc' or 'desc'.");
             return false;
         }
 
