@@ -34,20 +34,32 @@
             </div>
             <div class="level-right">
                 <div class="level-item">
-                    <div class="field has-addons">
-                        <div class="control has-icons-left">
-                            <input class="input" type="text" placeholder="Search stories..." @bind="searchQuery"
-                                   @onkeypress="OnSearchKeyPress">
-                            <span class="icon is-small is-left">
-                                <i class="fas fa-search"></i>
-                            </span>
+                    <form method="get" action="@GetCurrentPath()">
+                        <div class="field has-addons">
+                            <div class="control has-icons-left">
+                                <label class="is-sr-only" for="story-search">Search stories</label>
+                                <input id="story-search" name="q" class="input" type="search"
+                                       placeholder="Search stories..." @bind="searchQuery">
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                            <div class="control">
+                                <button class="button is-primary" type="submit">
+                                    Search
+                                </button>
+                            </div>
                         </div>
-                        <div class="control">
-                            <button class="button is-primary" @onclick="SearchStories">
-                                Search
-                            </button>
-                        </div>
-                    </div>
+                        @if (!string.Equals(sortBy, DefaultSort, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <input type="hidden" name="sort" value="@sortBy" />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(completionFilter))
+                        {
+                            <input type="hidden" name="completion" value="@completionFilter" />
+                        }
+                        <p class="is-sr-only">Search URL format: <code>/stories?q=search+terms</code>.</p>
+                    </form>
                 </div>
             </div>
         </div>
@@ -198,7 +210,7 @@
     protected override async Task OnParametersSetAsync()
     {
         currentPage = NormalizePage(Page);
-        searchQuery = Query ?? string.Empty;
+        searchQuery = StorySearchQuery.Normalize(Query);
         sortBy = NormalizeSort(Sort);
         completionFilter = NormalizeCompletion(Completion);
 
@@ -284,20 +296,6 @@
         _loadedSort = sortBy;
         _loadedAuthorId = AuthorId;
         _loadedCompletion = completionFilter;
-    }
-
-    private Task SearchStories()
-    {
-        NavigateToPage(1);
-        return Task.CompletedTask;
-    }
-
-    private async Task OnSearchKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await SearchStories();
-        }
     }
 
     private void OnSortChanged()
@@ -397,7 +395,7 @@
 
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            query["q"] = searchQuery;
+            StorySearchQuery.AddCanonical(query, searchQuery);
         }
 
         if (!string.Equals(sortBy, DefaultSort, StringComparison.OrdinalIgnoreCase))
@@ -427,7 +425,7 @@
             normalizedQuery["page"] = page.ToString(CultureInfo.InvariantCulture);
         }
 
-        var searchValue = GetQueryValue(query, "q") ?? GetQueryValue(query, "search");
+        var searchValue = GetQueryValue(query, "q");
         if (!string.IsNullOrWhiteSpace(searchValue))
         {
             normalizedQuery["q"] = searchValue;

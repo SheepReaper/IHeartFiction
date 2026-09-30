@@ -3782,7 +3782,7 @@
             "example": "50"
           },
           {
-            "name": "Q",
+            "name": "q",
             "in": "query",
             "description": "Simple string to find in supported object fields.",
             "schema": {

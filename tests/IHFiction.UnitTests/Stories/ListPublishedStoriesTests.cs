@@ -98,6 +98,31 @@ public class ListPublishedStoriesTests
         Assert.Equal("Complete", item.CompletionStatus);
     }
 
+    [Fact]
+    public async Task HandleAsync_SearchFilter_ReturnsOnlyMatchingStories()
+    {
+        await using var context = CreateContext();
+        var author = new Author { Id = Ulid.NewUlid(), UserId = Guid.NewGuid(), Name = "Author" };
+        context.AddRange(
+            author,
+            CreatePublishedStory(author, "The Ghost of Razgriz", StoryCompletionStatus.Complete),
+            CreatePublishedStory(author, "A Tale of Two Cities", StoryCompletionStatus.Complete));
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(Search: "Razgriz"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Data);
+        Assert.Equal("The Ghost of Razgriz", item.Title);
+    }
+
+
     [Theory]
     [InlineData("notAField")]
     [InlineData("title sideways")]

@@ -41,3 +41,5 @@ public sealed class PublishedStoryQueryValidationIntegrationTests(IntegrationTes
         Assert.Contains("storyId, title, description", domainError.GetProperty("description").GetString(), StringComparison.OrdinalIgnoreCase);
     }
 }
+
+

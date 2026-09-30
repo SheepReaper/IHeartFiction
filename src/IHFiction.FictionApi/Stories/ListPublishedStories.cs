@@ -51,7 +51,7 @@ internal sealed class ListPublishedStories(
         [property: Range(1, 100, ErrorMessage = "Page size must be between 1 and 100.")]
         int PageSize = 50,
 
-        [property: FromQuery(Name = "Q")]
+        [property: FromQuery(Name = "q")]
         [property: StringLength(100, MinimumLength = 2, ErrorMessage = "Search term must be between 2 and 100 characters.")]
         string Search = "",
 
