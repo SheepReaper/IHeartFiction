@@ -7316,7 +7316,15 @@
       },
       "LinkedOfListPublishedStoryChaptersItem": {
         "required": [
-          "links"
+          "links",
+          "chapterId",
+          "title",
+          "order",
+          "publishedAt",
+          "createdAt",
+          "updatedAt",
+          "hasContent",
+          "readCount"
         ],
         "type": "object",
         "properties": {
@@ -7364,15 +7372,6 @@
           "hasContent": {
             "type": "boolean",
             "description": "Whether the chapter has content written"
-          },
-          "contentLength": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "Length of the chapter content in characters",
-            "format": "int32"
           },
           "readCount": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",

@@ -279,7 +279,6 @@ internal static class OpenApiExamples
         /// </summary>
         internal static class Statistics
         {
-            public const int ContentLength = 2500;
             public const bool HasContent = true;
         }
     }
