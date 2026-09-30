@@ -11,6 +11,7 @@ using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Csp;
 using IHFiction.SharedWeb.Extensions;
 using IHFiction.SharedKernel.AgentAuth;
+using IHFiction.SharedKernel.AgentSkills;
 using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
@@ -26,6 +27,8 @@ internal static class MiddlewarePipelineExtensions
     private const string OpenIdConfigurationPath = "/.well-known/openid-configuration";
     private const string OAuthProtectedResourcePath = "/.well-known/oauth-protected-resource";
     private const string AuthMdPath = "/auth.md";
+    private const string AgentSkillsIndexPath = "/.well-known/agent-skills/index.json";
+    private const string AgentSkillsBasePath = "/.well-known/agent-skills";
 
     public static WebApplication UseWebClientPipeline(this WebApplication app, IConfiguration configuration)
     {
@@ -169,6 +172,22 @@ internal static class MiddlewarePipelineExtensions
             Results.Text(
                 CreateAuthMd(apiUrl.Value.BaseUrl!, configuration),
                 "text/markdown; charset=utf-8"));
+
+        app.MapMethods(AgentSkillsIndexPath, [HttpMethods.Get, HttpMethods.Head], () =>
+            Results.Json(AgentSkillsCatalog.CreateDiscoveryDocument(), contentType: "application/json"));
+
+        app.MapMethods(
+            $"{AgentSkillsBasePath}/{{skillName}}/SKILL.md",
+            [HttpMethods.Get, HttpMethods.Head],
+            (string skillName) =>
+            {
+                if (string.Equals(skillName, AgentSkillsCatalog.ReadContentSkillName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return Results.Text(AgentSkillsCatalog.ReadContentSkillMarkdown, "text/markdown; charset=utf-8");
+                }
+
+                return Results.NotFound();
+            });
 
         app.UseSitemap();
 

@@ -1784,7 +1784,7 @@
           "Story Management"
         ],
         "summary": "Replace Story Tags",
-        "description": "Replaces a story's complete tag set for categorization and discovery. Tags must be in the format 'category:value' or 'category:subcategory:value'. Only story owners and authorized collaborators can replace tags. An empty collection removes every tag. Equivalent duplicate values are rejected. Requires authentication and appropriate permissions.",
+        "description": "Replaces a story's complete tag set for categorization and discovery. Tags must be in the format 'category:value' or 'category:subcategory:value'. A story can have at most 200 tags. Only story owners and authorized collaborators can replace tags. An empty collection removes every tag. Equivalent duplicate values are rejected. Requires authentication and appropriate permissions.",
         "operationId": "AddTagsToStory",
         "parameters": [
           {
@@ -3744,7 +3744,7 @@
           "Story Discovery"
         ],
         "summary": "List Published Stories",
-        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Results can be filtered by completion status. Stories can be sorted by publication date, title, or last update date. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
+        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Results can be filtered by completion status or by a normalized tag key returned from GET /tags. Canonical and synonym tag keys resolve to the same canonical tag family. Sort accepts a comma-separated list of field direction pairs. Valid sort fields: publishedAt, title, updatedAt. Valid directions: asc, desc (default asc). Fields accepts a comma-separated list of response properties to include per item: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
         "operationId": "ListPublishedStories",
         "parameters": [
           {
@@ -3820,6 +3820,7 @@
           {
             "name": "AuthorId",
             "in": "query",
+            "description": "Optional author identifier.",
             "schema": {
               "examples": [
                 "01ARZ3NDEKTSV4RRFFQ69G5FAV"
@@ -3836,8 +3837,19 @@
           {
             "name": "CompletionStatus",
             "in": "query",
+            "description": "Optional InProgress or Complete status.",
             "schema": {
               "pattern": "^(InProgress|Complete)$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "TagKey",
+            "in": "query",
+            "description": "Optional normalized canonical or synonym tag key returned by GET /tags.",
+            "schema": {
+              "maxLength": 152,
+              "minLength": 0,
               "type": "string"
             }
           }
@@ -4439,7 +4451,7 @@
           "Tag Discovery"
         ],
         "summary": "List Tags",
-        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
+        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Each result exposes the normalized key accepted by the published-story tag filter. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
         "operationId": "ListTags",
         "parameters": [
           {
@@ -4792,7 +4804,7 @@
         "type": "object",
         "properties": {
           "tags": {
-            "maxItems": 50,
+            "maxItems": 200,
             "type": "array",
             "items": {
               "type": "string"
@@ -7383,7 +7395,8 @@
           "value",
           "createdAt",
           "storyCount",
-          "displayFormat"
+          "displayFormat",
+          "normalizedKey"
         ],
         "type": "object",
         "properties": {
@@ -7429,6 +7442,10 @@
           "displayFormat": {
             "type": "string",
             "description": "Formatted display string for the tag"
+          },
+          "normalizedKey": {
+            "type": "string",
+            "description": "Stable normalized key used to filter published stories"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."

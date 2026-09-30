@@ -98,6 +98,7 @@ internal static class MiddlewarePipelineExtensions
         app.MapDefaultEndpoints();
         app.MapApiCatalog();
         app.MapAgentAuth();
+        app.MapAgentSkills();
 
         return app;
     }
