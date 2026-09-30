@@ -1,5 +1,6 @@
 using IHFiction.FictionApi.Stories;
 using IHFiction.FictionApi.Tags;
+using System.ComponentModel.DataAnnotations;
 
 namespace IHFiction.UnitTests.Stories;
 
@@ -9,6 +10,15 @@ namespace IHFiction.UnitTests.Stories;
 /// </summary>
 public class AddTagsToStoryTests
 {
+    [Fact]
+    public void AddTagsToStoryBody_AllowsUpToTwoHundredTags()
+    {
+        var property = typeof(AddTagsToStory.AddTagsToStoryBody).GetProperty(nameof(AddTagsToStory.AddTagsToStoryBody.Tags));
+        var maximumLength = Assert.Single(property!.GetCustomAttributes(typeof(MaxLengthAttribute), false).Cast<MaxLengthAttribute>());
+
+        Assert.Equal(200, maximumLength.Length);
+    }
+
     [Fact]
     public void AddTagsToStoryResponse_CanBeCreated()
     {

@@ -3,11 +3,13 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Infrastructure;
 using IHFiction.FictionApi.Stories;
 using IHFiction.FictionApi.Tags;
 
@@ -69,14 +71,106 @@ public sealed class TagTaxonomyIntegrationTests : BaseIntegrationTest, IConfigur
     }
 
     [Fact]
+    public async Task ReplaceStoryTags_SetsOneHundredTagsInOneRequest()
+    {
+        var author = new Data.Authors.Domain.Author { Name = "Bulk Tag Author", UserId = Guid.NewGuid() };
+        var story = new Story { Title = "Bulk Tagged Story", Description = "Test", Owner = author, OwnerId = author.Id };
+        _context.AddRange(author, story);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var tags = Enumerable.Range(1, 100).Select(index => $"theme:Group {index % 5}:Value {index:D3}").ToArray();
+        var useCase = new AddTagsToStory(_context, new UserService(_context), Substitute.For<IMessageBus>());
+
+        var result = await useCase.HandleAsync(
+            story.Id,
+            new AddTagsToStory.AddTagsToStoryBody(tags),
+            Principal(author.UserId),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(100, result.Value.TotalTags);
+        Assert.Equal(100, await _context.Stories
+            .Where(candidate => candidate.Id == story.Id)
+            .SelectMany(candidate => candidate.Tags)
+            .CountAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task PublicTagDiscovery_CountsPublishedStoriesAndFiltersByCanonicalOrSynonymKey()
+    {
+        var author = new Data.Authors.Domain.Author { Name = "Discovery Author", UserId = Guid.NewGuid() };
+        var canonicalTag = Tag.CreateCanonical("universe", null, "Kantai Collection");
+        var synonym = Tag.CreateSynonym(canonicalTag, "universe", null, "Kancolle");
+        var unrelatedTag = Tag.CreateCanonical("universe", null, "Ace Combat");
+        var publishedMatch = new Story
+        {
+            Title = "Published Match",
+            Description = "Discoverable by tag.",
+            Owner = author,
+            OwnerId = author.Id,
+            PublishedAt = DateTime.UtcNow
+        };
+        var draftMatch = new Story
+        {
+            Title = "Draft Match",
+            Description = "Must stay private.",
+            Owner = author,
+            OwnerId = author.Id
+        };
+        var publishedOther = new Story
+        {
+            Title = "Published Other",
+            Description = "A different universe.",
+            Owner = author,
+            OwnerId = author.Id,
+            PublishedAt = DateTime.UtcNow
+        };
+        publishedMatch.Tags.Add(canonicalTag);
+        draftMatch.Tags.Add(canonicalTag);
+        publishedOther.Tags.Add(unrelatedTag);
+        _context.AddRange(author, canonicalTag, synonym, unrelatedTag, publishedMatch, draftMatch, publishedOther);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        var paginator = new PaginationService(Options.Create(new PaginationOptions()));
+        var listTags = new ListTags(_context, paginator);
+        var tagsResult = await listTags.HandleAsync(
+            new ListTags.ListTagsQuery(PageSize: 200),
+            new ListTags.ListTagsBody(),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(tagsResult.IsSuccess);
+        var listedTag = Assert.Single(tagsResult.Value.Data, tag => tag.TagId == canonicalTag.Id);
+        Assert.Equal("universe:kantaicollection", listedTag.NormalizedKey);
+        Assert.Equal(1, listedTag.StoryCount);
+
+        var listStories = new ListPublishedStories(_context, paginator);
+        var canonicalResult = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: canonicalTag.NormalizedKey),
+            TestContext.Current.CancellationToken);
+        var synonymResult = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: synonym.NormalizedKey.ToUpperInvariant()),
+            TestContext.Current.CancellationToken);
+        var unknownResult = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "universe:unknown"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(canonicalResult.IsSuccess);
+        Assert.True(synonymResult.IsSuccess);
+        Assert.True(unknownResult.IsSuccess);
+        Assert.Equal(publishedMatch.Id, Assert.Single(canonicalResult.Value!.Data).StoryId);
+        Assert.Equal(publishedMatch.Id, Assert.Single(synonymResult.Value!.Data).StoryId);
+        Assert.Empty(unknownResult.Value!.Data);
+    }
+
+    [Fact]
     public async Task RenameThenBulkMerge_PreservesSpellingsAndMovesWorkRelationships()
     {
         var source = Tag.CreateCanonical("genre", null, "Sci Fi");
         var secondSource = Tag.CreateCanonical("genre", null, "Space Opera");
         var target = Tag.CreateCanonical("genre", null, "Science Fiction");
         var author = new Data.Authors.Domain.Author { Name = "Taxonomy Admin", UserId = Guid.NewGuid() };
-        var story = new Story { Title = "Space Story", Description = "Test", Owner = author, OwnerId = author.Id };
-        var secondStory = new Story { Title = "Opera Story", Description = "Test", Owner = author, OwnerId = author.Id };
+        var story = new Story { Title = "Space Story", Description = "Test", Owner = author, OwnerId = author.Id, PublishedAt = DateTime.UtcNow };
+        var secondStory = new Story { Title = "Opera Story", Description = "Test", Owner = author, OwnerId = author.Id, PublishedAt = DateTime.UtcNow };
         story.Tags.Add(source);
         secondStory.Tags.Add(secondSource);
         _context.AddRange(author, source, secondSource, target, story, secondStory);
@@ -118,6 +212,18 @@ public sealed class TagTaxonomyIntegrationTests : BaseIntegrationTest, IConfigur
         Assert.False(await _context.Tags.OfType<CanonicalTag>().AnyAsync(
             tag => tag.Id == source.Id || tag.Id == secondSource.Id,
             TestContext.Current.CancellationToken));
+
+        var discovery = new ListPublishedStories(
+            _context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+        var result = await discovery.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "genre:scifi"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            new[] { story.Id, secondStory.Id }.Order().ToArray(),
+            result.Value!.Data.Select(item => item.StoryId).ToArray().Order().ToArray());
     }
 
     [Fact]

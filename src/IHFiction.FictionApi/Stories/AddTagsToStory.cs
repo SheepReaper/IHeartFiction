@@ -26,6 +26,8 @@ internal sealed class AddTagsToStory(
     UserService userService,
     IMessageBus messageBus) : IUseCase, INameEndpoint<AddTagsToStory>
 {
+    internal const int MaximumTagCount = 200;
+
     internal static class Errors
     {
         // Use common errors for infrastructure concerns
@@ -48,7 +50,7 @@ internal sealed class AddTagsToStory(
     /// <param name="Tags">Complete set of tags that should be assigned to the story.</param>
     internal sealed record AddTagsToStoryBody(
         [property: Required(ErrorMessage = "Tags are required.")]
-        [property: MaxLength(50, ErrorMessage = "A story can have at most 50 tags.")]
+        [property: MaxLength(MaximumTagCount, ErrorMessage = "A story can have at most 200 tags.")]
         IReadOnlyCollection<string> Tags
     );
 
@@ -143,23 +145,27 @@ internal sealed class AddTagsToStory(
                 parsedTags.Add((category, subcategory, value, normalizedKey));
             }
 
-            var resolvedTags = new List<CanonicalTag>();
+            var requestedNormalizedKeys = parsedTags.Select(tag => tag.NormalizedKey).ToArray();
+            var canonicalMatches = await context.Tags
+                .OfType<CanonicalTag>()
+                .Where(tag => requestedNormalizedKeys.Contains(tag.NormalizedKey))
+                .ToListAsync(cancellationToken);
+            var synonymMatches = await context.Tags
+                .OfType<SynonymTag>()
+                .Include(tag => tag.CanonicalTag)
+                .Where(tag => requestedNormalizedKeys.Contains(tag.NormalizedKey))
+                .ToListAsync(cancellationToken);
+            var existingTags = canonicalMatches
+                .Concat<Tag>(synonymMatches)
+                .ToDictionary(tag => tag.NormalizedKey, StringComparer.Ordinal);
+
+            var resolvedTags = new List<CanonicalTag>(parsedTags.Count);
             var createdTagIds = new List<Ulid>();
 
             foreach (var (category, subcategory, value, normalizedKey) in parsedTags)
             {
-                var tagMatch = await context.Tags
-                    .FirstOrDefaultAsync(tag => tag.NormalizedKey == normalizedKey, cancellationToken);
-
-                if (tagMatch is not null)
+                if (existingTags.TryGetValue(normalizedKey, out var tagMatch))
                 {
-                    if (tagMatch is SynonymTag synonym)
-                    {
-                        await context.Entry(synonym)
-                            .Reference(tag => tag.CanonicalTag)
-                            .LoadAsync(cancellationToken);
-                    }
-
                     resolvedTags.Add((CanonicalTag)tagMatch.ResolveCanonical());
                 }
                 else
@@ -191,7 +197,11 @@ internal sealed class AddTagsToStory(
             return new AddTagsToStoryResponse(
                 story.Id,
                 story.Title,
-                [.. resolvedTags.Select(tag => new AddedTagItem(tag.Category, tag.Subcategory, tag.Value, createdTagIds.Contains(tag.Id)))],
+                [.. resolvedTags
+                    .OrderBy(tag => tag.Category, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(tag => tag.Subcategory, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(tag => tag.Value, StringComparer.OrdinalIgnoreCase)
+                    .Select(tag => new AddedTagItem(tag.Category, tag.Subcategory, tag.Value, createdTagIds.Contains(tag.Id)))],
                 story.Tags.Count);
         }
         catch (InvalidOperationException)
@@ -251,6 +261,7 @@ internal sealed class AddTagsToStory(
             .WithSummary("Replace Story Tags")
             .WithDescription("Replaces a story's complete tag set for categorization and discovery. " +
                 "Tags must be in the format 'category:value' or 'category:subcategory:value'. " +
+                $"A story can have at most {MaximumTagCount} tags. " +
                 "Only story owners and authorized collaborators can replace tags. " +
                 "An empty collection removes every tag. Equivalent duplicate values are rejected. " +
                 "Requires authentication and appropriate permissions.")

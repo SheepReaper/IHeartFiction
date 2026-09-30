@@ -79,6 +79,7 @@ internal sealed class ListTags(
     /// <param name="CreatedAt">When the tag was first created</param>
     /// <param name="StoryCount">Number of stories that use this tag</param>
     /// <param name="DisplayFormat">Formatted display string for the tag</param>
+    /// <param name="NormalizedKey">Stable normalized key used to filter published stories</param>
     internal sealed record ListTagsItem(
         Ulid TagId,
         string Category,
@@ -86,7 +87,8 @@ internal sealed class ListTags(
         string Value,
         DateTime CreatedAt,
         int StoryCount,
-        string DisplayFormat);
+        string DisplayFormat,
+        string NormalizedKey);
 
     public async Task<Result<PagedCollection<ListTagsItem>>> HandleAsync(
         ListTagsQuery query,
@@ -116,6 +118,17 @@ internal sealed class ListTags(
                     || tag.Synonyms.Any(synonym => MatchesTagSearch(synonym, parsedSearch, searchFilter)))];
         }
 
+        var tagIds = tags.Select(tag => tag.Id).ToArray();
+        var publishedStoryCounts = await context.Stories
+            .AsNoTracking()
+            .Where(story => story.PublishedAt != null)
+            .SelectMany(story => story.Tags
+                .Where(tag => tagIds.Contains(tag.Id))
+                .Select(tag => new { tag.Id, StoryId = story.Id }))
+            .GroupBy(association => association.Id)
+            .Select(group => new { TagId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(item => item.TagId, item => item.Count, cancellationToken);
+
         var proj = tags
             .Select(t => new ListTagsItem(
                 t.Id,
@@ -123,8 +136,9 @@ internal sealed class ListTags(
                 t.Subcategory,
                 t.Value,
                 t.CreatedAt,
-                t.Works.Count(w => w.PublishedAt != null),
-                t.ToString()))
+                publishedStoryCounts.GetValueOrDefault(t.Id),
+                t.ToString(),
+                t.NormalizedKey))
             .AsQueryable();
 
         proj = proj.ApplySort(query, SortMappings);
@@ -191,6 +205,7 @@ internal sealed class ListTags(
             .WithSummary("List Tags")
             .WithDescription("Retrieves a paginated list of all available tags used across stories. " +
                 "Supports filtering by category and searching by tag value. " +
+                "Each result exposes the normalized key accepted by the published-story tag filter. " +
                 "Tags can be sorted by category, value, usage count, or creation date. " +
                 "This is a public endpoint that does not require authentication.")
             .WithTags(ApiTags.Tags.Discovery)

@@ -2,6 +2,7 @@
 @using IHFiction.SharedWeb.Components.Disqus
 @using IHFiction.SharedWeb.Components.Notifications
 @using IHFiction.SharedWeb.Components.Reading
+@using IHFiction.SharedWeb.Components.Tags
 
 @page "/stories/{storyId}"
 @inject StoryService StoryService
@@ -77,17 +78,9 @@ else if (story != null)
 
                     @if (story.Tags.Any())
                     {
-                        <div class="field is-grouped is-grouped-multiline">
-                            <label class="label">Tags:</label>
-                            @foreach (var tag in story.Tags)
-                            {
-                                <div @key="tag.Value" class="control">
-                                    <div class="tags has-addons">
-                                        <span class="tag is-dark">@tag.Category</span>
-                                        <span class="tag is-info">@tag.Value</span>
-                                    </div>
-                                </div>
-                            }
+                        <div class="field">
+                            <h2 class="label">Tags</h2>
+                            <TagDisplay Items="@story.Tags.Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, $"{tag.Category}:{tag.Subcategory}:{tag.Value}"))" />
                         </div>
                     }
                 </div>

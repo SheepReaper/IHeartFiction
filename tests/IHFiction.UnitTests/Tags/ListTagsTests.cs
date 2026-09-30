@@ -19,8 +19,8 @@ public class ListTagsTests
         // Arrange
         var tags = new List<ListTags.ListTagsItem>
         {
-            new(Ulid.NewUlid(), "genre", null, "fantasy", DateTime.UtcNow, 15, "genre:fantasy"),
-            new(Ulid.NewUlid(), "theme", null, "adventure", DateTime.UtcNow, 8, "theme:adventure")
+            new(Ulid.NewUlid(), "genre", null, "fantasy", DateTime.UtcNow, 15, "genre:fantasy", "genre:fantasy"),
+            new(Ulid.NewUlid(), "theme", null, "adventure", DateTime.UtcNow, 8, "theme:adventure", "theme:adventure")
         };
 
         // Act

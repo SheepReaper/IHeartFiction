@@ -1,0 +1,32 @@
+@foreach (var category in TagDisplayItem.Group(Items))
+{
+    <section class="mb-3" aria-label="@($"{category.Category} tags")">
+        <p class="is-size-7 has-text-weight-semibold is-uppercase mb-1">@category.Category</p>
+        <div class="field is-grouped is-grouped-multiline">
+            @foreach (var tag in category.Sections.SelectMany(section => section.Tags))
+            {
+                <div @key="tag.Key" class="control">
+                    <div class="tags has-addons">
+                        @if (!string.IsNullOrWhiteSpace(tag.Subcategory))
+                        {
+                            <span class="tag has-background-dark-bold has-text-dark-soft">@tag.Subcategory</span>
+                        }
+                        <span class="tag is-info">
+                            @tag.Value
+                            @if (Removable)
+                            {
+                                <button class="delete is-small" type="button" aria-label="Remove @tag.Key" @onclick="() => Remove.InvokeAsync(tag.Key)"></button>
+                            }
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<TagDisplayItem> Items { get; set; } = [];
+    [Parameter] public bool Removable { get; set; }
+    [Parameter] public EventCallback<string> Remove { get; set; }
+}
