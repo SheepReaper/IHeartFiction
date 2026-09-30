@@ -24,6 +24,8 @@ internal sealed class HomepageLinkHeaderMiddleware(RequestDelegate next)
                     var apiBase = apiUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? string.Empty;
                     context.Response.Headers.Link = new StringValues([
                         ApiCatalogRel,
+                        "</.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/json\"",
+                        "</.well-known/agent-skills/index.json>; rel=\"agent-skills\"; type=\"application/vnd.agentskills.v0.2.0+json\"",
                         $"<{apiBase}/.well-known/oauth-protected-resource>; rel=\"oauth-protected-resource\"",
                         $"<{apiBase}/openapi/v1.json>; rel=\"service-desc\"; type=\"application/vnd.oai.openapi+json\"",
                         $"<{apiBase}/scalar/v1>; rel=\"service-doc\"; type=\"text/html\"",

@@ -99,6 +99,7 @@ internal static class MiddlewarePipelineExtensions
         app.MapApiCatalog();
         app.MapAgentAuth();
         app.MapAgentSkills();
+        app.MapAiCatalog();
 
         return app;
     }

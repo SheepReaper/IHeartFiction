@@ -8,6 +8,8 @@ using IHFiction.FictionApi.Notifications;
 using IHFiction.FictionApi.Stories;
 using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.AgentAuth;
+using IHFiction.SharedKernel.AgentSkills;
+using IHFiction.SharedKernel.AiCatalog;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 
@@ -15,8 +17,10 @@ using MongoDB.Bson;
 
 namespace IHFiction.FictionApi.Infrastructure;
 
-// Agent Auth & OAuth
+// Agent Auth, Skills & AI Catalog
 [JsonSerializable(typeof(OAuthProtectedResourceMetadata))]
+[JsonSerializable(typeof(AgentSkillsDiscoveryDocument))]
+[JsonSerializable(typeof(AiCatalogDocument))]
 
 
 // Keycloak

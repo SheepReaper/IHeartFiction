@@ -26,6 +26,8 @@ public sealed class HomepageLinkHeaderMiddlewareTests
 
         context.Response.Headers.Link.Should().BeEquivalentTo([
             "</.well-known/api-catalog>; rel=\"api-catalog\"; type=\"application/linkset+json\"",
+            "</.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/json\"",
+            "</.well-known/agent-skills/index.json>; rel=\"agent-skills\"; type=\"application/vnd.agentskills.v0.2.0+json\"",
             "<https://api.example.test/.well-known/oauth-protected-resource>; rel=\"oauth-protected-resource\"",
             "<https://api.example.test/openapi/v1.json>; rel=\"service-desc\"; type=\"application/vnd.oai.openapi+json\"",
             "<https://api.example.test/scalar/v1>; rel=\"service-doc\"; type=\"text/html\"",

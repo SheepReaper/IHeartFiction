@@ -12,6 +12,7 @@ using IHFiction.SharedWeb.Csp;
 using IHFiction.SharedWeb.Extensions;
 using IHFiction.SharedKernel.AgentAuth;
 using IHFiction.SharedKernel.AgentSkills;
+using IHFiction.SharedKernel.AiCatalog;
 using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
@@ -23,6 +24,7 @@ namespace IHFiction.WebClient.Extensions;
 internal static class MiddlewarePipelineExtensions
 {
     private const string ApiCatalogPath = "/.well-known/api-catalog";
+    private const string AiCatalogPath = "/.well-known/ai-catalog.json";
     private const string OAuthAuthorizationServerPath = "/.well-known/oauth-authorization-server";
     private const string OpenIdConfigurationPath = "/.well-known/openid-configuration";
     private const string OAuthProtectedResourcePath = "/.well-known/oauth-protected-resource";
@@ -143,7 +145,7 @@ internal static class MiddlewarePipelineExtensions
         {
             var baseUrl = siteUrl.Value.BaseUrl!.ToString().TrimEnd('/');
             ctx.Response.Headers.CacheControl = "public, max-age=21600, s-maxage=21600";
-            var body = $"Sitemap: {baseUrl}/sitemap.xml\n";
+            var body = $"Sitemap: {baseUrl}/sitemap.xml\nAgentmap: {baseUrl}/.well-known/ai-catalog.json\n";
             return Results.Text(body, MediaTypeNames.Text.Plain);
         }).CacheOutput("Robots");
 
@@ -152,6 +154,9 @@ internal static class MiddlewarePipelineExtensions
                 new Uri(apiUrl.Value.BaseUrl!, ApiCatalogPath).ToString(),
                 permanent: true,
                 preserveMethod: true));
+
+        app.MapMethods(AiCatalogPath, [HttpMethods.Get, HttpMethods.Head], (IOptions<SiteUrlOptions> siteUrl, IOptions<ApiUrlOptions> apiUrl) =>
+            Results.Json(AiCatalog.CreateDocument(siteUrl.Value.BaseUrl, apiUrl.Value.BaseUrl), contentType: "application/json"));
 
         app.MapMethods(OAuthAuthorizationServerPath, [HttpMethods.Get, HttpMethods.Head], () =>
             Results.Redirect(
