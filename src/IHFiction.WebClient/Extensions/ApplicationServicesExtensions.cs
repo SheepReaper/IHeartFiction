@@ -48,6 +48,8 @@ internal static class ApplicationServicesExtensions
         builder.Services.AddTransient<NotificationService>();
         builder.Services.AddTransient<StoryService>();
         builder.Services.AddTransient<WorkService>();
+        builder.Services.AddTransient<IPublishedWorkReader, WorkService>();
+        builder.Services.AddTransient<MarkdownReaderService>();
 
         return builder;
     }

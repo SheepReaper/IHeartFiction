@@ -4,6 +4,8 @@ namespace IHFiction.WebClient.MarkdownResponses;
 
 internal static class MarkdownRequestNegotiator
 {
+    internal const string HttpContextItemKey = "IHFiction.MarkdownRequest";
+
     private const string HtmlMediaType = "text/html";
     private const string MarkdownMediaType = "text/markdown";
 

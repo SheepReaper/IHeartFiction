@@ -23,6 +23,7 @@ internal sealed class MarkdownResponseMiddleware(RequestDelegate next)
         var originalBody = context.Response.Body;
         await using var bufferedBody = new MemoryStream();
         context.Response.Body = bufferedBody;
+        context.Items[MarkdownRequestNegotiator.HttpContextItemKey] = true;
 
         try
         {

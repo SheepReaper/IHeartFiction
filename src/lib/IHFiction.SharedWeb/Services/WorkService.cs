@@ -3,7 +3,20 @@ using IHFiction.SharedWeb.Extensions;
 
 namespace IHFiction.SharedWeb.Services;
 
-public class WorkService(FictionApiClient client)
+public interface IPublishedWorkReader
+{
+    ValueTask<Result<LinkedOfGetPublishedWorkMetaResponse>> GetPublishedWorkMetaAsync(
+        Ulid id,
+        string? fields = null,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<Result<LinkedOfGetPublishedWorkContentResponse>> GetPublishedWorkContentAsync(
+        Ulid id,
+        string? fields = null,
+        CancellationToken cancellationToken = default);
+}
+
+public class WorkService(FictionApiClient client) : IPublishedWorkReader
 {
     public async ValueTask<Result<LinkedOfGetPublishedWorkMetaResponse>> GetPublishedWorkMetaAsync(
         Ulid id,

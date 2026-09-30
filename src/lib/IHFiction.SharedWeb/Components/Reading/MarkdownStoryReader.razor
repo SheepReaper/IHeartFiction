@@ -1,0 +1,141 @@
+@inherits CancellableComponent
+@inject MarkdownReaderService ReaderService
+@inject MarkdownPipeline MarkdownPipeline
+
+@if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <article class="content">
+        <h1>Content unavailable</h1>
+        <p>@errorMessage</p>
+        @if (Meta.StoryId is not null)
+        {
+            <p><a href="/stories/@Meta.StoryId">Story Details</a></p>
+        }
+    </article>
+}
+else if (reader is not null)
+{
+    var chapters = BuildNavigationChapters(reader.Meta).ToList();
+    var currentIndex = chapters.FindIndex(chapter => chapter.Id == reader.WorkId);
+    var previous = currentIndex > 0 ? chapters[currentIndex - 1] : null;
+    var next = currentIndex >= 0 && currentIndex < chapters.Count - 1 ? chapters[currentIndex + 1] : null;
+
+    <article class="content">
+        <h1>@reader.Meta.Title</h1>
+        @if (reader.Meta.Authors.Any())
+        {
+            <p>by @string.Join(", ", reader.Meta.Authors.Select(author => author.Name))</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(reader.Meta.BookTitle))
+        {
+            <p>From <strong>@reader.Meta.BookTitle</strong></p>
+        }
+        @if (!string.IsNullOrWhiteSpace(reader.Meta.StoryTitle))
+        {
+            <p>Part of <strong>@reader.Meta.StoryTitle</strong></p>
+        }
+        @if (reader.Meta.StoryId is not null)
+        {
+            <p><a href="/stories/@reader.Meta.StoryId">Story Details</a></p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(reader.Content.Note1))
+        {
+            <h2>Author's Notes</h2>
+            @((MarkupString)Markdown.ToHtml(reader.Content.Note1, MarkdownPipeline))
+        }
+
+        @if (string.IsNullOrWhiteSpace(reader.Content.Content))
+        {
+            <p>This work has no body content.</p>
+        }
+        else
+        {
+            @((MarkupString)Markdown.ToHtml(reader.Content.Content, MarkdownPipeline))
+        }
+
+        @if (!string.IsNullOrWhiteSpace(reader.Content.Note2))
+        {
+            <h2>Author's Notes</h2>
+            @((MarkupString)Markdown.ToHtml(reader.Content.Note2, MarkdownPipeline))
+        }
+
+        @if (chapters.Count > 0)
+        {
+            <nav aria-label="Chapter navigation">
+                <h2>Chapter Navigation</h2>
+                <ul>
+                    @if (previous is not null)
+                    {
+                        <li><a href="/read/@previous.Id">Previous: @previous.Title</a></li>
+                    }
+                    @if (currentIndex >= 0)
+                    {
+                        <li>Chapter @(currentIndex + 1) of @chapters.Count</li>
+                    }
+                    @if (next is not null)
+                    {
+                        <li><a href="/read/@next.Id">Next: @next.Title</a></li>
+                    }
+                    else if (currentIndex >= 0)
+                    {
+                        <li>End of story</li>
+                    }
+                </ul>
+            </nav>
+        }
+
+        <p>Last updated: @reader.Content.ContentUpdatedAt.ToString("MMM dd, yyyy")</p>
+    </article>
+}
+
+@code {
+    [Parameter, EditorRequired] public string WorkId { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public LinkedOfGetPublishedWorkMetaResponse Meta { get; set; } = new();
+
+    private MarkdownReaderModel? reader;
+    private string? errorMessage;
+    private string? resolvedParameterKey;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var parameterKey = $"{WorkId}:{Meta.Id}";
+        if (resolvedParameterKey == parameterKey)
+        {
+            return;
+        }
+
+        reader = null;
+        errorMessage = null;
+
+        try
+        {
+            var result = await ReaderService.ResolveAsync(WorkId, Meta, CancellationToken);
+            if (result.IsSuccess)
+            {
+                reader = result.Value;
+            }
+            else
+            {
+                errorMessage = result.DomainError.Description ?? "This work is not available.";
+            }
+        }
+        catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        resolvedParameterKey = parameterKey;
+    }
+
+    private static IEnumerable<ReaderChapterNavItem> BuildNavigationChapters(
+        LinkedOfGetPublishedWorkMetaResponse meta) => meta.ReadableChildren
+        .OrderBy(child => child.BookId?.ToString() ?? string.Empty)
+        .ThenBy(child => child.Order)
+        .Select(child => new ReaderChapterNavItem(
+            child.Id.ToString(),
+            child.Title,
+            child.Order,
+            child.BookTitle,
+            child.ReadCount));
+}

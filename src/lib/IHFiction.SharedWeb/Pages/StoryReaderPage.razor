@@ -27,12 +27,22 @@
 
 @if (meta is { } loadedMeta)
 {
-    <StoryReader WorkId="@WorkId" Meta="@loadedMeta" />
-    <DisqusThread PageUrl="@(CanonicalUrl ?? PageUrl)" PageIdentifier="@WorkId" />
+    @if (IsMarkdownRequest)
+    {
+        <MarkdownStoryReader WorkId="@WorkId" Meta="@loadedMeta" />
+    }
+    else
+    {
+        <StoryReader WorkId="@WorkId" Meta="@loadedMeta" />
+        <DisqusThread PageUrl="@(CanonicalUrl ?? PageUrl)" PageIdentifier="@WorkId" />
+    }
 }
 
 @code {
     [Parameter] public string WorkId { get; set; } = string.Empty;
+
+    [CascadingParameter(Name = "MarkdownRequest")]
+    private bool IsMarkdownRequest { get; set; }
 
     private LinkedOfGetPublishedWorkMetaResponse? meta;
     private string? loadedWorkId;

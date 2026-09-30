@@ -1,19 +1,24 @@
 @using static IHFiction.SharedWeb.Csp.CspConstants;
 
-<CascadingValue Name="@HttpContextItemKey" Value="Nonce">
-    <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-                <NotAuthorized>
-                    <h1>Not Authorized</h1>
-                    <p>You are not authorized to access this resource.</p>
-                </NotAuthorized>
-            </AuthorizeRouteView>
-        </Found>
-    </Router>
+<CascadingValue Name="MarkdownRequest" Value="IsMarkdownRequest">
+    <CascadingValue Name="@HttpContextItemKey" Value="Nonce">
+        <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                    <NotAuthorized>
+                        <h1>Not Authorized</h1>
+                        <p>You are not authorized to access this resource.</p>
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            </Found>
+        </Router>
+    </CascadingValue>
 </CascadingValue>
 
 @code {
     [Parameter]
     public string? Nonce { get; set; }
+
+    [Parameter]
+    public bool IsMarkdownRequest { get; set; }
 }

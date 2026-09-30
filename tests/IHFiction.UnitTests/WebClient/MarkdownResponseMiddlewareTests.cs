@@ -21,6 +21,7 @@ public sealed class MarkdownResponseMiddlewareTests
 
         await sut.InvokeAsync(context, new HtmlToMarkdownConverter());
 
+        context.Items[MarkdownRequestNegotiator.HttpContextItemKey].Should().Be(true);
         context.Response.ContentType.Should().Be("text/markdown; charset=utf-8");
         context.Response.Headers.Vary.ToString().Should().Be("Accept-Encoding, Accept");
         context.Response.Headers["Content-Signal"].ToString().Should().Be("ai-train=no, search=yes, ai-input=yes");
@@ -47,6 +48,7 @@ public sealed class MarkdownResponseMiddlewareTests
 
         await sut.InvokeAsync(context, new HtmlToMarkdownConverter());
 
+        context.Items.Should().NotContainKey(MarkdownRequestNegotiator.HttpContextItemKey);
         context.Response.ContentType.Should().Be("text/html; charset=utf-8");
         context.Response.Headers.Should().NotContainKey("Content-Signal");
         ReadBody(context).Should().Contain("<h1>Hello</h1>");

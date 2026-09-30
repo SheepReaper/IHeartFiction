@@ -1,4 +1,5 @@
 @inject IWebHostEnvironment Env
+@using IHFiction.WebClient.MarkdownResponses
 
 <!DOCTYPE html>
 <html lang="en">
@@ -40,7 +41,7 @@
 </head>
 
 <body>
-    <Routes Nonce="@nonce" @rendermode="InteractiveServer" />
+    <Routes Nonce="@nonce" IsMarkdownRequest="@isMarkdownRequest" @rendermode="InteractiveServer" />
     <ReconnectModal Nonce="@nonce" />
     <script src="@Assets["_framework/blazor.web.js"]" nonce="@nonce"></script>
 </body>
@@ -53,6 +54,7 @@
 
     private string? integrity;
     private string? nonce;
+    private bool isMarkdownRequest;
 
     protected override void OnInitialized()
     {
@@ -67,5 +69,6 @@
         integrity = $"sha384-{hash}";
 
         nonce = HttpContext?.Items.TryGetValue(HttpContextItemKey, out var nonceObj) == true && nonceObj is string value ? value : null;
+        isMarkdownRequest = HttpContext?.Items.ContainsKey(MarkdownRequestNegotiator.HttpContextItemKey) ?? false;
     }
 }
