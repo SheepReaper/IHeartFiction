@@ -86,6 +86,15 @@ Use this pattern by default:
 
 This aligns with analyzer expectations and keeps logging style consistent across the repository.
 
+## GitHub Discussion Updates (Preferred Pattern)
+
+Treat the canonical roadmap discussion as a stakeholder announcement channel, not a work log.
+
+- Announce completed, verified work.
+- Announce meaningful design changes that alter the public contract, architecture, or agreed scope.
+- Do not post implementation-start notices, incremental progress, individual verification results, transient blockers, or similarly granular status updates.
+- If a qualifying announcement is outside the current authorization, include a proposed announcement in the handoff only when useful.
+
 ## Head Metadata Composition Guardrail (Mandatory)
 
 For Blazor head metadata in this repository, treat `HeadContent` as a single-owner primitive.

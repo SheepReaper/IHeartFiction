@@ -14,9 +14,9 @@ Build the smallest complete feature slice while preserving this repository's arc
 3. Read [references/architecture-map.md](references/architecture-map.md), then locate the nearest existing analogue with its commands.
 4. Classify the feature using [references/feature-routing.md](references/feature-routing.md). Do not load every listed companion skill.
 5. Create an impact checklist containing only applicable rows from [references/completeness-gates.md](references/completeness-gates.md).
-6. Search the repository's GitHub Discussions for the existing roadmap or feature-planning thread that covers the work. Record one canonical discussion URL and its current status; update that discussion instead of creating a duplicate. Treat it as stakeholder-facing planning context, not as a substitute for repository evidence.
+6. Search the repository's GitHub Discussions for the existing roadmap or feature-planning thread that covers the work. Record one canonical discussion URL and its current status. Treat it as stakeholder-facing planning context and an announcement channel, not as a substitute for repository evidence or an execution log.
 
-When the user authorizes GitHub writes, synchronize the canonical discussion when implementation meaningfully starts, when scope or status materially changes, and after verification. Keep updates concise, distinguish delivered work from planned or deferred work, and never mark a feature complete before its applicable gates pass. If GitHub writes are unavailable or outside the request's authority, prepare the exact proposed discussion update for handoff instead.
+When the user authorizes GitHub writes, update the canonical discussion only to announce completed, verified work or a meaningful design change to the public contract, architecture, or agreed scope. Do not post implementation-start notices, incremental progress, test-by-test results, transient blockers, or other granular status updates. Keep announcements concise, distinguish delivered work from planned or deferred work, and never mark a feature complete before its applicable gates pass. If a qualifying announcement is useful but GitHub writes are unavailable or outside the request's authority, prepare the exact proposed announcement for handoff; otherwise report the discussion link without manufacturing an update.
 
 If requirements materially change behavior, use `spec-driven-development` before implementation. For a narrow, already-specified change, proceed without manufacturing a separate specification.
 
@@ -79,6 +79,6 @@ Summarize:
 - the layers changed and important design choice;
 - the verification performed and result;
 - any migration, generated artifact, deployment, or manual browser step still required.
-- the canonical GitHub Discussion link and whether it was synchronized or has a proposed update awaiting authorization.
+- the canonical GitHub Discussion link and, only when the work warrants an announcement, whether it was posted or has a proposed announcement awaiting authorization.
 
 Do not dump the full checklist unless unresolved items make it useful.

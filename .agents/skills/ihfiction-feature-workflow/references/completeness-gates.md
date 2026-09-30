@@ -40,6 +40,6 @@ Create a short impact checklist from applicable sections. A feature is complete 
 ## Scope and handoff
 
 - No unrelated refactors or user changes are included.
-- The canonical GitHub feature discussion is linked and accurately reflects verified status when external writes are authorized; otherwise the exact proposed update is included in the handoff.
+- The canonical GitHub feature discussion is linked. Completed verified work and meaningful design changes are announced when external writes are authorized; if a qualifying announcement is useful but unauthorized, the exact proposed announcement is included in the handoff. Incremental status updates are omitted.
 - Remaining migration application, secrets, deployment, generated artifact, or manual verification steps are stated plainly.
 - The final report names what was verified rather than implying compilation proved runtime behavior.
