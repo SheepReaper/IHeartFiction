@@ -80,7 +80,7 @@ else if (story != null)
                     {
                         <div class="field">
                             <h2 class="label">Tags</h2>
-                            <TagDisplay Items="@story.Tags.Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, $"{tag.Category}:{tag.Subcategory}:{tag.Value}"))" />
+                            <TagDisplay Items="@story.Tags.Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))" />
                         </div>
                     }
                 </div>

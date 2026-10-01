@@ -80,6 +80,7 @@ internal sealed class ListTags(
     /// <param name="StoryCount">Number of stories that use this tag</param>
     /// <param name="DisplayFormat">Formatted display string for the tag</param>
     /// <param name="NormalizedKey">Stable normalized key used to filter published stories</param>
+    /// <param name="RouteKey">Canonical ASCII-safe token used by public tag landing pages</param>
     internal sealed record ListTagsItem(
         Ulid TagId,
         string Category,
@@ -88,7 +89,20 @@ internal sealed class ListTags(
         DateTime CreatedAt,
         int StoryCount,
         string DisplayFormat,
-        string NormalizedKey);
+        string NormalizedKey,
+        string RouteKey)
+    {
+        public ListTagsItem(
+            Ulid tagId,
+            string category,
+            string? subcategory,
+            string value,
+            DateTime createdAt,
+            int storyCount,
+            string displayFormat,
+            string normalizedKey)
+            : this(tagId, category, subcategory, value, createdAt, storyCount, displayFormat, normalizedKey, normalizedKey) { }
+    }
 
     public async Task<Result<PagedCollection<ListTagsItem>>> HandleAsync(
         ListTagsQuery query,
@@ -138,7 +152,8 @@ internal sealed class ListTags(
                 t.CreatedAt,
                 publishedStoryCounts.GetValueOrDefault(t.Id),
                 t.ToString(),
-                t.NormalizedKey))
+                t.NormalizedKey,
+                TagRouteSpec.CreateRouteToken(t.Id, t.Category, t.Subcategory, t.Value)))
             .AsQueryable();
 
         proj = proj.ApplySort(query, SortMappings);

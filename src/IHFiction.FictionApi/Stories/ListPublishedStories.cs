@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
-using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.FictionApi.Tags;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -19,8 +19,12 @@ namespace IHFiction.FictionApi.Stories;
 
 internal sealed class ListPublishedStories(
     FictionDbContext context,
-    IPaginationService paginator) : IUseCase, INameEndpoint<ListPublishedStories>
+    IPaginationService paginator,
+    ResolveTagLanding tagResolver) : IUseCase, INameEndpoint<ListPublishedStories>
 {
+    internal ListPublishedStories(FictionDbContext context, IPaginationService paginator)
+        : this(context, paginator, new ResolveTagLanding(context)) { }
+
     internal static class Errors
     {
         public static readonly DomainError InvalidSort = new(
@@ -67,7 +71,7 @@ internal sealed class ListPublishedStories(
         [property: RegularExpression("^(InProgress|Complete)$", ErrorMessage = "Completion status must be InProgress or Complete.")]
         string? CompletionStatus = null,
 
-        [property: StringLength(152, ErrorMessage = "Tag key must be 152 characters or less.")]
+        [property: StringLength(300, ErrorMessage = "Tag key must be 300 characters or less.")]
         string? TagKey = null
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
@@ -135,24 +139,29 @@ internal sealed class ListPublishedStories(
             .Where(s => query.AuthorId == null || s.Authors.Any(a => a.Id == query.AuthorId))
             .Where(s => completionStatus == null || s.CompletionStatus == completionStatus);
 
-        if (!TryNormalizeTagKey(query.TagKey, out var tagKey)) return Errors.InvalidTagKey;
-        if (!string.IsNullOrWhiteSpace(tagKey))
+        if (!string.IsNullOrWhiteSpace(query.TagKey))
         {
-            var canonicalTagId = await context.Tags
-                .AsNoTracking()
-                .OfType<CanonicalTag>()
-                .Where(tag => tag.NormalizedKey == tagKey)
-                .Select(tag => (Ulid?)tag.Id)
-                .Concat(context.Tags
-                    .AsNoTracking()
-                    .OfType<SynonymTag>()
-                    .Where(tag => tag.NormalizedKey == tagKey)
-                    .Select(tag => (Ulid?)tag.CanonicalTagId))
-                .SingleOrDefaultAsync(cancellationToken);
-
-            stories = canonicalTagId is null
-                ? stories.Where(_ => false)
-                : stories.Where(story => story.Tags.Any(tag => tag.Id == canonicalTagId.Value));
+            var resolution = await tagResolver.HandleAsync(query.TagKey, includeStoryCount: false, cancellationToken: cancellationToken);
+            if (!resolution.IsSuccess)
+            {
+                if (resolution.DomainError.Code == ResolveTagLanding.Errors.NotFound.Code)
+                {
+                    stories = stories.Where(_ => false);
+                }
+                else
+                {
+                    return resolution.DomainError.Code == ResolveTagLanding.Errors.InvalidSpec.Code
+                        ? Errors.InvalidTagKey
+                        : resolution.DomainError;
+                }
+            }
+            else
+            {
+                stories = resolution.Value.Tags
+                    .Select(resolvedTag => resolvedTag.FamilyTagIds)
+                    .Aggregate(stories, (current, familyTagIds) =>
+                        current.Where(story => story.Tags.Any(tag => familyTagIds.Contains(tag.Id))));
+            }
         }
 
         // Apply search filter if provided
@@ -182,22 +191,6 @@ internal sealed class ListPublishedStories(
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
     }
 
-    private static bool TryNormalizeTagKey(string? tagKey, out string? normalizedTagKey)
-    {
-        normalizedTagKey = null;
-        if (string.IsNullOrWhiteSpace(tagKey)) return true;
-
-        var components = tagKey.Split(':', StringSplitOptions.TrimEntries);
-        if (components.Length is < 2 or > 3 || components.Any(string.IsNullOrWhiteSpace)) return false;
-
-        normalizedTagKey = components.Length switch
-        {
-            2 => Tag.BuildNormalizedKey(components[0], null, components[1]),
-            3 => Tag.BuildNormalizedKey(components[0], components[1], components[2]),
-            _ => null
-        };
-        return true;
-    }
 
     public static string EndpointName => nameof(ListPublishedStories);
 

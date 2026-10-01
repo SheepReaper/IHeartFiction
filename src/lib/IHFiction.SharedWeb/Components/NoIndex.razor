@@ -1,3 +1,7 @@
 <SectionContent SectionName="app-head-noindex">
-    <meta name="robots" content="noindex" />
+    <meta name="robots" content="@(Follow ? "noindex, follow" : "noindex")" />
 </SectionContent>
+
+@code {
+    [Parameter] public bool Follow { get; set; }
+}

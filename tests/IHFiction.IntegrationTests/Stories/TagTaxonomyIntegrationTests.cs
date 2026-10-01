@@ -163,6 +163,82 @@ public sealed class TagTaxonomyIntegrationTests : BaseIntegrationTest, IConfigur
     }
 
     [Fact]
+    public async Task PublicTagDiscovery_SupportsValueOnlyAndMultiTagIntersection()
+    {
+        var author = new Data.Authors.Domain.Author { Name = "Tag Discovery Author", UserId = Guid.NewGuid() };
+        var fantasyTag = Tag.CreateCanonical("genre", null, "Fantasy");
+        var kancolleTag = Tag.CreateCanonical("universe", null, "Kantai Collection");
+        var kancolleSynonym = Tag.CreateSynonym(kancolleTag, "universe", null, "Kancolle");
+        var sciFiTag = Tag.CreateCanonical("genre", null, "Sci-Fi");
+
+        var fantasyKancolleStory = new Story
+        {
+            Title = "Fantasy Kancolle",
+            Description = "A cross-genre story.",
+            Owner = author,
+            OwnerId = author.Id,
+            PublishedAt = DateTime.UtcNow
+        };
+        fantasyKancolleStory.Tags.Add(fantasyTag);
+        fantasyKancolleStory.Tags.Add(kancolleTag);
+
+        var fantasyOnlyStory = new Story
+        {
+            Title = "Fantasy Only",
+            Description = "Pure fantasy.",
+            Owner = author,
+            OwnerId = author.Id,
+            PublishedAt = DateTime.UtcNow
+        };
+        fantasyOnlyStory.Tags.Add(fantasyTag);
+
+        _context.AddRange(author, fantasyTag, kancolleTag, kancolleSynonym, sciFiTag, fantasyKancolleStory, fantasyOnlyStory);
+        await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        _context.ChangeTracker.Clear();
+
+        var paginator = new PaginationService(Options.Create(new PaginationOptions()));
+        var listStories = new ListPublishedStories(_context, paginator);
+
+        // Value-only query matching canonical tag
+        var fantasyResult = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "fantasy"),
+            TestContext.Current.CancellationToken);
+        Assert.True(fantasyResult.IsSuccess);
+        Assert.Equal(2, fantasyResult.Value!.Data.Count());
+
+        // Value-only query matching synonym tag
+        var synonymValueResult = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "kancolle"),
+            TestContext.Current.CancellationToken);
+        Assert.True(synonymValueResult.IsSuccess);
+        Assert.Single(synonymValueResult.Value!.Data);
+        Assert.Equal(fantasyKancolleStory.Id, synonymValueResult.Value!.Data.First().StoryId);
+
+        // Multi-tag intersection query (canonical + synonym)
+        var intersectionResult = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "fantasy+kancolle"),
+            TestContext.Current.CancellationToken);
+        Assert.True(intersectionResult.IsSuccess);
+        Assert.Single(intersectionResult.Value!.Data);
+        Assert.Equal(fantasyKancolleStory.Id, intersectionResult.Value!.Data.First().StoryId);
+
+        // Multi-tag intersection query (fully-qualified)
+        var fullyQualifiedIntersection = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "genre:fantasy+universe:kantaicollection"),
+            TestContext.Current.CancellationToken);
+        Assert.True(fullyQualifiedIntersection.IsSuccess);
+        Assert.Single(fullyQualifiedIntersection.Value!.Data);
+        Assert.Equal(fantasyKancolleStory.Id, fullyQualifiedIntersection.Value!.Data.First().StoryId);
+
+        // Multi-tag with no overlap
+        var noOverlap = await listStories.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "scifi+kancolle"),
+            TestContext.Current.CancellationToken);
+        Assert.True(noOverlap.IsSuccess);
+        Assert.Empty(noOverlap.Value!.Data);
+    }
+
+    [Fact]
     public async Task RenameThenBulkMerge_PreservesSpellingsAndMovesWorkRelationships()
     {
         var source = Tag.CreateCanonical("genre", null, "Sci Fi");

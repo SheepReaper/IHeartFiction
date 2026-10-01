@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Searching.Domain;
+
+using IHFiction.SharedKernel.Searching;
 
 using Sidio.Sitemap.Blazor;
 using Sidio.Sitemap.Core;
@@ -12,16 +15,26 @@ public class DynamicSitemapNodeProvider(FictionDbContext db) : ICustomSitemapNod
     public IEnumerable<SitemapNode> GetNodes()
     {
         // Newest published author
-        yield return new SitemapNode("/authors", db.Authors
+        var newestAuthor = db.Authors
             .Where(a => a.Works.Any(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))
-            .OrderBy(a => a.Id)
-            .Last().UpdatedAt);
+            .OrderByDescending(a => a.Id)
+            .FirstOrDefault();
+
+        if (newestAuthor is not null)
+        {
+            yield return new SitemapNode("/authors", newestAuthor.UpdatedAt);
+        }
 
         // Newest published story
-        yield return new SitemapNode("/stories", db.Stories
+        var newestStory = db.Stories
             .Where(s => s.PublishedAt != null)
-            .OrderBy(s => s.Id)
-            .Last().UpdatedAt);
+            .OrderByDescending(s => s.Id)
+            .FirstOrDefault();
+
+        if (newestStory is not null)
+        {
+            yield return new SitemapNode("/stories", newestStory.UpdatedAt);
+        }
             
         // Authors
         foreach (var author in db.Authors
@@ -32,6 +45,38 @@ public class DynamicSitemapNodeProvider(FictionDbContext db) : ICustomSitemapNod
             yield return new SitemapNode($"/authors/{author.Id}", author.UpdatedAt);
 
             yield return new SitemapNode($"/authors/{author.Id}/stories", author.Stories.Max(s => s.UpdatedAt));
+        }
+
+        // Active Canonical Tags
+        var activeTags = db.Tags.OfType<CanonicalTag>()
+            .Include(t => t.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))
+            .Include(t => t.Synonyms)
+                .ThenInclude(s => s.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))
+            .Where(t => t.Works.Any(w => w is Data.Stories.Domain.Story && w.PublishedAt != null)
+                     || t.Synonyms.Any(s => s.Works.Any(w => w is Data.Stories.Domain.Story && w.PublishedAt != null)))
+            .AsNoTracking()
+            .ToList();
+
+        if (activeTags.Count > 0)
+        {
+            var allTagWorks = activeTags
+                .SelectMany(tag => tag.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null)
+                    .Concat(tag.Synonyms.SelectMany(s => s.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null))))
+                .ToList();
+
+            if (allTagWorks.Count > 0)
+            {
+                yield return new SitemapNode("/tags", allTagWorks.Max(w => w.UpdatedAt));
+            }
+
+            foreach (var tag in activeTags)
+            {
+                var works = tag.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null)
+                    .Concat(tag.Synonyms.SelectMany(s => s.Works.Where(w => w is Data.Stories.Domain.Story && w.PublishedAt != null)));
+
+                var routeToken = TagRouteSpec.CreateRouteToken(tag.Id, tag.Category, tag.Subcategory, tag.Value);
+                yield return new SitemapNode(TagRouteSpec.BuildPath(routeToken), works.Max(w => w.UpdatedAt));
+            }
         }
 
         // Stories and Chapters

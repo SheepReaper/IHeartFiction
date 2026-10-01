@@ -1,0 +1,186 @@
+@using IHFiction.SharedKernel.Searching
+@using IHFiction.SharedWeb.Components.Tags
+@using IHFiction.SharedWeb.Services
+@inject TagService TagService
+@inject MetadataUrlService MetadataUrls
+@inject PersistentComponentState ApplicationState
+@implements IDisposable
+
+@page "/tags"
+
+<SocialPreviewMetadata
+    Title="Tags | I❤️Fiction"
+    Description="Browse published stories across genres, universes, characters, and themes on IHeartFiction."
+    CanonicalUrl="/tags" />
+
+<StructuredDataMetadata Schema="@TagsSchema" />
+
+<div class="section">
+    <div class="container">
+        <div class="level mb-5">
+            <div class="level-left">
+                <div>
+                    <h1 class="title">Tags</h1>
+                    <p class="subtitle">Browse stories by category and tag taxonomy.</p>
+                </div>
+            </div>
+        </div>
+
+        @if (isLoading)
+        {
+            <div class="has-text-centered my-6">
+                <span class="icon is-large">
+                    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                </span>
+                <p>Loading tags...</p>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="notification is-danger">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        }
+        else if (tags.Count > 0)
+        {
+            @foreach (var categoryGroup in TagDisplayItem.Group(tags))
+            {
+                <div @key="categoryGroup.Category" class="box mb-5">
+                    <h2 class="title is-4 is-uppercase has-text-weight-bold mb-3">@categoryGroup.Category</h2>
+                    @foreach (var section in categoryGroup.Sections)
+                    {
+                        <div @key="@(section.Subcategory ?? "default")" class="mb-4">
+                            @if (!string.IsNullOrWhiteSpace(section.Subcategory))
+                            {
+                                <h3 class="heading has-text-weight-semibold mb-2">@section.Subcategory</h3>
+                            }
+                            <div class="field is-grouped is-grouped-multiline">
+                                @foreach (var tag in section.Tags)
+                                {
+                                    <div @key="tag.RouteKey" class="control">
+                                        <div class="tags has-addons">
+                                            @if (!string.IsNullOrWhiteSpace(tag.Subcategory))
+                                            {
+                                                <span class="tag has-background-dark-bold has-text-dark-soft">@tag.Subcategory</span>
+                                            }
+                                            <a href="@TagRouteSpec.BuildPath(tag.RouteKey)" class="tag is-info">
+                                                @tag.Value
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="has-text-centered my-6">
+                <div class="content">
+                    <span class="icon is-large">
+                        <i class="fas fa-tags fa-3x"></i>
+                    </span>
+                    <h3 class="title is-4">No tags available</h3>
+                    <p>Tags will appear here as stories are published.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<TagDisplayItem> tags = [];
+    private bool isLoading = true;
+    private string? errorMessage;
+    private PersistingComponentStateSubscription persistingSubscription;
+
+    private const string StateKey = "TagsDirectory:LoadedTags";
+
+    protected override async Task OnInitializedAsync()
+    {
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistTags);
+
+        if (ApplicationState.TryTakeFromJson<List<TagDisplayItem>>(StateKey, out var persisted) && persisted is not null)
+        {
+            tags = persisted;
+            isLoading = false;
+            return;
+        }
+
+        await LoadTagsAsync();
+    }
+
+    private async Task LoadTagsAsync()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var result = await TagService.ListAsync(page: 1, pageSize: 200);
+        if (result.IsSuccess)
+        {
+            tags = result.Value.Data
+                .Where(t => t.StoryCount > 0)
+                .Select(t => new TagDisplayItem(t.Category, t.Subcategory, t.Value, t.RouteKey))
+                .ToList();
+        }
+        else
+        {
+            errorMessage = result.DomainError.Description;
+        }
+
+        isLoading = false;
+    }
+
+    private Task PersistTags()
+    {
+        if (tags.Count > 0 && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(StateKey, tags);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private object TagsSchema => new object[]
+    {
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Tags",
+                    ["item"] = ToAbsolute("/tags")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "ItemList",
+            ["@id"] = ToAbsolute("/tags#itemlist"),
+            ["name"] = "Tags",
+            ["url"] = ToAbsolute("/tags")
+        }
+    };
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
+
+    public void Dispose()
+    {
+        persistingSubscription.Dispose();
+    }
+}

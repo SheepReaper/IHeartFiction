@@ -1,6 +1,6 @@
 namespace IHFiction.SharedWeb.Components.Tags;
 
-public sealed record TagDisplayItem(string Category, string? Subcategory, string Value, string Key)
+public sealed record TagDisplayItem(string Category, string? Subcategory, string Value, string RouteKey)
 {
     public static IReadOnlyList<TagCategoryGroup> Group(IEnumerable<TagDisplayItem> tags) =>
         [.. tags

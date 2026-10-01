@@ -1,0 +1,231 @@
+@using IHFiction.SharedKernel.Searching
+@using IHFiction.SharedWeb.Components.Stories
+@using IHFiction.SharedWeb.Services
+@inject MetadataUrlService MetadataUrls
+@inject TagLandingRequestContext RequestContext
+@inject TagService TagService
+@inject PersistentComponentState ApplicationState
+@implements IDisposable
+
+@page "/tags/{TagSpec}"
+
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    CanonicalUrl="@CanonicalUrl" />
+
+@if (ShouldNoIndex)
+{
+    <NoIndex Follow="true" />
+}
+
+<StructuredDataMetadata Schema="@TagStoriesSchema" />
+
+<StoryList
+    Heading="@PageHeading"
+    TagKey="@TagSpec"
+    EmitPaginationHeadLinks="true"
+    Loaded="@OnStoriesLoaded" />
+
+@code {
+    [Parameter, EditorRequired] public string TagSpec { get; set; } = string.Empty;
+    [SupplyParameterFromQuery(Name = "page")] public int? Page { get; set; }
+    [SupplyParameterFromQuery(Name = "q")] public string? Query { get; set; }
+    [SupplyParameterFromQuery(Name = "sort")] public string? Sort { get; set; }
+    [SupplyParameterFromQuery(Name = "completion")] public string? Completion { get; set; }
+
+    private ResolveTagLandingResponse? resolutionResponse;
+    private IReadOnlyList<LinkedOfListPublishedStoriesItem>? loadedStories;
+    private string? loadedTagSpec;
+    private PersistingComponentStateSubscription persistingSubscription;
+
+    private int NormalizedPage => Page is > 0 ? Page.Value : 1;
+
+    private string CanonicalSpec => resolutionResponse?.CanonicalSpec ?? (TagRouteSpec.TryParse(TagSpec, out var tokens, out _)
+        ? TagRouteSpec.BuildCanonicalSpec(tokens.Select(t => t.RawToken))
+        : TagSpec);
+
+    private string BreadcrumbTagName
+    {
+        get
+        {
+            if (resolutionResponse?.Tags is { Count: > 0 } tags)
+            {
+                return string.Join(" + ", tags.Select(t => t.Value));
+            }
+
+            if (TagRouteSpec.TryParse(TagSpec, out var tokens, out _) && tokens.Count > 0)
+            {
+                return string.Join(" + ", tokens.Select(t => t.Value.Replace('-', ' ')));
+            }
+
+            return TagSpec;
+        }
+    }
+
+    private string FormattedFanfictionHeading
+    {
+        get
+        {
+            if (resolutionResponse?.Tags is { Count: > 0 } tags)
+            {
+                return $"{string.Join(" + ", tags.Select(t => t.Value))} Fanfiction";
+            }
+
+            if (TagRouteSpec.TryParse(TagSpec, out var tokens, out _) && tokens.Count > 0)
+            {
+                return $"{string.Join(" + ", tokens.Select(t => t.Value.Replace('-', ' ')))} Fanfiction";
+            }
+
+            return $"{TagSpec} Fanfiction";
+        }
+    }
+
+    private string PageHeading => FormattedFanfictionHeading;
+
+    private string MetadataTitle => $"{FormattedFanfictionHeading} | I❤️Fiction";
+
+    private string MetadataDescription =>
+        $"Browse published {FormattedFanfictionHeading.ToLowerInvariant()} stories across genres on IHeartFiction and start reading.";
+
+    private string CanonicalUrl => NormalizedPage <= 1
+        ? $"/tags/{CanonicalSpec}"
+        : $"/tags/{CanonicalSpec}?page={NormalizedPage}";
+
+    private bool HasFilterVariants =>
+        !string.IsNullOrWhiteSpace(Query)
+        || (!string.IsNullOrWhiteSpace(Sort) && !string.Equals(Sort, "publishedAt desc", StringComparison.OrdinalIgnoreCase))
+        || !string.IsNullOrWhiteSpace(Completion);
+
+    private bool IsMultiTag =>
+        (resolutionResponse?.Tags is { Count: > 1 })
+        || TagSpec.Contains(',', StringComparison.Ordinal)
+        || TagSpec.Contains('+', StringComparison.Ordinal);
+
+    private bool IsEmptyStoryList => loadedStories is not null && loadedStories.Count == 0;
+
+    private bool ShouldNoIndex => IsMultiTag || HasFilterVariants || IsEmptyStoryList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistResolution);
+
+        if (ApplicationState.TryTakeFromJson<ResolveTagLandingResponse>(BuildStateKey(TagSpec), out var persisted) && persisted is not null)
+        {
+            resolutionResponse = persisted;
+            loadedTagSpec = TagSpec;
+            return;
+        }
+
+        if (RequestContext.Resolution?.IsSuccess == true
+            && string.Equals(RequestContext.RequestedSpec, TagSpec, StringComparison.OrdinalIgnoreCase))
+        {
+            resolutionResponse = RequestContext.Resolution.Value;
+            loadedTagSpec = TagSpec;
+            return;
+        }
+
+        await LoadResolutionAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.Equals(loadedTagSpec, TagSpec, StringComparison.Ordinal))
+        {
+            await LoadResolutionAsync();
+        }
+    }
+
+    private async Task LoadResolutionAsync()
+    {
+        loadedTagSpec = TagSpec;
+        var result = await TagService.ResolveAsync(TagSpec);
+        if (result.IsSuccess)
+        {
+            resolutionResponse = result.Value;
+        }
+    }
+
+    private void OnStoriesLoaded(IReadOnlyList<LinkedOfListPublishedStoriesItem> stories)
+    {
+        loadedStories = stories;
+        StateHasChanged();
+    }
+
+    private Task PersistResolution()
+    {
+        if (resolutionResponse is not null && !string.IsNullOrWhiteSpace(loadedTagSpec))
+        {
+            ApplicationState.PersistAsJson(BuildStateKey(loadedTagSpec), resolutionResponse);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private static string BuildStateKey(string spec) => $"TagStories:Resolution:{spec}";
+
+    private object TagStoriesSchema
+    {
+        get
+        {
+            var breadcrumbs = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["itemListElement"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 1,
+                        ["name"] = "Home",
+                        ["item"] = ToAbsolute("/")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 2,
+                        ["name"] = "Tags",
+                        ["item"] = ToAbsolute("/tags")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 3,
+                        ["name"] = BreadcrumbTagName,
+                        ["item"] = ToAbsolute($"/tags/{CanonicalSpec}")
+                    }
+                }
+            };
+
+            var itemList = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "ItemList",
+                ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
+                ["name"] = FormattedFanfictionHeading,
+                ["url"] = ToAbsolute(CanonicalUrl)
+            };
+
+            if (loadedStories is { Count: > 0 } items)
+            {
+                itemList["itemListElement"] = items.Select((story, index) => new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = index + 1,
+                    ["name"] = story.Title,
+                    ["item"] = ToAbsolute($"/stories/{story.StoryId}")
+                }).ToArray();
+            }
+
+            return new object[] { breadcrumbs, itemList };
+        }
+    }
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
+
+    public void Dispose()
+    {
+        persistingSubscription.Dispose();
+    }
+}

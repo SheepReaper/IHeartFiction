@@ -3848,7 +3848,7 @@
             "in": "query",
             "description": "Optional normalized canonical or synonym tag key returned by GET /tags.",
             "schema": {
-              "maxLength": 152,
+              "maxLength": 300,
               "minLength": 0,
               "type": "string"
             }
@@ -4738,6 +4738,71 @@
             }
           }
         }
+      }
+    },
+    "/tags/resolve": {
+      "get": {
+        "tags": [
+          "Tag Discovery"
+        ],
+        "summary": "Resolve Tag Landing Page",
+        "description": "Resolves one to three comma-separated tag route tokens to canonical taxonomy families. Value-only, synonym, legacy plus-separated, differently ordered, and differently formatted inputs resolve to one canonical specification. Returns HTTP 400 for malformed or over-limit input, 404 for unknown tags, and 409 for ambiguous value-only tags.",
+        "operationId": "ResolveTagLanding",
+        "parameters": [
+          {
+            "name": "spec",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "maxLength": 300,
+              "minLength": 0,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolveTagLandingResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [ ]
       }
     },
     "/agent/identity/claim/confirm": {
@@ -7387,15 +7452,7 @@
       },
       "LinkedOfListTagsItem": {
         "required": [
-          "links",
-          "tagId",
-          "category",
-          "subcategory",
-          "value",
-          "createdAt",
-          "storyCount",
-          "displayFormat",
-          "normalizedKey"
+          "links"
         ],
         "type": "object",
         "properties": {
@@ -7445,6 +7502,10 @@
           "normalizedKey": {
             "type": "string",
             "description": "Stable normalized key used to filter published stories"
+          },
+          "routeKey": {
+            "type": "string",
+            "description": "Canonical ASCII-safe token used by public tag landing pages"
           }
         },
         "description": "A Response model decorated with a collection of hyperlinks under the Links property."
@@ -9228,6 +9289,71 @@
           }
         }
       },
+      "ResolvedTagItem": {
+        "required": [
+          "tagId",
+          "category",
+          "subcategory",
+          "value",
+          "normalizedKey",
+          "routeKey",
+          "familyTagIds"
+        ],
+        "type": "object",
+        "properties": {
+          "tagId": {
+            "$ref": "#/components/schemas/Ulid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "subcategory": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "normalizedKey": {
+            "type": "string"
+          },
+          "routeKey": {
+            "type": "string"
+          },
+          "familyTagIds": {
+            "type": "array"
+          }
+        }
+      },
+      "ResolveTagLandingResponse": {
+        "required": [
+          "canonicalSpec",
+          "tags",
+          "storyCount"
+        ],
+        "type": "object",
+        "properties": {
+          "canonicalSpec": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResolvedTagItem"
+            }
+          },
+          "storyCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "StoryAuthor": {
         "required": [
           "id",
@@ -9247,11 +9373,6 @@
         "description": "Represents an author associated with a story."
       },
       "StoryTag": {
-        "required": [
-          "category",
-          "subcategory",
-          "value"
-        ],
         "type": "object",
         "properties": {
           "category": {
@@ -9268,6 +9389,10 @@
           "value": {
             "type": "string",
             "description": "The actual tag value"
+          },
+          "routeKey": {
+            "type": "string",
+            "description": "Canonical ASCII-safe token used by public tag landing pages"
           }
         },
         "description": "Represents a tag associated with a story."

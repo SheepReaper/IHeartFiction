@@ -16,6 +16,7 @@ using IHFiction.SharedKernel.AiCatalog;
 using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
+using IHFiction.WebClient.Tags;
 
 using Sidio.Sitemap.Blazor;
 
@@ -74,6 +75,7 @@ internal static class MiddlewarePipelineExtensions
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
         app.UseHttpsRedirection();
         app.UseRouting();
+        app.UseMiddleware<TagCanonicalizationMiddleware>();
         app.UseMiddleware<MarkdownResponseMiddleware>();
         app.UseMiddleware<HomepageLinkHeaderMiddleware>();
 

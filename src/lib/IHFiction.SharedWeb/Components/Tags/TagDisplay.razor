@@ -1,3 +1,5 @@
+@using IHFiction.SharedKernel.Searching
+
 @foreach (var category in TagDisplayItem.Group(Items))
 {
     <section class="mb-3" aria-label="@($"{category.Category} tags")">
@@ -5,19 +7,23 @@
         <div class="field is-grouped is-grouped-multiline">
             @foreach (var tag in category.Sections.SelectMany(section => section.Tags))
             {
-                <div @key="tag.Key" class="control">
+                <div @key="tag.RouteKey" class="control">
                     <div class="tags has-addons">
                         @if (!string.IsNullOrWhiteSpace(tag.Subcategory))
                         {
                             <span class="tag has-background-dark-bold has-text-dark-soft">@tag.Subcategory</span>
                         }
-                        <span class="tag is-info">
-                            @tag.Value
-                            @if (Removable)
-                            {
-                                <button class="delete is-small" type="button" aria-label="Remove @tag.Key" @onclick="() => Remove.InvokeAsync(tag.Key)"></button>
-                            }
-                        </span>
+                        @if (Removable)
+                        {
+                            <span class="tag is-info">
+                                @tag.Value
+                                <button class="delete is-small" type="button" aria-label="Remove @tag.RouteKey" @onclick="() => Remove.InvokeAsync(tag.RouteKey)"></button>
+                            </span>
+                        }
+                        else
+                        {
+                            <a href="@TagRouteSpec.BuildPath(tag.RouteKey)" class="tag is-info">@tag.Value</a>
+                        }
                     </div>
                 </div>
             }

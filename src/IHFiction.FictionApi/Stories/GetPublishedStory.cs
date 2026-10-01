@@ -9,6 +9,7 @@ using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
+using IHFiction.SharedKernel.Searching;
 
 namespace IHFiction.FictionApi.Stories;
 
@@ -33,7 +34,14 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
     /// <param name="Category">The category of the tag (e.g., "genre", "theme")</param>
     /// <param name="Subcategory">Optional subcategory for more specific classification</param>
     /// <param name="Value">The actual tag value</param>
-    internal sealed record StoryTag(string Category, string? Subcategory, string Value);
+    /// <param name="RouteKey">Canonical ASCII-safe token used by public tag landing pages</param>
+    internal sealed record StoryTag(string Category, string? Subcategory, string Value, string RouteKey)
+    {
+        public StoryTag(string category, string? subcategory, string value)
+            : this(category, subcategory, value, string.IsNullOrWhiteSpace(subcategory)
+                ? $"{category}:{value}"
+                : $"{category}:{subcategory}:{value}") { }
+    }
 
     /// <summary>
     /// Represents a book associated with a story.
@@ -153,7 +161,11 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
                 .OrderBy(t => t.Category)
                 .ThenBy(t => t.Subcategory)
                 .ThenBy(t => t.Value)
-                .Select(t => new StoryTag(t.Category, t.Subcategory, t.Value)),
+                .Select(t => new StoryTag(
+                    t.Category,
+                    t.Subcategory,
+                    t.Value,
+                    TagRouteSpec.CreateRouteToken(t.Id, t.Category, t.Subcategory, t.Value))),
             story.Books
                 .Where(b => b.IsPublished)
                 .OrderBy(b => b.Order)

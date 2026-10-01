@@ -5,12 +5,13 @@ using Microsoft.Extensions.Options;
 
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
+using IHFiction.Data.Searching.Domain;
+using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.FictionApi.Stories;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
-using IHFiction.Data.Stories.Domain;
 
 namespace IHFiction.UnitTests.Stories;
 
@@ -145,9 +146,11 @@ public class ListPublishedStoriesTests
     }
 
     [Theory]
-    [InlineData("universe")]
+    [InlineData(":::")]
     [InlineData("universe::kancolle")]
     [InlineData("universe:kancolle:extra:segment")]
+    [InlineData("genre:")]
+    [InlineData(":fantasy")]
     public async Task HandleAsync_MalformedTagKey_ReturnsActionableDomainError(string tagKey)
     {
         await using var context = CreateContext();
@@ -162,6 +165,126 @@ public class ListPublishedStoriesTests
         Assert.True(result.IsFailure);
         Assert.Equal("ListPublishedStories.InvalidTagKey", result.DomainError.Code);
         Assert.Contains("category:value", result.DomainError.Description, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task HandleAsync_TagFilter_FullyQualifiedTag_ReturnsOnlyMatchingStories()
+    {
+        await using var context = CreateContext();
+        var author = new Author { Id = Ulid.NewUlid(), UserId = Guid.NewGuid(), Name = "Author" };
+        var fantasyTag = Tag.CreateCanonical("genre", null, "fantasy");
+        var sciFiTag = Tag.CreateCanonical("genre", null, "sci-fi");
+
+        var fantasyStory = CreatePublishedStory(author, "Fantasy Tale", StoryCompletionStatus.Complete);
+        fantasyStory.Tags.Add(fantasyTag);
+
+        var sciFiStory = CreatePublishedStory(author, "Sci-Fi Tale", StoryCompletionStatus.Complete);
+        sciFiStory.Tags.Add(sciFiTag);
+
+        context.AddRange(author, fantasyTag, sciFiTag, fantasyStory, sciFiStory);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "genre:fantasy"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Data);
+        Assert.Equal("Fantasy Tale", item.Title);
+    }
+
+    [Fact]
+    public async Task HandleAsync_TagFilter_ValueOnlyTag_ReturnsOnlyMatchingStories()
+    {
+        await using var context = CreateContext();
+        var author = new Author { Id = Ulid.NewUlid(), UserId = Guid.NewGuid(), Name = "Author" };
+        var fantasyTag = Tag.CreateCanonical("genre", null, "fantasy");
+        var sciFiTag = Tag.CreateCanonical("genre", null, "sci-fi");
+
+        var fantasyStory = CreatePublishedStory(author, "Fantasy Tale", StoryCompletionStatus.Complete);
+        fantasyStory.Tags.Add(fantasyTag);
+
+        var sciFiStory = CreatePublishedStory(author, "Sci-Fi Tale", StoryCompletionStatus.Complete);
+        sciFiStory.Tags.Add(sciFiTag);
+
+        context.AddRange(author, fantasyTag, sciFiTag, fantasyStory, sciFiStory);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "fantasy"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Data);
+        Assert.Equal("Fantasy Tale", item.Title);
+    }
+
+    [Fact]
+    public async Task HandleAsync_TagFilter_MultiTagIntersection_ReturnsOnlyStoriesMatchingAllTags()
+    {
+        await using var context = CreateContext();
+        var author = new Author { Id = Ulid.NewUlid(), UserId = Guid.NewGuid(), Name = "Author" };
+        var fantasyTag = Tag.CreateCanonical("genre", null, "fantasy");
+        var romanceTag = Tag.CreateCanonical("genre", null, "romance");
+        var actionTag = Tag.CreateCanonical("genre", null, "action");
+
+        var fantasyRomanceStory = CreatePublishedStory(author, "Fantasy Romance", StoryCompletionStatus.Complete);
+        fantasyRomanceStory.Tags.Add(fantasyTag);
+        fantasyRomanceStory.Tags.Add(romanceTag);
+
+        var fantasyOnlyStory = CreatePublishedStory(author, "Fantasy Only", StoryCompletionStatus.Complete);
+        fantasyOnlyStory.Tags.Add(fantasyTag);
+
+        var romanceActionStory = CreatePublishedStory(author, "Romance Action", StoryCompletionStatus.Complete);
+        romanceActionStory.Tags.Add(romanceTag);
+        romanceActionStory.Tags.Add(actionTag);
+
+        context.AddRange(author, fantasyTag, romanceTag, actionTag, fantasyRomanceStory, fantasyOnlyStory, romanceActionStory);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "fantasy+romance"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value.Data);
+        Assert.Equal("Fantasy Romance", item.Title);
+    }
+
+    [Fact]
+    public async Task HandleAsync_TagFilter_NonExistentTag_ReturnsEmptyResult()
+    {
+        await using var context = CreateContext();
+        var author = new Author { Id = Ulid.NewUlid(), UserId = Guid.NewGuid(), Name = "Author" };
+        var fantasyTag = Tag.CreateCanonical("genre", null, "fantasy");
+        var story = CreatePublishedStory(author, "Fantasy Story", StoryCompletionStatus.Complete);
+        story.Tags.Add(fantasyTag);
+
+        context.AddRange(author, fantasyTag, story);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var useCase = new ListPublishedStories(
+            context,
+            new PaginationService(Options.Create(new PaginationOptions())));
+
+        var result = await useCase.HandleAsync(
+            new ListPublishedStories.ListPublishedStoriesQuery(TagKey: "genre:nonexistent"),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value.Data);
     }
 
     [Theory]

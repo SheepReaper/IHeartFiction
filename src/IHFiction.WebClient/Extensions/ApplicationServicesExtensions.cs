@@ -30,6 +30,7 @@ internal static class ApplicationServicesExtensions
         builder.Services.AddScoped<StoryEditorService>();
         builder.Services.AddScoped<MetadataUrlService>();
         builder.Services.AddScoped<LoaderService>();
+        builder.Services.AddScoped<TagLandingRequestContext>();
 
         // API HTTP Client & handlers
         builder.Services.AddTransient<AuthenticationHandler>();
@@ -47,6 +48,7 @@ internal static class ApplicationServicesExtensions
         builder.Services.AddTransient<ChapterService>();
         builder.Services.AddTransient<NotificationService>();
         builder.Services.AddTransient<StoryService>();
+        builder.Services.AddTransient<TagService>();
         builder.Services.AddTransient<WorkService>();
         builder.Services.AddTransient<IPublishedWorkReader, WorkService>();
         builder.Services.AddTransient<MarkdownReaderService>();

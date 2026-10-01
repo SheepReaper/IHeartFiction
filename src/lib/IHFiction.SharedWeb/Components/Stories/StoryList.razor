@@ -29,7 +29,7 @@
         <div class="level">
             <div class="level-left">
                 <div class="level-item">
-                    <h1 class="title">Stories</h1>
+                    <h1 class="title">@Heading</h1>
                 </div>
             </div>
             <div class="level-right">
@@ -156,6 +156,7 @@
 
 @code {
     [Parameter] public string? AuthorId { get; set; } = null;
+    [Parameter] public string? TagKey { get; set; } = null;
     [Parameter]
     [SupplyParameterFromQuery(Name = "page")]
     public int? Page { get; set; }
@@ -174,6 +175,8 @@
 
     [Parameter] public bool EmitPaginationHeadLinks { get; set; } = true;
     [Parameter] public string MetadataSectionName { get; set; } = "social-preview-extra-head";
+    [Parameter] public string Heading { get; set; } = "Stories";
+    [Parameter] public EventCallback<IReadOnlyList<LinkedOfListPublishedStoriesItem>> Loaded { get; set; }
 
     [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 
@@ -194,6 +197,7 @@
     private string? _loadedSort;
     private string? _loadedAuthorId;
     private string? _loadedCompletion;
+    private string? _loadedTagKey;
     private PersistingComponentStateSubscription _persistingSubscription;
     private List<LinkedOfListPublishedStoriesItem> displayedStories = [];
     private string? loadMoreUrl;
@@ -218,17 +222,18 @@
             && string.Equals(searchQuery, _loadedSearch, StringComparison.Ordinal)
             && string.Equals(sortBy, _loadedSort, StringComparison.Ordinal)
             && string.Equals(AuthorId, _loadedAuthorId, StringComparison.Ordinal)
-            && string.Equals(completionFilter, _loadedCompletion, StringComparison.Ordinal))
+            && string.Equals(completionFilter, _loadedCompletion, StringComparison.Ordinal)
+            && string.Equals(TagKey, _loadedTagKey, StringComparison.Ordinal))
         {
             return;
         }
 
         if (ApplicationState.TryTakeFromJson<LinkedPagedCollectionOfListPublishedStoriesItem>(
-            BuildStateKey(currentPage, searchQuery, sortBy, AuthorId, completionFilter),
+            BuildStateKey(currentPage, searchQuery, sortBy, AuthorId, completionFilter, TagKey),
             out var persistedStories)
             && persistedStories is not null)
         {
-            ApplyStories(persistedStories);
+            await ApplyStoriesAsync(persistedStories);
             MarkLoaded();
             return;
         }
@@ -244,17 +249,18 @@
         errorMessage = null;
 
         var result = await StoryService.ListPublishedStoriesAsync(
-        page: currentPage,
-        pageSize: pageSize,
-        search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
-        sort: sortBy,
-        authorId: AuthorId,
-        completionStatus: ParseCompletionStatus(completionFilter),
-        cancellationToken: CancellationToken);
+            page: currentPage,
+            pageSize: pageSize,
+            search: string.IsNullOrWhiteSpace(searchQuery) ? null : searchQuery,
+            sort: sortBy,
+            authorId: AuthorId,
+            completionStatus: ParseCompletionStatus(completionFilter),
+            tagKey: TagKey,
+            cancellationToken: CancellationToken);
 
         if (result.IsSuccess)
         {
-            ApplyStories(result.Value);
+            await ApplyStoriesAsync(result.Value);
         }
         else
         {
@@ -267,7 +273,7 @@
         StateHasChanged();
     }
 
-    private void ApplyStories(LinkedPagedCollectionOfListPublishedStoriesItem loadedStories)
+    private async Task ApplyStoriesAsync(LinkedPagedCollectionOfListPublishedStoriesItem loadedStories)
     {
         stories = loadedStories;
         displayedStories = stories.Data.ToList();
@@ -275,6 +281,7 @@
         errorMessage = null;
         isLoading = false;
         isLoadingMore = false;
+        await Loaded.InvokeAsync(displayedStories);
     }
 
     private Task PersistLoadedStories()
@@ -282,7 +289,7 @@
         if (stories is not null && _loadedPage > 0 && string.IsNullOrEmpty(errorMessage))
         {
             ApplicationState.PersistAsJson(
-                BuildStateKey(_loadedPage, _loadedSearch, _loadedSort, _loadedAuthorId, _loadedCompletion),
+                BuildStateKey(_loadedPage, _loadedSearch, _loadedSort, _loadedAuthorId, _loadedCompletion, _loadedTagKey),
                 stories);
         }
 
@@ -296,7 +303,9 @@
         _loadedSort = sortBy;
         _loadedAuthorId = AuthorId;
         _loadedCompletion = completionFilter;
+        _loadedTagKey = TagKey;
     }
+
 
     private void OnSortChanged()
     {
@@ -337,6 +346,7 @@
             sort: sortBy,
             authorId: AuthorId,
             completionStatus: ParseCompletionStatus(completionFilter),
+            tagKey: TagKey,
             cancellationToken: CancellationToken);
 
         if (result.IsSuccess)
@@ -501,8 +511,8 @@
     private static string? ParseCompletionStatus(string completion)
         => string.IsNullOrWhiteSpace(completion) ? null : completion;
 
-    private static string BuildStateKey(int page, string? search, string? sort, string? authorId, string? completion)
-        => $"StoryList:{page}:{search ?? string.Empty}:{sort ?? string.Empty}:{authorId ?? string.Empty}:{completion ?? string.Empty}";
+    private static string BuildStateKey(int page, string? search, string? sort, string? authorId, string? completion, string? tagKey)
+        => $"StoryList:{page}:{search ?? string.Empty}:{sort ?? string.Empty}:{authorId ?? string.Empty}:{completion ?? string.Empty}:{tagKey ?? string.Empty}";
 
     protected override async ValueTask DisposeAsyncCore()
     {
