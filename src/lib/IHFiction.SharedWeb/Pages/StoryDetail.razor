@@ -291,11 +291,14 @@ else if (story != null)
                 ["@context"] = "https://schema.org",
                 ["@type"] = "CreativeWork",
                 ["@id"] = storyUrl,
+                ["mainEntityOfPage"] = storyUrl,
                 ["name"] = story.Title,
                 ["headline"] = story.Title,
                 ["description"] = string.IsNullOrWhiteSpace(story.Description) ? null : story.Description,
+                ["creativeWorkStatus"] = string.IsNullOrWhiteSpace(story.CompletionStatus) ? null : story.CompletionStatus,
                 ["url"] = storyUrl,
                 ["image"] = story.HasCoverImage ? new[] { ToAbsolute($"/stories/{story.Id}/cover") } : null,
+                ["thumbnailUrl"] = story.HasCoverImage ? ToAbsolute($"/stories/{story.Id}/cover") : null,
                 ["author"] = story.Authors.Select(author => new Dictionary<string, object?>
                 {
                     ["@type"] = "Person",
@@ -308,9 +311,130 @@ else if (story != null)
                     ["name"] = "IHeartFiction",
                     ["url"] = ToAbsolute("/")
                 },
+                ["interactionStatistic"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "InteractionCounter",
+                    ["interactionType"] = "https://schema.org/ReadAction",
+                    ["userInteractionCount"] = story.ReadCount
+                },
+                ["dateCreated"] = story.CreatedAt.ToString("O"),
                 ["datePublished"] = story.PublishedAt?.ToString("O"),
                 ["dateModified"] = story.UpdatedAt.ToString("O")
             };
+
+            if (story.Chapters is { } storyChapters && storyChapters.Any())
+            {
+                var chapterParts = storyChapters
+                    .OrderBy(c => c.Order)
+                    .Select(c => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "Chapter",
+                        ["@id"] = ToAbsolute($"/read/{c.Id}"),
+                        ["name"] = c.Title,
+                        ["position"] = c.Order,
+                        ["url"] = ToAbsolute($"/read/{c.Id}")
+                    })
+                    .ToList();
+
+                if (chapterParts.Count > 0)
+                {
+                    storySchema["hasPart"] = chapterParts;
+                }
+            }
+            else if (story.Books is { } storyBooks && storyBooks.Any())
+            {
+                var bookParts = storyBooks
+                    .OrderBy(b => b.Order)
+                    .Select(b => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "PublicationVolume",
+                        ["@id"] = ToAbsolute($"/read/{b.Id}"),
+                        ["name"] = b.Title,
+                        ["position"] = b.Order,
+                        ["url"] = ToAbsolute($"/read/{b.Id}"),
+                        ["hasPart"] = b.Chapters?
+                            .OrderBy(c => c.Order)
+                            .Select(c => new Dictionary<string, object?>
+                            {
+                                ["@type"] = "Chapter",
+                                ["@id"] = ToAbsolute($"/read/{c.Id}"),
+                                ["name"] = c.Title,
+                                ["position"] = c.Order,
+                                ["url"] = ToAbsolute($"/read/{c.Id}")
+                            })
+                            .ToList()
+                    })
+                    .ToList();
+
+                if (bookParts.Count > 0)
+                {
+                    storySchema["hasPart"] = bookParts;
+                }
+            }
+
+            if (story.Tags is { } tags && tags.Any())
+            {
+                var genres = tags
+                    .Where(tag => string.Equals(tag.Category, "genre", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => tag.Value)
+                    .ToList();
+
+                if (genres.Count > 0)
+                {
+                    storySchema["genre"] = genres;
+                }
+
+                var fandoms = tags
+                    .Where(tag => string.Equals(tag.Category, "fandom", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "CreativeWork",
+                        ["name"] = tag.Value,
+                        ["url"] = ToAbsolute($"/tags/{tag.RouteKey}")
+                    })
+                    .ToList();
+
+                if (fandoms.Count > 0)
+                {
+                    storySchema["isBasedOn"] = fandoms;
+                }
+
+                var languageTag = tags
+                    .FirstOrDefault(tag => string.Equals(tag.Category, "language", StringComparison.OrdinalIgnoreCase));
+
+                if (languageTag is not null && !string.IsNullOrWhiteSpace(languageTag.Value))
+                {
+                    storySchema["inLanguage"] = languageTag.Value;
+                }
+
+                var contentWarnings = tags
+                    .Where(tag => string.Equals(tag.Category, "content-warning", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => tag.Value)
+                    .ToList();
+
+                if (contentWarnings.Count > 0)
+                {
+                    storySchema["contentRating"] = contentWarnings;
+                }
+
+                var keywords = tags
+                    .Where(tag => !string.Equals(tag.Category, "genre", StringComparison.OrdinalIgnoreCase)
+                               && !string.Equals(tag.Category, "fandom", StringComparison.OrdinalIgnoreCase)
+                               && !string.Equals(tag.Category, "language", StringComparison.OrdinalIgnoreCase)
+                               && !string.Equals(tag.Category, "content-warning", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "DefinedTerm",
+                        ["name"] = tag.Value,
+                        ["url"] = ToAbsolute($"/tags/{tag.RouteKey}")
+                    })
+                    .ToList();
+
+                if (keywords.Count > 0)
+                {
+                    storySchema["keywords"] = keywords;
+                }
+            }
 
             var breadcrumbSchema = new Dictionary<string, object?>
             {

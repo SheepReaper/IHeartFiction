@@ -136,16 +136,29 @@
                 ["url"] = ToAbsolute($"/authors/{author.Id}")
             }).ToList();
 
+            var currentPosition = meta.ReadableChildren?
+                .FirstOrDefault(c => string.Equals(c.Id.ToString(), WorkId, StringComparison.OrdinalIgnoreCase))?
+                .Order;
+
+            var workType = meta.WorkType switch
+            {
+                "Chapter" => "Chapter",
+                "Book" => "PublicationVolume",
+                _ => "CreativeWork"
+            };
+
             var workSchema = new Dictionary<string, object?>
             {
                 ["@context"] = "https://schema.org",
-                ["@type"] = meta.WorkType == "Chapter" ? "Chapter" : "CreativeWork",
+                ["@type"] = workType,
                 ["@id"] = workUrl,
+                ["mainEntityOfPage"] = workUrl,
                 ["name"] = meta.Title,
                 ["headline"] = meta.Title,
                 ["description"] = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
                 ["url"] = workUrl,
                 ["image"] = string.IsNullOrWhiteSpace(meta.CoverImageUrl) ? null : new[] { ToAbsolute(meta.CoverImageUrl) },
+                ["thumbnailUrl"] = string.IsNullOrWhiteSpace(meta.CoverImageUrl) ? null : ToAbsolute(meta.CoverImageUrl),
                 ["author"] = authorSchemas,
                 ["publisher"] = new Dictionary<string, object?>
                 {
@@ -153,11 +166,24 @@
                     ["name"] = "IHeartFiction",
                     ["url"] = ToAbsolute("/")
                 },
+                ["interactionStatistic"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "InteractionCounter",
+                    ["interactionType"] = "https://schema.org/ReadAction",
+                    ["userInteractionCount"] = meta.ReadCount
+                },
                 ["datePublished"] = meta.PublishedAt?.ToString("O"),
                 ["dateModified"] = meta.UpdatedAt.ToString("O")
             };
 
-            if (meta.WorkType == "Chapter" && storyUrl is not null)
+            if (meta.WorkType == "Chapter" && currentPosition is not null)
+            {
+                workSchema["position"] = currentPosition;
+            }
+
+            var hasParentStory = storyUrl is not null && meta.WorkType is "Chapter" or "Book" && meta.StoryId != meta.Id;
+
+            if (hasParentStory)
             {
                 workSchema["isPartOf"] = new Dictionary<string, object?>
                 {
@@ -186,7 +212,7 @@
                 }
             };
 
-            if (storyUrl is not null && meta.WorkType == "Chapter")
+            if (hasParentStory)
             {
                 breadcrumbItems.Add(new()
                 {
