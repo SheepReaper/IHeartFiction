@@ -43,6 +43,7 @@ else if (story != null)
 {
     <div class="section">
         <div class="container">
+            <AppBreadcrumbs Items="@BreadcrumbItems" />
             <div class="columns">
                 <div class="column is-two-thirds">
                     @if (story.HasCoverImage)
@@ -275,6 +276,13 @@ else if (story != null)
     private string? CoverImageUrl => story?.HasCoverImage == true
         ? $"/stories/{story.Id}/cover"
         : null;
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems => story is null ? [] :
+    [
+        new("Home", "/"),
+        new("Stories", "/stories"),
+        new(story.Title, null, IsActive: true)
+    ];
 
     private IEnumerable<object> StructuredDataSchemas
     {

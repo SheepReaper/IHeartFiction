@@ -25,6 +25,10 @@
 
 <div class="section">
     <div class="container">
+        @if (Breadcrumbs is { Count: > 0 })
+        {
+            <AppBreadcrumbs Items="@Breadcrumbs" />
+        }
 
         <div class="level">
             <div class="level-left">
@@ -176,6 +180,7 @@
     [Parameter] public bool EmitPaginationHeadLinks { get; set; } = true;
     [Parameter] public string MetadataSectionName { get; set; } = "social-preview-extra-head";
     [Parameter] public string Heading { get; set; } = "Stories";
+    [Parameter] public IReadOnlyList<BreadcrumbItem>? Breadcrumbs { get; set; }
     [Parameter] public EventCallback<IReadOnlyList<LinkedOfListPublishedStoriesItem>> Loaded { get; set; }
 
     [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }

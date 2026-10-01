@@ -1,0 +1,29 @@
+@if (Items is { Count: > 0 })
+{
+    <nav class="@NavClass" aria-label="breadcrumbs">
+        <ul>
+            @foreach (var item in Items)
+            {
+                <li class="@(item.IsActive ? "is-active" : null)">
+                    @if (item.IsActive)
+                    {
+                        <a href="@(item.Href ?? "#")" aria-current="page">@item.Text</a>
+                    }
+                    else
+                    {
+                        <a href="@item.Href">@item.Text</a>
+                    }
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<BreadcrumbItem> Items { get; set; } = [];
+    [Parameter] public string? Class { get; set; }
+
+    private string NavClass => string.IsNullOrWhiteSpace(Class)
+        ? "breadcrumb has-succeeds-separator mb-4"
+        : $"breadcrumb has-succeeds-separator mb-4 {Class}";
+}

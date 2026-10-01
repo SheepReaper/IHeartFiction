@@ -8,6 +8,11 @@
 
 <div class="section">
     <div class="container">
+        @if (Breadcrumbs is { Count: > 0 })
+        {
+            <AppBreadcrumbs Items="@Breadcrumbs" />
+        }
+
         @if (EmitPaginationHeadLinks)
         {
             <SectionContent SectionName="@MetadataSectionName">
@@ -134,6 +139,7 @@
 
     [Parameter] public bool EmitPaginationHeadLinks { get; set; } = true;
     [Parameter] public string MetadataSectionName { get; set; } = "social-preview-extra-head";
+    [Parameter] public IReadOnlyList<BreadcrumbItem>? Breadcrumbs { get; set; }
     [CascadingParameter(Name = "IsCompact")] public bool IsCompact { get; set; }
 
     private static readonly string[] AllowedSorts = ["name", "createdAt", "updatedAt"];

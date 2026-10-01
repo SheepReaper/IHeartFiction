@@ -17,6 +17,8 @@
 
 <div class="section">
     <div class="container">
+        <AppBreadcrumbs Items="@BreadcrumbItems" />
+
         <div class="level mb-5">
             <div class="level-left">
                 <div>
@@ -142,6 +144,12 @@
 
         return Task.CompletedTask;
     }
+
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("Tags", null, IsActive: true)
+    ];
 
     private object TagsSchema => new object[]
     {

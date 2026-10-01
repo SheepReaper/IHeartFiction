@@ -12,7 +12,8 @@
 
 <StoryList
     AuthorId="@null"
-    EmitPaginationHeadLinks="true" />
+    EmitPaginationHeadLinks="true"
+    Breadcrumbs="@BreadcrumbItems" />
 
 @code {
     [SupplyParameterFromQuery(Name = "page")]
@@ -24,13 +25,44 @@
         ? "/stories"
         : $"/stories?page={NormalizedPage}";
 
-    private object StoriesListSchema => new Dictionary<string, object?>
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("Stories", null, IsActive: true)
+    ];
+
+    private object StoriesListSchema => new object[]
     {
-        ["@context"] = "https://schema.org",
-        ["@type"] = "ItemList",
-        ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
-        ["name"] = "Stories",
-        ["url"] = ToAbsolute(CanonicalUrl)
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Stories",
+                    ["item"] = ToAbsolute("/stories")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "ItemList",
+            ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
+            ["name"] = "Stories",
+            ["url"] = ToAbsolute(CanonicalUrl)
+        }
     };
 
     private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);

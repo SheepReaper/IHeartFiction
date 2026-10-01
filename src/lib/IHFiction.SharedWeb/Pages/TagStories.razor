@@ -25,6 +25,7 @@
     Heading="@PageHeading"
     TagKey="@TagSpec"
     EmitPaginationHeadLinks="true"
+    Breadcrumbs="@BreadcrumbItems"
     Loaded="@OnStoriesLoaded" />
 
 @code {
@@ -44,6 +45,13 @@
     private string CanonicalSpec => resolutionResponse?.CanonicalSpec ?? (TagRouteSpec.TryParse(TagSpec, out var tokens, out _)
         ? TagRouteSpec.BuildCanonicalSpec(tokens.Select(t => t.RawToken))
         : TagSpec);
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems =>
+    [
+        new("Home", "/"),
+        new("Tags", "/tags"),
+        new(BreadcrumbTagName, null, IsActive: true)
+    ];
 
     private string BreadcrumbTagName
     {

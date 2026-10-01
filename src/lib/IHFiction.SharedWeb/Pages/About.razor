@@ -8,10 +8,14 @@
 
 @attribute [Sitemap(ChangeFrequency.Yearly, 0.5, "2025-10-02")]
 @inject AppVersion appVersion
+@inject MetadataUrlService MetadataUrls
 
 <SocialPreviewMetadata
     Title="About I❤️Fiction"
-    Description="IHeartFiction is a reading and publishing platform for serialized fiction. Discover authors, read stories, and support creators you love." />
+    Description="IHeartFiction is a reading and publishing platform for serialized fiction. Discover authors, read stories, and support creators you love."
+    CanonicalUrl="/about" />
+
+<StructuredDataMetadata Schemas="@AboutSchemas" />
 
 <section class="hero is-light">
     <div class="hero-body">
@@ -25,6 +29,7 @@
 
 <section class="section">
     <div class="container content">
+        <AppBreadcrumbs Items="@BreadcrumbItems" />
         <div class="box">
             <h3 class="title is-4">What is this site?</h3>
             <p>
@@ -237,4 +242,65 @@
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexStringLower(hash);
     }
+
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("About", null, IsActive: true)
+    ];
+
+    private IEnumerable<object> AboutSchemas =>
+    [
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["@id"] = ToAbsolute("/about#breadcrumb"),
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "About",
+                    ["item"] = ToAbsolute("/about")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "AboutPage",
+            ["@id"] = ToAbsolute("/about"),
+            ["name"] = "About IHeartFiction",
+            ["description"] = "IHeartFiction is a reading and publishing platform for serialized fiction.",
+            ["url"] = ToAbsolute("/about"),
+            ["mainEntity"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "Organization",
+                ["name"] = "IHeartFiction",
+                ["url"] = ToAbsolute("/"),
+                ["founder"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Person",
+                    ["name"] = "Bryan Gonzalez",
+                    ["alternateName"] = "SheepReaper",
+                    ["sameAs"] = new[]
+                    {
+                        "https://github.com/SheepReaper",
+                        "https://www.linkedin.com/in/bryan-gonzalez-2b86ba67/"
+                    }
+                }
+            }
+        }
+    ];
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
 }

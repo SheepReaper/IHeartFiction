@@ -1,4 +1,4 @@
-﻿@using Markdig
+@using Markdig
 @using IHFiction.SharedWeb.Components.Stories
 @page "/authors/{authorId}"
 @inject AuthorService AuthorService
@@ -41,6 +41,7 @@ else if (author != null)
 {
     <div class="section">
         <div class="container">
+            <AppBreadcrumbs Items="@BreadcrumbItems" />
             <div class="columns">
                 <div class="column is-one-quarter" style="min-width: 20rem;">
                     <div class="card">
@@ -170,6 +171,13 @@ else if (author != null)
     };
 
     private string? MetadataImageUrl => author?.AvatarUrl;
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems => author is null ? [] :
+    [
+        new("Home", "/"),
+        new("Authors", "/authors"),
+        new(author.Name, null, IsActive: true)
+    ];
 
     private IEnumerable<object> StructuredDataSchemas
     {

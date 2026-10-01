@@ -3,6 +3,7 @@
 @using IHFiction.SharedKernel.Infrastructure
 @inject PersistentComponentState ApplicationState
 @inject AuthorService AuthorService
+@inject MetadataUrlService MetadataUrls
 @implements IDisposable
 
 @page "/authors/{authorId}/stories"
@@ -12,8 +13,11 @@
     Description="@MetadataDescription"
     CanonicalUrl="@CanonicalUrl" />
 
+<StructuredDataMetadata Schemas="@StructuredDataSchemas" />
+
 <StoryList
-    AuthorId="@AuthorId" />
+    AuthorId="@AuthorId"
+    Breadcrumbs="@BreadcrumbItems" />
 
 @code {
     [Parameter, EditorRequired] public string AuthorId { get; set; }
@@ -37,6 +41,75 @@
     private string MetadataDescription => author?.Name != null
         ? $"Read stories by {author.Name}. Browse published works and jump directly into the latest chapters."
         : "Browse published stories from this author on IHeartFiction and jump directly into the latest chapters.";
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems =>
+    [
+        new("Home", "/"),
+        new("Authors", "/authors"),
+        new(author?.Name ?? "Author", $"/authors/{AuthorId}"),
+        new("Stories", null, IsActive: true)
+    ];
+
+    private IEnumerable<object> StructuredDataSchemas
+    {
+        get
+        {
+            var authorUrl = ToAbsolute($"/authors/{AuthorId}");
+            var storiesUrl = ToAbsolute(CanonicalUrl);
+            var authorName = author?.Name ?? "Author";
+
+            var breadcrumbs = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["@id"] = $"{storiesUrl}#breadcrumb",
+                ["itemListElement"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 1,
+                        ["name"] = "Home",
+                        ["item"] = ToAbsolute("/")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 2,
+                        ["name"] = "Authors",
+                        ["item"] = ToAbsolute("/authors")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 3,
+                        ["name"] = authorName,
+                        ["item"] = authorUrl
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 4,
+                        ["name"] = "Stories",
+                        ["item"] = storiesUrl
+                    }
+                }
+            };
+
+            var itemList = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "ItemList",
+                ["@id"] = $"{storiesUrl}#itemlist",
+                ["name"] = $"Stories by {authorName}",
+                ["url"] = storiesUrl
+            };
+
+            return [breadcrumbs, itemList];
+        }
+    }
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
 
     protected override void OnInitialized()
     {

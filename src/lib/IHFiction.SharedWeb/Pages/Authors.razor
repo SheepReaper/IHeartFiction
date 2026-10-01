@@ -4,7 +4,8 @@
 @page "/authors"
 
 <AuthorList
-    EmitPaginationHeadLinks="true" />
+    EmitPaginationHeadLinks="true"
+    Breadcrumbs="@BreadcrumbItems" />
 
 <SocialPreviewMetadata
     Title="Authors | I❤️Fiction"
@@ -23,13 +24,44 @@
         ? "/authors"
         : $"/authors?page={NormalizedPage}";
 
-    private object AuthorsListSchema => new Dictionary<string, object?>
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("Authors", null, IsActive: true)
+    ];
+
+    private object AuthorsListSchema => new object[]
     {
-        ["@context"] = "https://schema.org",
-        ["@type"] = "ItemList",
-        ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
-        ["name"] = "Authors",
-        ["url"] = ToAbsolute(CanonicalUrl)
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Authors",
+                    ["item"] = ToAbsolute("/authors")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "ItemList",
+            ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
+            ["name"] = "Authors",
+            ["url"] = ToAbsolute(CanonicalUrl)
+        }
     };
 
     private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);

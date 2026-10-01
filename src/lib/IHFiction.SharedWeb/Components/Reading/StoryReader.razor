@@ -45,6 +45,7 @@ else if (Meta is not null)
 
     <div class="section" @ref="readerElement">
         <div class="container">
+            <AppBreadcrumbs Items="@BreadcrumbItems" />
             <div class="level ihf-reader-header">
                 <div class="level-left">
                     <div class="level-item">
@@ -397,6 +398,32 @@ else if (Meta is not null)
     }
 
     private static string ReadHref(string workId) => $"/read/{workId}";
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems
+    {
+        get
+        {
+            if (Meta is null) return [];
+
+            if (Meta.WorkType is "Chapter" or "Book" && Meta.StoryId is not null && Meta.StoryId != Meta.Id)
+            {
+                return
+                [
+                    new("Home", "/"),
+                    new("Stories", "/stories"),
+                    new(Meta.StoryTitle ?? "Story", $"/stories/{Meta.StoryId}"),
+                    new(Meta.Title, null, IsActive: true)
+                ];
+            }
+
+            return
+            [
+                new("Home", "/"),
+                new("Stories", "/stories"),
+                new(Meta.Title, null, IsActive: true)
+            ];
+        }
+    }
 
     private string BuildParameterKey() => $"{WorkId}:{Meta?.Id.ToString() ?? "none"}";
 }
