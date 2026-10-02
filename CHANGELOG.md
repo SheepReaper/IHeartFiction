@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.6] - 2026-10-02
+
+
+### Added
+
+- **tags:** Add tag picker multi-tag input parsing and taxonomy display components
+
+- **api:** Add actionable 400 responses for invalid sort and field shaping in story queries
+
+- **discovery:** Publish read-iheartfiction-content skill and RFC 0.2.0 discovery index
+
+- **discovery:** Publish ARD 1.0 ai-catalog manifest and discovery headers
+
+- **markdown:** Markdown requests render the full content instead of deferring like html
+
+- **tags:** Implement canonical tag landing pages and clean tag URLs
+
+- **seo:** Enrich story and chapter schema.org structured data
+
+- **navigation:** Implement visual breadcrumbs and complete JSON-LD hierarchies
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+- **agents:** Update roadmap discussion announcement guidance
+
+
+### Fixed
+
+- **api:** Remove unused contentLength property from story chapters response
+
+- **search:** Standardize the search paramter to be named "q"
+
+- **build:** Aspire container build changed again
+
+
+### Maintenance
+
+- **deps:** Update github/codeql-action digest to 2892aa5
+
+- **deps:** Update dependency coverlet.collector to 10.1.0
+
+- **deps:** Update aspire monorepo to 13.6.0
+
+
+
 ## [v1.0.5] - 2026-09-28
 
 
