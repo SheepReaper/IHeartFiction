@@ -78,7 +78,7 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.19.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.19.0" />
     <PackageVersion Include="Scalar.AspNetCore" Version="2.17.14" />
-    <PackageVersion Include="Shirubasoft.Aspire.CloudflareTunnels" Version="2.2.0" />
+    <PackageVersion Include="Shirubasoft.Aspire.CloudflareTunnels" Version="2.4.0" />
     <PackageVersion Include="Sidio.Sitemap.Blazor" Version="2.0.2" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.35.0.4138">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
