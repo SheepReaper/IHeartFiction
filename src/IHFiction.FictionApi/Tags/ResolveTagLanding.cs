@@ -84,7 +84,15 @@ internal sealed class ResolveTagLanding(FictionDbContext context) : IUseCase, IN
                 .ToArray();
 
             if (matches.Length == 0) return Errors.NotFound;
-            if (matches.Length > 1) return Errors.Conflict;
+            if (matches.Length > 1)
+            {
+                var matchingTags = await context.Tags.AsNoTracking().OfType<CanonicalTag>()
+                    .Where(tag => matches.Contains(tag.Id)).ToListAsync(cancellationToken);
+                var urls = matchingTags.Select(tag => TagRouteSpec.BuildPath(
+                    TagRouteSpec.CreateRouteToken(tag.Id, tag.Category, tag.Subcategory, tag.Value)))
+                    .OrderBy(url => url, StringComparer.Ordinal);
+                return Errors.Conflict with { Description = $"{Errors.Conflict.Description} Candidates: {string.Join(", ", urls)}" };
+            }
             canonicalIds.Add(matches[0]);
         }
 

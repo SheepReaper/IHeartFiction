@@ -165,7 +165,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
                     t.Category,
                     t.Subcategory,
                     t.Value,
-                    TagRouteSpec.CreateRouteToken(t.Id, t.Category, t.Subcategory, t.Value))),
+                    TagRouteSpec.CreateRouteToken(t.ResolveCanonical().Id, t.ResolveCanonical().Category, t.ResolveCanonical().Subcategory, t.ResolveCanonical().Value))),
             story.Books
                 .Where(b => b.IsPublished)
                 .OrderBy(b => b.Order)

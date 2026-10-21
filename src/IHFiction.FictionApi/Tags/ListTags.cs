@@ -132,16 +132,18 @@ internal sealed class ListTags(
                     || tag.Synonyms.Any(synonym => MatchesTagSearch(synonym, parsedSearch, searchFilter)))];
         }
 
-        var tagIds = tags.Select(tag => tag.Id).ToArray();
-        var publishedStoryCounts = await context.Stories
+        var familyMap = tags.SelectMany(tag => tag.Synonyms.Select(synonym => (Id: synonym.Id, CanonicalId: tag.Id))
+            .Append((Id: tag.Id, CanonicalId: tag.Id))).ToDictionary(item => item.Id, item => item.CanonicalId);
+        var tagIds = familyMap.Keys.ToArray();
+        var associations = await context.Stories
             .AsNoTracking()
             .Where(story => story.PublishedAt != null)
             .SelectMany(story => story.Tags
                 .Where(tag => tagIds.Contains(tag.Id))
                 .Select(tag => new { tag.Id, StoryId = story.Id }))
-            .GroupBy(association => association.Id)
-            .Select(group => new { TagId = group.Key, Count = group.Count() })
-            .ToDictionaryAsync(item => item.TagId, item => item.Count, cancellationToken);
+            .ToListAsync(cancellationToken);
+        var publishedStoryCounts = associations.GroupBy(item => familyMap[item.Id])
+            .ToDictionary(group => group.Key, group => group.Select(item => item.StoryId).Distinct().Count());
 
         var proj = tags
             .Select(t => new ListTagsItem(

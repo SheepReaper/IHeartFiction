@@ -3744,7 +3744,7 @@
           "Story Discovery"
         ],
         "summary": "List Published Stories",
-        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Results can be filtered by completion status or by a normalized tag key returned from GET /tags. Canonical and synonym tag keys resolve to the same canonical tag family. Sort accepts a comma-separated list of field direction pairs. Valid sort fields: publishedAt, title, updatedAt. Valid directions: asc, desc (default asc). Fields accepts a comma-separated list of response properties to include per item: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
+        "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Results can be filtered by completion status or by a normalized tag key returned from GET /tags. Canonical and synonym tag keys resolve to the same canonical tag family. TagKey accepts one to three comma-separated category:value, category:subcategory:value, unique value-only, or id:tagId tokens (300 characters maximum), combined with AND. Legacy + separators are accepted. Malformed or over-limit tags return 400; ambiguous value-only tags return 409 with candidate canonical URLs; unknown tags return an empty list. Sort accepts a comma-separated list of field direction pairs. Valid sort fields: publishedAt, title, updatedAt. Valid directions: asc, desc (default asc). Fields accepts a comma-separated list of response properties to include per item: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
         "operationId": "ListPublishedStories",
         "parameters": [
           {
@@ -3846,7 +3846,7 @@
           {
             "name": "TagKey",
             "in": "query",
-            "description": "Optional normalized canonical or synonym tag key returned by GET /tags.",
+            "description": "One to three comma-separated canonical, synonym, value-only, or id:tagId tokens (300 characters maximum), combined with AND. Legacy + separators are accepted. Invalid input returns 400; ambiguous values return 409 with candidate URLs; unknown tags return an empty list.",
             "schema": {
               "maxLength": 300,
               "minLength": 0,
@@ -3861,6 +3861,16 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }

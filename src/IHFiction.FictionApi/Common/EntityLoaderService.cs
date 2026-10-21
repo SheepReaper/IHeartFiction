@@ -111,6 +111,7 @@ internal sealed class EntityLoaderService(FictionDbContext context)
             .ThenInclude(p => p.SocialLinks)
             .Include(s => s.Cover)
             .Include(s => s.Tags)
+                .ThenInclude(tag => ((Data.Searching.Domain.SynonymTag)tag).CanonicalTag)
             .Include(s => s.Chapters)
             .Include(s => s.Books)
             .ThenInclude(b => b.Chapters);

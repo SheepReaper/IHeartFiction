@@ -33,7 +33,7 @@ internal sealed class ListPublishedStories(
 
         public static readonly DomainError InvalidTagKey = new(
             "ListPublishedStories.InvalidTagKey",
-            "TagKey must use the normalized category:value or category:subcategory:value format returned by GET /tags.");
+            "TagKey must contain one to three comma-separated tags, up to 300 characters: category:value, category:subcategory:value, a unique value, or id:tagId. Tags use AND semantics; legacy + separators are accepted.");
 
         public static DomainError InvalidFields(string detail) => new(
             "ListPublishedStories.InvalidFields",
@@ -47,7 +47,7 @@ internal sealed class ListPublishedStories(
     /// <param name="Fields">Optional comma-separated story item fields. The paginated envelope and links are always retained.</param>
     /// <param name="AuthorId">Optional author identifier.</param>
     /// <param name="CompletionStatus">Optional InProgress or Complete status.</param>
-    /// <param name="TagKey">Optional normalized canonical or synonym tag key returned by GET /tags.</param>
+    /// <param name="TagKey">One to three comma-separated canonical, synonym, value-only, or id:tagId tokens (300 characters maximum), combined with AND. Legacy + separators are accepted. Invalid input returns 400; ambiguous values return 409 with candidate URLs; unknown tags return an empty list.</param>
     internal sealed record ListPublishedStoriesQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
         int Page = 1,
@@ -231,6 +231,7 @@ internal sealed class ListPublishedStories(
                 "Supports searching by title, description, or author name. " +
                 "Results can be filtered by completion status or by a normalized tag key returned from GET /tags. " +
                 "Canonical and synonym tag keys resolve to the same canonical tag family. " +
+                "TagKey accepts one to three comma-separated category:value, category:subcategory:value, unique value-only, or id:tagId tokens (300 characters maximum), combined with AND. Legacy + separators are accepted. Malformed or over-limit tags return 400; ambiguous value-only tags return 409 with candidate canonical URLs; unknown tags return an empty list. " +
                 "Sort accepts a comma-separated list of field direction pairs. " +
                 "Valid sort fields: publishedAt, title, updatedAt. Valid directions: asc, desc (default asc). " +
                 "Fields accepts a comma-separated list of response properties to include per item: " +
@@ -241,7 +242,7 @@ internal sealed class ListPublishedStories(
                 "returns stories that have been explicitly published by their authors.")
             .WithTags(ApiTags.Stories.Discovery)
             .AllowAnonymous() // Public endpoint - no authentication required
-            .WithStandardResponses(notFound: false, conflict: false, unauthorized: false, forbidden: false)
+            .WithStandardResponses(notFound: false, conflict: true, unauthorized: false, forbidden: false)
             .Produces<LinkedPagedCollection<ListPublishedStoriesItem>>();
         }
     }
