@@ -124,7 +124,7 @@ public sealed class TagTaxonomyIntegrationTests : BaseIntegrationTest, IConfigur
             OwnerId = author.Id,
             PublishedAt = DateTime.UtcNow
         };
-        publishedMatch.Tags.Add(canonicalTag);
+        publishedMatch.Tags.Add(synonym);
         draftMatch.Tags.Add(canonicalTag);
         publishedOther.Tags.Add(unrelatedTag);
         _context.AddRange(author, canonicalTag, synonym, unrelatedTag, publishedMatch, draftMatch, publishedOther);
@@ -160,6 +160,10 @@ public sealed class TagTaxonomyIntegrationTests : BaseIntegrationTest, IConfigur
         Assert.Equal(publishedMatch.Id, Assert.Single(canonicalResult.Value!.Data).StoryId);
         Assert.Equal(publishedMatch.Id, Assert.Single(synonymResult.Value!.Data).StoryId);
         Assert.Empty(unknownResult.Value!.Data);
+        var details = await new GetPublishedStory(new EntityLoaderService(_context))
+            .HandleAsync(publishedMatch.Id, TestContext.Current.CancellationToken);
+        Assert.True(details.IsSuccess);
+        Assert.Equal("universe:kantai-collection", Assert.Single(details.Value.Tags).RouteKey);
     }
 
     [Fact]

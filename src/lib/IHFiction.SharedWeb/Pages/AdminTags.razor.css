@@ -1,0 +1,26 @@
+/* Bulma has no table-to-grid helper; keep mobile tag rows and their editors usable. */
+@media screen and (max-width: 768px) {
+    .admin-tags-table,
+    .admin-tags-table thead,
+    .admin-tags-table tbody {
+        display: block;
+    }
+
+    .admin-tags-table tr {
+        display: grid;
+        grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+    }
+
+    .admin-tags-table td[colspan] {
+        grid-column: 1 / -1;
+    }
+
+    .admin-tags-table td,
+    .admin-tags-table legend {
+        overflow-wrap: anywhere;
+    }
+
+    .admin-tags-table fieldset {
+        min-width: 0;
+    }
+}

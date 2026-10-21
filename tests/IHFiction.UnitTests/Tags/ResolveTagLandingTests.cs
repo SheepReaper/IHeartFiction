@@ -45,7 +45,9 @@ public sealed class ResolveTagLandingTests
             cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.False(result.IsSuccess);
-        Assert.Equal(ResolveTagLanding.Errors.Conflict, result.DomainError);
+        Assert.Equal(ResolveTagLanding.Errors.Conflict.Code, result.DomainError.Code);
+        Assert.Contains("/tags/genre:drama", result.DomainError.Description);
+        Assert.Contains("/tags/trope:drama", result.DomainError.Description);
     }
 
     [Fact]
@@ -73,6 +75,14 @@ public sealed class ResolveTagLandingTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.Value.StoryCount);
+
+        story.Tags.Add(canonical);
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var listed = await new ListTags(context, new IHFiction.FictionApi.Infrastructure.PaginationService(
+            Microsoft.Extensions.Options.Options.Create(new IHFiction.FictionApi.Infrastructure.PaginationOptions())))
+            .HandleAsync(new ListTags.ListTagsQuery(), new ListTags.ListTagsBody(), TestContext.Current.CancellationToken);
+        Assert.True(listed.IsSuccess);
+        Assert.Equal(1, Assert.Single(listed.Value.Data).StoryCount);
     }
 
     [Fact]
