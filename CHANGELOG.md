@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.7] - 2026-10-21
+
+
+### Added
+
+- **tags:** Refine taxonomy resolution and API responses
+
+- **tags:** Implement Blazor UI pages and management for tags
+
+- **security:** Add temporary security overrides for MessagePack and cryptography packages
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Maintenance
+
+- **deps:** Update dependency sonaranalyzer.csharp to 10.35.0.4138
+
+- **deps:** Update dependency scalar.aspnetcore to 2.17.13
+
+- **deps:** Update opentelemetry-dotnet-contrib monorepo to 1.19.0
+
+- **deps:** Update wolverine monorepo to 6.45.0
+
+- **deps:** Update wolverine monorepo to 6.46.0
+
+- **deps:** Update dependency scalar.aspnetcore to 2.17.14
+
+- **deps:** Update aspire monorepo to 13.6.1
+
+- **deps:** Update dependency microsoft.testing.platform to 2.5.1
+
+- **deps:** Update github/codeql-action digest to 24c5418
+
+- **deps:** Update dependency xunit.v3.mtp-v2 to 4.0.2
+
+- **deps:** Update testcontainers-dotnet monorepo to 4.16.0
+
+- **deps:** Update dependency scalar.aspnetcore to 2.18.0
+
+
+### Tests
+
+- **tags:** Add comprehensive test coverage for tagging system
+
+
+
 ## [v1.0.6] - 2026-10-02
 
 
