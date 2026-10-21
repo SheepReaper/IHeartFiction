@@ -28,4 +28,8 @@
     <ProjectReference Include="../../IHFiction.WebClient/IHFiction.WebClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup Label="Temporary security overrides">
+    <!-- GHSA-qhrr-8q5h-9q3h: remove with the central version; see .agents/WORKAROUNDS.md. -->
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
 </Project>

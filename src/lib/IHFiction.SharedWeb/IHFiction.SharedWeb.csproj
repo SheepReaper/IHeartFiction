@@ -43,4 +43,8 @@
     <AdditionalFiles Include="$(OpenApiInputPath)" Condition="Exists('$(OpenApiInputPath)')" />
   </ItemGroup>
 
+  <ItemGroup Label="Temporary security overrides">
+    <!-- Data's framework pruning does not cover this consumer; see .agents/WORKAROUNDS.md. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" />
+  </ItemGroup>
 </Project>

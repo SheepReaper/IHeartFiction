@@ -33,4 +33,9 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup Label="Temporary security overrides">
+    <!-- Remove with the central versions once upstream dependencies are patched; see .agents/WORKAROUNDS.md. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
 </Project>

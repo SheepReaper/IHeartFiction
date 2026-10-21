@@ -2,6 +2,38 @@
 
 This file records intentional temporary workarounds and unusual build plumbing. Check it before removing code that looks like a local band aid.
 
+## Temporary MessagePack security override (GHSA-qhrr-8q5h-9q3h)
+
+- **Location:** `Directory.Packages.props` and `src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj`, under `Temporary security overrides`.
+- **Symptom:** solution restore fails with NU1902 for MessagePack 2.5.302.
+- **Cause:** Aspire hosting 13.6.1 and its StreamJsonRpc 2.25.29 dependency bring in MessagePack 2.5.302, affected by [GHSA-qhrr-8q5h-9q3h](https://github.com/advisories/GHSA-qhrr-8q5h-9q3h), a denial-of-service vulnerability involving nested arrays.
+- **Workaround:** centrally manage MessagePack at patched version 2.5.303 and add a versionless AppHost reference, staying on the existing 2.5 release line.
+- **Removal criteria:** after compatible Aspire/StreamJsonRpc updates resolve a patched MessagePack version without this override, remove the AppHost reference and central version together. Run the commands below, confirm no affected version is resolved, and remove this entry after verification.
+
+```powershell
+dotnet restore
+dotnet nuget why src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj MessagePack
+dotnet list package --vulnerable --include-transitive
+dotnet build src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj
+```
+
+## Temporary Pkcs and Xml security overrides
+
+- **Location:** `Directory.Packages.props` and the Data, SharedWeb, MigrationService, and IntegrationTests project files, under `Temporary security overrides`.
+- **Symptom:** NuGet vulnerability auditing blocks restore for transitive `System.Security.Cryptography.Pkcs` and `System.Security.Cryptography.Xml` packages.
+- **Cause:** both `Microsoft.Build.Tasks.Core` 18.9.6 and `Microsoft.AspNetCore.DataProtection.EntityFrameworkCore` 10.0.12 (through `Microsoft.AspNetCore.DataProtection` and Xml) bring these packages into the graph. The resolved versions can differ by consuming project: Pkcs 10.0.10/10.0.12 and Xml 10.0.12 are vulnerable.
+- **Advisories:** [Pkcs GHSA-2fmv-rv2c-59x7](https://github.com/advisories/GHSA-2fmv-rv2c-59x7) and [Xml GHSA-7hqp-7c5m-4vq6](https://github.com/advisories/GHSA-7hqp-7c5m-4vq6). Both have patched .NET 10 packages at 10.0.13.
+- **Workaround:** centrally manage both versions at 10.0.13, with a versionless Pkcs reference in Data and Xml references in SharedWeb, MigrationService, and IntegrationTests. Data directly references `Microsoft.AspNetCore.App`, which provides Xml and makes a direct Xml reference fail with NU1510. Its consumers do not use that transitive framework reference for NuGet pruning, so they still need the patched Xml package. SharedWeb also carries the Xml override to UnitTests. Do not suppress vulnerability diagnostics or disable pruning.
+- **Removal criteria:** once compatible upstream MSBuild and DataProtection dependencies resolve patched versions throughout the solution without these overrides, remove the corresponding project references and central versions together. Respect the existing MSBuild `<18.10.0` compatibility constraint when updating that parent. Verify restore, dependency graphs, vulnerability audit, and Data build with the commands below before deleting this entry.
+
+```powershell
+dotnet restore
+dotnet nuget why src/lib/IHFiction.SharedWeb/IHFiction.SharedWeb.csproj System.Security.Cryptography.Pkcs
+dotnet nuget why src/lib/IHFiction.SharedWeb/IHFiction.SharedWeb.csproj System.Security.Cryptography.Xml
+dotnet list package --vulnerable --include-transitive
+dotnet build src/lib/IHFiction.Data/IHFiction.Data.csproj
+```
+
 ## Persistent database credential drift on reused volumes
 
 - **Location:** runtime operations for `src/aspire/IHFiction.AppHost/AppHost.cs`, and `tools/database-migrations.ps1` (`Preflight`, credential probe, and in-place PostgreSQL repair helpers).

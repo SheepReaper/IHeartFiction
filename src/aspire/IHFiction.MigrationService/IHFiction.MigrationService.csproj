@@ -22,4 +22,8 @@
     <ProjectReference Include="../../lib/IHFiction.ServiceDefaults/IHFiction.ServiceDefaults.csproj" />
     <ProjectReference Include="../../lib/IHFiction.Data/IHFiction.Data.csproj" />
   </ItemGroup>
+  <ItemGroup Label="Temporary security overrides">
+    <!-- Data's framework pruning does not cover this consumer; see .agents/WORKAROUNDS.md. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" />
+  </ItemGroup>
 </Project>
