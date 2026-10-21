@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 
 using IHFiction.SharedKernel.Infrastructure;
 
@@ -15,6 +16,9 @@ public partial class ApiException
     public static DomainError ToDomainError<TEx>(ApiException<TEx> ex)
     {
         ArgumentNullException.ThrowIfNull(ex);
+
+        var domainError = ReadDomainError(ex.Response) ?? ReadDomainError(JsonSerializer.Serialize(ex.Result));
+        if (domainError is not null) return domainError;
 
         string? description = null;
 
@@ -36,7 +40,31 @@ public partial class ApiException
     {
         ArgumentNullException.ThrowIfNull(ex);
 
+        if (ex is ApiException<HttpValidationProblemDetails> validation) return ToDomainError(validation);
+        if (ex is ApiException<ProblemDetails> problem) return ToDomainError(problem);
+        var domainError = ReadDomainError(ex.Response);
+        if (domainError is not null) return domainError;
         return new DomainError(nameof(ApiException), BuildDescription(ex, ex.Response));
+    }
+
+    private static DomainError? ReadDomainError(string response)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(response);
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty("domainError", out var error)
+                || error.ValueKind != JsonValueKind.Object
+                || !error.TryGetProperty("code", out var code)
+                || code.ValueKind != JsonValueKind.String
+                || !error.TryGetProperty("description", out var description)
+                || description.ValueKind != JsonValueKind.String) return null;
+            return new DomainError(code.GetString()!, description.GetString());
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static string BuildDescription(ApiException ex, string baseDescription)

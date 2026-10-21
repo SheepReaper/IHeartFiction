@@ -119,17 +119,23 @@
         isLoading = true;
         errorMessage = null;
 
-        var result = await TagService.ListAsync(page: 1, pageSize: 200);
-        if (result.IsSuccess)
+        tags = [];
+        var page = 1;
+        while (true)
         {
-            tags = result.Value.Data
+            var result = await TagService.ListAsync(page: page, pageSize: 100);
+            if (!result.IsSuccess)
+            {
+                errorMessage = result.DomainError.Description;
+                tags = [];
+                break;
+            }
+            tags.AddRange(result.Value.Data
                 .Where(t => t.StoryCount > 0)
                 .Select(t => new TagDisplayItem(t.Category, t.Subcategory, t.Value, t.RouteKey))
-                .ToList();
-        }
-        else
-        {
-            errorMessage = result.DomainError.Description;
+                .ToList());
+            if (!result.Value.Links.Any(link => link.Rel == "next-page")) break;
+            page++;
         }
 
         isLoading = false;

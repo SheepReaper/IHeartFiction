@@ -9,6 +9,8 @@
 
 @page "/tags/{TagSpec}"
 
+@if (resolutionResponse is not null)
+{
 <SocialPreviewMetadata
     Title="@MetadataTitle"
     Description="@MetadataDescription"
@@ -23,10 +25,20 @@
 
 <StoryList
     Heading="@PageHeading"
-    TagKey="@TagSpec"
+    TagKey="@CanonicalSpec"
     EmitPaginationHeadLinks="true"
     Breadcrumbs="@BreadcrumbItems"
     Loaded="@OnStoriesLoaded" />
+}
+else if (resolutionError is not null)
+{
+    <NoIndex />
+    <section class="section"><div class="container content">
+        <h1 class="title">Tag page unavailable</h1>
+        <p>@resolutionError</p>
+        <a href="/tags">Browse tags</a>
+    </div></section>
+}
 
 @code {
     [Parameter, EditorRequired] public string TagSpec { get; set; } = string.Empty;
@@ -38,6 +50,7 @@
     private ResolveTagLandingResponse? resolutionResponse;
     private IReadOnlyList<LinkedOfListPublishedStoriesItem>? loadedStories;
     private string? loadedTagSpec;
+    private string? resolutionError;
     private PersistingComponentStateSubscription persistingSubscription;
 
     private int NormalizedPage => Page is > 0 ? Page.Value : 1;
@@ -112,7 +125,7 @@
 
     private bool IsEmptyStoryList => loadedStories is not null && loadedStories.Count == 0;
 
-    private bool ShouldNoIndex => IsMultiTag || HasFilterVariants || IsEmptyStoryList;
+    private bool ShouldNoIndex => IsMultiTag || HasFilterVariants || IsEmptyStoryList || resolutionResponse?.StoryCount == 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -147,10 +160,17 @@
     private async Task LoadResolutionAsync()
     {
         loadedTagSpec = TagSpec;
+        resolutionResponse = null;
+        loadedStories = null;
+        resolutionError = null;
         var result = await TagService.ResolveAsync(TagSpec);
         if (result.IsSuccess)
         {
             resolutionResponse = result.Value;
+        }
+        else
+        {
+            resolutionError = result.DomainError.Description;
         }
     }
 
@@ -226,7 +246,12 @@
                 }).ToArray();
             }
 
-            return new object[] { breadcrumbs, itemList };
+            var collection = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org", ["@type"] = "CollectionPage",
+                ["name"] = PageHeading, ["url"] = ToAbsolute(CanonicalUrl), ["mainEntity"] = itemList
+            };
+            return new object[] { breadcrumbs, collection };
         }
     }
 

@@ -17,7 +17,7 @@
 
         <div class="field">
             <div class="control">
-                <input class="input" type="search" placeholder="Search tags..." value="@_search" @oninput="SearchChangedAsync" />
+                <input class="input" type="search" aria-label="Search tags" placeholder="Search tags..." value="@_search" disabled="@_isSaving" @oninput="SearchChangedAsync" />
             </div>
         </div>
 
@@ -57,13 +57,13 @@
             </div>
             <div class="is-clipped">
                 <div class="table-container">
-                    <table class="table is-fullwidth is-striped">
+                    <table class="table is-fullwidth is-striped admin-tags-table">
                     <thead>
                         <tr>
                             <th><span class="is-sr-only">Select for merge</span></th>
                             <th>Tag</th>
-                            <th>Synonyms</th>
-                            <th>Published works</th>
+                            <th class="is-hidden-mobile">Synonyms</th>
+                            <th class="is-hidden-mobile">Published works</th>
                             <th><span class="is-sr-only">Actions</span></th>
                         </tr>
                     </thead>
@@ -78,13 +78,51 @@
                                            disabled="@_isSaving"
                                            @onchange="args => ToggleMergeSelection(tag, args)" />
                                 </td>
-                                <td>@tag.DisplayFormat</td>
-                                <td>@(tag.Synonyms.Count == 0 ? "—" : string.Join(", ", tag.Synonyms))</td>
-                                <td>@tag.PublishedWorkCount</td>
                                 <td>
-                                    <button class="button is-small is-link is-light" @onclick="() => BeginEdit(tag)" disabled="@_isSaving">Rename</button>
+                                    @tag.DisplayFormat
+                                    <div class="is-hidden-tablet">
+                                        <p class="help">@tag.PublishedWorkCount published works</p>
+                                        @if (tag.Synonyms.Count > 0)
+                                        {
+                                            <p class="help">Synonyms: @string.Join(", ", tag.Synonyms)</p>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="is-hidden-mobile">@(tag.Synonyms.Count == 0 ? "—" : string.Join(", ", tag.Synonyms))</td>
+                                <td class="is-hidden-mobile">@tag.PublishedWorkCount</td>
+                                <td>
+                                    <button class="button is-small has-background-link-soft has-text-link-bold has-tooltip-left"
+                                            type="button" title="Rename" data-tooltip="Rename" aria-label="Rename @tag.DisplayFormat"
+                                            @onclick="() => BeginEdit(tag)" disabled="@(_isSaving || _editingTag?.TagId == tag.TagId)">
+                                        <span class="icon is-small"><i class="fas fa-pen" aria-hidden="true"></i></span>
+                                    </button>
                                 </td>
                             </tr>
+                            @if (_editingTag?.TagId == tag.TagId)
+                            {
+                                <tr>
+                                    <td colspan="5">
+                                        <form @onsubmit="RenameAsync" @onsubmit:preventDefault="true">
+                                            <fieldset disabled="@_isSaving">
+                                                <legend class="label">Rename @tag.DisplayFormat</legend>
+                                                <div class="columns">
+                                                    <div class="column"><label class="label" for="rename-category">Category</label><input id="rename-category" class="input" maxlength="50" required @bind="_category" @bind:event="oninput" /></div>
+                                                    <div class="column"><label class="label" for="rename-subcategory">Subcategory</label><input id="rename-subcategory" class="input" maxlength="50" @bind="_subcategory" @bind:event="oninput" /></div>
+                                                    <div class="column"><label class="label" for="rename-value">Value</label><input id="rename-value" class="input" maxlength="50" required @bind="_value" @bind:event="oninput" /></div>
+                                                </div>
+                                                @if (!string.IsNullOrWhiteSpace(_renameErrorMessage))
+                                                {
+                                                    <p class="help is-danger" role="alert">@_renameErrorMessage</p>
+                                                }
+                                                <div class="buttons mt-3">
+                                                    <button class="button is-link @(_isSaving ? "is-loading" : "")" type="submit" disabled="@(!CanRename)">Save</button>
+                                                    <button class="button has-background-light-soft has-text-light-bold" type="button" @onclick="CancelAction">Cancel</button>
+                                                </div>
+                                            </fieldset>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
                         }
                     </tbody>
                     </table>
@@ -99,28 +137,11 @@
             @if (_totalPages > 1)
             {
                 <nav class="pagination mt-4" aria-label="Tag pages">
-                    <button class="pagination-previous" @onclick="PreviousPageAsync" disabled="@(_page <= 1 || _isLoading)">Previous</button>
-                    <button class="pagination-next" @onclick="NextPageAsync" disabled="@(_page >= _totalPages || _isLoading)">Next</button>
+                    <button class="pagination-previous" @onclick="PreviousPageAsync" disabled="@(_page <= 1 || _isLoading || _isSaving)">Previous</button>
+                    <button class="pagination-next" @onclick="NextPageAsync" disabled="@(_page >= _totalPages || _isLoading || _isSaving)">Next</button>
                     <span class="pagination-list">Page @_page of @_totalPages</span>
                 </nav>
             }
-        }
-
-        @if (_editingTag is not null)
-        {
-            <div class="box mt-5">
-                <h2 class="title is-4">Rename @_editingTag.DisplayFormat</h2>
-                <div class="columns">
-                    <div class="column"><label class="label" for="rename-category">Category</label><input id="rename-category" class="input" @bind="_category" @bind:event="oninput" /></div>
-                    <div class="column"><label class="label" for="rename-subcategory">Subcategory</label><input id="rename-subcategory" class="input" @bind="_subcategory" @bind:event="oninput" /></div>
-                    <div class="column"><label class="label" for="rename-value">Value</label><input id="rename-value" class="input" @bind="_value" @bind:event="oninput" /></div>
-                </div>
-                <div class="field"><label class="label" for="rename-reason">Reason</label><textarea id="rename-reason" class="textarea" @bind="_reason" @bind:event="oninput"></textarea></div>
-                <div class="buttons">
-                    <button class="button is-link" @onclick="RenameAsync" disabled="@(_isSaving || !CanRename)">Save rename</button>
-                    <button class="button is-light" @onclick="CancelAction" disabled="@_isSaving">Cancel</button>
-                </div>
-            </div>
         }
 
         @if (_isMergeDialogOpen)
@@ -177,6 +198,7 @@
     private bool _isMergeDialogOpen;
     private Ulid? _mergeCanonicalTagId;
     private string? _mergeErrorMessage;
+    private string? _renameErrorMessage;
     private string _category = "";
     private string? _subcategory;
     private string _value = "";
@@ -185,7 +207,8 @@
     private int _totalPages = 1;
     private CancellationTokenSource? _searchCts;
 
-    private bool CanRename => !string.IsNullOrWhiteSpace(_category) && !string.IsNullOrWhiteSpace(_value) && _reason.Trim().Length >= 3;
+    private bool CanRename => !string.IsNullOrWhiteSpace(_category) && !string.IsNullOrWhiteSpace(_value)
+        && (_category.Trim() != _editingTag?.Category || (_subcategory?.Trim() ?? "") != (_editingTag?.Subcategory ?? "") || _value.Trim() != _editingTag?.Value);
     private bool CanMerge => _selectedMergeTags.Count >= 2 && _mergeCanonicalTagId is not null && _reason.Trim().Length >= 3;
 
     protected override async Task OnInitializedAsync()
@@ -215,6 +238,8 @@
 
     private async Task SearchChangedAsync(ChangeEventArgs args)
     {
+        if (_isSaving) return;
+        _editingTag = null;
         _search = args.Value?.ToString() ?? "";
         _page = 1;
         if (_searchCts is not null) await _searchCts.CancelAsync();
@@ -239,6 +264,7 @@
         _subcategory = tag.Subcategory;
         _value = tag.Value;
         _reason = "";
+        _renameErrorMessage = null;
         _errorMessage = null;
     }
 
@@ -272,10 +298,12 @@
     private async Task RenameAsync()
     {
         if (_editingTag is null || !CanRename) return;
+        var editingTagId = _editingTag.TagId;
         _isSaving = true;
-        var result = await AdminService.RenameCanonicalTagAsync(_editingTag.TagId, _category, _subcategory, _value, _reason);
+        var result = await AdminService.RenameCanonicalTagAsync(editingTagId, _category.Trim(), _subcategory?.Trim(), _value.Trim(), "Inline rename from tag administration.");
         _isSaving = false;
-        if (result.IsFailure) { _errorMessage = result.DomainError.Description; return; }
+        if (result.IsFailure) { _renameErrorMessage = result.DomainError.Description; return; }
+        _selectedMergeTags.RemoveAll(tag => tag.TagId == editingTagId);
         CancelAction();
         await LoadTagsAsync();
     }
@@ -300,11 +328,12 @@
         _isMergeDialogOpen = false;
         _mergeCanonicalTagId = null;
         _mergeErrorMessage = null;
+        _renameErrorMessage = null;
         _reason = "";
     }
 
-    private async Task PreviousPageAsync() { if (_page > 1) { _page--; await LoadTagsAsync(); } }
-    private async Task NextPageAsync() { if (_page < _totalPages) { _page++; await LoadTagsAsync(); } }
+    private async Task PreviousPageAsync() { if (_page > 1 && !_isSaving) { _editingTag = null; _page--; await LoadTagsAsync(); } }
+    private async Task NextPageAsync() { if (_page < _totalPages && !_isSaving) { _editingTag = null; _page++; await LoadTagsAsync(); } }
 
     public ValueTask DisposeAsync()
     {
