@@ -11,8 +11,8 @@
         @if (previousChapter != null)
         {
             <div class="control">
-                <a class="button" href="@ChapterHref(previousChapter.Id.ToString())" title="@BuildTargetLabel("Previous", previousChapter, currentChapter)">
-                    <span class="icon">
+                <a class="button" href="@ChapterHref(previousChapter.Id.ToString())" title="@BuildTargetLabel("Previous", previousChapter, currentChapter)" aria-label="@BuildTargetLabel("Previous", previousChapter, currentChapter)">
+                    <span class="icon" aria-hidden="true">
                         <i class="fas fa-chevron-left"></i>
                     </span>
                     @if (ShowLabels)
@@ -26,7 +26,7 @@
         {
             <div class="control">
                 <button class="button" disabled>
-                    <span class="icon">
+                    <span class="icon" aria-hidden="true">
                         <i class="fas fa-chevron-left"></i>
                     </span>
                     <span>Previous</span>
@@ -46,12 +46,12 @@
         @if (nextChapter != null)
         {
             <div class="control">
-                <a class="button" href="@ChapterHref(nextChapter.Id.ToString())" title="@BuildTargetLabel("Next", nextChapter, currentChapter)">
+                <a class="button" href="@ChapterHref(nextChapter.Id.ToString())" title="@BuildTargetLabel("Next", nextChapter, currentChapter)" aria-label="@BuildTargetLabel("Next", nextChapter, currentChapter)">
                     @if (ShowLabels)
                     {
                         <span>@BuildTargetLabel("Next", nextChapter, currentChapter)</span>
                     }
-                    <span class="icon">
+                    <span class="icon" aria-hidden="true">
                         <i class="fas fa-chevron-right"></i>
                     </span>
                 </a>
@@ -62,7 +62,7 @@
             <div class="control">
                 <button class="button" disabled>
                     <span>Next</span>
-                    <span class="icon">
+                    <span class="icon" aria-hidden="true">
                         <i class="fas fa-chevron-right"></i>
                     </span>
                 </button>

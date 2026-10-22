@@ -33,10 +33,10 @@
             <div class="media-right">
                 <div class="buttons are-small">
                     <a href="/authors/@Author.Id" class="button has-background-link-soft has-text-link-bold" aria-label="View profile">
-                        <span class="icon is-small"><i class="fas fa-user"></i></span>
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-user"></i></span>
                     </a>
                     <a href="/authors/@Author.Id/stories" class="button has-background-primary-soft has-text-primary-bold" aria-label="View stories">
-                        <span class="icon is-small"><i class="fas fa-book"></i></span>
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-book"></i></span>
                     </a>
                 </div>
             </div>
@@ -86,13 +86,13 @@ else
 
                 <div class="tags">
                     <span class="tag has-background-info-soft has-text-info-bold">
-                        <span class="icon is-small">
+                        <span class="icon is-small" aria-hidden="true">
                             <i class="fas fa-book"></i>
                         </span>
                         <span>@Author.TotalStories stories</span>
                     </span>
                     <span class="tag has-background-primary-soft has-text-primary-bold">
-                        <span class="icon is-small">
+                        <span class="icon is-small" aria-hidden="true">
                             <i class="fas fa-calendar"></i>
                         </span>
                         <span>Joined @Author.CreatedAt.ToString("MMM yyyy")</span>
@@ -102,13 +102,13 @@ else
         </div>
         <footer class="card-footer">
             <a href="/authors/@Author.Id" class="card-footer-item">
-                <span class="icon">
+                <span class="icon" aria-hidden="true">
                     <i class="fas fa-user"></i>
                 </span>
                 <span>View Profile</span>
             </a>
             <a href="/authors/@Author.Id/stories" class="card-footer-item">
-                <span class="icon">
+                <span class="icon" aria-hidden="true">
                     <i class="fas fa-book"></i>
                 </span>
                 <span>View Stories</span>

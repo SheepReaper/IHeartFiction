@@ -13,15 +13,16 @@
     @if (_initialLoading)
     {
         <div class="has-text-centered py-6">
-            <span class="icon is-large has-text-grey">
+            <span class="icon is-large has-text-grey" aria-hidden="true">
                 <i class="fas fa-spinner fa-spin fa-2x"></i>
             </span>
+            <span class="is-sr-only">Loading account settings...</span>
         </div>
     }
     else if (!string.IsNullOrEmpty(_loadError))
     {
         <div class="notification is-danger">
-            <button class="delete" @onclick="e => _loadError = string.Empty"></button>
+            <button class="delete" aria-label="Dismiss error" @onclick="e => _loadError = string.Empty"></button>
             <strong>Error:</strong> @_loadError
         </div>
     }
@@ -34,14 +35,14 @@
             @if (!string.IsNullOrEmpty(_profileError))
             {
                 <div class="notification is-danger">
-                    <button class="delete" @onclick="e => _profileError = string.Empty"></button>
+                    <button class="delete" aria-label="Dismiss error" @onclick="e => _profileError = string.Empty"></button>
                     <strong>Error:</strong> @_profileError
                 </div>
             }
             @if (!string.IsNullOrEmpty(_profileSuccess))
             {
                 <div class="notification is-success">
-                    <button class="delete" @onclick="e => _profileSuccess = string.Empty"></button>
+                    <button class="delete" aria-label="Dismiss success message" @onclick="e => _profileSuccess = string.Empty"></button>
                     @_profileSuccess
                 </div>
             }
@@ -88,14 +89,14 @@
                 @if (!string.IsNullOrEmpty(_authorError))
                 {
                     <div class="notification is-danger">
-                        <button class="delete" @onclick="e => _authorError = string.Empty"></button>
+                        <button class="delete" aria-label="Dismiss error" @onclick="e => _authorError = string.Empty"></button>
                         <strong>Error:</strong> @_authorError
                     </div>
                 }
                 @if (!string.IsNullOrEmpty(_authorSuccess))
                 {
                     <div class="notification is-success">
-                        <button class="delete" @onclick="e => _authorSuccess = string.Empty"></button>
+                        <button class="delete" aria-label="Dismiss success message" @onclick="e => _authorSuccess = string.Empty"></button>
                         @_authorSuccess
                     </div>
                 }

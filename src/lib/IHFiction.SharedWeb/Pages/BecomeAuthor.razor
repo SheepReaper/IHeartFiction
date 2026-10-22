@@ -58,7 +58,7 @@
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <div class="notification is-danger">
-            <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
+            <button class="delete" aria-label="Dismiss error" @onclick="e => _errorMessage = string.Empty"></button>
             <strong>Error:</strong> @_errorMessage
         </div>
     }
@@ -75,7 +75,7 @@
     <div class="field">
         <div class="control">
             <button class="button is-primary is-large" disabled="@(!_agreedToTerms || _loading)" @onclick="OnBecomeAuthorClick">
-                <span class="icon is-small">
+                <span class="icon is-small" aria-hidden="true">
                     <i class="fas fa-pen-nib"></i>
                 </span>
                 <span>Start Writing</span>

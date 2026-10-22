@@ -20,7 +20,7 @@
 {
     <div class="section">
         <div class="container has-text-centered">
-            <span class="icon is-large">
+            <span class="icon is-large" aria-hidden="true">
                 <i class="fas fa-spinner fa-pulse fa-2x"></i>
             </span>
             <p>Loading author details...</p>
@@ -67,7 +67,7 @@ else if (author != null)
                             </div>
                             <div class="tags is-centered mt-5">
                                 <span class="tag is-primary">
-                                    <span class="icon">
+                                    <span class="icon" aria-hidden="true">
                                         <i class="fas fa-calendar"></i>
                                     </span>
                                     <span>Joined @author.UpdatedAt.ToString("MMM yyyy")</span>
@@ -104,7 +104,7 @@ else if (author != null)
                                        target="_blank"
                                        rel="noopener noreferrer nofollow"
                                        title="@GetSocialLinkLabel(link.Type)">
-                                        <span class="icon"><i class="@GetSocialLinkIcon(link.Type)"></i></span>
+                                        <span class="icon" aria-hidden="true"><i class="@GetSocialLinkIcon(link.Type)"></i></span>
                                         <span>@GetSocialLinkLabel(link.Type)</span>
                                     </a>
                                 }
@@ -137,7 +137,7 @@ else if (author != null)
                         else
                         {
                             <div class="has-text-centered mt-6">
-                                <span class="icon is-large">
+                                <span class="icon is-large" aria-hidden="true">
                                     <i class="fas fa-book fa-2x"></i>
                                 </span>
                                 <p>This author hasn't published any stories yet.</p>

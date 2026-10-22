@@ -13,7 +13,7 @@
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <div class="notification is-danger">
-            <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
+            <button class="delete" aria-label="Dismiss error" @onclick="e => _errorMessage = string.Empty"></button>
             <strong>Error:</strong> @_errorMessage
         </div>
     }
@@ -38,7 +38,7 @@
                 }
                 <li>
                     <a class="pagination-link" aria-label="Add Chapter" @onclick="AddNewChapter">
-                        <span class="icon is-small">
+                        <span class="icon is-small" aria-hidden="true">
                             <i class="fas fa-plus"></i>
                         </span>
                     </a>
@@ -82,7 +82,7 @@
             </div>
             <div class="field">
                 <button class="button is-danger" @onclick="e => ShowDeleteModal(Chapter)">
-                    <span class="icon is-small">
+                    <span class="icon is-small" aria-hidden="true">
                         <i class="fas fa-trash"></i>
                     </span>
                     <span>Delete Chapter</span>

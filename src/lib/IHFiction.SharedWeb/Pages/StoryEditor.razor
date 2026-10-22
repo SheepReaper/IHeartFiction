@@ -27,7 +27,7 @@
         <div class="modal-background"></div>
         <div class="modal-content has-text-centered">
             <div class="box">
-                <span class="icon is-large">
+                <span class="icon is-large" aria-hidden="true">
                     <i class="fas fa-spinner fa-pulse fa-2x"></i>
                 </span>
                 <p class="is-size-5 mt-3">Working…</p>
@@ -41,7 +41,7 @@
     <div class="section">
         <div class="container">
             <div class="notification is-danger">
-                <button class="delete" @onclick="e => _errorMessage = string.Empty"></button>
+                <button class="delete" aria-label="Dismiss error" @onclick="e => _errorMessage = string.Empty"></button>
                 <strong>Error:</strong> @_errorMessage
             </div>
         </div>
@@ -51,7 +51,7 @@
 {
     <div class="section">
         <div class="container has-text-centered">
-            <span class="icon is-large">
+            <span class="icon is-large" aria-hidden="true">
                 <i class="fas fa-spinner fa-pulse fa-2x"></i>
             </span>
             <p>Loading...</p>

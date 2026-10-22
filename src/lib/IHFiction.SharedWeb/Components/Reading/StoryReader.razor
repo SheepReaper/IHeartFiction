@@ -11,7 +11,7 @@
 {
     <div class="section">
         <div class="content has-text-centered">
-            <span class="icon is-large">
+            <span class="icon is-large" aria-hidden="true">
                 <i class="fas fa-spinner fa-pulse fa-2x"></i>
             </span>
             <p>Loading...</p>
@@ -72,7 +72,7 @@ else if (Meta is not null)
                             @if (Meta.StoryId is not null)
                             {
                                 <a href="/stories/@Meta.StoryId" class="button has-background-info-soft has-text-info-bold">
-                                    <span class="icon">
+                                    <span class="icon" aria-hidden="true">
                                         <i class="fas fa-info-circle"></i>
                                     </span>
                                     <span>Story Details</span>
@@ -162,7 +162,7 @@ else if (Meta is not null)
             else if (Meta.IsDirectlyReadable)
             {
                 <div class="content has-text-centered">
-                    <span class="icon is-large">
+                    <span class="icon is-large" aria-hidden="true">
                         <i class="fas fa-file-alt fa-3x"></i>
                     </span>
                     <h2 class="title is-4">No content available</h2>
@@ -172,7 +172,7 @@ else if (Meta is not null)
             else
             {
                 <div class="content has-text-centered">
-                    <span class="icon is-large">
+                    <span class="icon is-large" aria-hidden="true">
                         <i class="fas fa-spinner fa-pulse fa-2x"></i>
                     </span>
                     <p>Finding your place...</p>

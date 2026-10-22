@@ -13,7 +13,7 @@
     <div>
         <button class="button @ButtonClass is-fullwidth" disabled="@(_submitting || !IsPublished)"
                 @onclick="ToggleFollowAsync">
-            <span class="icon">
+            <span class="icon" aria-hidden="true">
                 <i class="fas @(_isFollowing ? "fa-bookmark" : "fa-book-medical")"></i>
             </span>
             <span>@ButtonText</span>
@@ -28,7 +28,7 @@
 else
 {
     <button class="button is-fullwidth" disabled>
-        <span class="icon"><i class="fas fa-spinner fa-spin"></i></span>
+        <span class="icon" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
         <span>Loading</span>
     </button>
 }

@@ -29,21 +29,21 @@
     <div id="navbarBasicExample" class="navbar-menu @(_isMobileMenuOpen ? "is-active" : "")">
         <div class="navbar-start">
             <NavLink class="navbar-item" href="stories" @onclick="CloseMobileMenu">
-                <span class="icon">
+                <span class="icon" aria-hidden="true">
                     <i class="fas fa-book"></i>
                 </span>
                 <span>Stories</span>
             </NavLink>
 
             <NavLink class="navbar-item" href="authors" @onclick="CloseMobileMenu">
-                <span class="icon">
+                <span class="icon" aria-hidden="true">
                     <i class="fas fa-users"></i>
                 </span>
                 <span>Authors</span>
             </NavLink>
 
             <NavLink class="navbar-item" href="following" @onclick="CloseMobileMenu">
-                <span class="icon">
+                <span class="icon" aria-hidden="true">
                     <i class="fas fa-bell"></i>
                 </span>
                 <span>Following</span>
@@ -53,7 +53,7 @@
                     @if (context.User.IsInRole("author"))
                     {
                         <NavLink class="navbar-item" href="my-stories" @onclick="CloseMobileMenu">
-                            <span class="icon">
+                            <span class="icon" aria-hidden="true">
                                 <i class="fas fa-book-open"></i>
                             </span>
                             <span>My Stories</span>
@@ -62,7 +62,7 @@
                     else
                     {
                         <NavLink class="navbar-item" href="become-author" @onclick="CloseMobileMenu">
-                            <span class="icon">
+                            <span class="icon" aria-hidden="true">
                                 <i class="fas fa-pen-nib"></i>
                             </span>
                             <span>Start Writing</span>
@@ -72,7 +72,7 @@
                     @if (context.User.IsInRole("admin"))
                     {
                         <NavLink class="navbar-item" href="admin" @onclick="CloseMobileMenu">
-                            <span class="icon">
+                            <span class="icon" aria-hidden="true">
                                 <i class="fas fa-shield-alt"></i>
                             </span>
                             <span>Admin</span>
@@ -88,20 +88,20 @@
             </div>
             <div class="navbar-item ihf-nav-api-docs">
                 <a class="button is-info" href="@DocsUrl" target="_blank" rel="noopener noreferrer" @onclick="CloseMobileMenu">
-                    <span class="icon"><i class="fas fa-book-medical"></i></span>
+                    <span class="icon" aria-hidden="true"><i class="fas fa-book-medical"></i></span>
                     <span>API Docs</span>
                 </a>
             </div>
             <div class="navbar-item ihf-nav-actions">
                 <div class="buttons">
                     <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about" aria-label="About" @onclick="CloseMobileMenu">
-                        <span class="icon"><i class="@CurrentCycleIcon"></i></span>
+                        <span class="icon" aria-hidden="true"><i class="@CurrentCycleIcon"></i></span>
                     </a>
                     <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleThemeAndCloseMenu" aria-label="Hit the lights">
-                        <span class="icon"><i class="fas fa-@themeIcon"></i></span>
+                        <span class="icon" aria-hidden="true"><i class="fas fa-@themeIcon"></i></span>
                     </button>
                     <button class="button has-background-success-soft has-text-success-bold has-tooltip-bottom" data-tooltip="@compactToggleTooltip" @onclick="ToggleCompactAndCloseMenu" aria-label="@compactToggleTooltip">
-                        <span class="icon"><i class="fas fa-@compactToggleIcon"></i></span>
+                        <span class="icon" aria-hidden="true"><i class="fas fa-@compactToggleIcon"></i></span>
                     </button>
                 </div>
             </div>

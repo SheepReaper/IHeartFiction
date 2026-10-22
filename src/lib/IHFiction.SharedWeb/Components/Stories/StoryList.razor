@@ -44,7 +44,7 @@
                                 <label class="is-sr-only" for="story-search">Search stories</label>
                                 <input id="story-search" name="q" class="input" type="search"
                                        placeholder="Search stories..." @bind="searchQuery">
-                                <span class="icon is-small is-left">
+                                <span class="icon is-small is-left" aria-hidden="true">
                                     <i class="fas fa-search"></i>
                                 </span>
                             </div>
@@ -103,7 +103,7 @@
         {
             <div class="has-text-centered">
                 <div class="is-loading" style="height: 200px; display: flex; align-items: center; justify-content: center;">
-                    <span class="icon is-large">
+                    <span class="icon is-large" aria-hidden="true">
                         <i class="fas fa-spinner fa-pulse fa-2x"></i>
                     </span>
                 </div>
@@ -112,7 +112,7 @@
         else if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="notification is-danger">
-                <button class="delete" @onclick="ClearError"></button>
+                <button class="delete" aria-label="Dismiss error" @onclick="ClearError"></button>
                 <strong>Error:</strong> @errorMessage
             </div>
         }
@@ -147,7 +147,7 @@
         {
             <div class="has-text-centered">
                 <div class="content">
-                    <span class="icon is-large">
+                    <span class="icon is-large" aria-hidden="true">
                         <i class="fas fa-book fa-3x"></i>
                     </span>
                     <h3 class="title is-4">No stories found</h3>

@@ -12,7 +12,7 @@
                 else
                 {
                     <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="width: 64px; height: 64px;">
-                        <span class="icon is-small"><i class="fas fa-book"></i></span>
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-book"></i></span>
                     </div>
                 }
             </div>
@@ -59,7 +59,7 @@
                 else if (!string.IsNullOrWhiteSpace(Item.PrimaryActionHref))
                 {
                     <a href="@Item.PrimaryActionHref" class="button is-small has-background-success-soft has-text-success-bold" aria-label="@(Item.PrimaryActionLabel ?? "Open")">
-                        <span class="icon is-small"><i class="fas fa-@(Item.PrimaryActionIcon ?? "arrow-right")"></i></span>
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-@(Item.PrimaryActionIcon ?? "arrow-right")"></i></span>
                     </a>
                 }
             </div>
@@ -132,7 +132,7 @@ else
         {
             <footer class="card-footer">
                 <a href="@Item.PrimaryActionHref" class="card-footer-item">
-                    <span class="icon">
+                    <span class="icon" aria-hidden="true">
                         <i class="fas fa-@(Item.PrimaryActionIcon ?? "arrow-right")"></i>
                     </span>
                     <span>@(Item.PrimaryActionLabel ?? "Open")</span>

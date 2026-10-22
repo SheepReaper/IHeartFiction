@@ -12,7 +12,7 @@
                 else
                 {
                     <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="width: 64px; height: 64px;">
-                        <span class="icon is-small"><i class="fas fa-book"></i></span>
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-book"></i></span>
                     </div>
                 }
             </div>
@@ -52,7 +52,7 @@
             </div>
             <div class="media-right">
                 <a href="/read/@Story.StoryId" class="button is-small has-background-success-soft has-text-success-bold" aria-label="Read story">
-                    <span class="icon is-small"><i class="fas fa-book-open"></i></span>
+                    <span class="icon is-small" aria-hidden="true"><i class="fas fa-book-open"></i></span>
                 </a>
             </div>
         </div>
@@ -131,7 +131,7 @@ else
                     @if (Story.HasChapters)
                     {
                         <span class="tag has-background-info-soft has-text-info-bold">
-                            <span class="icon is-small">
+                            <span class="icon is-small" aria-hidden="true">
                                 <i class="fas fa-list"></i>
                             </span>
                             <span>@Story.ChapterCount chapters</span>
@@ -140,7 +140,7 @@ else
                     else if (Story.HasBooks)
                     {
                         <span class="tag has-background-primary-soft has-text-primary-bold">
-                            <span class="icon is-small">
+                            <span class="icon is-small" aria-hidden="true">
                                 <i class="fas fa-book"></i>
                             </span>
                             <span>Multi-book series</span>
@@ -149,7 +149,7 @@ else
                     else
                     {
                         <span class="tag has-background-link-soft has-text-link-bold">
-                            <span class="icon is-small">
+                            <span class="icon is-small" aria-hidden="true">
                                 <i class="fas fa-file-alt"></i>
                             </span>
                             <span>One-shot</span>
@@ -157,9 +157,10 @@ else
                     }
 
                     <span class="tag has-background-dark-soft has-text-dark-bold">
-                        <span class="icon is-small">
+                        <span class="icon is-small" aria-hidden="true">
                             <i class="fas fa-calendar"></i>
                         </span>
+                        <span class="is-sr-only">Updated </span>
                         <span>@Story.UpdatedAt.ToString("MMM dd, yyyy")</span>
                     </span>
                     <span class="tag has-background-dark-soft has-text-dark-bold" title="@($"{Story.ReadCount:N0} reads")">
@@ -172,7 +173,7 @@ else
 
         <footer class="card-footer">
             <a href="/stories/@Story.StoryId" class="card-footer-item">
-                <span class="icon">
+                <span class="icon" aria-hidden="true">
                     <i class="fas fa-eye"></i>
                 </span>
                 <span>View Details</span>
@@ -183,7 +184,7 @@ else
                 @if (Story.HasChapters)
                 {
                     <a href="/read/@Story.StoryId" class="card-footer-item">
-                        <span class="icon">
+                        <span class="icon" aria-hidden="true">
                             <i class="fas fa-book-open"></i>
                         </span>
                         <span>Start Reading</span>
@@ -192,7 +193,7 @@ else
                 else
                 {
                     <a href="/read/@Story.StoryId" class="card-footer-item">
-                        <span class="icon">
+                        <span class="icon" aria-hidden="true">
                             <i class="fas fa-book-open"></i>
                         </span>
                         <span>Read Story</span>

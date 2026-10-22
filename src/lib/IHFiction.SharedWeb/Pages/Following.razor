@@ -41,7 +41,7 @@
         @if (_loading)
         {
             <div class="has-text-centered py-6">
-                <span class="icon is-large has-text-grey">
+                <span class="icon is-large has-text-grey" aria-hidden="true">
                     <i class="fas fa-spinner fa-spin fa-2x"></i>
                 </span>
             </div>
@@ -49,7 +49,7 @@
         else if (!string.IsNullOrWhiteSpace(_error))
         {
             <div class="notification is-danger">
-                <button class="delete" @onclick="() => _error = null"></button>
+                <button class="delete" aria-label="Dismiss error" @onclick="() => _error = null"></button>
                 <strong>Error:</strong> @_error
             </div>
         }
@@ -92,7 +92,7 @@
                         else
                         {
                             <div class="ihf-notification-empty mb-4">
-                                <span class="icon is-medium has-text-link">
+                                <span class="icon is-medium has-text-link" aria-hidden="true">
                                     <i class="fas fa-user-pen fa-2x"></i>
                                 </span>
                                 <div>
@@ -131,7 +131,7 @@
                         else
                         {
                             <div class="ihf-notification-empty">
-                                <span class="icon is-medium has-text-warning">
+                                <span class="icon is-medium has-text-warning" aria-hidden="true">
                                     <i class="fas fa-book-bookmark fa-2x"></i>
                                 </span>
                                 <div>
@@ -200,7 +200,7 @@
                         else
                         {
                             <div class="ihf-notification-empty">
-                                <span class="icon is-medium has-text-info">
+                                <span class="icon is-medium has-text-info" aria-hidden="true">
                                     <i class="fas fa-bell-slash fa-2x"></i>
                                 </span>
                                 <div>
