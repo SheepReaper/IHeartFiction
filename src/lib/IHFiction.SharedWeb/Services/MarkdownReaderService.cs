@@ -4,7 +4,6 @@ namespace IHFiction.SharedWeb.Services;
 
 public sealed record MarkdownReaderModel(
     string WorkId,
-    LinkedOfGetPublishedWorkMetaResponse Meta,
     LinkedOfGetPublishedWorkContentResponse Content);
 
 public sealed class MarkdownReaderService(IPublishedWorkReader workReader)
@@ -20,42 +19,21 @@ public sealed class MarkdownReaderService(IPublishedWorkReader workReader)
     {
         ArgumentNullException.ThrowIfNull(requestedMeta);
 
-        var effectiveMeta = requestedMeta;
-        var effectiveWorkId = requestedMeta.Id;
-
-        if (!requestedMeta.IsDirectlyReadable)
+        if (!requestedMeta.IsDirectlyReadable
+            || !Ulid.TryParse(requestedWorkId, out var workId)
+            || requestedMeta.Id != workId)
         {
-            var defaultWorkId = requestedMeta.DefaultReadableWorkId;
-            if (defaultWorkId is null
-                || !requestedMeta.ReadableChildren.Any(child => child.Id == defaultWorkId.Value))
-            {
-                return NoReadableContent;
-            }
-
-            var metaResult = await workReader.GetPublishedWorkMetaAsync(
-                defaultWorkId.Value,
-                cancellationToken: cancellationToken);
-            if (metaResult.IsFailure)
-            {
-                return metaResult.DomainError;
-            }
-
-            effectiveMeta = metaResult.Value;
-            effectiveWorkId = defaultWorkId.Value;
-            if (!effectiveMeta.IsDirectlyReadable || effectiveMeta.Id != effectiveWorkId)
-            {
-                return NoReadableContent;
-            }
+            return NoReadableContent;
         }
 
         var contentResult = await workReader.GetPublishedWorkContentAsync(
-            effectiveWorkId,
+            workId,
             cancellationToken: cancellationToken);
         if (contentResult.IsFailure)
         {
             return contentResult.DomainError;
         }
 
-        return new MarkdownReaderModel(effectiveWorkId.ToString(), effectiveMeta, contentResult.Value);
+        return new MarkdownReaderModel(workId.ToString(), contentResult.Value);
     }
 }

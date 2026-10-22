@@ -93,24 +93,7 @@ else if (story != null)
                                 <div class="field">
                                     @if (story.IsPublished)
                                     {
-                                        @if (story.Type == MultiChapter)
-                                        {
-                                            <a href="/read/@story.Id" class="button is-primary is-fullwidth is-large">
-                                                <span class="icon">
-                                                    <i class="fas fa-book-open"></i>
-                                                </span>
-                                                <span>Start Reading</span>
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <a href="/read/@story.Id" class="button is-primary is-fullwidth is-large">
-                                                <span class="icon">
-                                                    <i class="fas fa-book-open"></i>
-                                                </span>
-                                                <span>Read Story</span>
-                                            </a>
-                                        }
+                                        <StoryReadingLink StoryId="@StoryId" />
                                     }
                                     else
                                     {
@@ -356,10 +339,10 @@ else if (story != null)
                     .Select(b => new Dictionary<string, object?>
                     {
                         ["@type"] = "PublicationVolume",
-                        ["@id"] = ToAbsolute($"/read/{b.Id}"),
+                        ["@id"] = ToAbsolute($"/stories/{StoryId}#book-{b.Id}"),
                         ["name"] = b.Title,
                         ["position"] = b.Order,
-                        ["url"] = ToAbsolute($"/read/{b.Id}"),
+                        ["url"] = ToAbsolute($"/stories/{StoryId}#book-{b.Id}"),
                         ["hasPart"] = b.Chapters?
                             .OrderBy(c => c.Order)
                             .Select(c => new Dictionary<string, object?>

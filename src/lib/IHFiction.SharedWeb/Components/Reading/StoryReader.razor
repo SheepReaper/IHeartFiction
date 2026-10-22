@@ -1,8 +1,8 @@
 @inherits CancellableComponent
-@inject WorkService WorkService
+@inject MarkdownReaderService ReaderService
+@inject PersistentComponentState ApplicationState
 @inject ReaderProgressService ReaderProgressService
 @inject ReadTrackingService ReadTrackingService
-@inject NavigationManager Navigation
 @inject ThemeService theme
 @inject MarkdownPipeline mdp
 @inject IJSRuntime JS
@@ -31,7 +31,7 @@ else if (!string.IsNullOrWhiteSpace(errorMessage))
 else if (Meta is not null)
 {
     var orderedChildren = BuildNavigationChapters().ToList();
-    var currentChapterIndex = orderedChildren.FindIndex(chapter => chapter.Id == WorkId);
+    var currentChapterIndex = orderedChildren.FindIndex(chapter => chapter.Id == Meta.Id.ToString());
     var currentChapter = currentChapterIndex >= 0 ? orderedChildren[currentChapterIndex] : null;
     var nextChapter = currentChapterIndex >= 0 && currentChapterIndex < orderedChildren.Count - 1
         ? orderedChildren[currentChapterIndex + 1]
@@ -43,7 +43,7 @@ else if (Meta is not null)
         && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
     var isEndOfStory = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
 
-    <div class="section" @ref="readerElement">
+    <div class="section" @key="WorkId">
         <div class="container">
             <AppBreadcrumbs Items="@BreadcrumbItems" />
             <div class="level ihf-reader-header">
@@ -67,7 +67,7 @@ else if (Meta is not null)
                         <div class="buttons">
                             @if (orderedChildren.Count > 1 && Meta.WorkType == "Chapter")
                             {
-                                <ChapterNavigation CurrentChapterId="@WorkId" Chapters="@orderedChildren" />
+                                <ChapterNavigation CurrentChapterId="@Meta.Id.ToString()" Chapters="@orderedChildren" />
                             }
                             @if (Meta.StoryId is not null)
                             {
@@ -98,7 +98,7 @@ else if (Meta is not null)
                         </div>
                     }
 
-                    <div class="box content ihf-reader-body">
+                    <div class="box content ihf-reader-body" data-work-id="@WorkId" @ref="readerElement">
                         @((MarkupString)Markdown.ToHtml(content.Content, mdp))
                     </div>
 
@@ -146,7 +146,7 @@ else if (Meta is not null)
                     <div class="level mt-6">
                         <div class="level-left">
                             <div class="level-item">
-                                <ChapterNavigation CurrentChapterId="@WorkId" Chapters="@orderedChildren" ShowLabels="true" />
+                                <ChapterNavigation CurrentChapterId="@Meta.Id.ToString()" Chapters="@orderedChildren" ShowLabels="true" />
                             </div>
                         </div>
                         <div class="level-right">
@@ -203,153 +203,115 @@ else if (Meta is not null)
     [CascadingParameter(Name = HttpContextItemKey)]
     private string? Nonce { get; set; }
 
-    private LinkedOfGetPublishedWorkContentResponse? content;
+    private MarkdownReaderModel? reader;
+    private LinkedOfGetPublishedWorkContentResponse? content => reader?.Content;
     private bool isLoading = true;
     private string? errorMessage;
-    private string? loadedContentWorkId;
     private string? appliedParameterKey;
-    private string? handledParameterKey;
     private bool _disposed;
     private ElementReference readerElement;
     private IJSObjectReference? readTrackingModule;
     private DotNetObjectReference<StoryReader>? dotNetReference;
     private string? observedWorkId;
+    private string? observedElementId;
+    private PersistingComponentStateSubscription persistingSubscription;
+    private long loadGeneration;
 
-    private string? Byline => Meta?.Authors?.Any() == true
+    private string? Byline => Meta.Authors.Any()
         ? $"by {string.Join(", ", Meta.Authors.Select(a => a.Name))}"
         : null;
 
     protected override void OnInitialized()
     {
         theme.ThemeChanged += OnThemeChanged;
+        persistingSubscription = ApplicationState.RegisterOnPersisting(() =>
+        {
+            if (reader is not null && !isLoading)
+                ApplicationState.PersistAsJson(BuildStateKey(), reader);
+            return Task.CompletedTask;
+        });
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         var parameterKey = BuildParameterKey();
-        if (appliedParameterKey == parameterKey)
-        {
-            return;
-        }
-
-        content = null;
-        errorMessage = null;
-        isLoading = Meta is null || Meta.IsDirectlyReadable;
+        if (appliedParameterKey == parameterKey) return;
         appliedParameterKey = parameterKey;
-        handledParameterKey = null;
-        loadedContentWorkId = null;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (content is not null && observedWorkId != WorkId)
-        {
-            await StartReadObservationAsync();
-        }
-
-        var parameterKey = BuildParameterKey();
-        if (Meta is null || handledParameterKey == parameterKey)
-        {
-            return;
-        }
-
-        handledParameterKey = parameterKey;
-
-        if (!Meta.IsDirectlyReadable)
-        {
-            await NavigateToSelectedReadableWorkAsync();
-            return;
-        }
-
-        await LoadContentAsync();
-    }
-
-    private async Task LoadContentAsync()
-    {
-        if (loadedContentWorkId == WorkId)
-        {
-            return;
-        }
-
-        isLoading = true;
+        var generation = ++loadGeneration;
+        reader = null;
         errorMessage = null;
-        StateHasChanged();
-
+        isLoading = true;
         try
         {
-            var result = await WorkService.GetPublishedWorkContentAsync(WorkId, cancellationToken: CancellationToken);
-
-            if (result.IsSuccess)
+            if (ApplicationState.TryTakeFromJson<MarkdownReaderModel>(BuildStateKey(), out var persisted)
+                && persisted is not null)
             {
-                content = result.Value;
-                loadedContentWorkId = WorkId;
-
+                reader = persisted;
             }
             else
             {
-                content = null;
-                errorMessage = result.DomainError.Description;
+                var result = await ReaderService.ResolveAsync(WorkId, Meta, CancellationToken);
+                if (generation != loadGeneration || _disposed) return;
+                if (result.IsSuccess) reader = result.Value;
+                else errorMessage = result.DomainError.Description;
             }
         }
         catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
         {
             return;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            content = null;
-            errorMessage = $"Failed to load this work's content: {ex.Message}";
+            if (generation != loadGeneration || _disposed) return;
+            errorMessage = "This work's content could not be loaded. Please try again.";
         }
-
-        isLoading = false;
-        StateHasChanged();
+        if (generation == loadGeneration) isLoading = false;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (reader is null || isLoading) return;
+        if (observedWorkId != WorkId || observedElementId != readerElement.Id)
+        {
+            try { await StartReadObservationAsync(); }
+            catch (JSException) { /* The server-rendered body remains readable. */ }
+            catch (InvalidOperationException) { /* Interactivity is unavailable. */ }
+        }
+    }
+
+    private string BuildStateKey() => $"StoryReader:Resolved:{WorkId}";
 
     private async Task StartReadObservationAsync()
     {
+        if (string.IsNullOrEmpty(readerElement.Id)) return;
+        var workId = WorkId;
+        var element = readerElement;
+        var generation = loadGeneration;
         readTrackingModule ??= await JS.InvokeAsync<IJSObjectReference>(
             "import", "./_content/IHFiction.SharedWeb/Components/Reading/StoryReader.razor.js");
+        if (_disposed || isLoading || generation != loadGeneration || element.Id != readerElement.Id) return;
         dotNetReference ??= DotNetObjectReference.Create(this);
-        await readTrackingModule.InvokeVoidAsync("observe", readerElement, dotNetReference);
-        observedWorkId = WorkId;
+        // A detached or replaced body must remain retryable on the next render.
+        var attached = await readTrackingModule.InvokeAsync<bool>("observe", element, dotNetReference, workId);
+        if (attached && !_disposed && generation == loadGeneration && element.Id == readerElement.Id)
+        {
+            observedWorkId = workId;
+            observedElementId = element.Id;
+        }
     }
 
     [JSInvokable]
-    public async Task OnQualifiedRead(int activeSeconds)
+    public async Task OnQualifiedRead(string observedId, int activeSeconds)
     {
-        if (!Ulid.TryParse(WorkId, out var workId)) return;
+        if (isLoading || reader is null || observedId != WorkId
+            || !Ulid.TryParse(observedId, out var workId)) return;
+        var qualifiedMeta = Meta;
 
         var result = await ReadTrackingService.RecordQualifiedReadAsync(workId, activeSeconds, CancellationToken);
-        if (result.IsSuccess && Meta?.WorkType == "Chapter" && Meta.StoryId is { } storyId)
+        if (result.IsSuccess && qualifiedMeta.WorkType == "Chapter" && qualifiedMeta.StoryId is { } storyId)
         {
-            await ReaderProgressService.SetLastReadChapterIdAsync(storyId.ToString(), WorkId);
+            await ReaderProgressService.SetLastReadChapterIdAsync(storyId.ToString(), observedId);
         }
-    }
-
-    private async Task NavigateToSelectedReadableWorkAsync()
-    {
-        isLoading = true;
-        StateHasChanged();
-
-        var storyProgressId = Meta?.StoryId?.ToString() ?? WorkId;
-        var targetWorkId = await ReaderProgressService.GetLastReadChapterIdAsync(storyProgressId);
-        var readableChildren = Meta?.ReadableChildren?.ToList() ?? [];
-
-        if (string.IsNullOrWhiteSpace(targetWorkId)
-            || !readableChildren.Any(child => child.Id.ToString() == targetWorkId))
-        {
-            targetWorkId = Meta?.DefaultReadableWorkId?.ToString();
-        }
-
-        if (!string.IsNullOrWhiteSpace(targetWorkId))
-        {
-            Navigation.NavigateTo($"/read/{targetWorkId}", replace: true);
-            return;
-        }
-
-        isLoading = false;
-        errorMessage = "This work does not have any published readable content yet.";
-        StateHasChanged();
     }
 
     private IEnumerable<ReaderChapterNavItem> BuildNavigationChapters()
@@ -378,6 +340,8 @@ else if (Meta is not null)
             return;
         }
 
+        persistingSubscription.Dispose();
+        loadGeneration++;
         theme.ThemeChanged -= OnThemeChanged;
         if (readTrackingModule is not null)
         {

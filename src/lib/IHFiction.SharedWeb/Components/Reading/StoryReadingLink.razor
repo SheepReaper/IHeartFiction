@@ -1,0 +1,127 @@
+@inherits CancellableComponent
+@inject IPublishedWorkReader WorkReader
+@inject ReaderProgressService Progress
+@inject PersistentComponentState ApplicationState
+
+@if (TargetWorkId is { } target)
+{
+    <a href="/read/@target" class="button is-primary is-fullwidth is-large">
+        <span class="icon"><i class="fas fa-book-open" aria-hidden="true"></i></span>
+        <span>@Label</span>
+    </a>
+    @if (resumeWorkId is not null)
+    {
+        <a href="/read/@DefaultWorkId" class="button is-text is-fullwidth mt-2">Start from beginning</a>
+    }
+}
+else
+{
+    <button class="button is-fullwidth is-large" disabled>Start Reading</button>
+    <p class="help">@(isLoading ? "Loading reading options..." : errorMessage ?? "No published readable chapters are available yet.")</p>
+}
+
+@code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = string.Empty;
+
+    private LinkedOfGetPublishedWorkMetaResponse? meta;
+    private string? requestedStoryId;
+    private string? progressStoryId;
+    private Ulid? resumeWorkId;
+    private bool isLoading = true;
+    private bool disposed;
+    private string? errorMessage;
+    private long generation;
+    private PersistingComponentStateSubscription persistingSubscription;
+
+    private Ulid? DefaultWorkId
+    {
+        get
+        {
+            if (meta?.IsDirectlyReadable == true) return meta.Id;
+            return meta?.DefaultReadableWorkId is { } id && meta.ReadableChildren.Any(child => child.Id == id)
+                ? id : null;
+        }
+    }
+    private Ulid? TargetWorkId => resumeWorkId ?? DefaultWorkId;
+    private string Label
+    {
+        get
+        {
+            if (meta?.IsDirectlyReadable == true) return "Read Story";
+            return resumeWorkId is not null ? "Resume Reading" : "Start Reading";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        persistingSubscription = ApplicationState.RegisterOnPersisting(() =>
+        {
+            if (meta is not null && !isLoading)
+                ApplicationState.PersistAsJson(StateKey(), meta);
+            return Task.CompletedTask;
+        });
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (requestedStoryId == StoryId) return;
+        requestedStoryId = StoryId;
+        var currentGeneration = ++generation;
+        meta = null;
+        resumeWorkId = null;
+        progressStoryId = null;
+        errorMessage = null;
+        isLoading = true;
+        try
+        {
+            if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedWorkMetaResponse>(StateKey(), out var persisted)
+                && persisted is not null)
+                meta = persisted;
+            else if (Ulid.TryParse(StoryId, out var id))
+            {
+                var result = await WorkReader.GetPublishedWorkMetaAsync(id, cancellationToken: CancellationToken);
+                if (disposed || generation != currentGeneration) return;
+                if (result.IsSuccess) meta = result.Value;
+                else errorMessage = "Reading options are currently unavailable.";
+            }
+        }
+        catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested) { return; }
+        catch (Exception)
+        {
+            if (disposed || generation != currentGeneration) return;
+            errorMessage = "Reading options are currently unavailable.";
+        }
+        if (generation == currentGeneration) isLoading = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isLoading || meta is null || meta.IsDirectlyReadable || DefaultWorkId is null
+            || progressStoryId == StoryId) return;
+        progressStoryId = StoryId;
+        var currentGeneration = generation;
+        try
+        {
+            var remembered = await Progress.GetLastReadChapterIdAsync(meta.Id.ToString());
+            if (disposed || generation != currentGeneration) return;
+            if (Ulid.TryParse(remembered, out var id) && id != DefaultWorkId
+                && meta.ReadableChildren.Any(child => child.Id == id))
+            {
+                resumeWorkId = id;
+                StateHasChanged();
+            }
+        }
+        catch (JSException) { /* The default chapter link remains available. */ }
+        catch (InvalidOperationException) { /* Browser storage can be unavailable. */ }
+    }
+
+    private string StateKey() => $"StoryReadingLink:Meta:{StoryId}";
+
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        disposed = true;
+        generation++;
+        persistingSubscription.Dispose();
+        await base.DisposeAsyncCore();
+    }
+}

@@ -1,6 +1,7 @@
 let activeCleanup;
 
-export function observe(element, dotNetReference) {
+export function observe(element, dotNetReference, workId) {
+    if (!(element instanceof Element) || !element.isConnected || element.dataset.workId !== workId) return false;
     activeCleanup?.();
 
     let activeSeconds = 0;
@@ -45,7 +46,7 @@ export function observe(element, dotNetReference) {
             qualified = true;
             window.clearInterval(timer);
             try {
-                await dotNetReference.invokeMethodAsync("OnQualifiedRead", activeSeconds);
+                await dotNetReference.invokeMethodAsync("OnQualifiedRead", workId, activeSeconds);
             } catch {
                 // Interactive Server circuit or .NET reference ended while the timer was pending.
             } finally {
@@ -55,4 +56,5 @@ export function observe(element, dotNetReference) {
     }, 1000);
 
     activeCleanup = cleanup;
+    return true;
 }

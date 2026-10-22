@@ -6,6 +6,7 @@
 @inject PersistentComponentState ApplicationState
 @inject WorkService WorkService
 @inject MetadataUrlService MetadataUrls
+@inject NavigationManager Navigation
 
 @page "/read/{WorkId}"
 
@@ -37,6 +38,10 @@
         <DisqusThread PageUrl="@(CanonicalUrl ?? PageUrl)" PageIdentifier="@WorkId" />
     }
 }
+else if (loadFailed)
+{
+    <div class="section"><div class="notification is-danger" role="alert">This work is unavailable or could not be loaded.</div></div>
+}
 
 @code {
     [Parameter] public string WorkId { get; set; } = string.Empty;
@@ -44,8 +49,12 @@
     [CascadingParameter(Name = "MarkdownRequest")]
     private bool IsMarkdownRequest { get; set; }
 
+    [CascadingParameter] private Microsoft.AspNetCore.Http.HttpContext? HttpContext { get; set; }
+
     private LinkedOfGetPublishedWorkMetaResponse? meta;
     private string? loadedWorkId;
+    private bool loadFailed;
+    private long loadGeneration;
     private PersistingComponentStateSubscription persistingSubscription;
 
     private bool CanIndex => meta?.CanIndex == true;
@@ -91,6 +100,9 @@
             return;
         }
 
+        var generation = ++loadGeneration;
+        var requestedWorkId = WorkId;
+        loadFailed = false;
         meta = null;
         loadedWorkId = null;
 
@@ -99,23 +111,46 @@
             out var persistedMeta)
             && persistedMeta is not null)
         {
-            meta = persistedMeta;
-            loadedWorkId = WorkId;
+            ApplyMetadata(persistedMeta);
             return;
         }
 
-        var result = await WorkService.GetPublishedWorkMetaAsync(WorkId);
+        IHFiction.SharedKernel.Infrastructure.Result<LinkedOfGetPublishedWorkMetaResponse> result;
+        try
+        {
+            result = HttpContext?.Items[typeof(LinkedOfGetPublishedWorkMetaResponse)]
+                is LinkedOfGetPublishedWorkMetaResponse cached && string.Equals(cached.Id.ToString(), requestedWorkId, StringComparison.OrdinalIgnoreCase)
+                    ? IHFiction.SharedKernel.Infrastructure.Result.Success(cached)
+                    : await WorkService.GetPublishedWorkMetaAsync(requestedWorkId);
+        }
+        catch (Exception)
+        {
+            if (generation == loadGeneration) loadFailed = true;
+            return;
+        }
+        if (generation != loadGeneration) return;
 
         if (result.IsSuccess)
         {
-            meta = result.Value;
-            loadedWorkId = WorkId;
+            ApplyMetadata(result.Value);
         }
         else
         {
+            loadFailed = true;
             meta = null;
             loadedWorkId = null;
         }
+    }
+
+    private void ApplyMetadata(LinkedOfGetPublishedWorkMetaResponse metadata)
+    {
+        if (ReaderRoutes.ContainerDestination(metadata) is { } destination)
+        {
+            Navigation.NavigateTo(destination, replace: true);
+            return;
+        }
+        meta = metadata;
+        loadedWorkId = WorkId;
     }
 
     private IEnumerable<object> StructuredDataSchemas
@@ -264,6 +299,7 @@
 
     public void Dispose()
     {
+        loadGeneration++;
         persistingSubscription.Dispose();
     }
 

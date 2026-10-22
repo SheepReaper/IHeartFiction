@@ -23,12 +23,11 @@ public sealed class MarkdownReaderServiceTests
         result.Value.Should().NotBeNull();
         var model = result.Value!;
         model.WorkId.Should().Be(workId.ToString());
-        model.Meta.Should().BeSameAs(meta);
         model.Content.Should().BeSameAs(content);
     }
 
     [Fact]
-    public async Task ResolveAsync_ContainerWork_LoadsValidatedDefaultChild()
+    public async Task ResolveAsync_ContainerWork_RejectsWithoutFetchingAnotherWork()
     {
         var storyId = Ulid.NewUlid();
         var chapterId = Ulid.NewUlid();
@@ -48,16 +47,14 @@ public sealed class MarkdownReaderServiceTests
         var result = await new MarkdownReaderService(reader)
             .ResolveAsync(storyId.ToString(), storyMeta, TestContext.Current.CancellationToken);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        var model = result.Value!;
-        model.WorkId.Should().Be(chapterId.ToString());
-        model.Meta.Should().BeSameAs(chapterMeta);
-        model.Content.Should().BeSameAs(content);
+        result.IsFailure.Should().BeTrue();
+        result.DomainError!.Code.Should().Be("MarkdownReader.NoReadableContent");
+        reader.MetaCalls.Should().Be(0);
+        reader.ContentCalls.Should().Be(0);
     }
 
     [Fact]
-    public async Task ResolveAsync_DefaultChildOutsideReadableChildren_ReturnsUnavailable()
+    public async Task ResolveAsync_NonReadableWork_ReturnsUnavailable()
     {
         var storyId = Ulid.NewUlid();
         var storyMeta = CreateMeta(
@@ -139,6 +136,8 @@ public sealed class MarkdownReaderServiceTests
 
     private sealed class FakePublishedWorkReader : IPublishedWorkReader
     {
+        public int MetaCalls { get; private set; }
+        public int ContentCalls { get; private set; }
         public Dictionary<Ulid, LinkedOfGetPublishedWorkMetaResponse> MetaResults { get; } = [];
         public Dictionary<Ulid, LinkedOfGetPublishedWorkContentResponse> ContentResults { get; } = [];
         public Dictionary<Ulid, DomainError> ContentErrors { get; } = [];
@@ -146,16 +145,20 @@ public sealed class MarkdownReaderServiceTests
         public ValueTask<Result<LinkedOfGetPublishedWorkMetaResponse>> GetPublishedWorkMetaAsync(
             Ulid id,
             string? fields = null,
-            CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(MetaResults.TryGetValue(id, out var value)
+            CancellationToken cancellationToken = default)
+        {
+            MetaCalls++;
+            return ValueTask.FromResult(MetaResults.TryGetValue(id, out var value)
                 ? Result.Success(value)
                 : Result.Failure<LinkedOfGetPublishedWorkMetaResponse>(DomainError.NotFound));
+        }
 
         public ValueTask<Result<LinkedOfGetPublishedWorkContentResponse>> GetPublishedWorkContentAsync(
             Ulid id,
             string? fields = null,
             CancellationToken cancellationToken = default)
         {
+            ContentCalls++;
             cancellationToken.ThrowIfCancellationRequested();
             return ValueTask.FromResult(ContentResults.TryGetValue(id, out var value)
                 ? Result.Success(value)

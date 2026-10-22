@@ -15,28 +15,28 @@
 }
 else if (reader is not null)
 {
-    var chapters = BuildNavigationChapters(reader.Meta).ToList();
+    var chapters = BuildNavigationChapters(Meta).ToList();
     var currentIndex = chapters.FindIndex(chapter => chapter.Id == reader.WorkId);
     var previous = currentIndex > 0 ? chapters[currentIndex - 1] : null;
     var next = currentIndex >= 0 && currentIndex < chapters.Count - 1 ? chapters[currentIndex + 1] : null;
 
     <article class="content">
-        <h1>@reader.Meta.Title</h1>
-        @if (reader.Meta.Authors.Any())
+        <h1>@Meta.Title</h1>
+        @if (Meta.Authors.Any())
         {
-            <p>by @string.Join(", ", reader.Meta.Authors.Select(author => author.Name))</p>
+            <p>by @string.Join(", ", Meta.Authors.Select(author => author.Name))</p>
         }
-        @if (!string.IsNullOrWhiteSpace(reader.Meta.BookTitle))
+        @if (!string.IsNullOrWhiteSpace(Meta.BookTitle))
         {
-            <p>From <strong>@reader.Meta.BookTitle</strong></p>
+            <p>From <strong>@Meta.BookTitle</strong></p>
         }
-        @if (!string.IsNullOrWhiteSpace(reader.Meta.StoryTitle))
+        @if (!string.IsNullOrWhiteSpace(Meta.StoryTitle))
         {
-            <p>Part of <strong>@reader.Meta.StoryTitle</strong></p>
+            <p>Part of <strong>@Meta.StoryTitle</strong></p>
         }
-        @if (reader.Meta.StoryId is not null)
+        @if (Meta.StoryId is not null)
         {
-            <p><a href="/stories/@reader.Meta.StoryId">Story Details</a></p>
+            <p><a href="/stories/@Meta.StoryId">Story Details</a></p>
         }
 
         @if (!string.IsNullOrWhiteSpace(reader.Content.Note1))

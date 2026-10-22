@@ -17,6 +17,7 @@ using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
 using IHFiction.WebClient.Tags;
+using IHFiction.WebClient.Reading;
 
 using Sidio.Sitemap.Blazor;
 
@@ -76,6 +77,7 @@ internal static class MiddlewarePipelineExtensions
         app.UseHttpsRedirection();
         app.UseRouting();
         app.UseMiddleware<TagCanonicalizationMiddleware>();
+        app.UseMiddleware<ReaderRedirectMiddleware>();
         app.UseMiddleware<MarkdownResponseMiddleware>();
         app.UseMiddleware<HomepageLinkHeaderMiddleware>();
 
