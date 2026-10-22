@@ -51,6 +51,7 @@ Keep each increment end-to-end enough to compile and verify. Preserve unrelated 
 - If a Wolverine handler owns that resilient transaction, configure EF integration with `TransactionMiddlewareMode.Lightweight`; eager middleware opens a user transaction before the execution strategy and reproduces Npgsql's unsupported-transaction failure. Domain uniqueness and merge rules must still tolerate redelivery because inbox deduplication covers an envelope ID, not separate HTTP retries that publish new envelopes.
 - In Interactive Server components, invoke JS only after interactive rendering from `OnAfterRenderAsync`. Treat disconnects during initialization and disposal as normal races by handling `JSDisconnectedException`; do not depend on teardown interop for client cleanup. Attach `ElementReference` values to the stable rendered element being observed, not loading or error branches. At the protected-browser-storage boundary, treat `CryptographicException` as stale data after a data-protection key change: delete the unreadable key and return the missing-value result instead of terminating the circuit.
 - Preserve `SocialPreviewMetadata.razor` as the single SEO `HeadContent` owner and follow the repository's section-composition and route verification rules.
+- For Bulma/Font Awesome UI, put `aria-hidden="true"` on decorative icon wrappers containing only glyphs. Keep the link or button accessible; icon-only controls, including CSS-only dismiss buttons, need an accessible name. Preserve meaningful loading, status, and date information in visible or `is-sr-only` text when hiding an icon.
 - Check `.agents/WORKAROUNDS.md` before removing unusual build plumbing, package overrides, suppressions, or generated-contract edges.
 
 ## Verify proportionally
@@ -70,6 +71,8 @@ For a new queued route, do not stop at direct handler tests. Verify boundary val
 For Interactive Server failures, reproduce the exact route in Playwright and correlate the same run with `aspire otel logs` and traces. Capture page errors, console errors, failed requests, loading/error UI state, redirects, and the relevant API response. Exercise stale protected storage and qualification timers explicitly when they are part of the behavior. Treat a healthy resource or HTTP 200 as insufficient if the Blazor circuit can still fail after hydration.
 
 Do not claim browser behavior, metadata, authentication, migration application, or distributed messaging is verified from compilation alone. Use the relevant Aspire, integration, or browser-testing skill and report anything that remains unverified.
+
+For icon accessibility changes, check rendered accessible names and accessibility snapshots on representative routes, including icon-only chapter navigation. Font glyphs must not leak into link/button names. Check both initial server-rendered HTML without JavaScript and the interactive page when those rendering modes are affected; source searches alone do not prove the browser result.
 
 ## Report the result
 
