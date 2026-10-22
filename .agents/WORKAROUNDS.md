@@ -2,6 +2,15 @@
 
 This file records intentional temporary workarounds and unusual build plumbing. Check it before removing code that looks like a local band aid.
 
+## Temporary Ubuntu 22.04 build runner for MongoDB integration tests
+
+- **Location:** `.github/workflows/build.yml`, build job OS matrix.
+- **Symptom:** [Build run 39732344027](https://github.com/SheepReaper/IHeartFiction/actions/runs/39732344027) passed its unit tests but failed all 104 integration tests during shared-fixture initialization because `library/mongo:8.0` exited with fatal message ID `12257600`.
+- **Cause:** Ubuntu 24.04 runner image `20261018.339.1` moved to kernel `7.0.0-1017-azure`. Its upstream kernel is 7.0.14, but affected MongoDB releases inspect the Ubuntu release string and incorrectly reject it as incompatible. GitHub reproduced this on Ubuntu 24.04 and 26.04 and verified Ubuntu 22.04 as a temporary workaround. See [actions/runner-images#15005](https://github.com/actions/runner-images/issues/15005) and [SERVER-131779](https://jira.mongodb.org/browse/SERVER-131779).
+- **Workaround:** pin the build job to `ubuntu-22.04`, retaining the existing MongoDB image and complete test suite.
+- **Removal criteria:** once a published MongoDB 8.0 image includes the Ubuntu kernel-detection fix (targeted for 8.0.35), update the test image and restore `ubuntu-latest` together. Confirm the actual MongoDB version and runner kernel, then require the complete Build workflow to pass on the newer runner, including integration-fixture startup. Do not assume an Ubuntu label pins a kernel indefinitely.
+- **Verification:** run `actionlint -shellcheck= -pyflakes= .github/workflows/build.yml` and `git diff --check` locally. After the change is pushed, require the Build workflow to pass with `dotnet test -c Release --no-restore`. A local Windows/WSL2 test pass does not verify this runner workaround.
+
 ## Temporary MessagePack security override (GHSA-qhrr-8q5h-9q3h)
 
 - **Location:** `Directory.Packages.props` and `src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj`, under `Temporary security overrides`.

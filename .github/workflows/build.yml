@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest] # Only planning on deploying to linux
+        os: [ubuntu-22.04] # Temporary MongoDB kernel-detection workaround; see .agents/WORKAROUNDS.md.
         config: [Release]
     
     outputs:
