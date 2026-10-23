@@ -34,6 +34,11 @@
     },
     {
       "matchManagers": ["nuget"],
+      "matchPackageNames": ["MessagePack"],
+      "allowedVersions": "<3.0.0"
+    },
+    {
+      "matchManagers": ["nuget"],
       "matchPackageNames": ["Microsoft.Build.Tasks.Core"],
       "allowedVersions": "<18.10.0"
     },
