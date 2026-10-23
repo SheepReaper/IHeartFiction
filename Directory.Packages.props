@@ -101,7 +101,7 @@
   <!-- Temporary dependency security overrides; removal criteria live in .agents/WORKAROUNDS.md. -->
   <ItemGroup Label="Temporary security overrides">
     <!-- GHSA-qhrr-8q5h-9q3h: Aspire hosting and StreamJsonRpc bring in MessagePack 2.5.302. -->
-    <PackageVersion Include="MessagePack" Version="2.5.303" />
+    <PackageVersion Include="MessagePack" Version="3.1.12" />
     <!-- DataProtection and Microsoft.Build.Tasks.Core bring in vulnerable cryptography packages. -->
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
