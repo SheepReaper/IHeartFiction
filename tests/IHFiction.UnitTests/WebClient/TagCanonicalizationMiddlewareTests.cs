@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Services;
 using IHFiction.WebClient.Tags;
@@ -40,10 +41,12 @@ public sealed class TagCanonicalizationMiddlewareTests
     [InlineData("HEAD")]
     public async Task Alias_PermanentlyRedirectsAndPreservesQuery(string method)
     {
+        using var services = new ServiceCollection().AddLogging().BuildServiceProvider();
         using var handler = new ResponseHandler(200, "{\"canonicalSpec\":\"genre:drama\",\"tags\":[],\"storyCount\":1}");
         using var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.example/") };
         var context = new DefaultHttpContext();
         context.Request.Method = method;
+        context.RequestServices = services;
         context.Request.Path = "/tags/Drama";
         context.Request.QueryString = new QueryString("?page=2");
         var middleware = new TagCanonicalizationMiddleware(_ => throw new InvalidOperationException("Must redirect before rendering."));

@@ -37,7 +37,10 @@ internal sealed class TagCanonicalizationMiddleware(RequestDelegate next)
             var canonicalPath = TagRouteSpec.BuildPath(requestContext.Resolution.Value.CanonicalSpec);
             if (!string.Equals(context.Request.Path.Value, canonicalPath, StringComparison.Ordinal))
             {
-                context.Response.Redirect(canonicalPath + context.Request.QueryString, permanent: true);
+                await Results.LocalRedirect(
+                    canonicalPath + context.Request.QueryString,
+                    permanent: true)
+                    .ExecuteAsync(context);
                 return;
             }
         }
