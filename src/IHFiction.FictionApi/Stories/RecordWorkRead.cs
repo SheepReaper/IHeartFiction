@@ -86,7 +86,7 @@ internal sealed class RecordWorkRead(IMessageBus messageBus, TimeProvider timePr
             .WithTags(ApiTags.Stories.Discovery)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false)
-            .RequireRateLimiting("qualified-reads")
+            .RequireRateLimiting(RateLimitPolicies.QualifiedReads)
             .Produces<RecordWorkReadResponse>(StatusCodes.Status202Accepted);
     }
 }
