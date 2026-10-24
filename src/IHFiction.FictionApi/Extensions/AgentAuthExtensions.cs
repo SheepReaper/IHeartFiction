@@ -118,8 +118,10 @@ internal static class AgentAuthExtensions
         }).ExcludeFromDescription();
     }
 
-    private static void MapProtocol(IEndpointRouteBuilder builder)
+    private static void MapProtocol(IEndpointRouteBuilder routes)
     {
+        var builder = routes.MapGroup(string.Empty).RequireRateLimiting(RateLimitPolicies.Auth);
+
         builder.MapPost("/agent/identity", async (
             IdentityRequest request,
             AgentRegistrationService registrations,
@@ -170,7 +172,7 @@ internal static class AgentAuthExtensions
                         $"AgentAuth error=\"{exception.Error}\", max_age=\"{(int)options.Value.ProviderAssertionMaxAge.TotalSeconds}\"";
                 return ProtocolError(exception.Error, exception.Message, exception.StatusCode);
             }
-        }).RequireRateLimiting("qualified-reads").ExcludeFromDescription();
+        }).ExcludeFromDescription();
 
         builder.MapPost("/agent/identity/claim", () => ProtocolError(
             "invalid_request",
