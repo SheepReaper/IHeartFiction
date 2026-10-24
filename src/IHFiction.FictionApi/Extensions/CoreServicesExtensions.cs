@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Threading.RateLimiting;
 
 using Cysharp.Serialization.Json;
 
@@ -26,15 +25,7 @@ internal static class CoreServicesExtensions
             .Configure<RouteOptions>(options => options.SetParameterPolicy<UlidRouteConstraint>("ulid"));
 
         builder.Services.AddHttpContextAccessor();
-        builder.Services.AddRateLimiter(options => options.AddPolicy("qualified-reads", httpContext =>
-            RateLimitPartition.GetFixedWindowLimiter(
-                httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = 120,
-                    Window = TimeSpan.FromMinutes(1),
-                    QueueLimit = 0
-                })));
+        builder.Services.AddApiRateLimiting();
 
         // Configure JSON serialization for AOT compatibility
         builder.Services.ConfigureHttpJsonOptions(options =>

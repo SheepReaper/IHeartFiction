@@ -32,7 +32,8 @@ internal static partial class EndpointExtensions
         {
             endpoint
                 .MapEndpoint(app)
-                .WithName(endpoint.Name);
+                .WithName(endpoint.Name)
+                .ApplyDefaultRateLimitPolicy();
         }
 
         return app;
