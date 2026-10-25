@@ -67,8 +67,7 @@ internal static partial class RateLimitingExtensions
                         : "Rate limit exceeded. Retry later.",
                     Type = "https://tools.ietf.org/html/rfc6585#section-4",
                 };
-                problem.Extensions["requestId"] = context.TraceIdentifier;
-
+                // The shared ProblemDetails service owns request/trace enrichment.
                 await Results.Problem(problem).ExecuteAsync(context);
             };
         });
