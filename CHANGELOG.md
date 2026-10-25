@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.9] - 2026-10-25
+
+
+### Added
+
+- **reader:** Server-render bodies and add contextual reading resume
+
+
+### CI
+
+- Pin build runner for MongoDB kernel compatibility
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Fixed
+
+- **accessibility:** Add aria-hidden attribute to icons for improved screen reader support
+
+- **accessibility:** Refactor icon accessibility attributes across components
+
+- **accessibility:** Enhance icon accessibility guidelines for Bulma/Font Awesome UI
+
+- **dependencies:** Add version constraint for MessagePack package in NuGet rules
+
+- **middleware:** Update redirect logic to use Results.LocalRedirect for canonical paths
+
+
+### Maintenance
+
+- **deps:** Update github/codeql-action digest to 9b32540
+
+- **deps:** Update dependency markdig to 1.4.2
+
+- **deps:** Update dotnet monorepo
+
+- **deps:** Update dependency shirubasoft.aspire.cloudflaretunnels to 2.5.0
+
+- **deps:** Update opentelemetry-dotnet monorepo to 1.20.1
+
+- **deps:** Update opentelemetry-dotnet-contrib monorepo to 1.20.1
+
+- **deps:** Update wolverine monorepo to 6.52.0
+
+
+### Other
+
+- Add comprehensive rate limiting policies and coverage
+
+Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
+
+
+
 ## [v1.0.7] - 2026-10-21
 
 
