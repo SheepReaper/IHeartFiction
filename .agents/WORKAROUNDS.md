@@ -11,21 +11,6 @@ This file records intentional temporary workarounds and unusual build plumbing. 
 - **Removal criteria:** once a published MongoDB 8.0 image includes the Ubuntu kernel-detection fix (targeted for 8.0.35), update the test image and restore `ubuntu-latest` together. Confirm the actual MongoDB version and runner kernel, then require the complete Build workflow to pass on the newer runner, including integration-fixture startup. Do not assume an Ubuntu label pins a kernel indefinitely.
 - **Verification:** run `actionlint -shellcheck= -pyflakes= .github/workflows/build.yml` and `git diff --check` locally. After the change is pushed, require the Build workflow to pass with `dotnet test -c Release --no-restore`. A local Windows/WSL2 test pass does not verify this runner workaround.
 
-## Temporary MessagePack security override (GHSA-qhrr-8q5h-9q3h)
-
-- **Location:** `Directory.Packages.props` and `src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj`, under `Temporary security overrides`.
-- **Symptom:** solution restore fails with NU1902 for MessagePack 2.5.302.
-- **Cause:** Aspire hosting and its StreamJsonRpc dependency bring in MessagePack versions affected by [GHSA-qhrr-8q5h-9q3h](https://github.com/advisories/GHSA-qhrr-8q5h-9q3h), a denial-of-service vulnerability involving nested arrays. Aspire.Hosting.Docker 13.6.4 also requires MessagePack 2.5.307 or later.
-- **Workaround:** centrally manage MessagePack at patched version 2.5.307 and add a versionless AppHost reference, staying on the existing 2.5 release line.
-- **Removal criteria:** after compatible Aspire/StreamJsonRpc updates resolve a patched MessagePack version without this override, remove the AppHost reference and central version together. Run the commands below, confirm no affected version is resolved, and remove this entry after verification.
-
-```powershell
-dotnet restore
-dotnet nuget why src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj MessagePack
-dotnet list package --vulnerable --include-transitive
-dotnet build src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj
-```
-
 ## Temporary Pkcs and Xml security overrides
 
 - **Location:** `Directory.Packages.props` and the Data, SharedWeb, MigrationService, and IntegrationTests project files, under `Temporary security overrides`.
