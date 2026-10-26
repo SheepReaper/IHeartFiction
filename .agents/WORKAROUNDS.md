@@ -15,8 +15,8 @@ This file records intentional temporary workarounds and unusual build plumbing. 
 
 - **Location:** `Directory.Packages.props` and `src/aspire/IHFiction.AppHost/IHFiction.AppHost.csproj`, under `Temporary security overrides`.
 - **Symptom:** solution restore fails with NU1902 for MessagePack 2.5.302.
-- **Cause:** Aspire hosting 13.6.1 and its StreamJsonRpc 2.25.29 dependency bring in MessagePack 2.5.302, affected by [GHSA-qhrr-8q5h-9q3h](https://github.com/advisories/GHSA-qhrr-8q5h-9q3h), a denial-of-service vulnerability involving nested arrays.
-- **Workaround:** centrally manage MessagePack at patched version 2.5.303 and add a versionless AppHost reference, staying on the existing 2.5 release line.
+- **Cause:** Aspire hosting and its StreamJsonRpc dependency bring in MessagePack versions affected by [GHSA-qhrr-8q5h-9q3h](https://github.com/advisories/GHSA-qhrr-8q5h-9q3h), a denial-of-service vulnerability involving nested arrays. Aspire.Hosting.Docker 13.6.4 also requires MessagePack 2.5.307 or later.
+- **Workaround:** centrally manage MessagePack at patched version 2.5.307 and add a versionless AppHost reference, staying on the existing 2.5 release line.
 - **Removal criteria:** after compatible Aspire/StreamJsonRpc updates resolve a patched MessagePack version without this override, remove the AppHost reference and central version together. Run the commands below, confirm no affected version is resolved, and remove this entry after verification.
 
 ```powershell
