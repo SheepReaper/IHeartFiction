@@ -59,7 +59,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.402" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.11.0" />
-    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.5.1" />
+    <PackageVersion Include="Microsoft.Testing.Platform" Version="2.5.2" />
     <PackageVersion Include="MongoDB.Bson" Version="3.12.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.12.0" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.4" />
