@@ -101,6 +101,7 @@ internal static class ProductionConfigExtensions
                 service.DependsOn.Clear(); // BUG: long-format of depends on is incompatible with swarm parser, and it's ignored anyways when short-form
                 service.Expose = []; // Expose is ignored in swarm
                 service.Restart = null; // Container restart policy is ignored in swarm
+                SwarmEnvironment.ValidateNoInterpolation(service.Name, service.Environment);
             }
         })
         .WithProperties(props =>
@@ -109,18 +110,8 @@ internal static class ProductionConfigExtensions
         })
         .ConfigureEnvFile(file =>
         {
-            file.Remove("FICTION_IMAGE");
-            file.Remove("FICTION_PORT");
-            file.Remove("IHFICTION_TUNNEL_TUNNEL_TOKEN");
-            file.Remove("KEYCLOAK_PASSWORD");
-            file.Remove("MIGRATIONS_IMAGE");
-            file.Remove("MONGO_PASSWORD");
-            file.Remove("POSTGRES_PASSWORD");
-            file.Remove("REDIS_PASSWORD");
-            file.Remove("VAPIDPRIVKEY");
-            file.Remove("VAPIDPUBKEY");
-            file.Remove("WEB_IMAGE");
-            file.Remove("WEB_PORT");
+            // Swarm does not load .env. Required values are resolved literals or mounted secret files.
+            file.Clear();
         });
 
     public static IResourceBuilder<PostgresServerResource> ConfigureForSwarm(this IResourceBuilder<PostgresServerResource> builder) => builder
@@ -213,15 +204,8 @@ internal static class ProductionConfigExtensions
         .PublishAsDockerComposeService((res, service) =>
         {
             // Using secrets for connection strings
-            service.Environment.Remove("ConnectionStrings__fiction-db");
-            service.Environment.Remove("FICTION_DB_PASSWORD");
-            service.Environment.Remove("FICTION_DB_URI");
-            service.Environment.Remove("ConnectionStrings__stories-db");
-            service.Environment.Remove("STORIES_DB_PASSWORD");
-            service.Environment.Remove("STORIES_DB_URI");
-
-            if (builder.ApplicationBuilder.Configuration["SecretsPath"] is string secretsPath)
-                service.Environment["SecretsPath"] = secretsPath;
+            SwarmEnvironment.RemoveConnectionVariables(service.Environment, "fiction-db", "stories-db");
+            service.Environment["SecretsPath"] = builder.ApplicationBuilder.Configuration["SecretsPath"] ?? "/run/secrets";
 
             service.Secrets.Add(new() { Source = "ConnectionStrings__fiction-db" });
             service.Secrets.Add(new() { Source = "ConnectionStrings__stories-db" });
@@ -255,17 +239,7 @@ internal static class ProductionConfigExtensions
         .PublishAsDockerComposeService((res, service) =>
         {
             // Using secrets for connection strings
-            service.Environment.Remove("ConnectionStrings__fiction-db");
-            service.Environment.Remove("FICTION_DB_PASSWORD");
-            service.Environment.Remove("FICTION_DB_URI");
-            service.Environment.Remove("ConnectionStrings__stories-db");
-            service.Environment.Remove("STORIES_DB_PASSWORD");
-            service.Environment.Remove("STORIES_DB_URI");
-            service.Environment.Remove("ConnectionStrings__redis");
-            service.Environment.Remove("REDIS_HOST");
-            service.Environment.Remove("REDIS_PASSWORD");
-            service.Environment.Remove("REDIS_PORT");
-            service.Environment.Remove("REDIS_URI");
+            SwarmEnvironment.RemoveConnectionVariables(service.Environment, "fiction-db", "stories-db", "redis");
             service.Environment.Remove("WebPush__PrivateKey");
             service.Environment.Remove("WebPush__PublicKey");
             service.Environment.Remove("AgentAuth__SigningKeyPem");
@@ -290,8 +264,7 @@ internal static class ProductionConfigExtensions
             if (config["OidcAuthority"] is string authority)
                 service.Environment["OidcAuthority"] = authority;
 
-            if (config["SecretsPath"] is string secretsPath)
-                service.Environment["SecretsPath"] = secretsPath;
+            service.Environment["SecretsPath"] = config["SecretsPath"] ?? "/run/secrets";
 
             service.Environment["TrustedProxies"] = config["Api:TrustedProxies"]
                 ?? throw new InvalidOperationException("Api:TrustedProxies is required for production publication.");
@@ -327,9 +300,7 @@ internal static class ProductionConfigExtensions
         .WithEndpoint("http", e => e.TargetPort = 8080)
         .PublishAsDockerComposeService((res, service) =>
         {
-            service.Environment.Remove("ConnectionStrings__fiction-db");
-            service.Environment.Remove("FICTION_DB_PASSWORD");
-            service.Environment.Remove("FICTION_DB_URI");
+            SwarmEnvironment.RemoveConnectionVariables(service.Environment, "fiction-db");
             service.Environment.Remove("FICTION_HTTPS");
             service.Environment.Remove("WebPush__PublicKey");
 
@@ -353,8 +324,7 @@ internal static class ProductionConfigExtensions
             if (config["OidcAuthority"] is string authority)
                 service.Environment["OidcAuthority"] = authority;
 
-            if (config["SecretsPath"] is string secretsPath)
-                service.Environment["SecretsPath"] = secretsPath;
+            service.Environment["SecretsPath"] = config["SecretsPath"] ?? "/run/secrets";
 
             service.Environment["TrustedProxies"] = config["WebClient:TrustedProxies"]
                 ?? throw new InvalidOperationException("WebClient:TrustedProxies is required for production publication.");

@@ -13,6 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Exercise the pure publishing policy without starting an AppHost or adding hosting dependencies. -->
+    <Compile Include="../../src/aspire/IHFiction.AppHost/Extensions/SwarmEnvironment.cs" Link="AppHost/SwarmEnvironment.cs" />
     <ProjectReference Include="../../src/IHFiction.FictionApi/IHFiction.FictionApi.csproj" />
     <ProjectReference Include="../../src/IHFiction.WebClient/IHFiction.WebClient.csproj" />
     <ProjectReference Include="../../src/lib/IHFiction.SharedWeb/IHFiction.SharedWeb.csproj" />
