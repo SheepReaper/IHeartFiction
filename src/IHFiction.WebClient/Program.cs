@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add Aspire service defaults (must be first)
 builder.AddServiceDefaults();
+builder.AddTrustedProxyForwarding();
 
 // Add feature-based service registrations
 builder.AddCoreWebServices();

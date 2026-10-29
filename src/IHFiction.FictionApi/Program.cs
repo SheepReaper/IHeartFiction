@@ -22,6 +22,7 @@ var isBuildEnv = IsBuildEnvironment();
 
 // Add Aspire service defaults (must be first)
 builder.AddServiceDefaults();
+builder.AddTrustedProxyForwarding();
 
 // Add feature-based service registrations
 builder.AddCoreApiServices(dateTime);

@@ -3,7 +3,6 @@ using System.Net.Mime;
 using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 
 using IHFiction.SharedWeb;
@@ -18,6 +17,7 @@ using IHFiction.WebClient.Components;
 using IHFiction.WebClient.MarkdownResponses;
 using IHFiction.WebClient.Tags;
 using IHFiction.WebClient.Reading;
+using IHFiction.WebClient.Infrastructure;
 
 using Sidio.Sitemap.Blazor;
 
@@ -36,6 +36,8 @@ internal static class MiddlewarePipelineExtensions
 
     public static WebApplication UseWebClientPipeline(this WebApplication app, IConfiguration configuration)
     {
+        app.UseTrustedProxyForwarding();
+
         if (app.Environment.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
@@ -45,37 +47,14 @@ internal static class MiddlewarePipelineExtensions
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
             app.UseHsts();
         }
-
-        if (app.Environment.IsProduction())
-        {
-            string[] trustedProxiesCidr = [.. (configuration["TrustedProxies"]
-                ?? throw new InvalidOperationException("TrustedProxies configuration is required in production"))
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-
-            string[] allowedHosts = [.. (configuration["AllowedHosts"]
-                ?? throw new InvalidOperationException("AllowedHosts configuration is required in production"))
-                    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-
-            ForwardedHeadersOptions options = new()
-            {
-                ForwardedHeaders = ForwardedHeaders.All,
-                ForwardLimit = null,
-                AllowedHosts = allowedHosts
-            };
-
-            foreach (var cidr in trustedProxiesCidr)
-            {
-                if (!System.Net.IPNetwork.TryParse(cidr, out var proxy)) continue;
-                options.KnownIPNetworks.Add(proxy);
-            }
-
-            app.UseForwardedHeaders(options);
-        }
-
         app.UseCsp();
-        app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
         app.UseHttpsRedirection();
         app.UseRouting();
+        app.UseWebSockets();
+        app.UseRateLimiter();
+        app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+        app.UseAuthentication();
+        app.UseMiddleware<VisitorContextMiddleware>();
         app.UseMiddleware<TagCanonicalizationMiddleware>();
         app.UseMiddleware<ReaderRedirectMiddleware>();
         app.UseMiddleware<MarkdownResponseMiddleware>();
@@ -204,7 +183,6 @@ internal static class MiddlewarePipelineExtensions
 
         app.MapDefaultEndpoints();
 
-        app.UseAuthentication();
         app.UseAuthorization();
         app.UseAntiforgery();
 
