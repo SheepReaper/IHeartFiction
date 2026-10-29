@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.10] - 2026-10-29
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+- Add WebClient visitor identity and rate limiting documentation
+
+
+### Maintenance
+
+- **deps:** Update dependency messagepack to 2.5.307
+
+- **deps:** Update aspire monorepo to 13.6.4
+
+- **deps:** Update dependency scalar.aspnetcore to 2.18.3
+
+- **deps:** Update dependency shirubasoft.aspire.cloudflaretunnels to 2.5.1
+
+- **deps:** Update dependency microsoft.testing.platform to 2.5.2
+
+- **deps:** Update dotnet monorepo
+
+- **deploy:** Implement Swarm environment configuration and validation, including connection variable cleanup and secret management
+
+
+### Other
+
+- Fix MessagePack restore downgrade
+
+Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
+
+- Remove obsolete MessagePack override
+
+Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
+
+- Remove obsolete MessagePack workaround docs
+
+Co-authored-by: SheepReaper <5705509+SheepReaper@users.noreply.github.com>
+
+- Implement trusted proxy forwarding and rate limiting in WebClient and FictionApi
+
+- Added `AddTrustedProxyForwarding` and `UseTrustedProxyForwarding` methods to handle trusted proxies in production.
+- Refactored middleware pipeline to utilize trusted proxy forwarding in both WebClient and FictionApi.
+- Introduced `WebRateLimitingExtensions` to configure rate limiting policies based on visitor context.
+- Created `VisitorContext` to persist client IP addresses across requests.
+- Implemented `VisitorIdentityHandler` to manage visitor identity headers.
+- Added tests for `FictionApiTransport`, `TrustedProxy`, and `VisitorIdentity` to ensure correct behavior under various scenarios.
+- Updated configuration handling for trusted proxies and allowed hosts in production settings.
+
+
+### Tests
+
+- **rate limiting:** Enhance middleware rejection tests with shared ProblemDetails validation
+
+
+
 ## [v1.0.9] - 2026-10-25
 
 
