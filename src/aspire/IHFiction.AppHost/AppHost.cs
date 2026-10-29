@@ -16,28 +16,6 @@ if(OperatingSystem.IsWindows())
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var vapid = new VapidKeysDefaultProvider();
-
-var keycloakClientSecret = builder.AddParameter(
-    "ApiOidcClientSecret",
-    secret: true);
-
-var keycloakAdminClientSecret = builder.AddParameter(
-    "ApiKeycloakAdminClientSecret",
-    secret: true);
-
-var agentSigningKey = builder.AddParameter(
-    "AgentAuthSigningKeyPem",
-    AgentSigningKeyDefaultProvider.Default,
-    secret: true,
-    persist: true);
-
-var vapidPrivKey = builder.AddParameter(
-    "VapidPrivKey", vapid.DefaultPrivKey, secret: true, persist: true);
-
-var vapidPubKey = builder.AddParameter(
-    "VapidPubKey", vapid.DefaultPubKey, secret: true, persist: true);
-
 var postgres = builder.AddPostgres("postgres")
     .WithImageTag("18.4-trixie")
     .WithLifetime(ContainerLifetime.Persistent)
@@ -67,9 +45,6 @@ var migrations = builder.AddProject<Projects.IHFiction_MigrationService>("migrat
 
 var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
-    .WithEnvironment("WebPush__PrivateKey", vapidPrivKey)
-    .WithEnvironment("WebPush__PublicKey", vapidPubKey)
-    .WithEnvironment("AgentAuth__SigningKeyPem", agentSigningKey)
     .WithReference(keycloak)
     .WithReference(fictionDb)
     .WithReference(redis)
@@ -82,15 +57,32 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
-    .WithEnvironment("WebPush__PublicKey", vapidPubKey)
     .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
     .WithReference(fictionApi) // API transport uses service discovery; ApiBaseUrl is only its public identity
     .WithReference(fictionDb) // Blazor server-side uses db directly via service discovery
     .WithReference(keycloak) // Blazor server-side uses Keycloak directly via service discovery
     .WithReplicas(builder.Configuration.GetValue("Containers:WebClient:ReplicaCount", 1));
 
+if (!builder.Environment.IsProduction())
+{
+    // Production consumes pre-provisioned Swarm secret files. Keep local keys out of its parameter graph.
+    var vapid = new VapidKeysDefaultProvider();
+    var agentSigningKey = builder.AddParameter("AgentAuthSigningKeyPem", AgentSigningKeyDefaultProvider.Default, secret: true, persist: true);
+    var vapidPrivKey = builder.AddParameter("VapidPrivKey", vapid.DefaultPrivKey, secret: true, persist: true);
+    var vapidPubKey = builder.AddParameter("VapidPubKey", vapid.DefaultPubKey, secret: true, persist: true);
+
+    fictionApi
+        .WithEnvironment("WebPush__PrivateKey", vapidPrivKey)
+        .WithEnvironment("WebPush__PublicKey", vapidPubKey)
+        .WithEnvironment("AgentAuth__SigningKeyPem", agentSigningKey);
+    webClient.WithEnvironment("WebPush__PublicKey", vapidPubKey);
+}
+
 if (builder.Environment.IsDevelopment())
 {
+    var keycloakClientSecret = builder.AddParameter("ApiOidcClientSecret", secret: true);
+    var keycloakAdminClientSecret = builder.AddParameter("ApiKeycloakAdminClientSecret", secret: true);
+
     postgres.WithDataVolume("pg18-final-20260804-115347-postgres-data");
 
     mongo.WithDataVolume("mongo-data");
