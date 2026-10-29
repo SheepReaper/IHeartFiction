@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.HttpOverrides;
 
 using IHFiction.FictionApi.AgentAuth;
 using IHFiction.FictionApi.Infrastructure;
@@ -11,6 +10,8 @@ internal static class MiddlewarePipelineExtensions
 {
     public static WebApplication UseFictionApiPipeline(this WebApplication app, IConfiguration configuration)
     {
+        app.UseTrustedProxyForwarding();
+
         // Configure middleware pipeline
         app.UseExceptionHandler();
         app.UseStatusCodePages(async statusCodeContext =>
@@ -28,28 +29,6 @@ internal static class MiddlewarePipelineExtensions
 
         if (app.Environment.IsProduction())
         {
-            string[] trustedProxiesCidr = [.. (configuration["TrustedProxies"]
-                ?? throw new InvalidOperationException("TrustedProxies configuration is required in production"))
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-
-            string[] allowedHosts = [.. (configuration["AllowedHosts"]
-                ?? throw new InvalidOperationException("AllowedHosts configuration is required in production"))
-                    .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
-
-            ForwardedHeadersOptions options = new()
-            {
-                ForwardedHeaders = ForwardedHeaders.All,
-                ForwardLimit = null,
-                AllowedHosts = allowedHosts
-            };
-
-            foreach (var cidr in trustedProxiesCidr)
-            {
-                if (!System.Net.IPNetwork.TryParse(cidr, out var proxy)) continue;
-                options.KnownIPNetworks.Add(proxy);
-            }
-
-            app.UseForwardedHeaders(options);
             app.UseCors();
         }
         else

@@ -272,6 +272,9 @@ internal static class ProductionConfigExtensions
 
             var config = builder.ApplicationBuilder.Configuration;
 
+            service.Environment.Remove("ASPNETCORE_FORWARDEDHEADERS_ENABLED");
+            service.Environment.Remove("DOTNET_FORWARDEDHEADERS_ENABLED");
+
             var allowedHosts = config["Api:AllowedHosts"] ?? "api.iheartfiction.net;localhost;fiction";
             if (!allowedHosts.Contains("fiction", StringComparison.OrdinalIgnoreCase))
                 allowedHosts = $"{allowedHosts.TrimEnd(';')};fiction";
@@ -290,8 +293,8 @@ internal static class ProductionConfigExtensions
             if (config["SecretsPath"] is string secretsPath)
                 service.Environment["SecretsPath"] = secretsPath;
 
-            if (config["TrustedProxies"] is string trustedProxies)
-                service.Environment["TrustedProxies"] = trustedProxies;
+            service.Environment["TrustedProxies"] = config["Api:TrustedProxies"]
+                ?? throw new InvalidOperationException("Api:TrustedProxies is required for production publication.");
 
             service.Deploy ??= new();
 
@@ -332,6 +335,9 @@ internal static class ProductionConfigExtensions
 
             var config = builder.ApplicationBuilder.Configuration;
 
+            service.Environment.Remove("ASPNETCORE_FORWARDEDHEADERS_ENABLED");
+            service.Environment.Remove("DOTNET_FORWARDEDHEADERS_ENABLED");
+
             var allowedHosts = config["WebClient:AllowedHosts"] ?? "iheartfiction.net;localhost;web";
             if (!allowedHosts.Contains("web", StringComparison.OrdinalIgnoreCase))
                 allowedHosts = $"{allowedHosts.TrimEnd(';')};web";
@@ -350,8 +356,8 @@ internal static class ProductionConfigExtensions
             if (config["SecretsPath"] is string secretsPath)
                 service.Environment["SecretsPath"] = secretsPath;
 
-            if (config["TrustedProxies"] is string trustedProxies)
-                service.Environment["TrustedProxies"] = trustedProxies;
+            service.Environment["TrustedProxies"] = config["WebClient:TrustedProxies"]
+                ?? throw new InvalidOperationException("WebClient:TrustedProxies is required for production publication.");
 
             service.Deploy ??= new();
 

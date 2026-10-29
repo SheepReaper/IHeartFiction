@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Components.Web;
 
 using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Services;
+using IHFiction.WebClient.Infrastructure;
 
 namespace IHFiction.WebClient.Extensions;
 
@@ -11,6 +13,7 @@ internal static class ApplicationServicesExtensions
     {
         // UI & Blazor services
         builder.Services.AddRazorComponents()
+            .RegisterPersistentService<VisitorContext>(RenderMode.InteractiveServer)
             .AddInteractiveServerComponents()
             .AddHubOptions(options =>
             {
@@ -20,6 +23,9 @@ internal static class ApplicationServicesExtensions
             });
 
         // Browser storage & client state
+        builder.Services.AddScoped<VisitorContext>();
+        builder.Services.AddWebRateLimiting(builder.Configuration);
+        builder.Services.AddOpenTelemetry().WithMetrics(metrics => metrics.AddMeter(WebRateLimitingExtensions.MeterName));
         builder.Services.AddScoped<ProtectedLocalStorage>();
         builder.Services.AddScoped<BrowserProtectedStorageService>();
         builder.Services.AddScoped<DeviceIdentityService>();
@@ -34,9 +40,11 @@ internal static class ApplicationServicesExtensions
 
         // API HTTP Client & handlers
         builder.Services.AddTransient<AuthenticationHandler>();
-        builder.Services.AddHttpClient<FictionApiClient>(client =>
-            client.BaseAddress = new("https+http://fiction"))
-                .AddHttpMessageHandler<AuthenticationHandler>();
+        builder.Services.AddTransient<VisitorIdentityHandler>();
+        builder.Services.AddHttpClient(FictionApiTransport.Name, client =>
+            client.BaseAddress = new("https+http://fiction"));
+        builder.Services.AddScoped<FictionApiTransport>();
+        builder.Services.AddScoped(services => new FictionApiClient(services.GetRequiredService<FictionApiTransport>().Client));
 
         builder.Services.AddTransient<IFictionApiClient>(services => services.GetRequiredService<FictionApiClient>());
 
