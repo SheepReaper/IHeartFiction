@@ -1,17 +1,17 @@
 using System.Security.Claims;
 
+using IHFiction.Data.AgentAuth.Domain;
+using IHFiction.Data.Contexts;
+using IHFiction.FictionApi.Features.AgentAccess;
+
+using Keycloak.AuthServices.Authorization;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-
-using IHFiction.Data.AgentAuth.Domain;
-using IHFiction.Data.Contexts;
-using IHFiction.FictionApi.AgentAuth;
-
-using Keycloak.AuthServices.Authorization;
 
 namespace IHFiction.FictionApi.Extensions;
 

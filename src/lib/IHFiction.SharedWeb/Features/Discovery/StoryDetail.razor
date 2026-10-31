@@ -1,0 +1,644 @@
+@using static IHFiction.Data.Stories.Domain.StoryType
+@using IHFiction.SharedWeb.Features.Reading
+@using IHFiction.SharedWeb.Features.Following
+@using IHFiction.SharedWeb.Features.Discovery
+@page "/stories/{storyId}"
+@inject StoryDiscoveryService StoryService
+@inject MetadataUrlService MetadataUrls
+@inject PersistentComponentState ApplicationState
+@implements IDisposable
+
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    ImageUrl="@CoverImageUrl"
+    Type="article" />
+
+<StructuredDataMetadata Schemas="@StructuredDataSchemas" />
+
+@if (isLoading)
+{
+    <div class="section">
+        <div class="container has-text-centered">
+            <span class="icon is-large" aria-hidden="true">
+                <i class="fas fa-spinner fa-pulse fa-2x"></i>
+            </span>
+            <p>Loading story details...</p>
+        </div>
+    </div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="section">
+        <div class="container">
+            <div class="notification is-danger">
+                <strong>Error:</strong> @errorMessage
+            </div>
+        </div>
+    </div>
+}
+else if (story != null)
+{
+    <div class="section">
+        <div class="container">
+            <AppBreadcrumbs Items="@BreadcrumbItems" />
+            <div class="columns">
+                <div class="column is-two-thirds">
+                    @if (story.HasCoverImage)
+                    {
+                        <figure class="image is-3by2 mb-5">
+                            <img src="@CoverImageUrl" alt="@story.Title cover image" style="object-fit: cover; height: 100%; width: 100%;" />
+                        </figure>
+                    }
+                    else
+                    {
+                        <figure class="image is-3by2 mb-5">
+                            <div class="has-background-primary-soft has-text-primary-bold is-flex is-align-items-center is-justify-content-center" style="height: 100%;">
+                                <span class="title is-4 has-text-primary-bold">@story.Title</span>
+                            </div>
+                        </figure>
+                    }
+
+                    <h1 class="title is-2">@story.Title</h1>
+                    <p class="subtitle is-4">
+                        by @foreach (var author in story.Authors)
+                        {
+                            <a @key="author.Id" href="/authors/@author.Id" class="ihf-content-link">@author.Name</a>
+                            @if (author != story.Authors.Last())
+                            {
+                                <text>, </text>
+                            }
+                        }
+                    </p>
+
+                    <div class="content">
+                        <p class="is-size-5">@story.Description</p>
+                    </div>
+
+                    @if (story.Tags.Any())
+                    {
+                        <div class="field">
+                            <h2 class="label">Tags</h2>
+                            <TagDisplay Items="@story.Tags.Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))" />
+                        </div>
+                    }
+                </div>
+
+                <div class="column">
+                    <div class="card">
+                        <div class="card-content">
+                            <div class="content">
+                                <div class="field">
+                                    @if (story.IsPublished)
+                                    {
+                                        <StoryReadingLink StoryId="@StoryId" />
+                                    }
+                                    else
+                                    {
+                                        <button class="button is-fullwidth is-large" disabled>
+                                            <span class="icon" aria-hidden="true">
+                                                <i class="fas fa-clock"></i>
+                                            </span>
+                                            <span>Not Published</span>
+                                        </button>
+                                    }
+                                </div>
+
+                                <div class="ihf-follow-panel">
+                                    <p class="has-text-weight-semibold mb-2">Follow this story</p>
+                                    <p class="help">Get notified when this story publishes new content or chapters.</p>
+                                    <StoryFollowButton StoryId="@story.Id" IsPublished="@story.IsPublished" />
+                                </div>
+
+                                <hr>
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div title="@($"{story.ReadCount:N0} reads")">
+                                            <p class="heading">Readers</p>
+                                            <p class="title is-6">
+                                                <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                                                @ReadCountFormatter.Format(story.ReadCount)
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div>
+                                            <p class="heading">Completion</p>
+                                            <p class="title is-6">
+                                                @if (story.CompletionStatus == "Complete")
+                                                {
+                                                    <span class="tag has-background-success-soft has-text-success-bold">Complete</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="tag has-background-warning-soft has-text-warning-bold">In progress</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div>
+                                            <p class="heading">Type</p>
+                                            <p class="title is-6">
+                                                @if (story.Type == MultiChapter)
+                                                {
+                                                    <span class="tag is-info">Multi-Chapter</span>
+                                                }
+                                                else if (story.Type == MultiBook)
+                                                {
+                                                    <span class="tag is-info">Multi-Book</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="tag has-background-link-soft has-text-link-bold">One-shot</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (story.PublishedAt.HasValue)
+                                {
+                                    <div class="level is-mobile">
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                                <p class="heading">Published</p>
+                                                <p class="title is-6">@story.PublishedAt.Value.ToString("MMM dd, yyyy")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="level is-mobile">
+                                    <div class="level-item has-text-centered">
+                                        <div>
+                                            <p class="heading">Last Updated</p>
+                                            <p class="title is-6">@story.UpdatedAt.ToString("MMM dd, yyyy")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (story.Type == MultiChapter && ((story.Chapters?.Any() ?? false) || (chapters?.Data?.Any() ?? false)))
+            {
+                <div class="section">
+                    <h2 class="title is-4">Chapters</h2>
+                    <ChapterList StoryId="@StoryIdString" Chapters="BuildChapterItems()" />
+                </div>
+            }
+            else if (story.Type == MultiBook && (story.Books?.Any() ?? false))
+            {
+                <div class="section">
+                    <h2 class="title is-4">Books and Chapters</h2>
+                    @foreach (var book in story.Books.OrderBy(candidate => candidate.Order))
+                    {
+                        <section @key="book.Id" class="mb-6" aria-labelledby="@($"book-{book.Id}")">
+                            <div class="level mb-2">
+                                <div class="level-left">
+                                    <h3 id="@($"book-{book.Id}")" class="title is-5 mb-0">@book.Title</h3>
+                                </div>
+                                <div class="level-right">
+                                    <span class="tag has-background-dark-soft has-text-dark-bold" title="@($"{book.ReadCount:N0} reads")">
+                                        <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
+                                        <span>@ReadCountFormatter.Format(book.ReadCount) reads</span>
+                                    </span>
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(book.Description))
+                            {
+                                <p class="mb-3">@book.Description</p>
+                            }
+                            <ChapterList StoryId="@StoryIdString" Chapters="@BuildBookChapterItems(book)" />
+                        </section>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @* disqus thread  *@
+    <DisqusThread PageIdentifier="@StoryId" />
+}
+
+@code {
+    [Parameter, EditorRequired] public string StoryId { get; set; } = string.Empty;
+
+    private LinkedOfGetPublishedStoryResponse? story;
+    private LinkedPagedCollectionOfListPublishedStoryChaptersItem? chapters;
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string? loadedStoryId;
+    private string? loadedChapterListStoryId;
+    private PersistingComponentStateSubscription persistingSubscription;
+
+    private string MetadataTitle => story is null
+        ? "Story Details | I❤️Fiction"
+        : $"{story.Title} | I❤️Fiction";
+
+    private string MetadataDescription => story switch
+    {
+        null => "Read story details, discover authors, and start reading on IHeartFiction.",
+        _ when !string.IsNullOrWhiteSpace(story.Description) =>
+            $"{story.Description} By {FormatAuthorList(story.Authors)}.",
+        _ => $"Read {story.Title} by {FormatAuthorList(story.Authors)} on IHeartFiction."
+    };
+
+    private string? CoverImageUrl => story?.HasCoverImage == true
+        ? $"/stories/{story.Id}/cover"
+        : null;
+
+    private IReadOnlyList<BreadcrumbItem> BreadcrumbItems => story is null ? [] :
+    [
+        new("Home", "/"),
+        new("Stories", "/stories"),
+        new(story.Title, null, IsActive: true)
+    ];
+
+    private IEnumerable<object> StructuredDataSchemas
+    {
+        get
+        {
+            if (story is null)
+            {
+                return [];
+            }
+
+            var storyUrl = ToAbsolute($"/stories/{story.Id}");
+            var storySchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "CreativeWork",
+                ["@id"] = storyUrl,
+                ["mainEntityOfPage"] = storyUrl,
+                ["name"] = story.Title,
+                ["headline"] = story.Title,
+                ["description"] = string.IsNullOrWhiteSpace(story.Description) ? null : story.Description,
+                ["creativeWorkStatus"] = string.IsNullOrWhiteSpace(story.CompletionStatus) ? null : story.CompletionStatus,
+                ["url"] = storyUrl,
+                ["image"] = story.HasCoverImage ? new[] { ToAbsolute($"/stories/{story.Id}/cover") } : null,
+                ["thumbnailUrl"] = story.HasCoverImage ? ToAbsolute($"/stories/{story.Id}/cover") : null,
+                ["author"] = story.Authors.Select(author => new Dictionary<string, object?>
+                {
+                    ["@type"] = "Person",
+                    ["name"] = author.Name,
+                    ["url"] = ToAbsolute($"/authors/{author.Id}")
+                }).ToList(),
+                ["publisher"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Organization",
+                    ["name"] = "IHeartFiction",
+                    ["url"] = ToAbsolute("/")
+                },
+                ["interactionStatistic"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "InteractionCounter",
+                    ["interactionType"] = "https://schema.org/ReadAction",
+                    ["userInteractionCount"] = story.ReadCount
+                },
+                ["dateCreated"] = story.CreatedAt.ToString("O"),
+                ["datePublished"] = story.PublishedAt?.ToString("O"),
+                ["dateModified"] = story.UpdatedAt.ToString("O")
+            };
+
+            if (story.Chapters is { } storyChapters && storyChapters.Any())
+            {
+                var chapterParts = storyChapters
+                    .OrderBy(c => c.Order)
+                    .Select(c => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "Chapter",
+                        ["@id"] = ToAbsolute($"/read/{c.Id}"),
+                        ["name"] = c.Title,
+                        ["position"] = c.Order,
+                        ["url"] = ToAbsolute($"/read/{c.Id}")
+                    })
+                    .ToList();
+
+                if (chapterParts.Count > 0)
+                {
+                    storySchema["hasPart"] = chapterParts;
+                }
+            }
+            else if (story.Books is { } storyBooks && storyBooks.Any())
+            {
+                var bookParts = storyBooks
+                    .OrderBy(b => b.Order)
+                    .Select(b => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "PublicationVolume",
+                        ["@id"] = ToAbsolute($"/stories/{StoryId}#book-{b.Id}"),
+                        ["name"] = b.Title,
+                        ["position"] = b.Order,
+                        ["url"] = ToAbsolute($"/stories/{StoryId}#book-{b.Id}"),
+                        ["hasPart"] = b.Chapters?
+                            .OrderBy(c => c.Order)
+                            .Select(c => new Dictionary<string, object?>
+                            {
+                                ["@type"] = "Chapter",
+                                ["@id"] = ToAbsolute($"/read/{c.Id}"),
+                                ["name"] = c.Title,
+                                ["position"] = c.Order,
+                                ["url"] = ToAbsolute($"/read/{c.Id}")
+                            })
+                            .ToList()
+                    })
+                    .ToList();
+
+                if (bookParts.Count > 0)
+                {
+                    storySchema["hasPart"] = bookParts;
+                }
+            }
+
+            if (story.Tags is { } tags && tags.Any())
+            {
+                var genres = tags
+                    .Where(tag => string.Equals(tag.Category, "genre", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => tag.Value)
+                    .ToList();
+
+                if (genres.Count > 0)
+                {
+                    storySchema["genre"] = genres;
+                }
+
+                var fandoms = tags
+                    .Where(tag => string.Equals(tag.Category, "fandom", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "CreativeWork",
+                        ["name"] = tag.Value,
+                        ["url"] = ToAbsolute($"/tags/{tag.RouteKey}")
+                    })
+                    .ToList();
+
+                if (fandoms.Count > 0)
+                {
+                    storySchema["isBasedOn"] = fandoms;
+                }
+
+                var languageTag = tags
+                    .FirstOrDefault(tag => string.Equals(tag.Category, "language", StringComparison.OrdinalIgnoreCase));
+
+                if (languageTag is not null && !string.IsNullOrWhiteSpace(languageTag.Value))
+                {
+                    storySchema["inLanguage"] = languageTag.Value;
+                }
+
+                var contentWarnings = tags
+                    .Where(tag => string.Equals(tag.Category, "content-warning", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => tag.Value)
+                    .ToList();
+
+                if (contentWarnings.Count > 0)
+                {
+                    storySchema["contentRating"] = contentWarnings;
+                }
+
+                var keywords = tags
+                    .Where(tag => !string.Equals(tag.Category, "genre", StringComparison.OrdinalIgnoreCase)
+                               && !string.Equals(tag.Category, "fandom", StringComparison.OrdinalIgnoreCase)
+                               && !string.Equals(tag.Category, "language", StringComparison.OrdinalIgnoreCase)
+                               && !string.Equals(tag.Category, "content-warning", StringComparison.OrdinalIgnoreCase))
+                    .Select(tag => new Dictionary<string, object?>
+                    {
+                        ["@type"] = "DefinedTerm",
+                        ["name"] = tag.Value,
+                        ["url"] = ToAbsolute($"/tags/{tag.RouteKey}")
+                    })
+                    .ToList();
+
+                if (keywords.Count > 0)
+                {
+                    storySchema["keywords"] = keywords;
+                }
+            }
+
+            var breadcrumbSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["@id"] = ToAbsolute($"/stories/{story.Id}#breadcrumb"),
+                ["itemListElement"] = new object[]
+                {
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 1,
+                        ["name"] = "Home",
+                        ["item"] = ToAbsolute("/")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 2,
+                        ["name"] = "Stories",
+                        ["item"] = ToAbsolute("/stories")
+                    },
+                    new Dictionary<string, object?>
+                    {
+                        ["@type"] = "ListItem",
+                        ["position"] = 3,
+                        ["name"] = story.Title,
+                        ["item"] = storyUrl
+                    }
+                }
+            };
+
+            return [storySchema, breadcrumbSchema];
+        }
+    }
+
+    // Helper to provide a non-null story id string for markup
+    private string StoryIdString => story?.Id.ToString() ?? string.Empty;
+
+    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
+
+    private List<ReaderChapterNavItem> BuildChapterItems()
+    {
+        if (story?.Chapters?.Any() ?? false)
+        {
+            return story.Chapters
+                .OrderBy(chapter => chapter.Order)
+                .Select(chapter => new ReaderChapterNavItem(chapter.Id.ToString(), chapter.Title, chapter.Order, ReadCount: chapter.ReadCount))
+                .ToList();
+        }
+
+        if (chapters?.Data?.Any() ?? false)
+        {
+            return chapters.Data
+                .OrderBy(chapter => chapter.Order)
+                .Select(chapter => new ReaderChapterNavItem(chapter.ChapterId.ToString(), chapter.Title, chapter.Order, ReadCount: chapter.ReadCount))
+                .ToList();
+        }
+
+        return [];
+    }
+
+    private static List<ReaderChapterNavItem> BuildBookChapterItems(BookItem book) => book.Chapters
+        .OrderBy(chapter => chapter.Order)
+        .Select(chapter => new ReaderChapterNavItem(
+            chapter.Id.ToString(), chapter.Title, chapter.Order, book.Title, chapter.ReadCount))
+        .ToList();
+
+    protected override void OnInitialized()
+    {
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedStoryDetail);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (story is not null && string.Equals(loadedStoryId, StoryId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        story = null;
+        chapters = null;
+        errorMessage = null;
+        isLoading = true;
+        loadedStoryId = null;
+        loadedChapterListStoryId = null;
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedStoryResponse>(
+            BuildStoryStateKey(StoryId),
+            out var persistedStory)
+            && persistedStory is not null)
+        {
+            ApplyStory(persistedStory);
+
+            if (story?.Type == MultiChapter)
+            {
+                await RestoreOrLoadChapters();
+            }
+
+            MarkStoryLoaded();
+            return;
+        }
+
+        await LoadStory();
+        MarkStoryLoaded();
+    }
+
+    private async Task LoadStory()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        var storyResult = await StoryService.GetStoryAsync(StoryId);
+
+        if (storyResult.IsSuccess)
+        {
+            ApplyStory(storyResult.Value);
+            
+            // Load chapters if the story has them
+            if (story?.Type == MultiChapter)
+            {
+                await RestoreOrLoadChapters();
+            }
+        }
+        else
+        {
+            errorMessage = storyResult.DomainError.Description;
+            isLoading = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task RestoreOrLoadChapters()
+    {
+        if (ApplicationState.TryTakeFromJson<LinkedPagedCollectionOfListPublishedStoryChaptersItem>(
+            BuildChapterListStateKey(StoryId),
+            out var persistedChapters)
+            && persistedChapters is not null)
+        {
+            ApplyChapters(persistedChapters);
+            return;
+        }
+
+        var chaptersResult = await StoryService.ListStoryChaptersAsync(StoryId);
+
+        if (chaptersResult.IsSuccess)
+        {
+            ApplyChapters(chaptersResult.Value);
+        }
+        else
+        {
+            chapters = null;
+            loadedChapterListStoryId = null;
+        }
+    }
+
+    private void ApplyStory(LinkedOfGetPublishedStoryResponse loadedStory)
+    {
+        story = loadedStory;
+        errorMessage = null;
+        isLoading = false;
+
+        if (story.Type != MultiChapter)
+        {
+            chapters = null;
+            loadedChapterListStoryId = null;
+        }
+    }
+
+    private void ApplyChapters(LinkedPagedCollectionOfListPublishedStoryChaptersItem loadedChapters)
+    {
+        chapters = loadedChapters;
+        loadedChapterListStoryId = StoryId;
+    }
+
+    private Task PersistLoadedStoryDetail()
+    {
+        if (story is not null && !string.IsNullOrWhiteSpace(loadedStoryId) && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildStoryStateKey(loadedStoryId), story);
+        }
+
+        if (chapters is not null
+            && !string.IsNullOrWhiteSpace(loadedChapterListStoryId)
+            && string.IsNullOrEmpty(errorMessage))
+        {
+            ApplicationState.PersistAsJson(BuildChapterListStateKey(loadedChapterListStoryId), chapters);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void MarkStoryLoaded()
+    {
+        loadedStoryId = StoryId;
+    }
+
+    private static string BuildStoryStateKey(string storyId) => $"StoryDetail:Story:{storyId}";
+
+    private static string BuildChapterListStateKey(string storyId) => $"StoryDetail:Chapters:{storyId}";
+
+    private static string FormatAuthorList(IEnumerable<StoryAuthor> authors)
+    {
+        var names = authors.Select(a => a.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
+        if (names.Count == 0)
+        {
+            return "IHeartFiction authors";
+        }
+
+        return names.Count == 1 ? names[0] : string.Join(", ", names.Take(3));
+    }
+
+    public void Dispose()
+    {
+        persistingSubscription.Dispose();
+    }
+}

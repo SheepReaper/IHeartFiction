@@ -1,0 +1,69 @@
+@using IHFiction.SharedWeb.Features.Discovery
+@inject MetadataUrlService MetadataUrls
+
+@page "/stories"
+
+<SocialPreviewMetadata
+    Title="Stories | I❤️Fiction"
+    Description="Browse published stories across genres, discover new favorites, and start reading instantly on IHeartFiction."
+    CanonicalUrl="@CanonicalUrl" />
+
+<StructuredDataMetadata Schema="@StoriesListSchema" />
+
+<StoryList
+    AuthorId="@null"
+    EmitPaginationHeadLinks="true"
+    Breadcrumbs="@BreadcrumbItems" />
+
+@code {
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    private int NormalizedPage => Page is > 0 ? Page.Value : 1;
+
+    private string CanonicalUrl => NormalizedPage <= 1
+        ? "/stories"
+        : $"/stories?page={NormalizedPage}";
+
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("Stories", null, IsActive: true)
+    ];
+
+    private object StoriesListSchema => new object[]
+    {
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Stories",
+                    ["item"] = ToAbsolute("/stories")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "ItemList",
+            ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
+            ["name"] = "Stories",
+            ["url"] = ToAbsolute(CanonicalUrl)
+        }
+    };
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
+}

@@ -1,0 +1,59 @@
+using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedWeb.Extensions;
+
+namespace IHFiction.SharedWeb.Features.Authoring;
+
+public class BookService(FictionApiClient client)
+{
+    public async ValueTask<Result<LinkedOfUpdateBookMetadataResponse>> UpdateBookMetadataAsync(
+        Ulid bookId,
+        UpdateBookMetadataBody body,
+        CancellationToken cancellationToken = default
+    ) => bookId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.UpdateBookMetadataAsync(bookId, body, null, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfUpdateBookMetadataResponse>> UpdateBookMetadataAsync(
+        string bookId,
+        UpdateBookMetadataBody body,
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(bookId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await UpdateBookMetadataAsync(ulid, body, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfCreateBookChapterResponse>> AddChapterToBookAsync(
+        Ulid bookId,
+        CreateBookChapterBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => bookId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.CreateBookChapterAsync(bookId, body, fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfCreateBookChapterResponse>> AddChapterToBookAsync(
+        string bookId,
+        CreateBookChapterBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(bookId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await AddChapterToBookAsync(ulid, body, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfCreateBookResponse>> CreateBookAsync(
+        Ulid storyId,
+        CreateBookBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => storyId == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.CreateBookAsync(storyId, body, fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfCreateBookResponse>> CreateBookAsync(
+        string storyId,
+        CreateBookBody body,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(storyId, out var ulid)
+        ? DomainError.InvalidUlid
+        : await CreateBookAsync(ulid, body, fields, cancellationToken);
+}

@@ -1,3 +1,7 @@
+using IHFiction.FictionApi.Features.Discovery;
+using IHFiction.FictionApi.Infrastructure;
+using IHFiction.SharedKernel.Linking;
+
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -5,10 +9,6 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
-
-using IHFiction.FictionApi.Infrastructure;
-using IHFiction.FictionApi.Stories;
-using IHFiction.SharedKernel.Linking;
 
 using MongoDB.Bson;
 

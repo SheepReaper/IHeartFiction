@@ -1,8 +1,9 @@
 using IHFiction.Data;
 using IHFiction.Data.Contexts;
+using IHFiction.FictionApi.Features.Authoring;
+using IHFiction.FictionApi.Features.Following;
+using IHFiction.FictionApi.Features.Reading;
 using IHFiction.FictionApi.Infrastructure;
-using IHFiction.FictionApi.Notifications;
-using IHFiction.FictionApi.Stories;
 
 using JasperFx.CodeGeneration.Model;
 using JasperFx.Resources;

@@ -1,5 +1,5 @@
 
-using IHFiction.FictionApi.AgentAuth;
+using IHFiction.FictionApi.Features.AgentAccess;
 using IHFiction.FictionApi.Infrastructure;
 
 using Scalar.AspNetCore;
@@ -76,7 +76,6 @@ internal static class MiddlewarePipelineExtensions
         app.MapEndpoints();
         app.MapDefaultEndpoints();
         app.MapApiCatalog();
-        app.MapAgentAuth();
         app.MapAgentSkills();
         app.MapAiCatalog();
 

@@ -1,0 +1,307 @@
+@using System.Text
+@using IHFiction.SharedWeb.Features.Reading
+@implements IDisposable
+@inject PersistentComponentState ApplicationState
+@inject WorkService WorkService
+@inject MetadataUrlService MetadataUrls
+@inject NavigationManager Navigation
+
+@page "/read/{WorkId}"
+
+<SocialPreviewMetadata
+    Title="@MetadataTitle"
+    Description="@MetadataDescription"
+    ImageUrl="@meta?.CoverImageUrl"
+    PageUrl="@PageUrl"
+    CanonicalUrl="@CanonicalUrl"
+    EmitCanonical="@CanIndex"
+    Type="article" />
+
+@if (!CanIndex)
+{
+    <NoIndex />
+}
+
+<StructuredDataMetadata Schemas="@StructuredDataSchemas" />
+
+@if (meta is { } loadedMeta)
+{
+    @if (IsMarkdownRequest)
+    {
+        <MarkdownStoryReader WorkId="@WorkId" Meta="@loadedMeta" />
+    }
+    else
+    {
+        <StoryReader WorkId="@WorkId" Meta="@loadedMeta" />
+        <DisqusThread PageUrl="@(CanonicalUrl ?? PageUrl)" PageIdentifier="@WorkId" />
+    }
+}
+else if (loadFailed)
+{
+    <div class="section"><div class="notification is-danger" role="alert">This work is unavailable or could not be loaded.</div></div>
+}
+
+@code {
+    [Parameter] public string WorkId { get; set; } = string.Empty;
+
+    [CascadingParameter(Name = "MarkdownRequest")]
+    private bool IsMarkdownRequest { get; set; }
+
+    [CascadingParameter] private Microsoft.AspNetCore.Http.HttpContext? HttpContext { get; set; }
+
+    private LinkedOfGetPublishedWorkMetaResponse? meta;
+    private string? loadedWorkId;
+    private bool loadFailed;
+    private long loadGeneration;
+    private PersistingComponentStateSubscription persistingSubscription;
+
+    private bool CanIndex => meta?.CanIndex == true;
+    private string PageUrl => meta?.PageUrl ?? $"/read/{WorkId}";
+    private string? CanonicalUrl => CanIndex ? meta?.CanonicalUrl ?? $"/read/{WorkId}" : null;
+
+    private string MetadataTitle
+    {
+        get
+        {
+            if (meta is null) return "Read Work | I❤️Fiction";
+
+            StringBuilder titleBuilder = new(meta.Title);
+
+            if (!string.IsNullOrWhiteSpace(meta.BookTitle))
+                titleBuilder.Append($" | {meta.BookTitle}");
+
+            if (!string.IsNullOrWhiteSpace(meta.StoryTitle))
+                titleBuilder.Append($" | {meta.StoryTitle}");
+
+            titleBuilder.Append(" | I❤️Fiction");
+
+            return titleBuilder.ToString();
+        }
+    }
+
+    private string MetadataDescription => meta switch
+    {
+        null => "Read and share stories on IHeartFiction.",
+        _ when !string.IsNullOrWhiteSpace(meta.Description) => meta.Description,
+        _ => $"Start reading {meta.Title} on IHeartFiction."
+    };
+
+    protected override void OnInitialized()
+    {
+        persistingSubscription = ApplicationState.RegisterOnPersisting(PersistLoadedWorkMetadata);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (meta is not null && string.Equals(loadedWorkId, WorkId, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var generation = ++loadGeneration;
+        var requestedWorkId = WorkId;
+        loadFailed = false;
+        meta = null;
+        loadedWorkId = null;
+
+        if (ApplicationState.TryTakeFromJson<LinkedOfGetPublishedWorkMetaResponse>(
+            BuildStateKey(WorkId),
+            out var persistedMeta)
+            && persistedMeta is not null)
+        {
+            ApplyMetadata(persistedMeta);
+            return;
+        }
+
+        IHFiction.SharedKernel.Infrastructure.Result<LinkedOfGetPublishedWorkMetaResponse> result;
+        try
+        {
+            result = HttpContext?.Items[typeof(LinkedOfGetPublishedWorkMetaResponse)]
+                is LinkedOfGetPublishedWorkMetaResponse cached && string.Equals(cached.Id.ToString(), requestedWorkId, StringComparison.OrdinalIgnoreCase)
+                    ? IHFiction.SharedKernel.Infrastructure.Result.Success(cached)
+                    : await WorkService.GetPublishedWorkMetaAsync(requestedWorkId);
+        }
+        catch (Exception)
+        {
+            if (generation == loadGeneration) loadFailed = true;
+            return;
+        }
+        if (generation != loadGeneration) return;
+
+        if (result.IsSuccess)
+        {
+            ApplyMetadata(result.Value);
+        }
+        else
+        {
+            loadFailed = true;
+            meta = null;
+            loadedWorkId = null;
+        }
+    }
+
+    private void ApplyMetadata(LinkedOfGetPublishedWorkMetaResponse metadata)
+    {
+        if (ReaderRoutes.ContainerDestination(metadata) is { } destination)
+        {
+            Navigation.NavigateTo(destination, replace: true);
+            return;
+        }
+        meta = metadata;
+        loadedWorkId = WorkId;
+    }
+
+    private IEnumerable<object> StructuredDataSchemas
+    {
+        get
+        {
+            if (meta is null)
+            {
+                return [];
+            }
+
+            var workUrl = ToAbsolute(meta.CanonicalUrl ?? meta.PageUrl);
+            var storyUrl = meta.StoryId is null ? null : ToAbsolute($"/stories/{meta.StoryId}");
+            var authorSchemas = meta.Authors.Select(author => new Dictionary<string, object?>
+            {
+                ["@type"] = "Person",
+                ["name"] = author.Name,
+                ["url"] = ToAbsolute($"/authors/{author.Id}")
+            }).ToList();
+
+            var currentPosition = meta.ReadableChildren?
+                .FirstOrDefault(c => string.Equals(c.Id.ToString(), WorkId, StringComparison.OrdinalIgnoreCase))?
+                .Order;
+
+            var workType = meta.WorkType switch
+            {
+                "Chapter" => "Chapter",
+                "Book" => "PublicationVolume",
+                _ => "CreativeWork"
+            };
+
+            var workSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = workType,
+                ["@id"] = workUrl,
+                ["mainEntityOfPage"] = workUrl,
+                ["name"] = meta.Title,
+                ["headline"] = meta.Title,
+                ["description"] = string.IsNullOrWhiteSpace(meta.Description) ? null : meta.Description,
+                ["url"] = workUrl,
+                ["image"] = string.IsNullOrWhiteSpace(meta.CoverImageUrl) ? null : new[] { ToAbsolute(meta.CoverImageUrl) },
+                ["thumbnailUrl"] = string.IsNullOrWhiteSpace(meta.CoverImageUrl) ? null : ToAbsolute(meta.CoverImageUrl),
+                ["author"] = authorSchemas,
+                ["publisher"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Organization",
+                    ["name"] = "IHeartFiction",
+                    ["url"] = ToAbsolute("/")
+                },
+                ["interactionStatistic"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "InteractionCounter",
+                    ["interactionType"] = "https://schema.org/ReadAction",
+                    ["userInteractionCount"] = meta.ReadCount
+                },
+                ["datePublished"] = meta.PublishedAt?.ToString("O"),
+                ["dateModified"] = meta.UpdatedAt.ToString("O")
+            };
+
+            if (meta.WorkType == "Chapter" && currentPosition is not null)
+            {
+                workSchema["position"] = currentPosition;
+            }
+
+            var hasParentStory = storyUrl is not null && meta.WorkType is "Chapter" or "Book" && meta.StoryId != meta.Id;
+
+            if (hasParentStory)
+            {
+                workSchema["isPartOf"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "CreativeWork",
+                    ["@id"] = storyUrl,
+                    ["name"] = meta.StoryTitle,
+                    ["url"] = storyUrl
+                };
+            }
+
+            var breadcrumbItems = new List<Dictionary<string, object?>>
+            {
+                new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Stories",
+                    ["item"] = ToAbsolute("/stories")
+                }
+            };
+
+            if (hasParentStory)
+            {
+                breadcrumbItems.Add(new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 3,
+                    ["name"] = meta.StoryTitle,
+                    ["item"] = storyUrl
+                });
+                breadcrumbItems.Add(new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 4,
+                    ["name"] = meta.Title,
+                    ["item"] = workUrl
+                });
+            }
+            else
+            {
+                breadcrumbItems.Add(new()
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 3,
+                    ["name"] = meta.Title,
+                    ["item"] = workUrl
+                });
+            }
+
+            var breadcrumbSchema = new Dictionary<string, object?>
+            {
+                ["@context"] = "https://schema.org",
+                ["@type"] = "BreadcrumbList",
+                ["@id"] = $"{workUrl}#breadcrumb",
+                ["itemListElement"] = breadcrumbItems
+            };
+
+            return [workSchema, breadcrumbSchema];
+        }
+    }
+
+    private Task PersistLoadedWorkMetadata()
+    {
+        if (meta is not null && !string.IsNullOrWhiteSpace(loadedWorkId))
+        {
+            ApplicationState.PersistAsJson(BuildStateKey(loadedWorkId), meta);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        loadGeneration++;
+        persistingSubscription.Dispose();
+    }
+
+    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
+
+    private static string BuildStateKey(string workId) => $"StoryReaderPage:WorkMeta:{workId}";
+}

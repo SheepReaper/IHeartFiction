@@ -1,9 +1,15 @@
+using IHFiction.SharedWeb.Services;
+using IHFiction.SharedWeb;
+using IHFiction.SharedWeb.Features.AccountManagement;
+using IHFiction.SharedWeb.Features.Administration;
+using IHFiction.SharedWeb.Features.Authoring;
+using IHFiction.SharedWeb.Features.Discovery;
+using IHFiction.SharedWeb.Features.Following;
+using IHFiction.SharedWeb.Features.Reading;
+using IHFiction.WebClient.Infrastructure;
+
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
-
-using IHFiction.SharedWeb;
-using IHFiction.SharedWeb.Services;
-using IHFiction.WebClient.Infrastructure;
 
 namespace IHFiction.WebClient.Extensions;
 
@@ -56,6 +62,9 @@ internal static class ApplicationServicesExtensions
         builder.Services.AddTransient<ChapterService>();
         builder.Services.AddTransient<NotificationService>();
         builder.Services.AddTransient<StoryService>();
+        builder.Services.AddTransient<StoryDiscoveryService>();
+        builder.Services.AddTransient<WorkPublishingService>();
+        builder.Services.AddTransient<AuthorWorkspaceService>();
         builder.Services.AddTransient<TagService>();
         builder.Services.AddTransient<WorkService>();
         builder.Services.AddTransient<IPublishedWorkReader, WorkService>();

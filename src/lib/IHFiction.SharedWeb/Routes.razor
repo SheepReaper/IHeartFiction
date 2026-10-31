@@ -2,7 +2,7 @@
 
 <CascadingValue Name="MarkdownRequest" Value="IsMarkdownRequest">
     <CascadingValue Name="@HttpContextItemKey" Value="Nonce">
-        <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+        <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Layout.NotFound)">
             <Found Context="routeData">
                 <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
                     <NotAuthorized>

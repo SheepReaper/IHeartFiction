@@ -1,0 +1,54 @@
+using IHFiction.SharedKernel.Infrastructure;
+using IHFiction.SharedWeb.Extensions;
+
+namespace IHFiction.SharedWeb.Features.Reading;
+
+public interface IPublishedWorkReader
+{
+    ValueTask<Result<LinkedOfGetPublishedWorkMetaResponse>> GetPublishedWorkMetaAsync(
+        Ulid id,
+        string? fields = null,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<Result<LinkedOfGetPublishedWorkContentResponse>> GetPublishedWorkContentAsync(
+        Ulid id,
+        string? fields = null,
+        CancellationToken cancellationToken = default);
+}
+
+public class WorkService(FictionApiClient client) : IPublishedWorkReader
+{
+    public async ValueTask<Result<LinkedOfGetPublishedWorkMetaResponse>> GetPublishedWorkMetaAsync(
+        Ulid id,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => id == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.GetPublishedWorkMetaAsync(id, fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfGetPublishedWorkMetaResponse>> GetPublishedWorkMetaAsync(
+        string id,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(id, out var ulid)
+        ? DomainError.InvalidUlid
+        : await GetPublishedWorkMetaAsync(ulid, fields, cancellationToken);
+
+    public async ValueTask<Result<LinkedOfGetPublishedWorkContentResponse>> GetPublishedWorkContentAsync(
+        Ulid id,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => id == Ulid.Empty
+        ? DomainError.EmptyUlid
+        : await client.GetPublishedWorkContentAsync(id, fields, cancellationToken).HandleApiException();
+
+    public async ValueTask<Result<LinkedOfGetPublishedWorkContentResponse>> GetPublishedWorkContentAsync(
+        string id,
+        string? fields = null,
+        CancellationToken cancellationToken = default
+    ) => !Ulid.TryParse(id, out var ulid)
+        ? DomainError.InvalidUlid
+        : await GetPublishedWorkContentAsync(ulid, fields, cancellationToken);
+
+
+}
