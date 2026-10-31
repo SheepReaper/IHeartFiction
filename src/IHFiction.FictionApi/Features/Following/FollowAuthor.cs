@@ -80,7 +80,7 @@ internal sealed class FollowAuthor(
             })
             .WithSummary("Follow Author")
             .WithDescription("Follows an author for the currently authenticated user. This operation is idempotent.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Follows)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false)
             .Produces<Linked<FollowAuthorResponse>>();
@@ -147,7 +147,7 @@ internal sealed class UnfollowAuthor(
             })
             .WithSummary("Unfollow Author")
             .WithDescription("Unfollows an author for the currently authenticated user. This operation is idempotent.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Follows)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false)
             .Produces<Linked<UnfollowAuthorResponse>>();
@@ -215,7 +215,7 @@ internal sealed class FollowAuthorForDevice(FictionDbContext context) : IUseCase
             })
             .WithSummary("Follow Author For Device")
             .WithDescription("Follows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.")
-            .WithTags(ApiTags.Authors.Discovery)
+            .WithTags(ApiTags.Follows)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<FollowAuthorForDeviceResponse>>();
@@ -280,7 +280,7 @@ internal sealed class UnfollowAuthorForDevice(FictionDbContext context) : IUseCa
             })
             .WithSummary("Unfollow Author For Device")
             .WithDescription("Unfollows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.")
-            .WithTags(ApiTags.Authors.Discovery)
+            .WithTags(ApiTags.Follows)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<UnfollowAuthorForDeviceResponse>>();

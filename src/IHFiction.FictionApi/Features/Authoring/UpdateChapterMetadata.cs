@@ -131,7 +131,7 @@ internal sealed class UpdateChapterMetadata(
             })
             .WithSummary("Update Chapter Metadata")
             .WithDescription("Updates the metadata of an existing chapter.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Chapters)
             .RequireAuthorization("author")
             .WithStandardResponses()
             .Produces<Linked<UpdateChapterMetadataResponse>>()

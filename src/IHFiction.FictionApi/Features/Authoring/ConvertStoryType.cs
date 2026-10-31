@@ -233,7 +233,7 @@ internal sealed class ConvertStoryType(
                 })
                 .WithSummary("Convert Story Type")
                 .WithDescription("Converts a story from one type to another (e.g., One-Shot to Chaptered). The conversion path is linear and has conditions for downgrading.")
-                .WithTags(ApiTags.Stories.Management)
+                .WithTags(ApiTags.Stories)
                 .RequireAuthorization("author")
                 .WithStandardResponses()
                 .Accepts<ConvertStoryTypeBody>(MediaTypeNames.Application.Json);

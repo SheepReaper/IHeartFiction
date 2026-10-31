@@ -184,7 +184,7 @@ internal sealed class GetOwnStoryContent(
             .WithDescription("Retrieves the content of a story owned by the current user, including unpublished works. " +
                 "This is a private endpoint for authors to fetch their own content for editing or review. " +
                 "Requires authentication and author status.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false, validation: false)
             .Produces<Linked<GetOwnStoryContentResponse>>();

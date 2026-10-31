@@ -99,7 +99,7 @@ internal sealed class GetStoryCover(
             })
             .WithSummary("Get Story Cover")
             .WithDescription("Retrieves the cover image for a story. Published story covers are public. Draft covers require story read access.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Stories)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, unauthorized: false, validation: false)
             .Produces(StatusCodes.Status200OK)

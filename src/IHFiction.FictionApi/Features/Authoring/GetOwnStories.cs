@@ -201,7 +201,7 @@ internal sealed class GetOwnStories(
                 "Includes both owned stories and stories where the author is a collaborator. " +
                 "Supports filtering by publication status, ownership, tags, and search terms. " +
                 "Stories can be sorted by various fields. Requires authentication and author registration.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false, notFound: false)
             .Accepts<GetOwnStoriesBody>(true, MediaTypeNames.Application.Json)

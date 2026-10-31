@@ -159,7 +159,7 @@ internal sealed class CreateBook(
             })
             .WithSummary("Create Book")
             .WithDescription("Creates a new book within a story.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Books)
             .RequireAuthorization("author")
             .WithStandardResponses()
             .Produces<Linked<CreateBookResponse>>(StatusCodes.Status201Created)

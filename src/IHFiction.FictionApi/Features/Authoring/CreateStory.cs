@@ -175,7 +175,7 @@ internal sealed class CreateStory(
             .WithDescription("Creates a new story with the provided title and description. " +
                 "The authenticated user becomes the owner of the story and can manage its content, " +
                 "collaborators, and publication status. Requires authentication.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(notFound: false)
             .Produces<Linked<CreateStoryResponse>>(StatusCodes.Status201Created)

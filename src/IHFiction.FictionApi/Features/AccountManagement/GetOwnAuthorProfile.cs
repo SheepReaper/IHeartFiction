@@ -101,7 +101,7 @@ internal sealed class GetOwnAuthorProfile(
             })
             .WithSummary("Get Own Author Profile")
             .WithDescription("Retrieves the profile and works for the currently authenticated author. This endpoint requires authentication and author registration.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Authors)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false, notFound: false)
             .Produces<Linked<GetOwnAuthorProfileResponse>>();

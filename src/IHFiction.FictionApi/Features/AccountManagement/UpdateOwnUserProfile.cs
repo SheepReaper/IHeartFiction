@@ -96,7 +96,7 @@ internal sealed class UpdateOwnUserProfile(
             .WithSummary("Update User Profile")
             .WithDescription("Updates the display name and Gravatar email for the currently authenticated user. " +
                 "Name is required; Gravatar email is optional.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.UserProfile)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false, notFound: false)
             .Produces<Linked<UpdateOwnUserProfileResponse>>()

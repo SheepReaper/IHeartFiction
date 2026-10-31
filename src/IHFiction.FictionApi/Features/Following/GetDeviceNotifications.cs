@@ -103,7 +103,7 @@ internal sealed class GetDeviceNotifications(FictionDbContext context) : IUseCas
             })
             .WithSummary("Get Device Notification Inbox")
             .WithDescription("Lists recent notifications for an anonymous browser or installed PWA device and includes the unread count.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Notifications)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<GetDeviceNotificationsResponse>();

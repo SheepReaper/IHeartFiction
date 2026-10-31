@@ -159,7 +159,7 @@ internal sealed class PublishStory(
                 "(either direct content or chapters) before it can be published. " +
                 "Once published, the story becomes discoverable in public listings. " +
                 "Requires authentication and story ownership.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false)
             .Produces<Linked<PublishStoryResponse>>();

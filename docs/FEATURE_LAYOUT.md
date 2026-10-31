@@ -15,6 +15,28 @@ still represent runtime and dependency boundaries; a feature can span those boun
 | AgentAccess | Agent authentication, read-only access policy, claims, and machine-facing API/auth discovery |
 
 These are the current capabilities, not a closed list or a resource ownership rule.
+
+Source folders, HTTP paths, and OpenAPI tags serve different navigation needs.
+Design an operation from the consumer's use case and the public domain model first;
+choose its HTTP resource, method, and representation before its documentation grouping.
+Place the implementation under the feature whose purpose it serves. None of these
+decisions requires the other names to match.
+
+Paths generally identify public resources and relationships; they do not mirror source
+folders or database tables. Keep existing paths stable during organizational refactors.
+OpenAPI tags organize the consumer-facing reference: Stories, Chapters, Books, Works,
+Authors, Tags, User Profile, Follows, Notifications, Push Subscriptions, and Agent
+Authentication are the current groups, not a fixed taxonomy for future endpoints.
+Published reads and private mutations of a story can share the Stories tag while living
+in Reading, Discovery, and Authoring source folders. Creating a chapter belongs under
+Chapters even when its URL identifies the parent story or book. Assigning tags to a
+story belongs under Stories; browsing and administering the taxonomy belong under Tags.
+Current-user shortcuts and admin-only operations stay with their public subject rather
+than becoming catch-all Current User or Administration reference groups. Document
+access requirements per endpoint. Keep group descriptions and reference order in `ApiTags`;
+the reference order is independent of endpoint registration and source-file locations. Introduce or
+adjust groups when they help consumers find operations, independently of source layout.
+
 Choose a location by the outcome someone is trying to change. A feature may read or
 modify several resources. Using the logged-in user's identity does not make an operation
 an account feature: private draft reads belong to Authoring, while a personal notification

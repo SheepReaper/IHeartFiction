@@ -105,7 +105,7 @@ internal sealed class ListAdminTags(
             })
             .WithSummary("List Tags for Administration")
             .WithDescription("Lists canonical tags, their synonyms, and published usage counts for administrators.")
-            .WithTags(ApiTags.Tags.Administration)
+            .WithTags(ApiTags.Tags)
             .RequireAuthorization("admin")
             .WithStandardResponses(notFound: false)
             .Produces<LinkedPagedCollection<AdminTagItem>>();

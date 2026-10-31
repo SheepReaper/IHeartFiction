@@ -268,7 +268,7 @@ internal sealed class AddTagsToStory(
                 "Only story owners and authorized collaborators can replace tags. " +
                 "An empty collection removes every tag. Equivalent duplicate values are rejected. " +
                 "Requires authentication and appropriate permissions.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author") // Authentication required
             .WithStandardResponses(conflict: false)
             .Produces<Linked<AddTagsToStoryResponse>>()

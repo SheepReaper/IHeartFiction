@@ -127,7 +127,7 @@ internal sealed class RegisterAsAuthor(
                 "This process creates an author profile, assigns the author role in the identity system, " +
                 "and sets up the necessary permissions for content creation. " +
                 "This endpoint requires authentication but not existing author status.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Authors)
             .RequireAuthorization() // Requires authentication
             .WithStandardResponses(conflict: false, forbidden: false, notFound: false)
             .Accepts<RegisterAsAuthorBody>(MediaTypeNames.Application.Json)

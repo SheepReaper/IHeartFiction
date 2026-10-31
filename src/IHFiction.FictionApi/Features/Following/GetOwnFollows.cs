@@ -83,7 +83,7 @@ internal sealed class GetOwnFollows(
             })
             .WithSummary("Get Followed Authors And Stories")
             .WithDescription("Lists the authors and stories followed by the currently authenticated user.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Follows)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false, notFound: false)
             .Produces<GetOwnFollowsResponse>();

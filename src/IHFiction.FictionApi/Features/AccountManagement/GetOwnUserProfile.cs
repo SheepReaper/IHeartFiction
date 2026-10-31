@@ -73,7 +73,7 @@ internal sealed class GetOwnUserProfile(
             .WithSummary("Get User Profile")
             .WithDescription("Retrieves the display name and Gravatar email for the currently authenticated user, " +
                 "along with a flag indicating whether the user is registered as an author.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.UserProfile)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false, notFound: false)
             .Produces<Linked<GetOwnUserProfileResponse>>();

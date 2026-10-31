@@ -1,156 +1,45 @@
 namespace IHFiction.FictionApi.Common;
 
-/// <summary>
-/// Centralized tag management system for OpenAPI documentation.
-/// Provides hierarchical organization and metadata optimized for Scalar interface display.
-/// </summary>
+/// <summary>Consumer-facing API reference groups, independent of source folders and authorization.</summary>
 internal static class ApiTags
 {
-    /// <summary>
-    /// Author-related endpoint tags.
-    /// </summary>
-    internal static class Authors
-    {
-        /// <summary>
-        /// Public author information and discovery endpoints.
-        /// </summary>
-        public const string Discovery = "Author Discovery";
+    public const string Stories = "Stories";
+    public const string Chapters = "Chapters";
+    public const string Books = "Books";
+    public const string Works = "Works";
+    public const string Authors = "Authors";
+    public const string Tags = "Tags";
+    public const string UserProfile = "User Profile";
+    public const string Follows = "Follows";
+    public const string Notifications = "Notifications";
+    public const string PushSubscriptions = "Push Subscriptions";
+    public const string AgentAuthentication = "Agent Authentication";
 
-        /// <summary>
-        /// Authenticated author management endpoints.
-        /// </summary>
-        public const string Management = "Author Management";
-    }
-
-    /// <summary>
-    /// Book-related endpoint tags.
-    /// </summary>
-    internal static class Books
-    {
-        /// <summary>
-        /// Book management and content endpoints.
-        /// </summary>
-        public const string Management = "Book Management";
-    }
-
-    /// <summary>
-    /// Story-related endpoint tags.
-    /// </summary>
-    internal static class Stories
-    {
-        /// <summary>
-        /// Public story browsing and discovery endpoints.
-        /// </summary>
-        public const string Discovery = "Story Discovery";
-
-        /// <summary>
-        /// Authenticated story management endpoints.
-        /// </summary>
-        public const string Management = "Story Management";
-    }
-
-    /// <summary>
-    /// Tag system endpoint tags.
-    /// </summary>
-    internal static class Tags
-    {
-        /// <summary>
-        /// Tag browsing and management endpoints.
-        /// </summary>
-        public const string Discovery = "Tag Discovery";
-
-        /// <summary>
-        /// Administrator-only canonical tag and synonym management.
-        /// </summary>
-        public const string Administration = "Tag Administration";
-    }
-
-    /// <summary>
-    /// User account and profile endpoint tags.
-    /// </summary>
-    internal static class Account
-    {
-        /// <summary>
-        /// Current user profile and account management endpoints.
-        /// </summary>
-        public const string CurrentUser = "Current User";
-    }
-
-    /// <summary>
-    /// Chapter-related endpoint tags.
-    /// </summary>
-    internal static class Chapters
-    {
-        /// <summary>
-        /// Chapter management and content endpoints.
-        /// </summary>
-        public const string Management = "Chapter Management";
-    }
-
-    /// <summary>
-    /// Metadata for all API tags, optimized for Scalar interface display.
-    /// </summary>
-    /// <param name="Name">The tag name</param>
-    /// <param name="Description">Description of the tag's purpose</param>
-    /// <param name="Order">Display order in documentation (lower numbers appear first)</param>
-    internal record TagMetadata(string Name, string Description, int Order);
-
-    /// <summary>
-    /// Gets all tag metadata for documentation generation.
-    /// Ordered for optimal display in Scalar interface.
-    /// </summary>
-    /// <returns>Array of tag metadata ordered by display priority</returns>
-    public static TagMetadata[] GetAllTags() =>
+    private static readonly string[] ReferenceOrder =
     [
-        new(Stories.Discovery, "Public story browsing, search, and discovery. No authentication required.", 1),
-        new(Authors.Discovery, "Public author information, profiles, and discovery. No authentication required.", 2),
-        new(Tags.Discovery, "Tag browsing and filtering for content discovery. No authentication required.", 3),
-        new(Tags.Administration, "Canonical tag and synonym management. Requires the admin role.", 4),
-        new(Account.CurrentUser, "Current user profile and account management. Requires authentication.", 5),
-        new(Authors.Management, "Author profile management and registration. Requires authentication.", 5),
-        new(Stories.Management, "Story creation, editing, and management. Requires authentication and author role.", 6),
-        new(Books.Management, "Book creation, editing, and management. Requires authentication and appropriate permissions.", 7),
-        new(Chapters.Management, "Chapter creation, editing, and content management. Requires authentication and appropriate permissions.", 8)
+        Stories, Books, Chapters, Works, Authors, Tags,
+        Follows, Notifications, PushSubscriptions, UserProfile, AgentAuthentication
     ];
 
-    /// <summary>
-    /// Gets tags that require authentication.
-    /// </summary>
-    /// <returns>Array of tag names that require authentication</returns>
-    public static string[] GetAuthenticatedTags() =>
-    [
-        Tags.Administration,
-        Account.CurrentUser,
-        Authors.Management,
-        Stories.Management,
-        Books.Management,
-        Chapters.Management
-    ];
+    public static int GetDisplayOrder(string? name)
+    {
+        var index = Array.IndexOf(ReferenceOrder, name);
+        return index >= 0 ? index : int.MaxValue;
+    }
 
-    /// <summary>
-    /// Gets tags that are public (no authentication required).
-    /// </summary>
-    /// <returns>Array of tag names that are public</returns>
-    public static string[] GetPublicTags() =>
-    [
-        Stories.Discovery,
-        Authors.Discovery,
-        Tags.Discovery
-    ];
-
-    /// <summary>
-    /// Checks if a tag requires authentication.
-    /// </summary>
-    /// <param name="tagName">The tag name to check</param>
-    /// <returns>True if the tag requires authentication, false otherwise</returns>
-    public static bool RequiresAuthentication(string tagName) =>
-        GetAuthenticatedTags().Contains(tagName);
-
-    /// <summary>
-    /// Gets the display order for a tag.
-    /// </summary>
-    /// <param name="tagName">The tag name</param>
-    /// <returns>The display order, or int.MaxValue if tag not found</returns>
-    public static int GetDisplayOrder(string tagName) =>
-        GetAllTags().FirstOrDefault(t => t.Name == tagName)?.Order ?? int.MaxValue;
+    public static string? GetDescription(string? name) => name switch
+    {
+        Stories => "Browse published stories and manage your own stories, including metadata, content, covers, tag assignments, structure, and publication. Private and editing operations require the permissions specified by each endpoint.",
+        Chapters => "List a story's published chapters, create chapters within stories or books, and retrieve or edit chapter metadata and content. Published content and private draft content have separate endpoints.",
+        Books => "Create books within a story and retrieve or update your own book metadata and chapter structure.",
+        Works => "Operations shared across story, book, and chapter identifiers: resolve published metadata and readable content, record qualified reads, or publish a work. See individual endpoints for supported work types and permissions.",
+        Authors => "Browse public author profiles, register the current user as an author, and manage your own author profile.",
+        Tags => "Browse and resolve tags, or administer canonical tags and synonyms. Administrative listing, renaming, and merging require the admin role. Assign tags to a story through the Stories endpoints.",
+        UserProfile => "Retrieve or update the authenticated user's display name and profile settings. Author-specific profiles are documented under Authors.",
+        Follows => "Follow or unfollow authors and stories, and list follows for the authenticated user or an anonymous device. Device operations require the documented device identifier.",
+        Notifications => "Retrieve notification inboxes and mark notifications as read for the authenticated user or an anonymous device. Manage follow relationships under Follows and delivery subscriptions under Push Subscriptions.",
+        PushSubscriptions => "Register or refresh browser push-delivery subscriptions for authenticated users or anonymous devices. These subscriptions configure delivery; follow relationships are managed under Follows.",
+        AgentAuthentication => "Confirm the link between an agent identity and a user account. Agent protocol discovery, registration, and token exchange are documented in /auth.md.",
+        _ => null
+    };
 }

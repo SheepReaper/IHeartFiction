@@ -221,7 +221,7 @@ internal sealed class CreateBookChapter(
             })
             .WithSummary("Add Chapter to Book")
             .WithDescription("Creates a new chapter within a book.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Chapters)
             .RequireAuthorization("author")
             .WithStandardResponses()
             .Produces<Linked<CreateBookChapterResponse>>(StatusCodes.Status201Created)

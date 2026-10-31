@@ -208,7 +208,7 @@ internal sealed class GetPublishedWorkContent(
             })
             .WithSummary("Get Published Work Content")
             .WithDescription("Retrieves body content for a directly readable published work.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Works)
             .AllowAnonymous()
             .WithStandardResponses(unauthorized: false, conflict: false, validation: false)
             .Produces<Linked<GetPublishedWorkContentResponse>>();

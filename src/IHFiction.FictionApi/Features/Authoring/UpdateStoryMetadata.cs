@@ -178,7 +178,7 @@ internal sealed class UpdateStoryMetadata(
             .WithSummary("Update Story Metadata")
             .WithDescription("Updates a story's title and description. Only the story owner or authorized collaborators " +
                 "can update story metadata. Requires authentication and appropriate permissions.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses()
             .Produces<Linked<UpdateStoryMetadataResponse>>()

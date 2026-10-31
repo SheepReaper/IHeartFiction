@@ -170,7 +170,7 @@ internal sealed class GetOwnBookContent(
             .WithDescription("Retrieves the content of a book owned by the current user, including unpublished works. " +
                 "This is a private endpoint for authors to fetch their own content for editing or review. " +
                 "Requires authentication and author status.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Books)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false, validation: false)
             .Produces<Linked<GetOwnBookContentResponse>>();

@@ -94,7 +94,7 @@ internal sealed class RegisterDevicePushSubscription(FictionDbContext context) :
             })
             .WithSummary("Register Device Push Subscription")
             .WithDescription("Registers or refreshes a web push subscription for an anonymous browser or installed PWA device.")
-            .WithTags(ApiTags.Authors.Discovery)
+            .WithTags(ApiTags.PushSubscriptions)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<RegisterDevicePushSubscriptionResponse>>()

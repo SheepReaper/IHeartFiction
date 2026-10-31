@@ -97,7 +97,7 @@ internal sealed class DeleteStoryCover(
             })
             .WithSummary("Delete Story Cover")
             .WithDescription("Removes the cover image for a story. Only the story owner or authorized collaborators can delete the cover image. Requires authentication.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(validation: false)
             .Produces<Linked<DeleteStoryCoverResponse>>();

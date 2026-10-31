@@ -139,7 +139,7 @@ internal sealed class ListAuthors(
             "Supports searching by author name or biography content. " +
             "Authors can be sorted by name, creation date, or last update date. " +
             "This is a public endpoint that does not require authentication.")
-            .WithTags(ApiTags.Authors.Discovery)
+            .WithTags(ApiTags.Authors)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(notFound: false, conflict: false, unauthorized: false, forbidden: false)
             .Produces<LinkedPagedCollection<ListAuthorsItem>>();

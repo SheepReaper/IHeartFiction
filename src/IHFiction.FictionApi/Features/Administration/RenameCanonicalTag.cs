@@ -133,7 +133,7 @@ internal sealed partial class RenameCanonicalTag(
                 (await useCase.HandleAsync(id, body, principal, cancellationToken)).ToOkResult())
             .WithSummary("Rename Canonical Tag")
             .WithDescription("Renames a canonical tag while retaining its previous spelling as a synonym. Requires an administrative reason.")
-            .WithTags(ApiTags.Tags.Administration)
+            .WithTags(ApiTags.Tags)
             .RequireAuthorization("admin")
             .WithStandardResponses()
             .Produces<RenameCanonicalTagResponse>();

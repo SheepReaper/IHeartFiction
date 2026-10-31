@@ -241,7 +241,7 @@ internal sealed class PublishWork(
             .WithDescription("Makes any work publicly visible by setting its publication timestamp. " +
                 "If publishAll is true, recursively publishes all child works. Only owners can publish their works. " +
                 "Requires authentication and ownership.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Works)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false)
             .Produces<Linked<PublishWorkResponse>>();

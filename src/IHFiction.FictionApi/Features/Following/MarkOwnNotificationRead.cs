@@ -72,7 +72,7 @@ internal sealed class MarkOwnNotificationRead(
             })
             .WithSummary("Mark Notification Read")
             .WithDescription("Marks a notification as read for the currently authenticated user.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Notifications)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false)
             .Produces<Linked<MarkOwnNotificationReadResponse>>();

@@ -163,7 +163,7 @@ internal sealed class ResolveTagLanding(FictionDbContext context) : IUseCase, IN
             .WithDescription("Resolves one to three comma-separated tag route tokens to canonical taxonomy families. " +
                 "Value-only, synonym, legacy plus-separated, differently ordered, and differently formatted inputs resolve to one canonical specification. " +
                 "Returns HTTP 400 for malformed or over-limit input, 404 for unknown tags, and 409 for ambiguous value-only tags.")
-            .WithTags(ApiTags.Tags.Discovery)
+            .WithTags(ApiTags.Tags)
             .AllowAnonymous()
             .WithStandardResponses(unauthorized: false, forbidden: false)
             .Produces<ResolveTagLandingResponse>();

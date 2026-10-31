@@ -163,7 +163,7 @@ internal sealed partial class MergeCanonicalTags(
                 (await useCase.HandleAsync(body, principal, cancellationToken)).ToOkResult())
             .WithSummary("Merge Canonical Tags")
             .WithDescription("Atomically merges one or more source canonical families into a selected canonical family, preserving alternate spellings as synonyms. Requires an administrative reason.")
-            .WithTags(ApiTags.Tags.Administration)
+            .WithTags(ApiTags.Tags)
             .RequireAuthorization("admin")
             .WithStandardResponses()
             .Produces<MergeCanonicalTagsResponse>();

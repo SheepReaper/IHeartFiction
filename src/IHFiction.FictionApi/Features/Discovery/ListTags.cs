@@ -225,7 +225,7 @@ internal sealed class ListTags(
                 "Each result exposes the normalized key accepted by the published-story tag filter. " +
                 "Tags can be sorted by category, value, usage count, or creation date. " +
                 "This is a public endpoint that does not require authentication.")
-            .WithTags(ApiTags.Tags.Discovery)
+            .WithTags(ApiTags.Tags)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(conflict: false, notFound: false, unauthorized: false, forbidden: false)
             .Produces<LinkedPagedCollection<ListTagsItem>>()
