@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 
@@ -196,6 +197,21 @@ internal static class OpenApiExtensions
 
     private static Task OperationTransformer(OpenApiOperation op, OpenApiOperationTransformerContext context, CancellationToken ct)
     {
+        if (!context.Description.ActionDescriptor.EndpointMetadata.OfType<DisableRateLimitingAttribute>().Any()
+            && op.Responses?.TryGetValue("429", out var response) == true
+            && response is OpenApiResponse rateLimitResponse)
+        {
+            rateLimitResponse.Headers ??= new Dictionary<string, IOpenApiHeader>();
+            rateLimitResponse.Headers.TryAdd("Retry-After", new OpenApiHeader
+            {
+                Description = "When a retry estimate is available, the number of seconds to wait before retrying. "
+                    + "Emitted as a positive integer delay in seconds, not an HTTP date. "
+                    + "Wait at least this long before retrying; a retry is not guaranteed to succeed. "
+                    + "If absent, use backoff rather than retrying immediately.",
+                Schema = new OpenApiSchema { Type = JsonSchemaType.Integer, Minimum = "1" }
+            });
+        }
+
         var allowAnonymous = context.Description.ActionDescriptor.EndpointMetadata
             .OfType<IAllowAnonymous>()
             .Any();

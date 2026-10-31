@@ -5,6 +5,8 @@ using System.Threading.RateLimiting;
 using IHFiction.FictionApi.Infrastructure;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Metadata;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
 namespace IHFiction.FictionApi.Extensions;
@@ -79,6 +81,7 @@ internal static partial class RateLimitingExtensions
     /// Assigns a policy to endpoints that have not chosen one: writes use <c>mutations</c>, authorized reads use
     /// <c>authenticated-reads</c>; anything else falls through to the global <c>public-reads</c> default.
     /// Runs after the endpoint is fully built so explicit <c>RequireRateLimiting</c> calls always win.
+    /// Adds standard 429 ProblemDetails response metadata unless rate limiting is disabled.
     /// </summary>
     public static TBuilder ApplyDefaultRateLimitPolicy<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder
@@ -88,6 +91,15 @@ internal static partial class RateLimitingExtensions
             var policy = ResolveDefaultPolicy(endpointBuilder.Metadata);
             if (policy is not null)
                 endpointBuilder.Metadata.Add(new EnableRateLimitingAttribute(policy));
+
+            if (!endpointBuilder.Metadata.OfType<DisableRateLimitingAttribute>().Any()
+                && !endpointBuilder.Metadata.OfType<IProducesResponseTypeMetadata>()
+                    .Any(response => response.StatusCode == StatusCodes.Status429TooManyRequests))
+            {
+                // The same metadata as ProducesProblem, added after opt-out metadata is final.
+                endpointBuilder.Metadata.Add(new ProducesResponseTypeMetadata(
+                    StatusCodes.Status429TooManyRequests, typeof(ProblemDetails), ["application/problem+json"]));
+            }
         });
 
         return builder;

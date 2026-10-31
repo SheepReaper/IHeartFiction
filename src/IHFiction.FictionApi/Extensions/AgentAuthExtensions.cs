@@ -120,7 +120,9 @@ internal static class AgentAuthExtensions
 
     private static void MapProtocol(IEndpointRouteBuilder routes)
     {
-        var builder = routes.MapGroup(string.Empty).RequireRateLimiting(RateLimitPolicies.Auth);
+        var builder = routes.MapGroup(string.Empty)
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .ApplyDefaultRateLimitPolicy();
 
         builder.MapPost("/agent/identity", async (
             IdentityRequest request,
@@ -196,6 +198,7 @@ internal static class AgentAuthExtensions
             }
         }).WithName("ConfirmAgentIdentityClaim")
         .WithTags("Agent authentication")
+        .Produces(StatusCodes.Status200OK)
         .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute
         {
             AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
