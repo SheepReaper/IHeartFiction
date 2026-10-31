@@ -138,7 +138,7 @@ internal sealed class UpdateBookMetadata(
             })
             .WithSummary("Update Book Metadata")
             .WithDescription("Updates a book's title, description, and author notes. Only the story owner or authorized collaborators can update book metadata. Requires authentication and appropriate permissions.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Books)
             .RequireAuthorization("author")
             .WithStandardResponses()
             .Produces<Linked<UpdateBookMetadataResponse>>()

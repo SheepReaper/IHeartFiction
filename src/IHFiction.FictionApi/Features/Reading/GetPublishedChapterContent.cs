@@ -153,7 +153,7 @@ internal sealed class GetPublishedChapterContent(
                 "This is a public endpoint that allows anyone to read published chapter content. " +
                 "Returns the markdown content along with any author notes and metadata. " +
                 "No authentication required.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Chapters)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(conflict: false, unauthorized: false, validation: false)
             .Produces<Linked<GetPublishedChapterContentResponse>>();

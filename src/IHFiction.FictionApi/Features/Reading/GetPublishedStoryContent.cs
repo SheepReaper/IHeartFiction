@@ -127,7 +127,7 @@ internal sealed class GetPublishedStoryContent(
                 "This is a public endpoint that allows anyone to read published story content. " +
                 "Returns the markdown content along with any author notes and metadata. " +
                 "No authentication required.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Stories)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(unauthorized: false, conflict: false, validation: false)
             .Produces<Linked<GetPublishedStoryContentResponse>>();

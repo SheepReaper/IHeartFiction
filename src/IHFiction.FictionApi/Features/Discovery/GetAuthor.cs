@@ -119,7 +119,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
             .WithDescription("Retrieves detailed information about a specific author by their unique identifier. " +
                 "Returns the author's profile information and a list of their works. " +
                 "This is a public endpoint that does not require authentication.")
-            .WithTags(ApiTags.Authors.Discovery)
+            .WithTags(ApiTags.Authors)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<GetAuthorResponse>>();

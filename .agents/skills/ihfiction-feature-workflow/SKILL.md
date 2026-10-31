@@ -26,6 +26,12 @@ Follow `docs/FEATURE_LAYOUT.md`. Use matching `Features/<Purpose>` areas across 
 
 ## Implement a vertical slice
 
+Choose OpenAPI tags for API-consumer navigation independently of feature folders.
+Use the public resource or domain subject described in `docs/FEATURE_LAYOUT.md` and
+`ApiTags`. Current-user context, admin access, and the parent resource in a creation
+URL do not automatically determine a documentation group. Keep routes stable in
+layout-only work and describe authorization on the individual operation.
+
 Work in coherent, testable increments:
 
 1. Define or update domain behavior and errors.

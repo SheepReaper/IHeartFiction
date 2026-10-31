@@ -102,7 +102,7 @@ internal sealed class RegisterOwnPushSubscription(
             })
             .WithSummary("Register Push Subscription")
             .WithDescription("Registers or refreshes a web push subscription for the currently authenticated user.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.PushSubscriptions)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false)
             .Produces<Linked<RegisterOwnPushSubscriptionResponse>>()

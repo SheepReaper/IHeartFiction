@@ -91,7 +91,7 @@ internal sealed class DeleteStory(
                 "collaborators, and metadata. This action cannot be undone. Only the story owner can delete a story. " +
                 "The story must not have any active collaborators or pending invitations. " +
                 "Requires authentication and ownership permissions.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false, validation: false)
             .Produces(StatusCodes.Status204NoContent);

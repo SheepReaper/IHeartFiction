@@ -77,7 +77,7 @@ internal sealed class DeleteChapter(
             })
             .WithSummary("Delete Chapter")
             .WithDescription("Permanently deletes a chapter and its associated content.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Chapters)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false, validation: false)
             .Produces(StatusCodes.Status204NoContent);

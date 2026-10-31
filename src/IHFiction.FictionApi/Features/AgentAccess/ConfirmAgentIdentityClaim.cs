@@ -1,3 +1,4 @@
+using IHFiction.FictionApi.Common;
 using System.Security.Claims;
 
 using IHFiction.FictionApi.Infrastructure;
@@ -36,7 +37,7 @@ internal static class ConfirmAgentIdentityClaim
                     return ProtocolError(exception.Error, exception.Message, exception.StatusCode);
                 }
             }).WithName("ConfirmAgentIdentityClaim")
-            .WithTags("Agent authentication")
+            .WithTags(ApiTags.AgentAuthentication)
             .Produces(StatusCodes.Status200OK)
             .RequireAuthorization(new Microsoft.AspNetCore.Authorization.AuthorizeAttribute
             {

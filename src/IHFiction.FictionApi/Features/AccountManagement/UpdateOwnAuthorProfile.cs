@@ -170,7 +170,7 @@ internal sealed class UpdateOwnAuthorProfile(
                 "Allows modification of the author's biography and other profile details. " +
                 "The biography supports markdown formatting and is subject to content validation. " +
                 "This endpoint requires authentication and author registration.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Authors)
             .RequireAuthorization("author") // Requires authentication
             .WithStandardResponses(conflict: false, notFound: false)
             .Produces<Linked<UpdateOwnAuthorProfileResponse>>()

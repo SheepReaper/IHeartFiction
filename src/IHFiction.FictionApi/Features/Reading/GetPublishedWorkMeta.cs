@@ -345,7 +345,7 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
             })
             .WithSummary("Get Published Work Metadata")
             .WithDescription("Retrieves reader metadata for a published story, book, or chapter.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Works)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false, validation: false)
             .Produces<Linked<GetPublishedWorkMetaResponse>>();

@@ -108,7 +108,7 @@ internal sealed class GetOwnNotifications(
             })
             .WithSummary("Get Notification Inbox")
             .WithDescription("Lists recent notifications for the currently authenticated user and includes the unread count.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Notifications)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false, notFound: false)
             .Produces<GetOwnNotificationsResponse>();

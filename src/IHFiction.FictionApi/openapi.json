@@ -19,7 +19,7 @@
     "/me/author": {
       "get": {
         "tags": [
-          "Current User"
+          "Authors"
         ],
         "summary": "Get Own Author Profile",
         "description": "Retrieves the profile and works for the currently authenticated author. This endpoint requires authentication and author registration.",
@@ -102,7 +102,7 @@
       },
       "post": {
         "tags": [
-          "Current User"
+          "Authors"
         ],
         "summary": "Register as Author",
         "description": "Registers the currently authenticated user as an author, enabling them to create and manage stories. This process creates an author profile, assigns the author role in the identity system, and sets up the necessary permissions for content creation. This endpoint requires authentication but not existing author status.",
@@ -185,7 +185,7 @@
       },
       "put": {
         "tags": [
-          "Current User"
+          "Authors"
         ],
         "summary": "Update Author Profile",
         "description": "Updates the profile information for the currently authenticated author. Allows modification of the author's biography and other profile details. The biography supports markdown formatting and is subject to content validation. This endpoint requires authentication and author registration.",
@@ -280,7 +280,7 @@
     "/me/profile": {
       "get": {
         "tags": [
-          "Current User"
+          "User Profile"
         ],
         "summary": "Get User Profile",
         "description": "Retrieves the display name and Gravatar email for the currently authenticated user, along with a flag indicating whether the user is registered as an author.",
@@ -363,7 +363,7 @@
       },
       "put": {
         "tags": [
-          "Current User"
+          "User Profile"
         ],
         "summary": "Update User Profile",
         "description": "Updates the display name and Gravatar email for the currently authenticated user. Name is required; Gravatar email is optional.",
@@ -458,7 +458,7 @@
     "/admin/tags": {
       "get": {
         "tags": [
-          "Tag Administration"
+          "Tags"
         ],
         "summary": "List Tags for Administration",
         "description": "Lists canonical tags, their synonyms, and published usage counts for administrators.",
@@ -597,7 +597,7 @@
     "/admin/tags/merge": {
       "post": {
         "tags": [
-          "Tag Administration"
+          "Tags"
         ],
         "summary": "Merge Canonical Tags",
         "description": "Atomically merges one or more source canonical families into a selected canonical family, preserving alternate spellings as synonyms. Requires an administrative reason.",
@@ -698,7 +698,7 @@
     "/admin/tags/{id}": {
       "put": {
         "tags": [
-          "Tag Administration"
+          "Tags"
         ],
         "summary": "Rename Canonical Tag",
         "description": "Renames a canonical tag while retaining its previous spelling as a synonym. Requires an administrative reason.",
@@ -809,7 +809,7 @@
     "/stories/{id}/tags": {
       "put": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Replace Story Tags",
         "description": "Replaces a story's complete tag set for categorization and discovery. Tags must be in the format 'category:value' or 'category:subcategory:value'. A story can have at most 200 tags. Only story owners and authorized collaborators can replace tags. An empty collection removes every tag. Equivalent duplicate values are rejected. Requires authentication and appropriate permissions.",
@@ -922,7 +922,7 @@
     "/stories/{id}/convert": {
       "post": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Convert Story Type",
         "description": "Converts a story from one type to another (e.g., One-Shot to Chaptered). The conversion path is linear and has conditions for downgrading.",
@@ -1023,7 +1023,7 @@
     "/stories/{id}/books": {
       "post": {
         "tags": [
-          "Story Management"
+          "Books"
         ],
         "summary": "Create Book",
         "description": "Creates a new book within a story.",
@@ -1146,7 +1146,7 @@
     "/books/{id}/chapters": {
       "post": {
         "tags": [
-          "Story Management"
+          "Chapters"
         ],
         "summary": "Add Chapter to Book",
         "description": "Creates a new chapter within a book.",
@@ -1269,7 +1269,7 @@
     "/stories": {
       "post": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Create Story",
         "description": "Creates a new story with the provided title and description. The authenticated user becomes the owner of the story and can manage its content, collaborators, and publication status. Requires authentication.",
@@ -1374,7 +1374,7 @@
     "/stories/{id}/chapters": {
       "post": {
         "tags": [
-          "Story Management"
+          "Chapters"
         ],
         "summary": "Add Chapter to Story",
         "description": "Creates a new chapter within a story with the provided title and content. Only story owners and authorized collaborators can add chapters. The story must support chapters (cannot have direct content or books). Chapter titles must be unique within the story. Requires authentication.",
@@ -1495,7 +1495,7 @@
       },
       "get": {
         "tags": [
-          "Story Discovery"
+          "Chapters"
         ],
         "summary": "List Published Story Chapters",
         "description": "Retrieves a list of published chapters for a specific published story. This is a public endpoint that only shows published chapters from published stories. Chapters can be sorted by various fields. No authentication required.",
@@ -1589,7 +1589,7 @@
     "/chapters/{id}": {
       "delete": {
         "tags": [
-          "Story Management"
+          "Chapters"
         ],
         "summary": "Delete Chapter",
         "description": "Permanently deletes a chapter and its associated content.",
@@ -1661,7 +1661,7 @@
       },
       "put": {
         "tags": [
-          "Story Management"
+          "Chapters"
         ],
         "summary": "Update Chapter Metadata",
         "description": "Updates the metadata of an existing chapter.",
@@ -1784,7 +1784,7 @@
     "/stories/{id}": {
       "delete": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Delete Story",
         "description": "Permanently deletes a story and all its associated content including chapters, collaborators, and metadata. This action cannot be undone. Only the story owner can delete a story. The story must not have any active collaborators or pending invitations. Requires authentication and ownership permissions.",
@@ -1856,7 +1856,7 @@
       },
       "put": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Update Story Metadata",
         "description": "Updates a story's title and description. Only the story owner or authorized collaborators can update story metadata. Requires authentication and appropriate permissions.",
@@ -1977,7 +1977,7 @@
       },
       "get": {
         "tags": [
-          "Story Discovery"
+          "Stories"
         ],
         "summary": "Get Story by ID",
         "description": "Retrieves detailed information about a specific story including metadata, authors, tags, and publication status. This is a public endpoint that does not require authentication.",
@@ -2051,7 +2051,7 @@
     "/stories/{id}/cover": {
       "delete": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Delete Story Cover",
         "description": "Removes the cover image for a story. Only the story owner or authorized collaborators can delete the cover image. Requires authentication.",
@@ -2140,7 +2140,7 @@
       },
       "put": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Upload Story Cover",
         "description": "Uploads or replaces the cover image for a story. Only the story owner or authorized collaborators can update the cover image. Requires authentication.",
@@ -2247,7 +2247,7 @@
       },
       "get": {
         "tags": [
-          "Story Discovery"
+          "Stories"
         ],
         "summary": "Get Story Cover",
         "description": "Retrieves the cover image for a story. Published story covers are public. Draft covers require story read access.",
@@ -2312,7 +2312,7 @@
     "/me/books/{id}/content": {
       "get": {
         "tags": [
-          "Current User"
+          "Books"
         ],
         "summary": "Get My Book Content",
         "description": "Retrieves the content of a book owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
@@ -2405,7 +2405,7 @@
     "/me/chapters/{id}/content": {
       "get": {
         "tags": [
-          "Current User"
+          "Chapters"
         ],
         "summary": "Get My Chapter Content",
         "description": "Retrieves the content of a chapter owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
@@ -2498,7 +2498,7 @@
     "/me/stories": {
       "get": {
         "tags": [
-          "Current User"
+          "Stories"
         ],
         "summary": "Get Current Author Stories",
         "description": "Retrieves a paginated list of stories associated with the current authenticated author. Includes both owned stories and stories where the author is a collaborator. Supports filtering by publication status, ownership, tags, and search terms. Stories can be sorted by various fields. Requires authentication and author registration.",
@@ -2655,7 +2655,7 @@
     "/me/stories/{id}/content": {
       "get": {
         "tags": [
-          "Current User"
+          "Stories"
         ],
         "summary": "Get My Story Content",
         "description": "Retrieves the content of a story owned by the current user, including unpublished works. This is a private endpoint for authors to fetch their own content for editing or review. Requires authentication and author status.",
@@ -2748,7 +2748,7 @@
     "/stories/{id}/publish": {
       "post": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Publish Story",
         "description": "Makes a story publicly visible by setting its publication timestamp. Only story owners can publish their stories. The story must have content (either direct content or chapters) before it can be published. Once published, the story becomes discoverable in public listings. Requires authentication and story ownership.",
@@ -2851,7 +2851,7 @@
     "/works/{id}/publish": {
       "post": {
         "tags": [
-          "Story Management"
+          "Works"
         ],
         "summary": "Publish Work (Story, Book, Chapter, Anthology)",
         "description": "Makes any work publicly visible by setting its publication timestamp. If publishAll is true, recursively publishes all child works. Only owners can publish their works. Requires authentication and ownership.",
@@ -2964,7 +2964,7 @@
     "/stories/{id}/unpublish": {
       "post": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Unpublish Story",
         "description": "Removes a story from public visibility by clearing its publication timestamp. Only story owners can unpublish their stories. The story must currently be published to be unpublished. Once unpublished, the story is no longer discoverable in public listings but remains accessible to the owner and collaborators. Requires authentication and story ownership.",
@@ -3067,7 +3067,7 @@
     "/books/{id}": {
       "put": {
         "tags": [
-          "Story Management"
+          "Books"
         ],
         "summary": "Update Book Metadata",
         "description": "Updates a book's title, description, and author notes. Only the story owner or authorized collaborators can update book metadata. Requires authentication and appropriate permissions.",
@@ -3190,7 +3190,7 @@
     "/chapters/{id}/content": {
       "put": {
         "tags": [
-          "Story Management"
+          "Chapters"
         ],
         "summary": "Update Chapter Content",
         "description": "Updates the content of an existing chapter with new markdown content and optional notes. Only chapter owners and authorized collaborators can update chapter content. The content supports full markdown formatting including images and links. Requires authentication and appropriate permissions.",
@@ -3301,7 +3301,7 @@
       },
       "get": {
         "tags": [
-          "Story Discovery"
+          "Chapters"
         ],
         "summary": "Get Published Chapter Content",
         "description": "Retrieves the content of a published chapter for public reading. This is a public endpoint that allows anyone to read published chapter content. Returns the markdown content along with any author notes and metadata. No authentication required.",
@@ -3385,7 +3385,7 @@
     "/stories/{id}/content": {
       "put": {
         "tags": [
-          "Story Management"
+          "Stories"
         ],
         "summary": "Update Story Content",
         "description": "Updates the content of a story that has direct content (not chapters or books). Only story owners and authorized collaborators can update story content. The content supports full markdown formatting including images and links with security validation. Images must be from approved domains or base64 encoded with size limits. Requires authentication and appropriate permissions.",
@@ -3496,7 +3496,7 @@
       },
       "get": {
         "tags": [
-          "Story Discovery"
+          "Stories"
         ],
         "summary": "Get Published Story Content",
         "description": "Retrieves the content of a published story that has direct content (not chapters or books). This is a public endpoint that allows anyone to read published story content. Returns the markdown content along with any author notes and metadata. No authentication required.",
@@ -3580,7 +3580,7 @@
     "/authors/{id}": {
       "get": {
         "tags": [
-          "Author Discovery"
+          "Authors"
         ],
         "summary": "Get Author by ID",
         "description": "Retrieves detailed information about a specific author by their unique identifier. Returns the author's profile information and a list of their works. This is a public endpoint that does not require authentication.",
@@ -3664,7 +3664,7 @@
     "/authors": {
       "get": {
         "tags": [
-          "Author Discovery"
+          "Authors"
         ],
         "summary": "List Authors",
         "description": "Retrieves a paginated list of all authors who have published at least one story. Supports searching by author name or biography content. Authors can be sorted by name, creation date, or last update date. This is a public endpoint that does not require authentication.",
@@ -3788,7 +3788,7 @@
     "/stories/published": {
       "get": {
         "tags": [
-          "Story Discovery"
+          "Stories"
         ],
         "summary": "List Published Stories",
         "description": "Retrieves a paginated list of all publicly published stories. Supports searching by title, description, or author name. Results can be filtered by completion status or by a normalized tag key returned from GET /tags. Canonical and synonym tag keys resolve to the same canonical tag family. TagKey accepts one to three comma-separated category:value, category:subcategory:value, unique value-only, or id:tagId tokens (300 characters maximum), combined with AND. Legacy + separators are accepted. Malformed or over-limit tags return 400; ambiguous value-only tags return 409 with candidate canonical URLs; unknown tags return an empty list. Sort accepts a comma-separated list of field direction pairs. Valid sort fields: publishedAt, title, updatedAt. Valid directions: asc, desc (default asc). Fields accepts a comma-separated list of response properties to include per item: storyId, title, description, publishedAt, updatedAt, hasContent, hasChapters, hasBooks, hasCoverImage, chapterCount, authorId, authorName, readCount, completionStatus. Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. This is a public endpoint that does not require authentication and only returns stories that have been explicitly published by their authors.",
@@ -3958,7 +3958,7 @@
     "/tags": {
       "get": {
         "tags": [
-          "Tag Discovery"
+          "Tags"
         ],
         "summary": "List Tags",
         "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Each result exposes the normalized key accepted by the published-story tag filter. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
@@ -4098,7 +4098,7 @@
     "/tags/resolve": {
       "get": {
         "tags": [
-          "Tag Discovery"
+          "Tags"
         ],
         "summary": "Resolve Tag Landing Page",
         "description": "Resolves one to three comma-separated tag route tokens to canonical taxonomy families. Value-only, synonym, legacy plus-separated, differently ordered, and differently formatted inputs resolve to one canonical specification. Returns HTTP 400 for malformed or over-limit input, 404 for unknown tags, and 409 for ambiguous value-only tags.",
@@ -4182,7 +4182,7 @@
     "/authors/{id}/follow": {
       "post": {
         "tags": [
-          "Current User"
+          "Follows"
         ],
         "summary": "Follow Author",
         "description": "Follows an author for the currently authenticated user. This operation is idempotent.",
@@ -4283,7 +4283,7 @@
       },
       "delete": {
         "tags": [
-          "Current User"
+          "Follows"
         ],
         "summary": "Unfollow Author",
         "description": "Unfollows an author for the currently authenticated user. This operation is idempotent.",
@@ -4386,7 +4386,7 @@
     "/authors/{id}/follow/device": {
       "post": {
         "tags": [
-          "Author Discovery"
+          "Follows"
         ],
         "summary": "Follow Author For Device",
         "description": "Follows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
@@ -4475,7 +4475,7 @@
       },
       "delete": {
         "tags": [
-          "Author Discovery"
+          "Follows"
         ],
         "summary": "Unfollow Author For Device",
         "description": "Unfollows an author for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
@@ -4566,7 +4566,7 @@
     "/stories/{id}/follow": {
       "post": {
         "tags": [
-          "Current User"
+          "Follows"
         ],
         "summary": "Follow Story",
         "description": "Follows a published story for the currently authenticated user. This operation is idempotent.",
@@ -4667,7 +4667,7 @@
       },
       "delete": {
         "tags": [
-          "Current User"
+          "Follows"
         ],
         "summary": "Unfollow Story",
         "description": "Unfollows a published story for the currently authenticated user. This operation is idempotent.",
@@ -4770,7 +4770,7 @@
     "/stories/{id}/follow/device": {
       "post": {
         "tags": [
-          "Story Discovery"
+          "Follows"
         ],
         "summary": "Follow Story For Device",
         "description": "Follows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
@@ -4859,7 +4859,7 @@
       },
       "delete": {
         "tags": [
-          "Story Discovery"
+          "Follows"
         ],
         "summary": "Unfollow Story For Device",
         "description": "Unfollows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.",
@@ -4950,7 +4950,7 @@
     "/device/follows": {
       "get": {
         "tags": [
-          "Story Discovery"
+          "Follows"
         ],
         "summary": "Get Device Follows",
         "description": "Lists the authors and stories followed by an anonymous browser or installed PWA device.",
@@ -5033,7 +5033,7 @@
     "/device/notifications": {
       "get": {
         "tags": [
-          "Story Discovery"
+          "Notifications"
         ],
         "summary": "Get Device Notification Inbox",
         "description": "Lists recent notifications for an anonymous browser or installed PWA device and includes the unread count.",
@@ -5131,7 +5131,7 @@
     "/me/follows": {
       "get": {
         "tags": [
-          "Current User"
+          "Follows"
         ],
         "summary": "Get Followed Authors And Stories",
         "description": "Lists the authors and stories followed by the currently authenticated user.",
@@ -5216,7 +5216,7 @@
     "/me/notifications": {
       "get": {
         "tags": [
-          "Current User"
+          "Notifications"
         ],
         "summary": "Get Notification Inbox",
         "description": "Lists recent notifications for the currently authenticated user and includes the unread count.",
@@ -5316,7 +5316,7 @@
     "/device/notifications/{id}/read": {
       "post": {
         "tags": [
-          "Story Discovery"
+          "Notifications"
         ],
         "summary": "Mark Device Notification Read",
         "description": "Marks a notification as read for an anonymous browser or installed PWA device.",
@@ -5407,7 +5407,7 @@
     "/me/notifications/{id}/read": {
       "post": {
         "tags": [
-          "Current User"
+          "Notifications"
         ],
         "summary": "Mark Notification Read",
         "description": "Marks a notification as read for the currently authenticated user.",
@@ -5510,7 +5510,7 @@
     "/notifications/push-subscription/device": {
       "put": {
         "tags": [
-          "Author Discovery"
+          "Push Subscriptions"
         ],
         "summary": "Register Device Push Subscription",
         "description": "Registers or refreshes a web push subscription for an anonymous browser or installed PWA device.",
@@ -5591,7 +5591,7 @@
     "/notifications/push-subscription": {
       "put": {
         "tags": [
-          "Current User"
+          "Push Subscriptions"
         ],
         "summary": "Register Push Subscription",
         "description": "Registers or refreshes a web push subscription for the currently authenticated user.",
@@ -5682,7 +5682,7 @@
     "/works/{id}/content": {
       "get": {
         "tags": [
-          "Story Discovery"
+          "Works"
         ],
         "summary": "Get Published Work Content",
         "description": "Retrieves body content for a directly readable published work.",
@@ -5766,7 +5766,7 @@
     "/works/{id}/meta": {
       "get": {
         "tags": [
-          "Story Discovery"
+          "Works"
         ],
         "summary": "Get Published Work Metadata",
         "description": "Retrieves reader metadata for a published story, book, or chapter.",
@@ -5840,7 +5840,7 @@
     "/works/{id}/reads": {
       "post": {
         "tags": [
-          "Story Discovery"
+          "Works"
         ],
         "summary": "Record a qualified work read",
         "description": "Durably queues a qualified unique read for asynchronous recording against a story or chapter and its parent works.",
@@ -5939,7 +5939,7 @@
     "/agent/identity/claim/confirm": {
       "post": {
         "tags": [
-          "Agent authentication"
+          "Agent Authentication"
         ],
         "operationId": "ConfirmAgentIdentityClaim",
         "requestBody": {
@@ -10852,25 +10852,48 @@
   ],
   "tags": [
     {
-      "name": "Current User"
+      "name": "Stories",
+      "description": "Browse published stories and manage your own stories, including metadata, content, covers, tag assignments, structure, and publication. Private and editing operations require the permissions specified by each endpoint."
     },
     {
-      "name": "Tag Administration"
+      "name": "Books",
+      "description": "Create books within a story and retrieve or update your own book metadata and chapter structure."
     },
     {
-      "name": "Story Management"
+      "name": "Chapters",
+      "description": "List a story's published chapters, create chapters within stories or books, and retrieve or edit chapter metadata and content. Published content and private draft content have separate endpoints."
     },
     {
-      "name": "Story Discovery"
+      "name": "Works",
+      "description": "Operations shared across story, book, and chapter identifiers: resolve published metadata and readable content, record qualified reads, or publish a work. See individual endpoints for supported work types and permissions."
     },
     {
-      "name": "Author Discovery"
+      "name": "Authors",
+      "description": "Browse public author profiles, register the current user as an author, and manage your own author profile."
     },
     {
-      "name": "Tag Discovery"
+      "name": "Tags",
+      "description": "Browse and resolve tags, or administer canonical tags and synonyms. Administrative listing, renaming, and merging require the admin role. Assign tags to a story through the Stories endpoints."
     },
     {
-      "name": "Agent authentication"
+      "name": "Follows",
+      "description": "Follow or unfollow authors and stories, and list follows for the authenticated user or an anonymous device. Device operations require the documented device identifier."
+    },
+    {
+      "name": "Notifications",
+      "description": "Retrieve notification inboxes and mark notifications as read for the authenticated user or an anonymous device. Manage follow relationships under Follows and delivery subscriptions under Push Subscriptions."
+    },
+    {
+      "name": "Push Subscriptions",
+      "description": "Register or refresh browser push-delivery subscriptions for authenticated users or anonymous devices. These subscriptions configure delivery; follow relationships are managed under Follows."
+    },
+    {
+      "name": "User Profile",
+      "description": "Retrieve or update the authenticated user's display name and profile settings. Author-specific profiles are documented under Authors."
+    },
+    {
+      "name": "Agent Authentication",
+      "description": "Confirm the link between an agent identity and a user account. Agent protocol discovery, registration, and token exchange are documented in /auth.md."
     }
   ]
 }

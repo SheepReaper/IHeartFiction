@@ -120,7 +120,7 @@ internal sealed class ListPublishedStoryChapters(
             .WithDescription("Retrieves a list of published chapters for a specific published story. " +
                 "This is a public endpoint that only shows published chapters from published stories. " +
                 "Chapters can be sorted by various fields. No authentication required.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Chapters)
             .AllowAnonymous()
             .WithStandardResponses(unauthorized: false, conflict: false)
             .Produces<LinkedPagedCollection<ListPublishedStoryChaptersItem>>();

@@ -84,7 +84,7 @@ internal sealed class FollowStory(
             })
             .WithSummary("Follow Story")
             .WithDescription("Follows a published story for the currently authenticated user. This operation is idempotent.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Follows)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false)
             .Produces<Linked<FollowStoryResponse>>();
@@ -155,7 +155,7 @@ internal sealed class UnfollowStory(
             })
             .WithSummary("Unfollow Story")
             .WithDescription("Unfollows a published story for the currently authenticated user. This operation is idempotent.")
-            .WithTags(ApiTags.Account.CurrentUser)
+            .WithTags(ApiTags.Follows)
             .RequireAuthorization()
             .WithStandardResponses(conflict: false)
             .Produces<Linked<UnfollowStoryResponse>>();
@@ -227,7 +227,7 @@ internal sealed class FollowStoryForDevice(FictionDbContext context) : IUseCase,
             })
             .WithSummary("Follow Story For Device")
             .WithDescription("Follows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Follows)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<FollowStoryForDeviceResponse>>();
@@ -296,7 +296,7 @@ internal sealed class UnfollowStoryForDevice(FictionDbContext context) : IUseCas
             })
             .WithSummary("Unfollow Story For Device")
             .WithDescription("Unfollows a published story for an anonymous browser or installed PWA device. Requires a valid device identifier header.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Follows)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<Linked<UnfollowStoryForDeviceResponse>>();

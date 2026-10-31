@@ -177,7 +177,7 @@ internal sealed class UpdateChapterContent(
                 "Only chapter owners and authorized collaborators can update chapter content. " +
                 "The content supports full markdown formatting including images and links. " +
                 "Requires authentication and appropriate permissions.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Chapters)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false)
             .Produces<Linked<UpdateChapterContentResponse>>()

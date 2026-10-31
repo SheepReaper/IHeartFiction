@@ -247,7 +247,7 @@ internal sealed class CreateStoryChapter(
                 "Only story owners and authorized collaborators can add chapters. " +
                 "The story must support chapters (cannot have direct content or books). " +
                 "Chapter titles must be unique within the story. Requires authentication.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Chapters)
             .RequireAuthorization("author")
             .WithStandardResponses()
             .Produces<Linked<CreateStoryChapterResponse>>(StatusCodes.Status201Created)

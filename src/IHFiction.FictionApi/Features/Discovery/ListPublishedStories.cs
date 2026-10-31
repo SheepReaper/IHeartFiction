@@ -240,7 +240,7 @@ internal sealed class ListPublishedStories(
                 "Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. " +
                 "This is a public endpoint that does not require authentication and only " +
                 "returns stories that have been explicitly published by their authors.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Stories)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(notFound: false, conflict: true, unauthorized: false, forbidden: false)
             .Produces<LinkedPagedCollection<ListPublishedStoriesItem>>();

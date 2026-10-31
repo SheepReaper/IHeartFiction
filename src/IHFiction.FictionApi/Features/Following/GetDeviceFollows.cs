@@ -78,7 +78,7 @@ internal sealed class GetDeviceFollows(FictionDbContext context) : IUseCase, INa
             })
             .WithSummary("Get Device Follows")
             .WithDescription("Lists the authors and stories followed by an anonymous browser or installed PWA device.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Follows)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<GetDeviceFollowsResponse>();

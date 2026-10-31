@@ -139,7 +139,7 @@ internal sealed class UploadStoryCover(
             })
             .WithSummary("Upload Story Cover")
             .WithDescription("Uploads or replaces the cover image for a story. Only the story owner or authorized collaborators can update the cover image. Requires authentication.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(validation: false)
             .Produces<Linked<UploadStoryCoverResponse>>()

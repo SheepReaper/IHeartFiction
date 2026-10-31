@@ -1,3 +1,4 @@
+using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Features.Discovery;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -93,6 +94,19 @@ internal static class OpenApiExtensions
             Summary = "I❤️Fiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
             TermsOfService = new("http://localhost") // I don't have ToS yet
         };
+
+        if (document.Tags is { } tags)
+        {
+            foreach (var tag in tags)
+            {
+                tag.Description = ApiTags.GetDescription(tag.Name) ?? tag.Description;
+            }
+
+            document.Tags = tags
+                .OrderBy(tag => ApiTags.GetDisplayOrder(tag.Name))
+                .ThenBy(tag => tag.Name, StringComparer.Ordinal)
+                .ToHashSet();
+        }
     };
 
     private static async Task SchemaTransformer(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken ct)

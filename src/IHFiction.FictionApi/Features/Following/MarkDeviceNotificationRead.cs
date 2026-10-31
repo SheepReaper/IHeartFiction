@@ -65,7 +65,7 @@ internal sealed class MarkDeviceNotificationRead(
             })
             .WithSummary("Mark Device Notification Read")
             .WithDescription("Marks a notification as read for an anonymous browser or installed PWA device.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Notifications)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false)
             .Produces<MarkDeviceNotificationReadResponse>();

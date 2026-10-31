@@ -90,7 +90,7 @@ internal sealed class RecordWorkRead(IMessageBus messageBus, TimeProvider timePr
                     .ToResult(accepted => Results.Accepted(value: accepted)))
             .WithSummary("Record a qualified work read")
             .WithDescription("Durably queues a qualified unique read for asynchronous recording against a story or chapter and its parent works.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Works)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false)
             .RequireRateLimiting(RateLimitPolicies.QualifiedReads)

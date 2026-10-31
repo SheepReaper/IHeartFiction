@@ -216,7 +216,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
             .WithSummary("Get Story by ID")
             .WithDescription("Retrieves detailed information about a specific story including metadata, " +
                 "authors, tags, and publication status. This is a public endpoint that does not require authentication.")
-            .WithTags(ApiTags.Stories.Discovery)
+            .WithTags(ApiTags.Stories)
             .AllowAnonymous()
             .WithStandardResponses(conflict: false, forbidden: false, unauthorized: false, validation: false)
             .Produces<Linked<GetPublishedStoryResponse>>();

@@ -202,7 +202,7 @@ internal sealed class UpdateStoryContent(
                 "The content supports full markdown formatting including images and links with security validation. " +
                 "Images must be from approved domains or base64 encoded with size limits. " +
                 "Requires authentication and appropriate permissions.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false)
             .Produces<Linked<UpdateStoryContentResponse>>()

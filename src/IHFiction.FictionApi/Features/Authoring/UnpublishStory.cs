@@ -143,7 +143,7 @@ internal sealed class UnpublishStory(
                 "to be unpublished. Once unpublished, the story is no longer discoverable in public " +
                 "listings but remains accessible to the owner and collaborators. " +
                 "Requires authentication and story ownership.")
-            .WithTags(ApiTags.Stories.Management)
+            .WithTags(ApiTags.Stories)
             .RequireAuthorization("author")
             .WithStandardResponses(conflict: false)
             .Produces<Linked<UnpublishStoryResponse>>();
