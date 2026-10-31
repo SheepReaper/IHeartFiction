@@ -77,3 +77,7 @@ However, this choice comes with certain trade-offs. Minimal APIs, by design, are
 Another current limitation is the lack of built-in support for content negotiation. While the OpenAPI specification allows defining different response models per content type (e.g., `application/json` vs. `application/vnd.iheartfiction.hateoas+json`), the OpenAPI generator in ASP.NET Core does not yet fully support this (see [dotnet/aspnetcore#56177](https://github.com/dotnet/aspnetcore/issues/56177)). Due to this tooling limitation, we have made the design decision to forgo content negotiation for the time being. Consequently, all API responses include hypermedia (HATEOAS) links by default, rather than requiring clients to opt-in via a specific `Accept` header. This approach may be revisited as the framework evolves.
 
 For the initial feature set, the benefits of performance and simplicity offered by Minimal APIs far outweigh these limitations. The focused nature of our endpoints aligns perfectly with the minimal approach. As the platform grows, we will continuously evaluate this choice to ensure it remains the best fit for our needs.
+
+## Feature organization
+
+Application behavior is grouped by user purpose across the existing projects. See [Finding code by feature](docs/FEATURE_LAYOUT.md) for the navigation map, single-file API use-case convention, shared-code boundaries, and compatibility requirements. Purpose takes precedence over resource ownership and technical type when placing application code.

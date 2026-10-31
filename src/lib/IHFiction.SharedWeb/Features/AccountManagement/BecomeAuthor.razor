@@ -1,0 +1,120 @@
+@page "/become-author"
+@attribute [Authorize]
+@inherits CancellableComponent
+@inject AccountService AccountService
+@inject NavigationManager Navigation
+@inject LoaderService LoaderService
+
+<div class="container">
+    <h1 class="title">Become an Author</h1>
+    <h2 class="subtitle">Publish with clarity and confidence</h2>
+
+    <div class="content box">
+        <p>
+            Welcome to the author community. Before you publish, please review these shared expectations.
+            This is a plain-language guide for authors, not a legal contract.
+        </p>
+    </div>
+
+    <div class="box">
+        <h3 class="title is-4">Your Responsibilities</h3>
+        <div class="content">
+            <ul>
+                <li><strong>Tag Clearly:</strong> Use accurate genres, ratings, warnings, and format labels so readers know what to expect.</li>
+                <li><strong>Control Visibility:</strong> "Safe for All Audiences" stories can be public. Works with mature tags require login.</li>
+                <li><strong>Explicit Content Is Allowed:</strong> Mature themes are welcome when legal in your jurisdiction and tagged clearly.</li>
+                <li><strong>AI Work Is Welcome:</strong> AI-assisted and AI-generated stories are welcome. Please tag AI use clearly.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="box">
+        <h3 class="title is-4">Our Commitments</h3>
+        <div class="content">
+            <h4>Your Content, Your Rights</h4>
+            <ul>
+                <li><strong>No Model Training on Your Stories:</strong> We do not use your original story content to train AI models.</li>
+                <li><strong>Platform AI Features:</strong> We may use AI for categorization, recommendations, and abuse detection. Final moderation decisions are made by humans.</li>
+                <li><strong>Protection Limits:</strong> Public content can be scraped by third parties. We cannot fully prevent this, but we act on valid reports and takedown requests.</li>
+                <li><strong>Privacy Policy:</strong> Your account and personal data are handled under our main Privacy Policy.</li>
+            </ul>
+
+            <h4>Respecting Creators</h4>
+            <ul>
+                <li><strong>Original Work Matters:</strong> Do not post stories copied from other authors or sources without permission.</li>
+                <li><strong>Fan Works Are Welcome:</strong> Fan fiction and transformative works are welcome. Please tag and describe them honestly.</li>
+                <li><strong>Plagiarism Reviews Are Fair:</strong> We investigate reports and provide a path to respond and appeal.</li>
+            </ul>
+
+            <h4>Moderation and Appeals</h4>
+            <ul>
+                <li><strong>Clear Standards:</strong> We remove or limit content that breaks rules, including plagiarism, illegal content, targeted abuse, and harmful conduct.</li>
+                <li><strong>Human Review:</strong> Automated systems can flag potential issues, but moderators make final decisions.</li>
+                <li><strong>Appeals Matter:</strong> If action is taken on your content or account, you can appeal through support for a fresh review.</li>
+            </ul>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="notification is-danger">
+            <button class="delete" aria-label="Dismiss error" @onclick="e => _errorMessage = string.Empty"></button>
+            <strong>Error:</strong> @_errorMessage
+        </div>
+    }
+
+    <div class="field">
+        <div class="control">
+            <label class="checkbox">
+                <input type="checkbox" @bind="_agreedToTerms" />
+                I have read these guidelines and agree to tag honestly, respect creators, and follow these standards.
+            </label>
+        </div>
+    </div>
+
+    <div class="field">
+        <div class="control">
+            <button class="button is-primary is-large" disabled="@(!_agreedToTerms || _loading)" @onclick="OnBecomeAuthorClick">
+                <span class="icon is-small" aria-hidden="true">
+                    <i class="fas fa-pen-nib"></i>
+                </span>
+                <span>Start Writing</span>
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@code {
+
+    private bool _agreedToTerms;
+    private string? _errorMessage;
+    private bool _loading;
+
+    private async Task OnBecomeAuthorClick()
+    {
+        _errorMessage = null;
+        if (!_agreedToTerms) return;
+
+        _loading = true;
+        LoaderService.Show();
+        try
+        {
+            var result = await AccountService.RegisterAsAuthorAsync(new(){AcceptTerms = true}, null, CancellationToken);
+
+            if (result.IsSuccess)
+            {
+                Navigation.NavigateTo("/sign-in-again?reason=author-role-updated&returnUrl=%2Fstories%2Fnew", forceLoad: true);
+            }
+            else
+            {
+                _errorMessage = result.DomainError.Description;
+            }
+        }
+        finally
+        {
+            _loading = false;
+            LoaderService.Hide();
+        }
+    }
+}

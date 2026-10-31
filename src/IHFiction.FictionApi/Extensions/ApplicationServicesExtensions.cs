@@ -1,5 +1,5 @@
-using IHFiction.FictionApi.AgentAuth;
 using IHFiction.FictionApi.Common;
+using IHFiction.FictionApi.Features.AgentAccess;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Markdown;
 using IHFiction.SharedKernel.Notifications;

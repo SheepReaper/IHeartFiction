@@ -1,0 +1,357 @@
+@page "/following"
+@inherits CancellableComponent
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject LoaderService LoaderService
+
+<PageTitle>Following & Notifications — IHeartFiction</PageTitle>
+
+<div class="section">
+    <div class="container">
+        <div class="level is-align-items-flex-start mb-5">
+            <div class="level-left">
+                <div>
+                    <h1 class="title mb-2">Following & Notifications</h1>
+
+                    <div class="tags">
+                        <span class="tag has-background-link-soft has-text-link-bold">@((_follows?.Authors.Count ?? 0) + (_follows?.Stories.Count ?? 0)) followed</span>
+                        @if (_inbox is not null)
+                        {
+                            <span class="tag has-background-warning-soft has-text-warning-bold">@_inbox.UnreadCount unread</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ihf-notification-summary mb-5">
+            <article class="ihf-notification-tile">
+                <p class="heading">Following</p>
+                <p class="title is-4">@((_follows?.Authors.Count ?? 0) + (_follows?.Stories.Count ?? 0))</p>
+                <p class="subtitle is-7">Authors and stories tracked on this profile or device.</p>
+            </article>
+
+            <article class="ihf-notification-tile">
+                <p class="heading">Unread</p>
+                <p class="title is-4">@(_inbox?.UnreadCount ?? 0)</p>
+                <p class="subtitle is-7">Notifications waiting in the inbox.</p>
+            </article>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="has-text-centered py-6">
+                <span class="icon is-large has-text-grey" aria-hidden="true">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                </span>
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="notification is-danger">
+                <button class="delete" aria-label="Dismiss error" @onclick="() => _error = null"></button>
+                <strong>Error:</strong> @_error
+            </div>
+        }
+        else
+        {
+            <div class="columns is-variable is-6">
+                <div class="column is-5">
+                    <div class="box">
+                        <div class="level mb-4">
+                            <div class="level-left">
+                                <h2 class="title is-4 mb-0">Following</h2>
+                            </div>
+                            <div class="level-right">
+                                <span class="tag has-background-info-soft has-text-info-bold">
+                                    @((_follows?.Authors.Count ?? 0) + (_follows?.Stories.Count ?? 0)) total
+                                </span>
+                            </div>
+                        </div>
+
+                        <h3 class="title is-6">Authors</h3>
+                        @if (_follows?.Authors.Count > 0)
+                        {
+                            @foreach (var author in _follows.Authors)
+                            {
+                                <div class="ihf-notification-item mb-3">
+                                    <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap" style="gap: 0.75rem;">
+                                        <div>
+                                            <a class="has-text-link-bold" href="/authors/@author.AuthorId">@author.Name</a>
+                                            <p class="is-size-7 has-text-grey mb-0">Author updates</p>
+                                        </div>
+                                        <button class="button is-small has-background-danger-soft has-text-danger-bold"
+                                                disabled="@_actionBusy"
+                                                @onclick="() => OnUnfollowAuthorAsync(author.AuthorId)">
+                                            Unfollow
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="ihf-notification-empty mb-4">
+                                <span class="icon is-medium has-text-link" aria-hidden="true">
+                                    <i class="fas fa-user-pen fa-2x"></i>
+                                </span>
+                                <div>
+                                    <p class="has-text-weight-semibold">No authors followed</p>
+                                    <p class="is-size-7">Follow an author from their profile to receive publish updates.</p>
+                                </div>
+                            </div>
+                        }
+
+                        <h3 class="title is-6 mt-5">Stories</h3>
+                        @if (_follows?.Stories.Count > 0)
+                        {
+                            @foreach (var story in _follows.Stories)
+                            {
+                                <div class="ihf-notification-item mb-3">
+                                    <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap" style="gap: 0.75rem;">
+                                        <div>
+                                            <a class="has-text-warning-bold" href="/stories/@story.StoryId">@story.Title</a>
+                                            <div class="tags mt-2 mb-0">
+                                                <span class="tag has-background-warning-soft has-text-warning-bold">Story updates</span>
+                                                @if (!story.IsPublished)
+                                                {
+                                                    <span class="tag">Draft</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        <button class="button is-small has-background-danger-soft has-text-danger-bold"
+                                                disabled="@_actionBusy"
+                                                @onclick="() => OnUnfollowStoryAsync(story.StoryId)">
+                                            Unfollow
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="ihf-notification-empty">
+                                <span class="icon is-medium has-text-warning" aria-hidden="true">
+                                    <i class="fas fa-book-bookmark fa-2x"></i>
+                                </span>
+                                <div>
+                                    <p class="has-text-weight-semibold">No stories followed</p>
+                                    <p class="is-size-7">Use the story detail follow button to get future publish alerts.</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="column">
+                    <div class="box">
+                        <div class="level mb-4">
+                            <div class="level-left">
+                                <h2 class="title is-4 mb-0">Recent Notifications</h2>
+                            </div>
+                            <div class="level-right">
+                                <button class="button is-small has-background-link-soft has-text-link-bold"
+                                        disabled="@_actionBusy"
+                                        @onclick="ReloadAsync">
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (_inbox?.Items.Count > 0)
+                        {
+                            @foreach (var item in _inbox.Items.OrderByDescending(notification => notification.DeliveredAt))
+                            {
+                                <article class="ihf-notification-item @(item.ReadAt is null ? "is-unread" : string.Empty) mb-3">
+                                    <div class="is-flex is-justify-content-space-between is-align-items-flex-start is-flex-wrap-wrap" style="gap: 1rem;">
+                                        <div>
+                                            <p class="title is-6 mb-2">@item.Title</p>
+                                            <p class="mb-2">@item.Body</p>
+                                            <div class="ihf-notification-item__meta">
+                                                <span class="tag has-background-link-soft has-text-link-bold">@FormatKind(item.Kind)</span>
+                                                <span class="tag">@item.AuthorName</span>
+                                                @if (item.ReadAt is null)
+                                                {
+                                                    <span class="tag has-background-warning-soft has-text-warning-bold">Unread</span>
+                                                }
+                                            </div>
+                                            <p class="is-size-7 has-text-grey">
+                                                Delivered @item.DeliveredAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")
+                                            </p>
+                                        </div>
+
+                                        <div class="ihf-notification-item__actions">
+                                            <a class="button has-background-link-soft has-text-link-bold" href="@item.TargetPath">
+                                                Open
+                                            </a>
+                                            @if (item.ReadAt is null)
+                                            {
+                                                <button class="button has-background-success-soft has-text-success-bold"
+                                                        disabled="@_actionBusy"
+                                                        @onclick="() => OnMarkReadAsync(item.NotificationId)">
+                                                    Mark Read
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </article>
+                            }
+                        }
+                        else
+                        {
+                            <div class="ihf-notification-empty">
+                                <span class="icon is-medium has-text-info" aria-hidden="true">
+                                    <i class="fas fa-bell-slash fa-2x"></i>
+                                </span>
+                                <div>
+                                    <p class="has-text-weight-semibold">No notifications yet</p>
+                                    <p class="is-size-7">Follow authors or stories and new publish events will appear here.</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _actionBusy;
+    private bool _isAuthenticated;
+    private string? _error;
+    private FollowSnapshot? _follows;
+    private NotificationInbox? _inbox;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        LoaderService.Show();
+
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+
+            var followsResult = await NotificationService.GetFollowSnapshotAsync(_isAuthenticated, CancellationToken);
+            var inboxResult = await NotificationService.GetNotificationsAsync(_isAuthenticated, cancellationToken: CancellationToken);
+
+            if (followsResult.IsFailure)
+            {
+                _error = followsResult.DomainError.Description;
+                return;
+            }
+
+            if (inboxResult.IsFailure)
+            {
+                _error = inboxResult.DomainError.Description;
+                return;
+            }
+
+            _follows = followsResult.Value;
+            _inbox = inboxResult.Value;
+        }
+        finally
+        {
+            _loading = false;
+            LoaderService.Hide();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnUnfollowAuthorAsync(Ulid authorId)
+    {
+        _actionBusy = true;
+        try
+        {
+            var result = await NotificationService.UnfollowAuthorAsync(authorId, _isAuthenticated, CancellationToken);
+            if (result.IsFailure)
+            {
+                _error = result.DomainError.Description;
+                return;
+            }
+
+            if (_follows is not null)
+            {
+                _follows = _follows with { Authors = _follows.Authors.Where(author => author.AuthorId != authorId).ToList() };
+            }
+        }
+        finally
+        {
+            _actionBusy = false;
+        }
+    }
+
+    private async Task OnUnfollowStoryAsync(Ulid storyId)
+    {
+        _actionBusy = true;
+        try
+        {
+            var result = await NotificationService.UnfollowStoryAsync(storyId, _isAuthenticated, CancellationToken);
+            if (result.IsFailure)
+            {
+                _error = result.DomainError.Description;
+                return;
+            }
+
+            if (_follows is not null)
+            {
+                _follows = _follows with { Stories = _follows.Stories.Where(story => story.StoryId != storyId).ToList() };
+            }
+        }
+        finally
+        {
+            _actionBusy = false;
+        }
+    }
+
+    private async Task OnMarkReadAsync(Ulid notificationId)
+    {
+        _actionBusy = true;
+        try
+        {
+            var result = await NotificationService.MarkNotificationReadAsync(notificationId, _isAuthenticated, CancellationToken);
+            if (result.IsFailure)
+            {
+                _error = result.DomainError.Description;
+                return;
+            }
+
+            if (_inbox is not null)
+            {
+                var updatedItems = _inbox.Items
+                    .Select(item => item.NotificationId == notificationId ? item with { ReadAt = DateTime.UtcNow } : item)
+                    .ToList();
+
+                _inbox = _inbox with
+                {
+                    Items = updatedItems,
+                    UnreadCount = Math.Max(0, _inbox.UnreadCount - 1)
+                };
+            }
+        }
+        finally
+        {
+            _actionBusy = false;
+        }
+    }
+
+    private static string FormatKind(string kind) => kind switch
+    {
+        "story_published" => "New Story",
+        "chapter_published" => "New Chapter",
+        _ => "Notification"
+    };
+}

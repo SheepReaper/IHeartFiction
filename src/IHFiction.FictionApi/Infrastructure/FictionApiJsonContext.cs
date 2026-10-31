@@ -1,12 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using IHFiction.FictionApi.Account;
-using IHFiction.FictionApi.Authors;
 using IHFiction.FictionApi.Common;
-using IHFiction.FictionApi.Notifications;
-using IHFiction.FictionApi.Stories;
-using IHFiction.FictionApi.Tags;
+using IHFiction.FictionApi.Features.AccountManagement;
+using IHFiction.FictionApi.Features.Administration;
+using IHFiction.FictionApi.Features.Authoring;
+using IHFiction.FictionApi.Features.Discovery;
+using IHFiction.FictionApi.Features.Following;
+using IHFiction.FictionApi.Features.Reading;
 using IHFiction.SharedKernel.AgentAuth;
 using IHFiction.SharedKernel.AgentSkills;
 using IHFiction.SharedKernel.AiCatalog;

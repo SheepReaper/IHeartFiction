@@ -11,7 +11,7 @@ Build the smallest complete feature slice while preserving this repository's arc
 
 1. Read the repository `AGENTS.md`. Its commands and guardrails override companion skills.
 2. Restate the user-visible outcome, roles, routes, data, failure cases, and explicit non-goals.
-3. Read [references/architecture-map.md](references/architecture-map.md), then locate the nearest existing analogue with its commands.
+3. Read [the feature layout guide](../../../docs/FEATURE_LAYOUT.md) for purpose-based placement, then read [references/architecture-map.md](references/architecture-map.md), then locate the nearest existing analogue with its commands.
 4. Classify the feature using [references/feature-routing.md](references/feature-routing.md). Do not load every listed companion skill.
 5. Create an impact checklist containing only applicable rows from [references/completeness-gates.md](references/completeness-gates.md).
 6. Search the repository's GitHub Discussions for the existing roadmap or feature-planning thread that covers the work. Record one canonical discussion URL and its current status. Treat it as stakeholder-facing planning context and an announcement channel, not as a substitute for repository evidence or an execution log.
@@ -19,6 +19,10 @@ Build the smallest complete feature slice while preserving this repository's arc
 When the user authorizes GitHub writes, update the canonical discussion only to announce completed, verified work or a meaningful design change to the public contract, architecture, or agreed scope. Do not post implementation-start notices, incremental progress, test-by-test results, transient blockers, or other granular status updates. Keep announcements concise, distinguish delivered work from planned or deferred work, and never mark a feature complete before its applicable gates pass. If a qualifying announcement is useful but GitHub writes are unavailable or outside the request's authority, prepare the exact proposed announcement for handoff; otherwise report the discussion link without manufacturing an update.
 
 If requirements materially change behavior, use `spec-driven-development` before implementation. For a narrow, already-specified change, proceed without manufacturing a separate specification.
+
+## Place code by purpose
+
+Follow `docs/FEATURE_LAYOUT.md`. Use matching `Features/<Purpose>` areas across existing projects and tests. Select a purpose by the user outcome, not the entity accessed or the presence of current-user context. Keep each API use case in a single file, including its private models, validation, handling, and nested endpoint. Keep use-case-specific queued handlers in that file as public top-level types when discovery requires it; genuinely shared handlers/services remain separate. Colocate feature UI, services, models, and assets. Shared entities, mappings, migrations, primitives, composition, and reusable UI keep their separate homes. Namespaces follow folders. Preserve endpoint contracts and durable message identities during moves, and update Razor imports and asset paths. Enforce semantic placement through guidance and review, without introducing automated layout rules.
 
 ## Implement a vertical slice
 

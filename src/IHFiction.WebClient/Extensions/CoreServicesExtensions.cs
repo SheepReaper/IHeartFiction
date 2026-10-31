@@ -1,11 +1,11 @@
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Notifications;
-using IHFiction.SharedWeb.Components.Disqus;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Csp;
+using IHFiction.SharedWeb.Features.Reading;
 using IHFiction.SharedWeb.Reporting;
-using IHFiction.SharedWeb.Sitemap;
-using IHFiction.WebClient.MarkdownResponses;
+using IHFiction.SharedWeb.Features.Discovery;
+using IHFiction.WebClient.Features.Reading;
 
 using Markdig;
 

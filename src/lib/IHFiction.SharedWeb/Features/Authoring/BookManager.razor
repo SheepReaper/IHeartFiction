@@ -1,0 +1,244 @@
+@namespace IHFiction.SharedWeb.Features.Authoring
+@using IHFiction.SharedWeb.Features.Authoring
+@using System.Collections.ObjectModel
+@using static IHFiction.SharedWeb.Features.Authoring.StoryEditorService
+@using static IHFiction.Data.Stories.Domain.StoryType
+
+@inherits CancellableComponent
+@inject StoryEditorService StoryEditorService
+
+<div class="book-manager">
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="notification is-danger">
+            <button class="delete" aria-label="Dismiss error" @onclick="e => _errorMessage = string.Empty"></button>
+            <strong>Error:</strong> @_errorMessage
+        </div>
+    }
+    <div class="columns">
+        <div class="column">
+            <h3 class="subtitle">Books</h3>
+                <nav class="pagination is-centered is-small" role="navigation" aria-label="books pagination"
+                    style="margin-bottom: 1.5rem;">
+                    <a class="pagination-previous" @onclick="e => SelectPreviousBook()">&lt; Previous</a>
+                    <ul class="pagination-list">
+                        @{ var _sortedBooks = GetSortedBooks(); }
+                        @for (int i = 0; i < _sortedBooks.Count; i++)
+                        {
+                            var book = _sortedBooks[i];
+                            <li @key="book.Id">
+                                <a class="pagination-link has-tooltip-top @(book.Id == Book?.Id ? "is-current" : "")"
+                                    aria-label="Book @(i + 1)" title="@book.Title" data-tooltip="@book.Title"
+                                    @onclick="async () => await SelectBook(book)">@(i + 1)</a>
+                            </li>
+                        }
+                        <li>
+                            <a class="pagination-link" aria-label="Add Book" @onclick="AddNewBook">
+                                <span class="icon is-small" aria-hidden="true">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                    <a class="pagination-next" @onclick="e => SelectNextBook()">Next &gt;</a>
+                </nav>
+            @if (Book is not null)
+            {
+                <div class="field">
+                    <label class="label">Book Title</label>
+                    <div class="control">
+                        <input class="input" type="text" @bind="Book.Title" @bind:event="oninput" />
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Book Description</label>
+                    <div class="control">
+                        <textarea class="textarea" @bind="Book.Description" @bind:event="oninput"></textarea>
+                    </div>
+                </div>
+                <div class="field">
+                    <button class="button is-danger" @onclick="e => ShowDeleteModal(Book)">
+                        <span class="icon is-small" aria-hidden="true">
+                            <i class="fas fa-trash"></i>
+                        </span>
+                        <span>Delete Book</span>
+                    </button>
+                </div>
+                <!-- Author's Notes fields removed: not supported for books -->
+                <hr />
+                <ChapterManager />
+            }
+            else
+            {
+                <div class="has-text-centered">
+                    <p>Select a book to edit its content or add a new one.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+@if (_showDeleteModal && _bookToDelete is not null)
+{
+    <div class="modal is-active">
+        <div class="modal-background" @onclick="HideDeleteModal"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Delete Book</p>
+                <button class="delete" aria-label="close" @onclick="HideDeleteModal"></button>
+            </header>
+            <section class="modal-card-body">
+                <p>Are you sure you want to permanently delete the book <strong>@_bookToDelete.Title</strong>? This action cannot be undone.</p>
+            </section>
+            <footer class="modal-card-foot">
+                <button class="button is-danger" @onclick="ConfirmDeleteBook">Delete</button>
+                <button class="button" @onclick="HideDeleteModal">Cancel</button>
+            </footer>
+        </div>
+    </div>
+}
+</div>
+
+@code {
+    private BookEditorModel? Book => StoryEditorService.CurrentBook;
+    private string? _errorMessage;
+    private bool _disposed;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        StoryEditorService.BookChanged += OnBookChanged;
+
+        if (StoryEditorService.CurrentBook is not null) return;
+
+        if (StoryEditorService.CurrentStory is { StoryType: MultiBook })
+        {
+            var _initList = GetSortedBooks();
+            if (_initList.Count > 0) await SelectBook(_initList[0]);
+        }
+    }
+
+    private ObservableCollection<BookEditorModel> Books => StoryEditorService.CurrentStory?.Books
+        ?? new ObservableCollection<BookEditorModel>();
+
+    // Provide a stable, order-sorted view for rendering and navigation
+    private List<BookEditorModel> GetSortedBooks()
+        => Books is null
+            ? new List<BookEditorModel>()
+            : Books.OrderBy(b => b.Order).ThenBy(b => b.Title, StringComparer.InvariantCulture).ToList();
+
+    private void OnBookChanged(object? sender, BookChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddNewBook()
+    {
+        var result = await StoryEditorService.AddNewBookAsync();
+        if (result.IsFailure)
+        {
+            _errorMessage = result.DomainError?.Description ?? "Unknown error adding book.";
+            return;
+        }
+
+        await SelectBook(result.Value);
+    }
+
+    private async Task SelectBook(BookEditorModel book)
+    {
+        if (book.Id is null) return;
+
+        var result = await StoryEditorService.LoadBookAsync(book.Id.Value);
+
+        if (result.IsFailure) _errorMessage = result.DomainError?.Description ?? "Unknown error loading book.";
+    }
+
+    private async Task SelectPreviousBook()
+    {
+        if (Books.Count == 0 || Book == null) return;
+
+        var _list = GetSortedBooks();
+        var selectedIndex = _list.FindIndex(b => b.Id == Book.Id);
+
+        if(selectedIndex == -1) return;
+
+        var previousIndex = selectedIndex == 0 ? _list.Count - 1 : selectedIndex - 1;
+
+        await SelectBook(_list[previousIndex]);
+    }
+
+    private async Task SelectNextBook()
+    {
+        if (Books.Count == 0 || Book == null) return;
+
+        var _list2 = GetSortedBooks();
+        var selectedIndex = _list2.FindIndex(b => b.Id == Book.Id);
+
+        if (selectedIndex == -1) return;
+
+        var nextIndex = (selectedIndex + 1) % _list2.Count;
+
+        await SelectBook(_list2[nextIndex]);
+    }
+
+    private bool _showDeleteModal = false;
+    private BookEditorModel? _bookToDelete;
+
+    private void ShowDeleteModal(BookEditorModel book)
+    {
+        _bookToDelete = book;
+        _showDeleteModal = true;
+    }
+
+    private void HideDeleteModal()
+    {
+        _showDeleteModal = false;
+        _bookToDelete = null;
+    }
+
+    private async Task ConfirmDeleteBook()
+    {
+        if (_bookToDelete is null) return;
+        var result = await StoryEditorService.DeleteBookAsync(_bookToDelete);
+        if (result.IsFailure)
+        {
+            _errorMessage = result.DomainError?.Description ?? "Unknown error deleting book.";
+        }
+        else
+        {
+            // Remove from underlying collection and update selection using sorted view
+            var _fresh = GetSortedBooks();
+            var sortedIdx = _fresh.FindIndex(b => b.Id == _bookToDelete.Id);
+            if (sortedIdx != -1)
+            {
+                var underlyingIdx = Books.ToList().FindIndex(b => b.Id == _bookToDelete.Id);
+                if (underlyingIdx != -1)
+                {
+                    Books.RemoveAt(underlyingIdx);
+                }
+
+                if (Book?.Id == _bookToDelete.Id)
+                {
+                    var refreshed = GetSortedBooks();
+                    if (refreshed.Count > 0)
+                        await SelectBook(refreshed[sortedIdx % refreshed.Count]);
+                    else
+                        ClearCurrentBook();
+                }
+            }
+        }
+        HideDeleteModal();
+    }
+
+    private void ClearCurrentBook()
+    {
+        StoryEditorService.ClearBook();
+    }
+
+    protected override ValueTask DisposeAsyncCore()
+    {
+        if (_disposed) return ValueTask.CompletedTask;
+        StoryEditorService.BookChanged -= OnBookChanged;
+        _disposed = true;
+        return base.DisposeAsyncCore();
+    }
+}

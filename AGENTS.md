@@ -11,6 +11,10 @@ Before changing code:
 
 The solution uses vertical slices and CQRS-lite. PostgreSQL/EF Core owns relational metadata, MongoDB driver collections own document bodies where existing slices use them, Redis/WolverineFx owns distributed messaging, and SharedWeb consumes the API contract generated from FictionApi. Do not introduce a second source of truth or hand-edit generated client output.
 
+## Feature layout (Mandatory)
+
+Read `docs/FEATURE_LAYOUT.md` before placing or moving application code. Organize API, UI, host feature behavior, and tests by user purpose under `Features/<Purpose>`, retaining existing projects. Resource access and logged-in-user context do not determine feature ownership. Keep each API use case in one file with its models, validation, handling, and nested endpoint; shared services stay outside that file. Colocate feature UI and supporting services rather than using global technical-type folders. Namespaces must follow folders. Update Razor imports, asset paths, references, and guidance with moves, and preserve HTTP contracts and durable message identities. Shared data models, mappings, migrations, infrastructure, and reusable UI remain separate. Use guidance and review to enforce placement; do not introduce automated layout rules.
+
 ## EF Core Migration Creation (Mandatory)
 
 For this repository, the migration creation command is fixed.
@@ -102,7 +106,7 @@ For Blazor head metadata in this repository, treat `HeadContent` as a single-own
 Rules:
 
 - `HeadContent` must appear only once in the effective render tree for SEO metadata composition.
-- Exception: `src/lib/IHFiction.SharedWeb/Components/MarkdownEditor/Editor.razor` may continue using `HeadContent` for editor assets.
+- Exception: `src/lib/IHFiction.SharedWeb/Features/Authoring/MarkdownEditor/Editor.razor` may continue using `HeadContent` for editor assets.
 - The metadata owner component is `src/lib/IHFiction.SharedWeb/Components/SocialPreviewMetadata.razor`.
 - Do not add additional page/component `HeadContent` blocks for SEO/social/JSON-LD metadata.
 

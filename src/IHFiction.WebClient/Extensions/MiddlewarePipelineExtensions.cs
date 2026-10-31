@@ -2,22 +2,21 @@ using System.Net;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Options;
-
+using IHFiction.SharedKernel.AgentAuth;
+using IHFiction.SharedKernel.AgentSkills;
+using IHFiction.SharedKernel.AiCatalog;
 using IHFiction.SharedWeb;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Csp;
 using IHFiction.SharedWeb.Extensions;
-using IHFiction.SharedKernel.AgentAuth;
-using IHFiction.SharedKernel.AgentSkills;
-using IHFiction.SharedKernel.AiCatalog;
-using IHFiction.WebClient.AgentDiscovery;
 using IHFiction.WebClient.Components;
-using IHFiction.WebClient.MarkdownResponses;
-using IHFiction.WebClient.Tags;
-using IHFiction.WebClient.Reading;
+using IHFiction.WebClient.Features.AgentAccess;
+using IHFiction.WebClient.Features.Discovery;
+using IHFiction.WebClient.Features.Reading;
 using IHFiction.WebClient.Infrastructure;
+
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Options;
 
 using Sidio.Sitemap.Blazor;
 
