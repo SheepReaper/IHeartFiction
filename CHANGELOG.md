@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.11] - 2026-11-01
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Maintenance
+
+- **deps:** Update dependency markdig to 1.5.1
+
+- **deps:** Update dependency reversemarkdown to 6.3.0
+
+- **deps:** Update dependency scalar.aspnetcore to 2.18.7
+
+
+### Other
+
+- Add unit tests for OpenAPI rate limiting in FictionApi
+
+- Implemented OpenApiRateLimitingTests to verify global and explicit rate limits.
+- Ensured proper handling of rate limiting responses in OpenAPI documentation.
+- Included tests for endpoints with and without rate limiting applied.
+
+- Add unit tests for reading features and middleware
+
+- Implement tests for MarkdownResponseMiddleware to validate markdown headers and body responses.
+- Create tests for MarkdownStoryReader rendering to ensure complete body notes and navigation are included.
+- Add ReadCountFormatter tests to verify compact display formatting.
+- Introduce ReadIdentity tests to ensure stable identifiers for devices and users.
+- Develop ReaderRedirectMiddleware tests to check redirection behavior based on work availability.
+- Implement RecordWorkRead dispatch tests to validate message publishing for read requests.
+- Add StoryReader rendering tests to ensure proper rendering of stories and chapters.
+- Create StoryReadingLink tests to verify link behavior and hydration of reading progress.
+- Introduce DurableMessageCompatibilityTests to ensure message identity preservation in envelopes.
+- Update ApiExceptionTests to include relevant namespaces and services.
+
+- Refactor API tags for clarity and consistency across endpoints
+
+- Updated tags for various discovery endpoints to better reflect their functionality, consolidating related tags under broader categories (e.g., "Stories", "Authors", "Tags").
+- Adjusted tags for following and notification endpoints to group them under "Follows" and "Notifications" respectively.
+- Enhanced OpenAPI documentation to align with the new tag structure, improving the overall organization and readability of the API reference.
+
+- Fix Disqus configuration and align feature test placement
+
+- Update .gitignore to include Playwright CLI output and modify .mcp.json for pagespeed server configuration
+
+
+
 ## [v1.0.10] - 2026-10-29
 
 
