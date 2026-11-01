@@ -43,6 +43,9 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
 
+      - name: JavaScript regression tests
+        run: node --test tests/JavaScript/Features/Reading/DisqusThread.test.mjs
+
       - name: Restore
         run: dotnet restore
 

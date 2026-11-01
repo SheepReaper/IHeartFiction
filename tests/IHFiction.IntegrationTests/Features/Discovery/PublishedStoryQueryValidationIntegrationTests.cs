@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 
-namespace IHFiction.IntegrationTests.Features.Authoring;
+namespace IHFiction.IntegrationTests.Features.Discovery;
 
 public sealed class PublishedStoryQueryValidationIntegrationTests(IntegrationTestWebAppFactory factory)
 {

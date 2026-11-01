@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 using MongoDB.Bson;
 
-namespace IHFiction.UnitTests.Features.Authoring;
+namespace IHFiction.UnitTests.Features.Reading;
 
 public sealed class GetPublishedWorkTests(MongoDbFixture mongoDbFixture) : IClassFixture<MongoDbFixture>
 {
