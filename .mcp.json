@@ -1,15 +1,15 @@
 {
   "mcpServers": {
-    "aspire": {
-      "command": "aspire",
-      "args": [
-        "agent",
-        "mcp"
-      ]
-    },
-    "chrome-devtools": {
+    "pagespeed": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["-y", "chrome-devtools-mcp@latest"]
+      "args": [
+        "-y",
+        "mcp-server-pagespeed"
+      ],
+      "tools": [
+        "*"
+      ]
     }
   }
 }

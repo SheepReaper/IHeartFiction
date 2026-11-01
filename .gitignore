@@ -507,3 +507,5 @@ appsettings.Production.json
 
 # C# Dev kit language server generated files
 *.lscache
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
