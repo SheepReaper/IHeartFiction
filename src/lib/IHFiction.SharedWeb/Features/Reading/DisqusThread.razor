@@ -19,18 +19,21 @@
     private string ResolvedPageUrl => MetadataUrls.ToAbsolute(PageUrl ?? GetCurrentPathAndQuery());
 
     private IJSObjectReference? module;
+    private (string Url, string Identifier)? loadedThread;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
-        {
-            return;
-        }
-
         try
         {
-            module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Features/Reading/DisqusThread.razor.js");
-            await module.InvokeVoidAsync("loadDisqus", ResolvedPageUrl, PageIdentifier, DisqusOptions.Value.ShortName, Nonce);
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Features/Reading/DisqusThread.razor.js");
+            var thread = (Url: ResolvedPageUrl, Identifier: PageIdentifier);
+            if (loadedThread == thread)
+            {
+                return;
+            }
+
+            await module.InvokeVoidAsync("loadDisqus", thread.Url, thread.Identifier, DisqusOptions.Value.ShortName, Nonce);
+            loadedThread = thread;
         }
         catch (JSDisconnectedException)
         {
