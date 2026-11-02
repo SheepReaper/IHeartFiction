@@ -82,6 +82,8 @@ For Interactive Server failures, reproduce the exact route in Playwright and cor
 
 Do not claim browser behavior, metadata, authentication, migration application, or distributed messaging is verified from compilation alone. Use the relevant Aspire, integration, or browser-testing skill and report anything that remains unverified.
 
+Before declaring browser verification blocked, follow the Browser Verification Access guardrail in repository `AGENTS.md`. Discover MCP/editor capabilities and local Playwright alternatives; a single unavailable browser access host is not a global blocker. Use a working permitted route to finish verification before asking the user to configure another integration.
+
 For icon accessibility changes, check rendered accessible names and accessibility snapshots on representative routes, including icon-only chapter navigation. Font glyphs must not leak into link/button names. Check both initial server-rendered HTML without JavaScript and the interactive page when those rendering modes are affected; source searches alone do not prove the browser result.
 
 ## Report the result

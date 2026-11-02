@@ -11,6 +11,10 @@ Before changing code:
 
 The solution uses vertical slices and CQRS-lite. PostgreSQL/EF Core owns relational metadata, MongoDB driver collections own document bodies where existing slices use them, Redis/WolverineFx owns distributed messaging, and SharedWeb consumes the API contract generated from FictionApi. Do not introduce a second source of truth or hand-edit generated client output.
 
+## Browser Verification Access (Mandatory)
+
+Before reporting browser verification blocked, discover available browser/DevTools/Node REPL/editor tools and local Playwright tooling. A failed MCP connection is not proof that all browser access is unavailable. Follow `%USERPROFILE%\.agents\guidance\global.md` (Browser testing access and fallbacks) when available; otherwise try the easiest permitted alternative before asking for setup help. Prefer an isolated task browser for anonymous routes, keep temporary automation artifacts outside the repo, and report concrete remaining blockers. Use fresh Aspire binaries and verify the actual routes, accessible names, keyboard behavior, and JavaScript modes required by the change.
+
 ## Feature layout (Mandatory)
 
 Read `docs/FEATURE_LAYOUT.md` before placing or moving application code. Organize API, UI, host feature behavior, and tests by user purpose under `Features/<Purpose>`, retaining existing projects. Resource access and logged-in-user context do not determine feature ownership. Keep each API use case in one file with its models, validation, handling, and nested endpoint; shared services stay outside that file. Colocate feature UI and supporting services rather than using global technical-type folders. Namespaces must follow folders. Update Razor imports, asset paths, references, and guidance with moves, and preserve HTTP contracts and durable message identities. Shared data models, mappings, migrations, infrastructure, and reusable UI remain separate. Use guidance and review to enforce placement; do not introduce automated layout rules.
