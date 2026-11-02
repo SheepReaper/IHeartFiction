@@ -71,10 +71,10 @@
         <div class="columns">
             <div class="column is-narrow">
                 <div class="field">
-                    <label class="label">Sort by</label>
+                    <label class="label" for="story-sort">Sort by</label>
                     <div class="control">
                         <div class="select is-fullwidth">
-                            <select @bind="sortBy" @bind:after="OnSortChanged">
+                            <select id="story-sort" @bind="sortBy" @bind:after="OnSortChanged">
                                 <option value="publishedAt desc">Recently Published</option>
                                 <option value="title">Title (A-Z)</option>
                                 <option value="updatedAt desc">Recently Updated</option>

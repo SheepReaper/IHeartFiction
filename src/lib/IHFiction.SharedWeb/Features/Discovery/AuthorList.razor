@@ -38,7 +38,8 @@
                 <div class="level-item">
                     <div class="field has-addons">
                         <div class="control has-icons-left">
-                            <input class="input" type="text" placeholder="Search authors..." @bind="searchQuery" @onkeypress="OnSearchKeyPress">
+                            <label class="is-sr-only" for="author-search">Search authors</label>
+                            <input id="author-search" name="q" class="input" type="text" placeholder="Search authors..." @bind="searchQuery" @onkeypress="OnSearchKeyPress">
                             <span class="icon is-small is-left" aria-hidden="true">
                                 <i class="fas fa-search"></i>
                             </span>
@@ -54,9 +55,10 @@
         </div>
 
         <div class="field">
+            <label class="is-sr-only" for="author-sort">Sort authors</label>
             <div class="control">
                 <div class="select">
-                    <select @bind="sortBy" @bind:after="OnSortChanged">
+                    <select id="author-sort" name="sort" @bind="sortBy" @bind:after="OnSortChanged">
                         <option value="name">Sort by Name</option>
                         <option value="createdAt">Sort by Join Date</option>
                         <option value="updatedAt">Sort by Last Activity</option>
