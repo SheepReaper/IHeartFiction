@@ -36,20 +36,26 @@
             </div>
             <div class="level-right">
                 <div class="level-item">
-                    <div class="field has-addons">
-                        <div class="control has-icons-left">
-                            <label class="is-sr-only" for="author-search">Search authors</label>
-                            <input id="author-search" name="q" class="input" type="text" placeholder="Search authors..." @bind="searchQuery" @onkeypress="OnSearchKeyPress">
-                            <span class="icon is-small is-left" aria-hidden="true">
-                                <i class="fas fa-search"></i>
-                            </span>
+                    <form method="get" action="@GetCurrentPath()">
+                        <div class="field has-addons">
+                            <div class="control has-icons-left">
+                                <label class="is-sr-only" for="author-search">Search authors</label>
+                                <input id="author-search" name="q" class="input" type="text" placeholder="Search authors..." @bind="searchQuery">
+                                <span class="icon is-small is-left" aria-hidden="true">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                            </div>
+                            <div class="control">
+                                <button class="button is-primary" type="submit">
+                                    Search
+                                </button>
+                            </div>
                         </div>
-                        <div class="control">
-                            <button class="button is-primary" @onclick="SearchAuthors">
-                                Search
-                            </button>
-                        </div>
-                    </div>
+                        @if (!string.Equals(sortBy, DefaultSort, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <input type="hidden" name="sort" value="@sortBy" />
+                        }
+                    </form>
                 </div>
             </div>
         </div>
@@ -212,20 +218,6 @@
 
         isLoading = false;
         StateHasChanged();
-    }
-
-    private Task SearchAuthors()
-    {
-        NavigateToPage(1);
-        return Task.CompletedTask;
-    }
-
-    private async Task OnSearchKeyPress(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter")
-        {
-            await SearchAuthors();
-        }
     }
 
     private void OnSortChanged()

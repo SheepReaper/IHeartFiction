@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Mvc;
 
 using IHFiction.SharedWeb.Infrastructure;
 
@@ -16,8 +18,8 @@ public static class LoginLogoutEndpointRouteBuilderExtensions
         group.MapGet("login", (string? returnUrl, IHttpContextAccessor context) =>
             TypedResults.Challenge(CreateLoginProperties(returnUrl, context.HttpContext))).AllowAnonymous();
 
-        group.MapGet("logout", (string? returnUrl, IHttpContextAccessor context) =>
-            TypedResults.SignOut(GetAuthProperties(returnUrl, context.HttpContext), [cookieScheme, oidcScheme]));
+        group.MapPost("logout", ([FromForm] string? returnUrl, IHttpContextAccessor context) =>
+            TypedResults.SignOut(CreateLogoutProperties(returnUrl, context.HttpContext), [cookieScheme, oidcScheme]));
 
         group.MapGet("refresh", async Task<IResult> (
             string? returnUrl,
@@ -34,6 +36,20 @@ public static class LoginLogoutEndpointRouteBuilderExtensions
         }).AllowAnonymous();
 
         return group;
+    }
+
+    internal static AuthenticationProperties CreateLogoutProperties(string? returnUrl, HttpContext? context)
+    {
+        var pathBase = context?.Request.PathBase ?? PathString.Empty;
+        var destination = $"{pathBase}/";
+        if (RedirectHttpResult.IsLocalUrl(returnUrl))
+        {
+            destination = returnUrl.StartsWith("~/", StringComparison.Ordinal)
+                ? $"{pathBase}{returnUrl[1..]}"
+                : returnUrl;
+        }
+
+        return new AuthenticationProperties { RedirectUri = destination };
     }
 
     private static AuthenticationProperties GetAuthProperties(string? returnUrl, HttpContext? context)

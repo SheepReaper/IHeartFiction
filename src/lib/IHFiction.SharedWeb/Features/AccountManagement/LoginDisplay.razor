@@ -23,20 +23,17 @@
             </a>
 
             <div class="navbar-dropdown">
-                @* <form action="authentication/logout" method="post">
-                    <AntiforgeryToken />
-                    <input type="hidden" name="ReturnUrl" value="@Navigation.Uri" />
-                    <button type="submit" class="navbar-item">
-                        Log out
-                    </button>
-                </form> *@
                 <a class="navbar-item" @onclick="OnAccountSettingsClick">
                     Account Settings
                 </a>
                 <hr class="navbar-divider" />
-                <a class="navbar-item" @onclick="OnLogoutClick" disabled="@_loading">
-                    Log out
-                </a>
+                <form action="authentication/logout" method="post" data-enhance="false">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="returnUrl" value="@(LogoutReturnUrl ?? new Uri(Navigation.BaseUri).AbsolutePath)" />
+                    <button type="submit" class="navbar-item button is-ghost" disabled="@_loading">
+                        Log out
+                    </button>
+                </form>
             </div>
         </div>
     </Authorized>
@@ -53,6 +50,9 @@
 </AuthorizeView>
 
 @code {
+    [CascadingParameter(Name = "LogoutReturnUrl")]
+    public string? LogoutReturnUrl { get; set; }
+
     [Parameter]
     [SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; }
@@ -125,15 +125,6 @@
         _loading = true;
         LoaderService.Show();
         Navigation.NavigateTo($"authentication/login?returnUrl={ReturnUrl ?? Navigation.Uri}", forceLoad: true);
-    }
-
-    private async Task OnLogoutClick()
-    {
-        CloseMenu();
-        await NotifyActionInvokedAsync();
-        _loading = true;
-        LoaderService.Show();
-        Navigation.NavigateTo($"authentication/logout", forceLoad: true);
     }
 
     private async Task OnAccountSettingsClick()

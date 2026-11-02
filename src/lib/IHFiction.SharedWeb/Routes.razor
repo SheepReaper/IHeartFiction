@@ -1,15 +1,18 @@
 @using static IHFiction.SharedWeb.Csp.CspConstants;
+@inject NavigationManager Navigation
 
 <CascadingValue Name="MarkdownRequest" Value="IsMarkdownRequest">
     <CascadingValue Name="@HttpContextItemKey" Value="Nonce">
         <Router AppAssembly="typeof(Layout.MainLayout).Assembly" NotFoundPage="typeof(Layout.NotFound)">
             <Found Context="routeData">
-                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-                    <NotAuthorized>
-                        <h1>Not Authorized</h1>
-                        <p>You are not authorized to access this resource.</p>
-                    </NotAuthorized>
-                </AuthorizeRouteView>
+                <CascadingValue Name="LogoutReturnUrl" Value="@LogoutNavigation.GetReturnUrl(routeData.PageType, Navigation.Uri, Navigation.BaseUri)">
+                    <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                        <NotAuthorized>
+                            <h1>Not Authorized</h1>
+                            <p>You are not authorized to access this resource.</p>
+                        </NotAuthorized>
+                    </AuthorizeRouteView>
+                </CascadingValue>
             </Found>
         </Router>
     </CascadingValue>
