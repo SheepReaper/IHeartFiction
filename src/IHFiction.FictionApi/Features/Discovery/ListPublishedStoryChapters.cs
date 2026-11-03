@@ -74,7 +74,8 @@ internal sealed class ListPublishedStoryChapters(
         var chaptersQuery = fictionDb.Chapters
             .Where(c => c.StoryId == id)
             .Where(c => c.PublishedAt != null)
-            .OrderBy(c => c.PublishedAt);
+            .OrderBy(c => c.Order)
+            .ThenBy(c => c.Id);
 
         var chapterItems = chaptersQuery.Select(c => new ListPublishedStoryChaptersItem(
             c.Id,
@@ -119,7 +120,8 @@ internal sealed class ListPublishedStoryChapters(
             .WithSummary("List Published Story Chapters")
             .WithDescription("Retrieves a list of published chapters for a specific published story. " +
                 "This is a public endpoint that only shows published chapters from published stories. " +
-                "Chapters can be sorted by various fields. No authentication required.")
+                "Chapters are returned in ascending narrative order, with chapter ID as a deterministic tie-breaker. " +
+                "No authentication required.")
             .WithTags(ApiTags.Chapters)
             .AllowAnonymous()
             .WithStandardResponses(unauthorized: false, conflict: false)

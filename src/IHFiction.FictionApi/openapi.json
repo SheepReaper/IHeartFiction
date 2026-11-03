@@ -1498,7 +1498,7 @@
           "Chapters"
         ],
         "summary": "List Published Story Chapters",
-        "description": "Retrieves a list of published chapters for a specific published story. This is a public endpoint that only shows published chapters from published stories. Chapters can be sorted by various fields. No authentication required.",
+        "description": "Retrieves a list of published chapters for a specific published story. This is a public endpoint that only shows published chapters from published stories. Chapters are returned in ascending narrative order, with chapter ID as a deterministic tie-breaker. No authentication required.",
         "operationId": "ListPublishedStoryChapters",
         "parameters": [
           {
