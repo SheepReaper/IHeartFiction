@@ -1,6 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
+
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Searching.Domain;
 using IHFiction.FictionApi.Common;
@@ -12,10 +16,6 @@ using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
 
 namespace IHFiction.FictionApi.Features.Discovery;
 
@@ -51,7 +51,7 @@ internal sealed class ListTags(
         [property: Range(1, 200, ErrorMessage = "Page size must be between 1 and 200.")]
         int PageSize = 50,
 
-        [property: FromQuery(Name = "Q")]
+        [property: FromQuery(Name = ISearchSupport.QueryParameterName)]
         [property: StringLength(100, ErrorMessage = "Search term must be 100 characters or less.")]
         string Search = "",
 

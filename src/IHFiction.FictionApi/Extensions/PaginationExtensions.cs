@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 using IHFiction.FictionApi.Infrastructure;
+using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Filtering;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
@@ -163,8 +164,9 @@ internal static class PaginationExtensions
         values.Add(nameof(IPaginationSupport.PageSize), pagedCollection.PageSize);
 
         if (queryParams is IFilterSupport f) values.Add(nameof(IFilterSupport.Filter), f.Filter);
-        if (queryParams is ISearchSupport se) values.Add(nameof(ISearchSupport.Search), se.Search);
+        if (queryParams is ISearchSupport se) values.Add(ISearchSupport.QueryParameterName, se.Search);
         if (queryParams is ISortingSupport so) values.Add(nameof(ISortingSupport.Sort), so.Sort);
+        if (queryParams is IDataShapingSupport shaping) values.TryAdd(nameof(IDataShapingSupport.Fields), shaping.Fields);
 
         List<LinkItem> links = [linker.Create(endpointName, "self", values: values.Select(e => new KeyValuePair<string, string?>(e.Key, e.Value?.ToString())))];
 

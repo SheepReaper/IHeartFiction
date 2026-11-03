@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
@@ -12,9 +15,6 @@ using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace IHFiction.FictionApi.Features.Discovery;
 
@@ -37,7 +37,7 @@ internal sealed class ListAuthors(
         [property: Range(1, 100, ErrorMessage = "Page size must be between 1 and 100.")]
         int PageSize = 30,
 
-        [property: FromQuery(Name = "Q")]
+        [property: FromQuery(Name = ISearchSupport.QueryParameterName)]
         [property: StringLength(100, MinimumLength = 2, ErrorMessage = "Search term must be between 2 and 100 characters.")]
         string Search = "",
 

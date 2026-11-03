@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using System.Security.Claims;
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.EntityFrameworkCore;
+
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
@@ -15,10 +19,6 @@ using IHFiction.SharedKernel.Pagination;
 using IHFiction.SharedKernel.Searching;
 using IHFiction.SharedKernel.Sorting;
 using IHFiction.SharedKernel.Validation;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
 
 namespace IHFiction.FictionApi.Features.Authoring;
 
@@ -48,7 +48,7 @@ internal sealed class GetOwnStories(
         int Page = 1,
         [property: StringLength(100, ErrorMessage = "Search query must be 100 characters or less.")]
         [property: NoHarmfulContent]
-        [property: FromQuery(Name = "Q")]
+        [property: FromQuery(Name = ISearchSupport.QueryParameterName)]
         string Search = "",
         string Sort = "",
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]

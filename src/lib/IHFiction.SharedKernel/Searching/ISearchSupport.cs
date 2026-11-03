@@ -12,4 +12,9 @@ public interface ISearchSupport
     /// </summary>
     /// <example>fantasy adventure</example>
     string Search { get; }
+
+    /// <summary>
+    /// Query parameter name used when generating links for this search request.
+    /// </summary>
+    const string QueryParameterName = "q";
 }
