@@ -10,8 +10,6 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<!DOCTYPE html>
-
 <nav class="navbar is-primary" role="navigation" aria-label="main navigation" @ref="_navbarRootRef">
     <div class="navbar-brand">
         <NavLink class="navbar-item" href="" Match="NavLinkMatch.All" @onclick="CloseMobileMenu">
@@ -95,7 +93,12 @@
             <div class="navbar-item ihf-nav-actions">
                 <div class="buttons">
                     <a class="button has-background-link-soft has-text-link-bold has-tooltip-bottom" data-tooltip="About" href="/about" aria-label="About" @onclick="CloseMobileMenu">
-                        <span class="icon" aria-hidden="true"><i class="@CurrentCycleIcon"></i></span>
+                        <span class="icon ihf-about-icons" aria-hidden="true">
+                            <span class="ihf-about-icon"><i class="fas fa-question-circle"></i></span>
+                            <span class="ihf-about-icon"><i class="fab fa-github"></i></span>
+                            <span class="ihf-about-icon"><i class="fab fa-patreon"></i></span>
+                            <span class="ihf-about-icon"><i class="fas fa-mug-hot"></i></span>
+                        </span>
                     </a>
                     <button class="button has-background-warning-soft has-text-warning-bold has-tooltip-bottom" data-tooltip="Hit the lights" @onclick="ToggleThemeAndCloseMenu" aria-label="Hit the lights">
                         <span class="icon" aria-hidden="true"><i class="fas fa-@themeIcon"></i></span>
@@ -122,31 +125,11 @@
 
     private string DocsUrl => new Uri(apiUrlOptions.Value.BaseUrl!, "/scalar/v1").ToString();
 
-    private System.Threading.Timer? _iconTimer;
-    private int _iconIndex = 0;
-    private readonly (string Icon, string Name)[] _cycleIcons = new[]
-    {
-        ("fas fa-question-circle", "Help"),
-        ("fab fa-github", "GitHub"),
-        @* ("fab fa-kofi", "Ko-fi"), *@
-        ("fab fa-patreon", "Patreon"),
-        ("fas fa-mug-hot", "Buy Me a Coffee")
-    };
-
-    private string CurrentCycleIcon => _cycleIcons[_iconIndex].Icon;
-
     protected override Task OnInitializedAsync()
     {
         theme.ThemeChanged += OnThemeChanged;
         viewPreferences.CompactModeChanged += OnCompactModeChanged;
         Navigation.LocationChanged += OnLocationChanged;
-
-        // start icon rotation (every 3s)
-        _iconTimer = new System.Threading.Timer(_ =>
-        {
-            _iconIndex = (_iconIndex + 1) % _cycleIcons.Length;
-            InvokeAsync(StateHasChanged);
-        }, null, 3000, 3000);
 
         return Task.CompletedTask;
     }
@@ -259,11 +242,6 @@
         theme.ThemeChanged -= OnThemeChanged;
         viewPreferences.CompactModeChanged -= OnCompactModeChanged;
         Navigation.LocationChanged -= OnLocationChanged;
-
-        if (_iconTimer is not null)
-        {
-            await _iconTimer.DisposeAsync();
-        }
 
         if (_outsideClickListener is not null)
         {
