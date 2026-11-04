@@ -77,18 +77,24 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("/scalar/v1");
 
         // Search & Listing
-        markdown.Should().Contain("GET https://api.iheartfiction.net/stories");
+        markdown.Should().Contain("GET https://api.iheartfiction.net/stories/published");
+        markdown.Should().Contain("GET https://api.iheartfiction.net/tags");
         markdown.Should().Contain("`q`");
-        markdown.Should().Contain("`tag`");
-        markdown.Should().Contain("`sort`");
-        markdown.Should().Contain("`direction`");
-        markdown.Should().Contain("`page`");
-        markdown.Should().Contain("`pageSize`");
-        markdown.Should().Contain("`fields`");
+        markdown.Should().Contain("`TagKey`");
+        markdown.Should().Contain("`AuthorId`");
+        markdown.Should().Contain("`CompletionStatus`");
+        markdown.Should().Contain("`Sort`");
+        markdown.Should().Contain("`Page`");
+        markdown.Should().Contain("`PageSize`");
+        markdown.Should().Contain("`Fields`");
+        markdown.Should().Contain("\"data\":");
+        markdown.Should().Contain("\"currentPage\":");
+        markdown.Should().NotContain("GET https://api.iheartfiction.net/stories?");
 
-        // Story Details & Chapters
+        // Story Details, Chapters & Work Metadata
         markdown.Should().Contain("/stories/{id}");
         markdown.Should().Contain("/stories/{id}/chapters");
+        markdown.Should().Contain("/works/{id}/meta");
 
         // Content Retrieval
         markdown.Should().Contain("/chapters/{id}/content");
@@ -97,8 +103,11 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("Accept: text/markdown");
 
         // Authors
+        markdown.Should().Contain("GET https://api.iheartfiction.net/authors?");
         markdown.Should().Contain("/authors/{id}");
-        markdown.Should().Contain("/authors/{id}/stories");
+        markdown.Should().Contain("GET https://api.iheartfiction.net/stories/published?AuthorId=");
+        markdown.Should().NotContain("https://api.iheartfiction.net/authors/01J8Y6M1A2B3C4D5E6F7G8H9J0/stories");
+        markdown.Should().NotContain("GET /authors/{id}/stories");
 
         // Auth Boundary & Read-Only defaults
         markdown.Should().Contain("Anonymous Public Access");
@@ -111,5 +120,35 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("400 Bad Request");
         markdown.Should().Contain("404 Not Found");
         markdown.Should().Contain("429 Too Many Requests");
+    }
+
+    [Fact]
+    public void RepositorySkillFile_Matches_AgentSkillsCatalogReadContentSkillMarkdown()
+    {
+        var repoRoot = FindRepositoryRoot();
+        var skillPath = Path.Combine(repoRoot, ".agents", "skills", "read-iheartfiction-content", "SKILL.md");
+
+        File.Exists(skillPath).Should().BeTrue($"expected repository skill file at {skillPath}");
+
+        var fileMarkdown = File.ReadAllText(skillPath, Encoding.UTF8).ReplaceLineEndings("\n").TrimEnd('\n');
+        var catalogMarkdown = AgentSkillsCatalog.ReadContentSkillMarkdown.ReplaceLineEndings("\n").TrimEnd('\n');
+
+        fileMarkdown.Should().Be(catalogMarkdown);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, "IHFiction.slnx")))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        throw new InvalidOperationException("Could not locate repository root containing IHFiction.slnx.");
     }
 }
