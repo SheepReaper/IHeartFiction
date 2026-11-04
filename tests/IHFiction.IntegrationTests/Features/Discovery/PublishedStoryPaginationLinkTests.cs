@@ -1,10 +1,13 @@
 using System.Net;
 using System.Text.Json;
 
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
@@ -113,5 +116,14 @@ public sealed class PublishedStoryPaginationLinkTests(IntegrationTestWebAppFacto
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "xUnit1013:Public method should be marked as test", Justification = "Implements IConfigureServices<T>.")]
     public static void ConfigureServices(IServiceCollection services)
-        => services.AddKeyedTestFictionDbContext<PublishedStoryPaginationLinkTests>(configurePendingModelWarning: false);
+    {
+        services.AddKeyedTestFictionDbContext<PublishedStoryPaginationLinkTests>(configurePendingModelWarning: false);
+        services.PostConfigure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
+            options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(
+                new OpenIdConnectConfiguration
+                {
+                    AuthorizationEndpoint = "https://auth.example.test/realms/fiction/protocol/openid-connect/auth",
+                    TokenEndpoint = "https://auth.example.test/realms/fiction/protocol/openid-connect/token"
+                }));
+    }
 }
