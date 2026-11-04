@@ -47,7 +47,11 @@ internal static class MiddlewarePipelineExtensions
             app.UseHsts();
         }
         app.UseCsp();
-        app.UseHttpsRedirection();
+        // Production TLS termination and HTTP-to-HTTPS redirects belong to the reverse proxy.
+        // Keep internal HTTP health probes and service traffic on their configured transport.
+        if (!app.Environment.IsProduction())
+            app.UseHttpsRedirection();
+
         app.UseRouting();
         app.UseWebSockets();
         app.UseRateLimiter();
