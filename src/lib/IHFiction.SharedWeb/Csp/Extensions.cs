@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -35,7 +36,7 @@ public static partial class Extensions
             var siteUrlOptions = sp.GetRequiredService<IOptions<SiteUrlOptions>>().Value;
             var disqusOptions = sp.GetRequiredService<IOptions<DisqusOptions>>().Value;
 
-            return new CspPolicyProvider(siteUrlOptions, disqusOptions);
+            return new CspPolicyProvider(siteUrlOptions, disqusOptions, sp.GetRequiredService<IHostEnvironment>());
         });
 
         return services;

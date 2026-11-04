@@ -3,6 +3,8 @@ using System.Text.RegularExpressions;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.SharedWeb.Features.Reading;
 
+using Microsoft.Extensions.Hosting;
+
 using static IHFiction.SharedWeb.Csp.CspConstants;
 
 namespace IHFiction.SharedWeb.Csp;
@@ -20,16 +22,19 @@ public sealed partial class CspPolicyProvider
     private readonly string[] _policySegments;
     private readonly string[] _policyReportOnlySegments;
 
-    public CspPolicyProvider(SiteUrlOptions siteUrlOptions, DisqusOptions disqusOptions)
+    public CspPolicyProvider(SiteUrlOptions siteUrlOptions, DisqusOptions disqusOptions, IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(siteUrlOptions);
         ArgumentNullException.ThrowIfNull(disqusOptions);
+        ArgumentNullException.ThrowIfNull(environment);
 
         var baseUrl = siteUrlOptions.BaseUrl?.ToString().TrimEnd('/') ?? string.Empty;
         var reportTo = $"csp-endpoint=\"{baseUrl}{CspReportsEndpoint}\"";
         var reportingEndpoints = $"default=\"{baseUrl}{CspReportsEndpoint}\",{reportTo}";
         var disqusHost = $"{disqusOptions.ShortName}.disqus.com";
         var webSocketHost = $"wss://{siteUrlOptions.BaseUrl?.Host}";
+        // Browser refresh uses a dynamically assigned localhost WebSocket port.
+        var browserRefreshSources = environment.IsDevelopment() ? " ws://localhost:* wss://localhost:*" : string.Empty;
 
         // Report-only is intentionally looser while testing strict-dynamic with Disqus and
         // Cloudflare Rocket Loader. CSP3 clients ignore https: when strict-dynamic is active;
@@ -39,7 +44,7 @@ public sealed partial class CspPolicyProvider
             report-to csp-endpoint;
             base-uri 'self';
             default-src 'none';
-            connect-src 'self' {webSocketHost} https://links.services.disqus.com https://glitter.services.disqus.com https://referrer.disqus.com;
+            connect-src 'self' {webSocketHost}{browserRefreshSources} https://links.services.disqus.com https://glitter.services.disqus.com https://referrer.disqus.com;
             font-src 'self' data:;
             form-action 'self';
             frame-src 'self' data: https://disqus.com https://{disqusHost};
