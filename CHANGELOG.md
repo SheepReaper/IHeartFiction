@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.12] - 2026-11-04
+
+
+### Added
+
+- **DisqusThread:** Optimize thread loading and add unit tests for component reuse
+
+- **antiforgery:** Implement antiforgery protection for logout and form submissions
+
+- **search:** Unify search query parameter naming and enhance pagination link tests
+
+- **chapters:** Update chapter ordering to use narrative order and add integration tests
+
+- **nav-menu:** Move about button animation to css instead of timer callback
+
+- **author:** Add CreatedAt field to author responses and update related tests
+
+- **csp:** Add IHostEnvironment to CspPolicyProvider for dynamic browser refresh handling and implement corresponding unit tests
+
+- **html-to-markdown:** Enhance conversion logic to remove additional form elements and improve link accessibility; add comprehensive unit tests
+
+- **https:** Adjust HTTPS redirection logic for non-production environments
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+- **agents:** Enhance browser verification access guidelines for clarity and completeness
+
+
+### Fixed
+
+- **accessibility:** Add accessible labels to search and sort inputs in AuthorList and StoryList components
+
+
+### Maintenance
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.13.0
+
+
+### Tests
+
+- Stub OIDC discovery in OpenAPI integration test
+
+
+
 ## [v1.0.11] - 2026-11-01
 
 
