@@ -70,7 +70,7 @@ else if (author != null)
                                     <span class="icon" aria-hidden="true">
                                         <i class="fas fa-calendar"></i>
                                     </span>
-                                    <span>Joined @author.UpdatedAt.ToString("MMM yyyy")</span>
+                                    <span>Joined @author.CreatedAt.ToString("MMM yyyy")</span>
                                 </span>
                             </div>
                         </div>
@@ -157,6 +157,7 @@ else if (author != null)
     private bool isLoading = true;
     private string? errorMessage;
     private string? _loadedAuthorId;
+    private string? plainTextBio;
     private PersistingComponentStateSubscription _persistingSubscription;
 
     private string MetadataTitle => author is null
@@ -166,7 +167,7 @@ else if (author != null)
     private string MetadataDescription => author switch
     {
         null => "Explore author profiles, published stories, and creator updates on IHeartFiction.",
-        _ when !string.IsNullOrWhiteSpace(author.Profile.Bio) => author.Profile.Bio,
+        _ when !string.IsNullOrWhiteSpace(plainTextBio) => plainTextBio,
         _ => $"Read stories by {author.Name} on IHeartFiction. {author.PublishedStories.Count} published {(author.PublishedStories.Count == 1 ? "story" : "stories")}."
     };
 
@@ -200,7 +201,7 @@ else if (author != null)
                     ["@type"] = "Person",
                     ["@id"] = ToAbsolute($"/authors/{AuthorId}#person"),
                     ["name"] = author.Name,
-                    ["description"] = string.IsNullOrWhiteSpace(author.Profile.Bio) ? null : author.Profile.Bio,
+                    ["description"] = plainTextBio,
                     ["url"] = authorUrl,
                     ["image"] = string.IsNullOrWhiteSpace(author.AvatarUrl) ? null : ToAbsolute(author.AvatarUrl),
                     ["sameAs"] = author.Profile.SocialLinks?
@@ -302,6 +303,9 @@ else if (author != null)
     private void ApplyAuthor(LinkedOfGetAuthorResponse loadedAuthor)
     {
         author = loadedAuthor;
+        var bio = loadedAuthor.Profile.Bio;
+        plainTextBio = string.IsNullOrWhiteSpace(bio) ? null : Markdown.ToPlainText(bio, mdp).Trim();
+        if (string.IsNullOrWhiteSpace(plainTextBio)) plainTextBio = null;
         errorMessage = null;
         isLoading = false;
     }

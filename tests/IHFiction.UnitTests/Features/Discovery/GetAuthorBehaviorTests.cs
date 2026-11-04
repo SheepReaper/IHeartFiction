@@ -26,7 +26,7 @@ public class GetAuthorBehaviorTests
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt, null, profile, works, 0);
+        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt.AddDays(-1), updatedAt, null, profile, works, 0);
 
         // Assert
         response.Name.Should().Be(name);
@@ -43,7 +43,7 @@ public class GetAuthorBehaviorTests
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(emptyGuid, name, null, updatedAt, null, profile, works, 0);
+        var response = new GetAuthor.GetAuthorResponse(emptyGuid, name, null, updatedAt.AddDays(-1), updatedAt, null, profile, works, 0);
 
         // Assert
         response.UserId.Should().Be(emptyGuid);
@@ -60,7 +60,7 @@ public class GetAuthorBehaviorTests
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(userId, name, null, futureDate, null, profile, works, 0);
+        var response = new GetAuthor.GetAuthorResponse(userId, name, null, futureDate.AddDays(-1), futureDate, null, profile, works, 0);
 
         // Assert
         response.UpdatedAt.Should().Be(futureDate);
@@ -77,7 +77,7 @@ public class GetAuthorBehaviorTests
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(userId, name, null, pastDate, null, profile, works, 0);
+        var response = new GetAuthor.GetAuthorResponse(userId, name, null, pastDate.AddDays(-1), pastDate, null, profile, works, 0);
 
         // Assert
         response.UpdatedAt.Should().Be(pastDate);
@@ -95,7 +95,7 @@ public class GetAuthorBehaviorTests
         var works = new List<GetAuthor.AuthorWorkItem>();
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt, deletedAt, profile, works, 0);
+        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt.AddDays(-1), updatedAt, deletedAt, profile, works, 0);
 
         // Assert
         response.UpdatedAt.Should().Be(updatedAt);
@@ -166,6 +166,7 @@ public class GetAuthorBehaviorTests
             userId,
             name,
             null,
+            DateTime.UtcNow.AddDays(-1),
             DateTime.UtcNow,
             null,
             new GetAuthor.GaAuthorProfile("Bio", []),

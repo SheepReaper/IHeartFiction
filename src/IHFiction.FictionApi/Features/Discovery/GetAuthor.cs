@@ -1,18 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
-using IHFiction.FictionApi.Features.AccountManagement;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
-
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace IHFiction.FictionApi.Features.Discovery;
 
@@ -50,6 +49,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
         Guid UserId,
         string Name,
         string? AvatarUrl,
+        DateTime CreatedAt,
         DateTime UpdatedAt,
         DateTime? DeletedAt,
         GaAuthorProfile Profile,
@@ -78,6 +78,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
             author.UserId,
             author.Name,
             GravatarUrlBuilder.BuildAvatarUrl(author.GravatarEmail),
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GaAuthorProfile(
@@ -108,8 +109,7 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
 
                 var okResult = result
                     .WithLinks([
-                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())]),
-                        linker.Create<UpdateOwnAuthorProfile>("update-profile", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())])
+                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())])
                     ])
                     .ToOkResult(query);
 

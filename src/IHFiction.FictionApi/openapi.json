@@ -7442,6 +7442,7 @@
           "userId",
           "name",
           "avatarUrl",
+          "createdAt",
           "updatedAt",
           "deletedAt",
           "profile",
@@ -7468,6 +7469,10 @@
               "null",
               "string"
             ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "updatedAt": {
             "type": "string",

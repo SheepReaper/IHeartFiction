@@ -16,6 +16,7 @@ Create a short impact checklist from applicable sections. A feature is complete 
 - Endpoint name, summary, description, tags, standard responses, media types, HATEOAS links, and route constraints match repository conventions.
 - Server-side policy plus resource ownership/collaboration checks cover every mutation and private read.
 - Contract changes refresh `openapi.json`; the SharedWeb generated client and callers compile against the new shape.
+- Required contract data is mandatory at construction and mapped from its authoritative source. Owned callers and fixtures are updated with meaningful values; compatibility defaults/overloads address demonstrated consumer needs rather than avoiding updates.
 - Wolverine messages are public where discovery requires it, minimal, idempotent, cancellation-aware, observable, and tested for repeat/failure behavior.
 - Structured logs use source-generated `LoggerMessage` methods and do not expose secrets or private story content.
 

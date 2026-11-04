@@ -22,6 +22,7 @@ public class GetAuthorEndpointTests
             userId,
             "Test Author",
             null,
+            DateTime.UtcNow.AddDays(-1),
             DateTime.UtcNow,
             null,
             new GetAuthor.GaAuthorProfile("Test bio", []),
@@ -72,11 +73,12 @@ public class GetAuthorResponseTests
         };
 
         // Act
-        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt, deletedAt, profile, works, 2);
+        var response = new GetAuthor.GetAuthorResponse(userId, name, null, updatedAt.AddDays(-1), updatedAt, deletedAt, profile, works, 2);
 
         // Assert
         response.UserId.Should().Be(userId);
         response.Name.Should().Be(name);
+        response.CreatedAt.Should().Be(updatedAt.AddDays(-1));
         response.UpdatedAt.Should().Be(updatedAt);
         response.DeletedAt.Should().Be(deletedAt);
         response.Profile.Should().Be(profile);

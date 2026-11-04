@@ -20,6 +20,7 @@ public class GetAuthorShapingTests
             UserId: Guid.NewGuid(),
             Name: "Test Author",
             AvatarUrl: null,
+            CreatedAt: DateTime.UtcNow.AddDays(-1),
             UpdatedAt: DateTime.UtcNow,
             DeletedAt: null,
             Profile: new GetAuthor.GaAuthorProfile("Bio text", []),

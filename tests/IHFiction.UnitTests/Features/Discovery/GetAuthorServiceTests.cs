@@ -36,6 +36,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
@@ -46,6 +47,7 @@ public class GetAuthorServiceTests
         // Assert
         response.UserId.Should().Be(userId);
         response.Name.Should().Be(authorName);
+        response.CreatedAt.Should().Be(author.CreatedAt);
         response.UpdatedAt.Should().Be(updatedAt);
         response.DeletedAt.Should().Be(deletedAt);
         response.Profile.Bio.Should().Be(bio);
@@ -65,6 +67,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
@@ -87,6 +90,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
@@ -111,6 +115,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
@@ -139,6 +144,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
@@ -167,6 +173,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),
@@ -203,6 +210,7 @@ public class GetAuthorServiceTests
             author.UserId,
             author.Name,
             null,
+            author.CreatedAt,
             author.UpdatedAt,
             author.DeletedAt,
             new GetAuthor.GaAuthorProfile(author.Profile.Bio, []),

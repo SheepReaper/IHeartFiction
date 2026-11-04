@@ -11,6 +11,10 @@ Before changing code:
 
 The solution uses vertical slices and CQRS-lite. PostgreSQL/EF Core owns relational metadata, MongoDB driver collections own document bodies where existing slices use them, Redis/WolverineFx owns distributed messaging, and SharedWeb consumes the API contract generated from FictionApi. Do not introduce a second source of truth or hand-edit generated client output.
 
+## Released Application Quality (Mandatory)
+
+Treat this repository as a released application. Preserve required construction and response invariants; update all affected callers, fixtures, generated contracts, and meaningful assertions together. Required response-record data belongs in the established primary constructor. Do not introduce default-valued properties, optional parameters, or compatibility overloads solely to avoid updating tests or internal call sites. Compatibility shims require an identified supported-consumer need and verification. Follow the global Released application contract changes guidance; report unresolved production-impacting limitations explicitly.
+
 ## Browser Verification Access (Mandatory)
 
 Before reporting browser verification blocked, discover available browser/DevTools/Node REPL/editor tools and local Playwright tooling. A failed MCP connection is not proof that all browser access is unavailable. Follow `%USERPROFILE%\.agents\guidance\global.md` (Browser testing access and fallbacks) when available; otherwise try the easiest permitted alternative before asking for setup help. Prefer an isolated task browser for anonymous routes, keep temporary automation artifacts outside the repo, and report concrete remaining blockers. Use fresh Aspire binaries and verify the actual routes, accessible names, keyboard behavior, and JavaScript modes required by the change.
