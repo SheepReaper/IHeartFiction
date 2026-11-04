@@ -50,6 +50,44 @@ public sealed class HtmlToMarkdownConverterTests
     }
 
     [Fact]
+    public void Convert_RemovesFormChromeButKeepsReadableContent()
+    {
+        var result = _sut.Convert("""
+            <main data-agent-content><h1>Stories</h1>
+            <form><label>Search<input value="secret"></label><button>Submit</button></form>
+            <label for="sort">Sort by</label><select id="sort"><option>Recently published</option></select>
+            <textarea>Draft input</textarea><p>A story with <strong>real prose</strong>.</p></main>
+            """);
+        result.Should().Contain("# Stories").And.Contain("**real prose**")
+            .And.NotContain("<form").And.NotContain("<select").And.NotContain("<textarea")
+            .And.NotContain("Search").And.NotContain("Submit").And.NotContain("Recently published").And.NotContain("Draft input");
+    }
+
+    [Fact]
+    public void Convert_SeparatesAdjacentBadgesWithoutChangingInlineProseOrCode()
+    {
+        var result = _sut.Convert("""
+            <main data-agent-content><p><span class="tag">In progress</span><span class="tag">15 chapters</span><span class="tag">6 reads</span></p>
+            <p>Un<span>break</span>able.</p><pre><code>&lt;span class="tag"&gt;literal&lt;/span&gt;</code></pre></main>
+            """);
+        result.Should().Contain("In progress 15 chapters 6 reads").And.Contain("Unbreakable.")
+            .And.Contain("<span class=\"tag\">literal</span>");
+    }
+
+    [Fact]
+    public void Convert_UsesAccessibleNamesForIconLinksAndPreservesImageLinks()
+    {
+        var result = _sut.Convert("""
+            <main data-agent-content><a href="/read/1" aria-label="Read story"><span aria-hidden="true">glyph</span></a>
+            <a href="/empty"><i class="fas fa-book"></i></a>
+            <a href="/cover"><img src="/cover.png" alt="Cover art"></a>
+            <a href="/text">Ordinary link</a></main>
+            """);
+        result.Should().Contain("[Read story](/read/1)").And.NotContain("glyph").And.NotContain("/empty")
+            .And.Contain("![Cover art](/cover.png)").And.Contain("[Ordinary link](/text)");
+    }
+
+    [Fact]
     public void Convert_WithEmptyAgentContent_ReturnsSingleNewline()
     {
         _sut.Convert("<main data-agent-content></main>").Should().Be("\n");

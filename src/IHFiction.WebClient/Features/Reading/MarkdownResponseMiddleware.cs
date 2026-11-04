@@ -13,8 +13,20 @@ internal sealed class MarkdownResponseMiddleware(RequestDelegate next)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!MarkdownRequestNegotiator.PrefersMarkdown(context.Request)
+        if (!HttpMethods.IsGet(context.Request.Method)
             || context.GetEndpoint()?.Metadata.GetMetadata<ComponentTypeMetadata>() is null)
+        {
+            await next(context);
+            return;
+        }
+
+        context.Response.OnStarting(() =>
+        {
+            MergeVary(context.Response.Headers);
+            return Task.CompletedTask;
+        });
+
+        if (!MarkdownRequestNegotiator.PrefersMarkdown(context.Request))
         {
             await next(context);
             return;
@@ -70,7 +82,14 @@ internal sealed class MarkdownResponseMiddleware(RequestDelegate next)
     {
         var values = headers.Vary
             .SelectMany(value => value?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [])
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+
+        if (values.Contains("*"))
+        {
+            headers.Vary = "*";
+            return;
+        }
 
         if (!values.Any(value => value.Equals(HeaderNames.Accept, StringComparison.OrdinalIgnoreCase)))
             values.Add(HeaderNames.Accept);
