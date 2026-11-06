@@ -15,13 +15,39 @@ public sealed class ReaderRedirectMiddlewareTests
     [InlineData("GET", "text/html", "Book")]
     [InlineData("GET", "text/markdown", "Book")]
     [InlineData("HEAD", "text/html", "Book")]
-    public async Task Container_RedirectsBeforeRenderingOrFetchingContent(string method, string accept, string type)
+    public async Task ContainerWithDefaultReadableWork_RedirectsToFirstReadableWork(string method, string accept, string type)
+    {
+        var id = Ulid.NewUlid();
+        var storyId = type == "Story" ? id : Ulid.NewUlid();
+        var defaultReadableWorkId = Ulid.NewUlid();
+        var meta = new LinkedOfGetPublishedWorkMetaResponse
+        {
+            Id = id, StoryId = storyId, WorkType = type, IsDirectlyReadable = false,
+            DefaultReadableWorkId = defaultReadableWorkId,
+            Authors = [], ReadableChildren = [], Links = []
+        };
+        var context = Context(id, method, accept);
+        var middleware = new ReaderRedirectMiddleware(_ => throw new InvalidOperationException("Must not render."));
+        await middleware.InvokeAsync(context, new FakeReader(Result.Success(meta)));
+        Assert.Equal(303, context.Response.StatusCode);
+        Assert.Equal($"/read/{defaultReadableWorkId}", context.Response.Headers.Location);
+        Assert.Equal(0, context.Response.Body.Length);
+    }
+
+    [Theory]
+    [InlineData("GET", "text/html", "Story")]
+    [InlineData("GET", "text/markdown", "Story")]
+    [InlineData("GET", "text/html", "Book")]
+    [InlineData("GET", "text/markdown", "Book")]
+    [InlineData("HEAD", "text/html", "Book")]
+    public async Task EmptyContainer_RedirectsToStoryDetailFallbackBeforeRenderingOrFetchingContent(string method, string accept, string type)
     {
         var id = Ulid.NewUlid();
         var storyId = type == "Story" ? id : Ulid.NewUlid();
         var meta = new LinkedOfGetPublishedWorkMetaResponse
         {
             Id = id, StoryId = storyId, WorkType = type, IsDirectlyReadable = false,
+            DefaultReadableWorkId = null,
             Authors = [], ReadableChildren = [], Links = []
         };
         var context = Context(id, method, accept);
