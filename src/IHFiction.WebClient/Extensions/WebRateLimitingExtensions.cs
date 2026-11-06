@@ -68,7 +68,8 @@ internal static partial class WebRateLimitingExtensions
             return null;
         if (path == oidc.CallbackPath || path == oidc.SignedOutCallbackPath || path == oidc.RemoteSignOutPath)
             return "callbacks";
-        if (path == "/authentication/login" || path == "/authentication/logout" || path == "/authentication/refresh")
+        if (path == "/authentication/login" || path == "/authentication/register" || path == "/authentication/logout" || path == "/authentication/refresh" ||
+            path == "/login" || path == "/signup" || path == "/register")
             return "authentication";
         if (path == CspConstants.CspReportsEndpoint)
             return "reports";

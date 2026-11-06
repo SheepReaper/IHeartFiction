@@ -34,6 +34,63 @@ public sealed class CookieAuthenticationTests
         properties.RedirectUri.Should().Be("/stories");
     }
 
+    [Theory]
+    [InlineData("/login")]
+    [InlineData("/signup")]
+    [InlineData("/register")]
+    [InlineData("/authentication/login")]
+    [InlineData("/authentication/register")]
+    [InlineData("/login?returnUrl=%2F")]
+    public void CreateLoginProperties_FallsBackToRoot_WhenReturnUrlTargetsAuthEndpoints(string returnUrl)
+    {
+        var context = new DefaultHttpContext();
+
+        var properties = LoginLogoutEndpointRouteBuilderExtensions.CreateLoginProperties(returnUrl, context);
+
+        properties.RedirectUri.Should().Be("/");
+    }
+
+    [Theory]
+    [InlineData("https://evil.example.com")]
+    [InlineData("//evil.example.com")]
+    [InlineData("")]
+    [InlineData(null)]
+    public void CreateLoginProperties_FallsBackToRoot_WhenReturnUrlIsExternalOrInvalid(string? returnUrl)
+    {
+        var context = new DefaultHttpContext();
+
+        var properties = LoginLogoutEndpointRouteBuilderExtensions.CreateLoginProperties(returnUrl, context);
+
+        properties.RedirectUri.Should().Be("/");
+    }
+
+    [Fact]
+    public void CreateRegisterProperties_SetsKeycloakRegisterActionAndPrompt()
+    {
+        var context = new DefaultHttpContext();
+
+        var properties = LoginLogoutEndpointRouteBuilderExtensions.CreateRegisterProperties("/stories", context);
+
+        properties.IsPersistent.Should().BeTrue();
+        properties.RedirectUri.Should().Be("/stories");
+        properties.Items.Should().ContainKey("kc_action").WhoseValue.Should().Be("register");
+        properties.Items.Should().ContainKey("prompt").WhoseValue.Should().Be("create");
+    }
+
+    [Theory]
+    [InlineData("/login")]
+    [InlineData("/signup")]
+    [InlineData("/register")]
+    [InlineData("/authentication/login")]
+    public void CreateLogoutProperties_FallsBackToRoot_WhenReturnUrlTargetsAuthEndpoints(string returnUrl)
+    {
+        var context = new DefaultHttpContext();
+
+        var properties = LoginLogoutEndpointRouteBuilderExtensions.CreateLogoutProperties(returnUrl, context);
+
+        properties.RedirectUri.Should().Be("/");
+    }
+
     [Fact]
     public void ConfigureCookieOidc_UsesExplicitFourteenDayTicketLifetime()
     {

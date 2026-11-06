@@ -39,12 +39,12 @@
     </Authorized>
     <NotAuthorized>
         <div class="buttons">
-            <button class="button is-primary" @onclick="OnSignUpClick" disabled="@_loading">
+            <a class="@(_loading ? "button is-primary is-loading" : "button is-primary")" role="button" href="@SignUpUrl" @onclick="OnSignUpClick" aria-disabled="@_loading">
                 <strong>Sign up</strong>
-            </button>
-            <button class="button has-background-link-soft has-text-link-bold" @onclick="OnLoginClick" disabled="@_loading">
+            </a>
+            <a class="@(_loading ? "button has-background-link-soft has-text-link-bold is-loading" : "button has-background-link-soft has-text-link-bold")" role="button" href="@LoginUrl" @onclick="OnLoginClick" aria-disabled="@_loading">
                 Log in
-            </button>
+            </a>
         </div>
     </NotAuthorized>
 </AuthorizeView>
@@ -118,13 +118,42 @@
         }
     }
 
-    private void OnSignUpClick() => OnLoginClick();
+    private string LoginUrl => BuildAuthUrl("/authentication/login");
+
+    private string SignUpUrl => BuildAuthUrl("/authentication/register");
+
+    private string BuildAuthUrl(string path)
+    {
+        var target = ReturnUrl;
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+            if (!string.IsNullOrWhiteSpace(relative) && !relative.StartsWith("authentication", StringComparison.OrdinalIgnoreCase))
+            {
+                target = "/" + relative.TrimStart('/');
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(target) || string.Equals(target, "/", StringComparison.Ordinal))
+        {
+            return path;
+        }
+
+        return $"{path}?returnUrl={Uri.EscapeDataString(target)}";
+    }
+
+    private void OnSignUpClick()
+    {
+        _loading = true;
+        LoaderService.Show();
+        Navigation.NavigateTo(SignUpUrl, forceLoad: true);
+    }
 
     private void OnLoginClick()
     {
         _loading = true;
         LoaderService.Show();
-        Navigation.NavigateTo($"authentication/login?returnUrl={ReturnUrl ?? Navigation.Uri}", forceLoad: true);
+        Navigation.NavigateTo(LoginUrl, forceLoad: true);
     }
 
     private async Task OnAccountSettingsClick()

@@ -34,6 +34,25 @@ internal static class SecurityExtensions
 
                 if (builder.Configuration["OidcAuthority"] is string authority)
                     options.Authority = authority;
+
+                var existingRedirect = options.Events.OnRedirectToIdentityProvider;
+                options.Events.OnRedirectToIdentityProvider = async context =>
+                {
+                    if (existingRedirect is not null)
+                    {
+                        await existingRedirect(context);
+                    }
+
+                    if (context.Properties.Items.TryGetValue("kc_action", out var kcAction) && !string.IsNullOrEmpty(kcAction))
+                    {
+                        context.ProtocolMessage.SetParameter("kc_action", kcAction);
+                    }
+
+                    if (context.Properties.Items.TryGetValue("prompt", out var prompt) && !string.IsNullOrEmpty(prompt))
+                    {
+                        context.ProtocolMessage.Prompt = prompt;
+                    }
+                };
             })
             .AddCookieWithOidcApiToken(CookieAuthenticationDefaults.AuthenticationScheme, KeycloakAuthenticationScheme, 60);
 

@@ -126,6 +126,8 @@ internal static class MiddlewarePipelineExtensions
         app.MapGroup("authentication")
             .MapLoginAndLogout(CookieAuthenticationDefaults.AuthenticationScheme, SecurityExtensions.KeycloakAuthenticationScheme);
 
+        app.MapAuthShortcuts();
+
         app.MapCspReportingEndpoint();
 
         app.MapGet("/robots.txt", (IOptions<SiteUrlOptions> siteUrl, HttpContext ctx) =>

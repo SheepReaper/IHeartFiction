@@ -72,4 +72,41 @@ public sealed class LogoutAntiforgeryTests
             Assert.Equal(destination.StartsWith('/') ? destination : "/", response.Headers.Location?.OriginalString);
         }
     }
+
+    [Fact]
+    public async Task RegisterAndLogin_ChallengeEndpointsReturnRedirect()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.Configuration["AllowedHosts"] = "*";
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddAntiforgery();
+        builder.Services.AddSingleton<CookieOidcRefresher>();
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultScheme = "cookie";
+            options.DefaultChallengeScheme = "oidc";
+        })
+        .AddCookie("cookie")
+        .AddCookie("oidc", options =>
+        {
+            options.LoginPath = "/challenge-target";
+        });
+
+        await using var app = builder.Build();
+        app.UseAuthentication();
+        app.MapGroup("authentication").MapLoginAndLogout("cookie", "oidc");
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var address = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+        using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+        using var client = new HttpClient(handler) { BaseAddress = new Uri(address) };
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        using var loginResponse = await client.GetAsync("/authentication/login", cancellationToken);
+        Assert.Equal(HttpStatusCode.Redirect, loginResponse.StatusCode);
+
+        using var registerResponse = await client.GetAsync("/authentication/register", cancellationToken);
+        Assert.Equal(HttpStatusCode.Redirect, registerResponse.StatusCode);
+    }
 }
