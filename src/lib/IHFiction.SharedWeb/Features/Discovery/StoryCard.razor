@@ -90,9 +90,12 @@ else
                     by <a href="/authors/@Story.AuthorId" class="ihf-card-link">@Story.AuthorName</a>
                 </p>
 
-                <p>
-                    @(Story.Description.Length > 200 ? Story.Description.Substring(0, 200) + "..." : Story.Description)
-                </p>
+                @if (!string.IsNullOrEmpty(Story.Description))
+                {
+                    <p>
+                        @(Story.Description.Length > 200 ? Story.Description.Substring(0, 200) + "..." : Story.Description)
+                    </p>
+                }
 
                 <div class="tags mt-4">
                     @if (Story.CompletionStatus == "Complete")

@@ -1,6 +1,14 @@
 @page "/"
 @using Sidio.Sitemap.Core
+@using IHFiction.SharedKernel.Searching
+@using IHFiction.SharedWeb.Components
+@using IHFiction.SharedWeb.Features.Discovery
+@inherits CancellableComponent
+
 @inject MetadataUrlService MetadataUrls
+@inject PersistentComponentState ApplicationState
+@inject StoryDiscoveryService StoryService
+@inject TagService TagService
 
 @attribute [Sitemap(ChangeFrequency.Yearly, 0.5, "2025-10-02")]
 
@@ -13,66 +21,174 @@
 <section class="hero is-primary is-medium">
     <div class="hero-body">
         <div class="container has-text-centered">
+            <span class="tag is-primary is-light is-medium mb-3">
+                <span class="icon is-small" aria-hidden="true"><i class="fas fa-feather-alt"></i></span>
+                <span>Serialized &amp; Original Fiction</span>
+            </span>
             <h1 class="title is-1">
                 Welcome to I❤️Fiction
             </h1>
-
             <h2 class="subtitle is-3">
                 Discover amazing stories from talented authors around the world
             </h2>
-            <div class="buttons is-centered">
-                <a href="/stories" class="button is-white is-large">
-                    <span class="icon" aria-hidden="true">
-                        <i class="fas fa-book"></i>
-                    </span>
+            <div class="buttons is-centered mt-5">
+                <a href="/stories" class="button is-primary is-inverted is-large">
+                    <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
                     <span>Browse Stories</span>
                 </a>
-                <a href="/authors" class="button has-background-link-soft has-text-link-bold is-large">
-                    <span class="icon" aria-hidden="true">
-                        <i class="fas fa-users"></i>
-                    </span>
-                    <span>Browse Authors</span>
+                <a href="/tags" class="button is-primary is-inverted is-outlined is-large">
+                    <span class="icon" aria-hidden="true"><i class="fas fa-tags"></i></span>
+                    <span>Explore Tags</span>
+                </a>
+                <a href="/become-author" class="button has-background-link-soft has-text-link-bold is-large">
+                    <span class="icon" aria-hidden="true"><i class="fas fa-pen-nib"></i></span>
+                    <span>Start Writing</span>
                 </a>
             </div>
         </div>
     </div>
 </section>
 
-@code {
-    private string HomeUrl => ToAbsolute("/");
-
-    private IEnumerable<object> HomeSchemas =>
-    [
-        new Dictionary<string, object?>
-        {
-            ["@context"] = "https://schema.org",
-            ["@type"] = "Organization",
-            ["@id"] = ToAbsolute("/#organization"),
-            ["name"] = "IHeartFiction",
-            ["url"] = HomeUrl,
-            ["logo"] = ToAbsolute("/_content/IHFiction.SharedWeb/og-image.png"),
-            ["description"] = "A modern fiction reading and publishing platform for original and fan fiction."
-        },
-        new Dictionary<string, object?>
-        {
-            ["@context"] = "https://schema.org",
-            ["@type"] = "WebSite",
-            ["@id"] = ToAbsolute("/#website"),
-            ["name"] = "IHeartFiction",
-            ["url"] = HomeUrl,
-            ["potentialAction"] = new Dictionary<string, object?>
-            {
-                ["@type"] = "SearchAction",
-                ["target"] = $"{MetadataUrls.BaseUri.ToString().TrimEnd('/')}/stories?q={{search_term_string}}",
-                ["query-input"] = "required name=search_term_string"
-            }
-        }
-    ];
-
-    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
-}
-
 <section class="section">
+    <div class="container">
+        <div class="level mb-5">
+            <div class="level-left">
+                <div>
+                    <h2 class="title is-3 mb-1">Recently Updated Stories</h2>
+                    <p class="subtitle is-6 has-text-grey">Discover new chapters and serialized works</p>
+                </div>
+            </div>
+            <div class="level-right">
+                <a href="/stories" class="button has-background-link-soft has-text-link-bold">
+                    <span>View All Stories</span>
+                    <span class="icon is-small" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+
+        @if (isLoadingStories)
+        {
+            <div class="has-text-centered py-6">
+                <span class="icon is-large" aria-hidden="true">
+                    <i class="fas fa-spinner fa-pulse fa-2x"></i>
+                </span>
+                <p class="has-text-grey mt-2">Loading recently updated stories...</p>
+            </div>
+        }
+        else if (stories.Count > 0)
+        {
+            <div class="columns is-multiline">
+                @foreach (var story in stories)
+                {
+                    <div @key="story.StoryId" class="column is-one-third-desktop is-half-tablet">
+                        <StoryCard Story="story" />
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="box has-text-centered py-6">
+                <span class="icon is-large has-text-grey" aria-hidden="true">
+                    <i class="fas fa-book fa-3x"></i>
+                </span>
+                <h3 class="title is-4 mt-3">No stories published yet</h3>
+                <p class="has-text-grey">Check back soon or be the first author to publish a story!</p>
+                <div class="mt-4">
+                    <a href="/become-author" class="button is-primary">Become an Author</a>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<section class="section pt-0">
+    <div class="container">
+        <div class="box">
+            <div class="level mb-4">
+                <div class="level-left">
+                    <div>
+                        <h2 class="title is-4 mb-1">Browse by Genre &amp; Fandom</h2>
+                        <p class="subtitle is-6 has-text-grey">Find stories by popular themes, tropes, and fandoms</p>
+                    </div>
+                </div>
+                <div class="level-right">
+                    <a href="/tags" class="button is-small has-background-link-soft has-text-link-bold">
+                        <span>All Tags</span>
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-arrow-right"></i></span>
+                    </a>
+                </div>
+            </div>
+
+            @if (isLoadingTags)
+            {
+                <div class="has-text-centered py-4">
+                    <span class="icon" aria-hidden="true">
+                        <i class="fas fa-spinner fa-pulse"></i>
+                    </span>
+                    <span class="has-text-grey ml-2">Loading tags...</span>
+                </div>
+            }
+            else if (popularTags.Count > 0)
+            {
+                <div class="field is-grouped is-grouped-multiline">
+                    @foreach (var tag in popularTags)
+                    {
+                        <div @key="tag.RouteKey" class="control">
+                            <div class="tags has-addons">
+                                @if (!string.IsNullOrWhiteSpace(tag.Subcategory))
+                                {
+                                    <span class="tag has-background-dark-bold has-text-dark-soft">@tag.Subcategory</span>
+                                }
+                                <a href="@TagRouteSpec.BuildPath(tag.RouteKey)" class="tag is-info">
+                                    @tag.Value
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="has-text-centered py-4">
+                    <a href="/tags" class="button is-light">Browse the Tag Directory</a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="section pt-0">
+    <div class="container">
+        <div class="box has-background-primary-soft p-5 p-6-tablet">
+            <div class="columns is-vcentered">
+                <div class="column">
+                    <span class="tag has-background-primary has-text-primary-invert is-rounded mb-2">
+                        <span class="icon is-small" aria-hidden="true"><i class="fas fa-pen-nib"></i></span>
+                        <span>Share Your Writing</span>
+                    </span>
+                    <h2 class="title is-3 has-text-primary-bold mb-2">Write on I❤️Fiction</h2>
+                    <p class="has-text-primary-bold is-size-6" style="max-width: 60ch;">
+                        You retain 100% rights to your work. Enjoy full Markdown authoring, multi-book structures, cover uploads, and transparent discovery across the open web.
+                    </p>
+                </div>
+                <div class="column is-narrow has-text-centered-mobile">
+                    <div class="buttons">
+                        <a href="/become-author" class="button is-primary is-medium">
+                            <span class="icon" aria-hidden="true"><i class="fas fa-rocket"></i></span>
+                            <span>Become an Author</span>
+                        </a>
+                        <a href="/about" class="button has-background-scheme-main has-text-text is-medium">
+                            <span>Learn More</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section pt-0">
     <div class="container">
         <div class="columns">
             <div class="column is-4">
@@ -119,3 +235,122 @@
         </div>
     </div>
 </section>
+
+@code {
+    private const string StoriesStateKey = "home_recent_stories";
+    private const string TagsStateKey = "home_popular_tags";
+
+    private PersistingComponentStateSubscription _persistingSubscription;
+    private LinkedPagedCollectionOfListPublishedStoriesItem? storiesResponse;
+    private ICollection<LinkedOfListPublishedStoriesItem> stories => storiesResponse?.Data ?? [];
+    private List<HomeTagItem> popularTags = [];
+    private bool isLoadingStories = true;
+    private bool isLoadingTags = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistState);
+
+        if (ApplicationState.TryTakeFromJson<LinkedPagedCollectionOfListPublishedStoriesItem>(StoriesStateKey, out var persistedStories)
+            && persistedStories is not null)
+        {
+            storiesResponse = persistedStories;
+            isLoadingStories = false;
+        }
+        else
+        {
+            await LoadStoriesAsync();
+        }
+
+        if (ApplicationState.TryTakeFromJson<List<HomeTagItem>>(TagsStateKey, out var persistedTags)
+            && persistedTags is not null)
+        {
+            popularTags = persistedTags;
+            isLoadingTags = false;
+        }
+        else
+        {
+            await LoadTagsAsync();
+        }
+    }
+
+    private async Task LoadStoriesAsync()
+    {
+        isLoadingStories = true;
+        var result = await StoryService.ListPublishedStoriesAsync(page: 1, pageSize: 6, cancellationToken: CancellationToken);
+        if (result.IsSuccess)
+        {
+            storiesResponse = result.Value;
+        }
+        isLoadingStories = false;
+    }
+
+    private async Task LoadTagsAsync()
+    {
+        isLoadingTags = true;
+        var result = await TagService.ListAsync(page: 1, pageSize: 30, cancellationToken: CancellationToken);
+        if (result.IsSuccess)
+        {
+            popularTags = result.Value.Data
+                .Where(t => t.StoryCount > 0)
+                .OrderByDescending(t => t.StoryCount)
+                .Take(12)
+                .Select(t => new HomeTagItem(TagDisplayItem.CanonicalizeSubcategory(t.Subcategory), TagDisplayItem.FormatValue(t.Value), t.RouteKey, t.StoryCount))
+                .ToList();
+        }
+        isLoadingTags = false;
+    }
+
+    private Task PersistState()
+    {
+        if (storiesResponse is not null)
+        {
+            ApplicationState.PersistAsJson(StoriesStateKey, storiesResponse);
+        }
+        if (popularTags.Count > 0)
+        {
+            ApplicationState.PersistAsJson(TagsStateKey, popularTags);
+        }
+        return Task.CompletedTask;
+    }
+
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        _persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
+    }
+
+    private string HomeUrl => ToAbsolute("/");
+
+    private IEnumerable<object> HomeSchemas =>
+    [
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "Organization",
+            ["@id"] = ToAbsolute("/#organization"),
+            ["name"] = "IHeartFiction",
+            ["url"] = HomeUrl,
+            ["logo"] = ToAbsolute("/_content/IHFiction.SharedWeb/og-image.png"),
+            ["description"] = "A modern fiction reading and publishing platform for original and fan fiction."
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "WebSite",
+            ["@id"] = ToAbsolute("/#website"),
+            ["name"] = "IHeartFiction",
+            ["url"] = HomeUrl,
+            ["potentialAction"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "SearchAction",
+                ["target"] = $"{MetadataUrls.BaseUri.ToString().TrimEnd('/')}/stories?q={{search_term_string}}",
+                ["query-input"] = "required name=search_term_string"
+            }
+        }
+    ];
+
+    private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
+
+    public sealed record HomeTagItem(string? Subcategory, string Value, string RouteKey, int StoryCount);
+}

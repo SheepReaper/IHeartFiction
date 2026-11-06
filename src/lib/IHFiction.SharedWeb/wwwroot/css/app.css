@@ -1,6 +1,21 @@
  :root {
 	 --ihf-card-shadow: 0 1.5rem 2.5rem -2rem rgba(10, 10, 10, 0.25), 0 0 0 1px var(--bulma-border-weak);
 	 --ihf-soft-surface: var(--bulma-scheme-main-bis);
+
+	 /* I❤️Fiction Brand Palette - Deep Royal Indigo */
+	 --bulma-primary-h: 258deg;
+	 --bulma-primary-s: 65%;
+	 --bulma-primary-l: 46%;
+	 --bulma-primary-invert-l: 100%;
+	 --bulma-primary-on-scheme-l: 46%;
+ }
+
+ html[data-theme="dark"] {
+	 --bulma-primary-h: 258deg;
+	 --bulma-primary-s: 65%;
+	 --bulma-primary-l: 60%;
+	 --bulma-primary-invert-l: 100%;
+	 --bulma-primary-on-scheme-l: 70%;
  }
 
  .card {
