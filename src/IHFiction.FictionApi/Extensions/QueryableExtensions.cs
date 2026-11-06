@@ -1,6 +1,9 @@
 using System.Linq.Dynamic.Core;
 using System.Linq.Expressions;
 
+using Microsoft.EntityFrameworkCore;
+
+using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Sorting;
 
 namespace IHFiction.FictionApi.Extensions;
@@ -23,6 +26,28 @@ internal static class QueryableExtensions
             return node == oldParameter ? newParameter : base.VisitParameter(node);
         }
     }
+
+    public static Task<T?> FirstOrDefaultShapedAsync<T>(
+        this IQueryable<T> query,
+        IDataShapingSupport? shaping,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        return query.ShapeProjection(shaping).FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public static IQueryable<T> ApplySort<T>(
+        this IQueryable<T> query,
+        ISortingSupport sort,
+        string defaultOrderBy = "Id") =>
+        ApplySort(query, sort, SortMappingRegistry.GetMappings<T>(), defaultOrderBy);
+
+    public static IQueryable<TSource> ApplySort<TSource, TSortModel>(
+        this IQueryable<TSource> query,
+        ISortingSupport sort,
+        string defaultOrderBy = "Id") =>
+        ApplySort(query, sort, SortMappingRegistry.GetMappings<TSortModel>(), defaultOrderBy);
 
     public static IQueryable<T> ApplySort<T>(
         this IQueryable<T> query,

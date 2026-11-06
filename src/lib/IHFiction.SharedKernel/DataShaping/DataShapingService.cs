@@ -3,9 +3,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
+using System.Linq.Expressions;
 using System.Reflection;
 
 using IHFiction.SharedKernel.Linking;
+using IHFiction.SharedKernel.Pagination;
 
 namespace IHFiction.SharedKernel.DataShaping;
 
@@ -14,18 +16,135 @@ public static class DataShapingService
     [SuppressMessage("SonarLint", "S1450", Justification = "This is a thread-safe cache shared across invocations.")]
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropertiesCache = new();
 
+    [SuppressMessage("SonarLint", "S1450", Justification = "This is a thread-safe registry shared across invocations.")]
+    private static readonly ConcurrentDictionary<Type, IReadOnlySet<string>> RegisteredPropertyNames = new();
+
+    [SuppressMessage("SonarLint", "S1450", Justification = "This is a thread-safe registry shared across invocations.")]
+    private static readonly ConcurrentDictionary<Type, Func<object, HashSet<string>, ExpandoObject>> ObjectShapers = new();
+
     private static readonly HashSet<string> AlwaysIncluded = ["links"];
+
+    /// <summary>
+    /// Registers a compile-time source-generated property allowlist and property writer for <typeparamref name="TItem"/>,
+    /// along with strongly-typed shapers for <see cref="Linked{TItem}"/> and <see cref="LinkedPagedCollection{TItem}"/>.
+    /// </summary>
+    public static void RegisterShaper<TItem>(
+        string[] propertyNames,
+        Action<TItem, IReadOnlySet<string>?, IDictionary<string, object?>> writeProperties)
+    {
+        ArgumentNullException.ThrowIfNull(propertyNames);
+        ArgumentNullException.ThrowIfNull(writeProperties);
+
+        var propertyNameSet = new HashSet<string>(propertyNames, StringComparer.OrdinalIgnoreCase);
+        RegisteredPropertyNames[typeof(TItem)] = propertyNameSet;
+
+        ObjectShapers[typeof(TItem)] = (obj, fieldSet) =>
+        {
+            IDictionary<string, object?> shaped = new ExpandoObject();
+            HashSet<string>? activeFields = fieldSet.Count > 0 ? fieldSet : null;
+            writeProperties((TItem)obj, activeFields, shaped);
+            return (ExpandoObject)shaped;
+        };
+
+        ObjectShapers[typeof(Linked<TItem>)] = (obj, fieldSet) =>
+        {
+            var linked = (Linked<TItem>)obj;
+            IDictionary<string, object?> shaped = new ExpandoObject();
+            HashSet<string>? activeFields = fieldSet.Count > 0 ? fieldSet : null;
+
+            if (linked.Value is not null)
+            {
+                writeProperties(linked.Value, activeFields, shaped);
+            }
+
+            shaped.Add("links", linked.Links);
+            return (ExpandoObject)shaped;
+        };
+
+        ObjectShapers[typeof(LinkedPagedCollection<TItem>)] = (obj, fieldSet) =>
+        {
+            var page = (LinkedPagedCollection<TItem>)obj;
+            IDictionary<string, object?> shaped = new ExpandoObject();
+            HashSet<string>? activeFields = fieldSet.Count > 0 ? fieldSet : null;
+
+            if (page.Data is null)
+            {
+                shaped.Add(nameof(LinkedPagedCollection<>.Data), null);
+            }
+            else
+            {
+                var shapedList = new List<ExpandoObject>();
+                foreach (var item in page.Data)
+                {
+                    if (item is null)
+                    {
+                        continue;
+                    }
+
+                    IDictionary<string, object?> shapedItem = new ExpandoObject();
+                    if (item.Value is not null)
+                    {
+                        writeProperties(item.Value, activeFields, shapedItem);
+                    }
+                    else
+                    {
+                        foreach (var propName in propertyNames.Where(propName => activeFields is null || activeFields.Contains(propName)))
+                        {
+                            shapedItem.Add(propName, null);
+                        }
+                    }
+
+                    shapedItem.Add("links", item.Links);
+                    shapedList.Add((ExpandoObject)shapedItem);
+                }
+
+                shaped.Add(nameof(LinkedPagedCollection<>.Data), shapedList.AsReadOnly());
+            }
+
+            shaped.Add(nameof(LinkedPagedCollection<>.TotalCount), page.TotalCount);
+            shaped.Add(nameof(LinkedPagedCollection<>.CurrentPage), page.CurrentPage);
+            shaped.Add(nameof(LinkedPagedCollection<>.PageSize), page.PageSize);
+            shaped.Add(nameof(LinkedPagedCollection<>.TotalPages), page.TotalPages);
+            shaped.Add(nameof(LinkedPagedCollection<>.Links), page.Links);
+            return (ExpandoObject)shaped;
+        };
+    }
+
+    public static bool HasRegisteredShaper<T>() => HasRegisteredShaper(typeof(T));
+
+    public static bool HasRegisteredShaper(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        return RegisteredPropertyNames.ContainsKey(type) || ObjectShapers.ContainsKey(type);
+    }
+
+    public static ExpandoObject ShapeObject(object data, string? fields) => ShapeData(data, fields);
 
     public static ExpandoObject ShapeData<T>(T data, string? fields)
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        // If the root object is Linked<Inner>, flatten it so callers get inner properties at top-level
-        if (typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Linked<>))
+        if (data is ExpandoObject alreadyShaped)
         {
-            var innerType = typeof(T).GetGenericArguments()[0];
-            var valueProp = typeof(T).GetProperty("Value");
-            var linksProp = typeof(T).GetProperty("Links");
+            return alreadyShaped;
+        }
+
+        var fieldSet = fields?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+
+        var runtimeType = data.GetType();
+        if (ObjectShapers.TryGetValue(runtimeType, out var registeredShaper))
+        {
+            return registeredShaper(data, fieldSet);
+        }
+
+        // If the root object is Linked<Inner>, flatten it so callers get inner properties at top-level
+        if (runtimeType.IsGenericType && runtimeType.GetGenericTypeDefinition() == typeof(Linked<>))
+        {
+            var innerType = runtimeType.GetGenericArguments()[0];
+            var valueProp = runtimeType.GetProperty("Value");
+            var linksProp = runtimeType.GetProperty("Links");
 
             var valueObj = valueProp?.GetValue(data);
 
@@ -36,6 +155,11 @@ public static class DataShapingService
                 var innerProperties = PropertiesCache.GetOrAdd(
                     innerType,
                     t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+
+                if (fieldSet.Count != 0)
+                {
+                    innerProperties = [.. innerProperties.Where(p => fieldSet.Contains(p.Name))];
+                }
 
                 foreach (var innerProperty in innerProperties)
                 {
@@ -52,12 +176,8 @@ public static class DataShapingService
             return (ExpandoObject)shapedInner;
         }
 
-        var fieldSet = fields?
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
-
         PropertyInfo[] propertyInfos = PropertiesCache.GetOrAdd(
-            typeof(T),
+            runtimeType,
             t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
 
         var shapesLinkedCollection = propertyInfos.Any(property =>
@@ -313,6 +433,277 @@ public static class DataShapingService
         return shapedData.AsReadOnly();
     }
 
+    /// <summary>
+    /// Prunes an <see cref="IQueryable{T}"/> projection so that unrequested properties and subqueries
+    /// are replaced with default constants before database query execution, while preserving primary
+    /// identifier properties needed for hypermedia link generation and any properties referenced by
+    /// post-projection operators.
+    /// </summary>
+    public static IQueryable<T> ShapeProjection<T>(IQueryable<T> query, string? fields)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+
+        if (string.IsNullOrWhiteSpace(fields))
+        {
+            return query;
+        }
+
+        var fieldSet = fields
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        if (fieldSet.Count == 0)
+        {
+            return query;
+        }
+
+        var postProjectionCollector = new PostProjectionMemberCollector(typeof(T));
+        postProjectionCollector.Visit(query.Expression);
+        foreach (var memberName in postProjectionCollector.AccessedMembers)
+        {
+            fieldSet.Add(memberName);
+        }
+
+        var rewriter = new ProjectionPruningVisitor(typeof(T), fieldSet);
+        var rewritten = rewriter.Visit(query.Expression);
+
+        if (rewriter.HasRewrittenProjection)
+        {
+            return query.Provider.CreateQuery<T>(rewritten);
+        }
+
+        return TryAppendEntityMemberInitProjection(query, fieldSet);
+    }
+
+    private static IQueryable<T> TryAppendEntityMemberInitProjection<T>(IQueryable<T> query, HashSet<string> fieldSet)
+    {
+        var targetType = typeof(T);
+        var parameterlessCtor = targetType.GetConstructor(Type.EmptyTypes);
+        if (parameterlessCtor is null)
+        {
+            return query;
+        }
+
+        var writableProps = PropertiesCache.GetOrAdd(
+                targetType,
+                t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            .Where(p => p.CanRead && p.CanWrite)
+            .ToArray();
+
+        if (writableProps.Length == 0)
+        {
+            return query;
+        }
+
+        var keptProps = writableProps
+            .Where((p, index) => ShouldKeepMember(p.Name, index, p.PropertyType, fieldSet))
+            .ToArray();
+
+        if (keptProps.Length == 0 || keptProps.Length == writableProps.Length)
+        {
+            return query;
+        }
+
+        var param = Expression.Parameter(targetType, "e");
+        var bindings = keptProps
+            .Select(p => (MemberBinding)Expression.Bind(p, Expression.Property(param, p)))
+            .ToArray();
+
+        var selector = Expression.Lambda<Func<T, T>>(
+            Expression.MemberInit(Expression.New(parameterlessCtor), bindings),
+            param);
+
+        return query.Select(selector);
+    }
+
+    private static bool ShouldKeepMember(string memberName, int parameterIndex, Type memberType, HashSet<string> fieldSet)
+    {
+        if (fieldSet.Contains(memberName))
+        {
+            return true;
+        }
+
+        if (memberName.Equals("Id", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (parameterIndex == 0 && memberName.EndsWith("Id", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var underlyingType = Nullable.GetUnderlyingType(memberType) ?? memberType;
+        if (underlyingType == typeof(Ulid))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private sealed class PostProjectionMemberCollector(Type targetType) : ExpressionVisitor
+    {
+        private bool _hasFoundProjectionSelect;
+
+        public HashSet<string> AccessedMembers { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            if (node.Method.DeclaringType == typeof(Queryable) &&
+                node.Method.Name == nameof(Queryable.Select) &&
+                node.Method.GetGenericArguments() is [_, var resultType] &&
+                resultType == targetType)
+            {
+                _hasFoundProjectionSelect = true;
+                return node;
+            }
+
+            // Visit outer arguments (such as OrderBy/Where lambdas) before recursing into the source queryable
+            for (var i = 1; i < node.Arguments.Count; i++)
+            {
+                Visit(node.Arguments[i]);
+            }
+
+            if (node.Arguments.Count > 0)
+            {
+                Visit(node.Arguments[0]);
+            }
+
+            if (!_hasFoundProjectionSelect)
+            {
+                AccessedMembers.Clear();
+            }
+
+            return node;
+        }
+
+        protected override Expression VisitMember(MemberExpression node)
+        {
+            if (node.Expression?.Type == targetType)
+            {
+                AccessedMembers.Add(node.Member.Name);
+            }
+
+            return base.VisitMember(node);
+        }
+    }
+
+    private sealed class ProjectionPruningVisitor(Type targetType, HashSet<string> fieldSet) : ExpressionVisitor
+    {
+        public bool HasRewrittenProjection { get; private set; }
+
+        protected override Expression VisitNew(NewExpression node)
+        {
+            if (node.Type != targetType || node.Constructor is null)
+            {
+                return base.VisitNew(node);
+            }
+
+            var parameters = node.Constructor.GetParameters();
+            if (parameters.Length == 0 || parameters.Length != node.Arguments.Count)
+            {
+                return base.VisitNew(node);
+            }
+
+            var newArgs = new Expression[node.Arguments.Count];
+            var changed = false;
+
+            for (var i = 0; i < parameters.Length; i++)
+            {
+                var param = parameters[i];
+                var paramName = param.Name ?? string.Empty;
+
+                if (ShouldKeepMember(paramName, i, param.ParameterType, fieldSet) ||
+                    !CanReplaceWithSqlConstant(param.ParameterType))
+                {
+                    newArgs[i] = node.Arguments[i];
+                }
+                else
+                {
+                    newArgs[i] = CreateDefaultConstant(param.ParameterType);
+                    changed = true;
+                }
+            }
+
+            HasRewrittenProjection = true;
+            return changed ? node.Update(newArgs) : node;
+        }
+
+        protected override Expression VisitMemberInit(MemberInitExpression node)
+        {
+            if (node.Type != targetType)
+            {
+                return base.VisitMemberInit(node);
+            }
+
+            var newExpr = (NewExpression)VisitNew(node.NewExpression);
+            var keptBindings = new List<MemberBinding>(node.Bindings.Count);
+            var changed = !ReferenceEquals(newExpr, node.NewExpression);
+
+            for (var i = 0; i < node.Bindings.Count; i++)
+            {
+                var binding = node.Bindings[i];
+                var memberType = binding.Member switch
+                {
+                    PropertyInfo prop => prop.PropertyType,
+                    FieldInfo field => field.FieldType,
+                    _ => typeof(object)
+                };
+
+                if (ShouldKeepMember(binding.Member.Name, i, memberType, fieldSet))
+                {
+                    keptBindings.Add(binding);
+                }
+                else
+                {
+                    changed = true;
+                }
+            }
+
+            HasRewrittenProjection = true;
+            return changed ? node.Update(newExpr, keptBindings) : node;
+        }
+
+        private static bool CanReplaceWithSqlConstant(Type type)
+        {
+            var underlying = Nullable.GetUnderlyingType(type) ?? type;
+            return underlying == typeof(string) ||
+                   underlying == typeof(bool) ||
+                   underlying == typeof(int) ||
+                   underlying == typeof(long) ||
+                   underlying == typeof(short) ||
+                   underlying == typeof(byte) ||
+                   underlying == typeof(decimal) ||
+                   underlying == typeof(double) ||
+                   underlying == typeof(float) ||
+                   underlying == typeof(Guid) ||
+                   underlying == typeof(DateTime) ||
+                   underlying == typeof(DateTimeOffset);
+        }
+
+        private static ConstantExpression CreateDefaultConstant(Type type)
+        {
+            if (type == typeof(string))
+            {
+                return Expression.Constant(string.Empty, typeof(string));
+            }
+
+            if (type == typeof(DateTime))
+            {
+                return Expression.Constant(DateTime.UnixEpoch, typeof(DateTime));
+            }
+
+            if (type == typeof(DateTimeOffset))
+            {
+                return Expression.Constant(DateTimeOffset.UnixEpoch, typeof(DateTimeOffset));
+            }
+
+            var defaultValue = type.IsValueType ? Activator.CreateInstance(type) : null;
+            return Expression.Constant(defaultValue, type);
+        }
+    }
+
     public static void EnsureValid<T>(IDataShapingSupport request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -377,6 +768,18 @@ public static class DataShapingService
         {
             errors = new ValidationResult("Fields must include at least one field.");
             return false;
+        }
+
+        if (RegisteredPropertyNames.TryGetValue(type, out var validNames))
+        {
+            string[] invalidRegisteredFields = [.. fieldSet.Where(field => !validNames.Contains(field))];
+            if (invalidRegisteredFields.Length > 0)
+            {
+                errors = new ValidationResult($"Data shaping field{(invalidRegisteredFields.Length > 1 ? "s" : "")}: {string.Join(", ", invalidRegisteredFields)} {(invalidRegisteredFields.Length > 1 ? "are" : "is")} not valid.");
+                return false;
+            }
+
+            return true;
         }
 
         PropertyInfo[] propertyInfos = PropertiesCache.GetOrAdd(

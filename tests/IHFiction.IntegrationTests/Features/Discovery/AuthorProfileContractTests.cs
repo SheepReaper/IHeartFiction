@@ -55,7 +55,14 @@ public sealed class AuthorProfileContractTests(IntegrationTestWebAppFactory fact
                 using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
                 var root = document.RootElement;
                 Assert.Equal(created, root.GetProperty("createdAt").GetDateTime());
-                Assert.Equal(updated, root.GetProperty("updatedAt").GetDateTime());
+                if (string.IsNullOrEmpty(fields))
+                {
+                    Assert.Equal(updated, root.GetProperty("updatedAt").GetDateTime());
+                }
+                else
+                {
+                    Assert.False(root.TryGetProperty("updatedAt", out _));
+                }
                 var links = root.GetProperty("links").EnumerateArray().ToArray();
                 var self = Assert.Single(links);
                 Assert.Equal("self", self.GetProperty("rel").GetString());

@@ -57,4 +57,33 @@ public class GetAuthorShapingTests
         links.First().Href.Should().Be("/authors/01");
         links.First().Rel.Should().Be("self");
     }
+
+    [Fact]
+    public void WithLinks_And_ShapeData_WithSelectedFields_FiltersInnerPropertiesAndRetainsLinks()
+    {
+        var response = new GetAuthor.GetAuthorResponse(
+            UserId: Guid.NewGuid(),
+            Name: "Test Author",
+            AvatarUrl: null,
+            CreatedAt: DateTime.UtcNow.AddDays(-1),
+            UpdatedAt: DateTime.UtcNow,
+            DeletedAt: null,
+            Profile: new GetAuthor.GaAuthorProfile("Bio text", []),
+            PublishedStories: [new GetAuthor.AuthorWorkItem(Ulid.NewUlid(), "Story 1", DateTime.UtcNow)],
+            TotalStories: 1
+        );
+
+        var linkedValue = Result.Success(response)
+            .WithLinks([new LinkItem("/authors/01", "self", HttpMethods.Get)])
+            .Value!;
+
+        DataShapingService.HasRegisteredShaper<GetAuthor.GetAuthorResponse>().Should().BeTrue();
+
+        var shaped = DataShapingService.ShapeData(linkedValue, "name,totalStories");
+        var dict = (IDictionary<string, object?>)shaped;
+
+        dict.Keys.Should().BeEquivalentTo("Name", "TotalStories", "links");
+        dict["Name"].Should().Be("Test Author");
+        dict["TotalStories"].Should().Be(1);
+    }
 }

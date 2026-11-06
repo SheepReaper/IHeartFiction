@@ -33,6 +33,7 @@ internal static partial class EndpointExtensions
             endpoint
                 .MapEndpoint(app)
                 .WithName(endpoint.Name)
+                .AddEndpointFilter<DataShapingEndpointFilter>()
                 .ApplyDefaultRateLimitPolicy();
         }
 

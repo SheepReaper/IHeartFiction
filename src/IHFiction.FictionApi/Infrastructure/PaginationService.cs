@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Options;
 
-using IHFiction.FictionApi.Extensions;
+using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Pagination;
 
 namespace IHFiction.FictionApi.Infrastructure;
@@ -85,7 +85,22 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
 
         var page = Math.Clamp(pagination.Page, 1, lastPageIndex + 1);
 
-        return query.ToPagedResult(totalCount, page, pageSize);
+        if (pagination is IDataShapingSupport { Fields: { Length: > 0 } fields })
+        {
+            query = query.ShapeProjection(fields);
+        }
+
+        var pagedQuery = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+        List<TSource> items = pagedQuery.Provider is IAsyncQueryProvider
+            ? await pagedQuery.ToListAsync(cancellationToken)
+            : [.. pagedQuery];
+
+        return new PagedCollection<TSource>(
+            Data: items.AsQueryable(),
+            TotalCount: totalCount,
+            CurrentPage: page,
+            PageSize: pageSize);
     }
 }
 
@@ -95,4 +110,5 @@ internal sealed class PaginationService(IOptions<PaginationOptions> options) : I
 /// </summary>
 internal record PaginationParams(
     int Page = 1,
-    int PageSize = 50) : IPaginationSupport;
+    int PageSize = 50,
+    string Fields = "") : IPaginationSupport, IDataShapingSupport;
