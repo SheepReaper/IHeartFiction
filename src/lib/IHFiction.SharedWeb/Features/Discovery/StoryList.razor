@@ -97,6 +97,22 @@
                     </div>
                 </div>
             </div>
+            @if (string.IsNullOrWhiteSpace(AuthorId))
+            {
+                <div class="column is-narrow">
+                    <div class="field">
+                        <span class="label is-invisible" aria-hidden="true">Tags</span>
+                        <div class="control">
+                            <a class="button has-background-link-soft has-text-link-bold" href="/tags">
+                                <span class="icon" aria-hidden="true">
+                                    <i class="fas fa-tags"></i>
+                                </span>
+                                <span>Browse by Tag</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
         @if (isLoading)
@@ -151,7 +167,14 @@
                         <i class="fas fa-book fa-3x"></i>
                     </span>
                     <h3 class="title is-4">No stories found</h3>
-                    <p>Try adjusting your search criteria.</p>
+                    @if (string.IsNullOrWhiteSpace(AuthorId))
+                    {
+                        <p>Try adjusting your search criteria or <a href="/tags">browse stories by tag</a>.</p>
+                    }
+                    else
+                    {
+                        <p>Try adjusting your search criteria.</p>
+                    }
                 </div>
             </div>
         }

@@ -28,6 +28,7 @@ public sealed class DynamicSitemapNodeProviderTests
             OwnerId = author.Id,
             PublishedAt = DateTime.UtcNow
         };
+        story1.Authors.Add(author);
         story1.Tags.Add(activeTag);
 
         var story2 = new Story
@@ -46,6 +47,8 @@ public sealed class DynamicSitemapNodeProviderTests
         var provider = new DynamicSitemapNodeProvider(context);
         var nodes = provider.GetNodes().ToList();
 
+        Assert.Contains(nodes, n => n.Url == "/stories");
+        Assert.Contains(nodes, n => n.Url == "/authors");
         Assert.Contains(nodes, n => n.Url == "/tags");
         Assert.Contains(nodes, n => n.Url == "/tags/genre:fantasy");
         Assert.Contains(nodes, n => n.Url == "/tags/universe:kantai-collection");
