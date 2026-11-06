@@ -212,7 +212,7 @@ else if (loadFailed)
 
             if (meta.WorkType == "Chapter" && currentPosition is not null)
             {
-                workSchema["position"] = currentPosition;
+                workSchema["position"] = currentPosition.Value + 1;
             }
 
             var hasParentStory = storyUrl is not null && meta.WorkType is "Chapter" or "Book" && meta.StoryId != meta.Id;

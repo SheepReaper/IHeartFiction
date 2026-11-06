@@ -1,3 +1,5 @@
+@inject NavigationManager Navigation
+
 @if (Chapters.Any())
 {
     var chapters = Chapters.ToList();
@@ -34,7 +36,23 @@
             </div>
         }
 
-        @if (ShowLabels && currentIndex >= 0)
+        @if (chapters.Count > 1 && currentIndex >= 0)
+        {
+            <div class="control">
+                <div class="select">
+                    <select aria-label="Jump to chapter" value="@CurrentChapterId" @onchange="OnChapterSelected">
+                        @for (var i = 0; i < chapters.Count; i++)
+                        {
+                            var chapter = chapters[i];
+                            <option value="@chapter.Id" selected="@(chapter.Id == CurrentChapterId)">
+                                @BuildOptionLabel(i + 1, chapter)
+                            </option>
+                        }
+                    </select>
+                </div>
+            </div>
+        }
+        else if (ShowLabels && currentIndex >= 0)
         {
             <div class="control">
                 <span class="button is-static">
@@ -78,6 +96,21 @@
     [Parameter] public bool ShowLabels { get; set; } = false;
 
     private static string ChapterHref(string chapterId) => $"/read/{chapterId}";
+
+    private void OnChapterSelected(ChangeEventArgs args)
+    {
+        if (args.Value is string targetId
+            && !string.IsNullOrWhiteSpace(targetId)
+            && !string.Equals(targetId, CurrentChapterId, StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo(ChapterHref(targetId));
+        }
+    }
+
+    private static string BuildOptionLabel(int number, ReaderChapterNavItem chapter) =>
+        string.IsNullOrWhiteSpace(chapter.BookTitle)
+            ? $"Chapter {number}: {chapter.Title}"
+            : $"Chapter {number}: {chapter.BookTitle} · {chapter.Title}";
 
     private static string BuildTargetLabel(string direction, ReaderChapterNavItem target, ReaderChapterNavItem? current)
     {

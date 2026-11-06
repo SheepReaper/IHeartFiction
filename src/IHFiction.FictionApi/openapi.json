@@ -7903,8 +7903,15 @@
             "description": "Title of the parent story"
           },
           "bookId": {
-            "description": "Unique identifier of the parent book, if applicable",
-            "$ref": "#/components/schemas/Ulid"
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Unique identifier of the parent book, if applicable",
+                "$ref": "#/components/schemas/Ulid"
+              }
+            ]
           },
           "bookTitle": {
             "type": [

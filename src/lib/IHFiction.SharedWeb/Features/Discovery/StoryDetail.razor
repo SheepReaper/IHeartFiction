@@ -321,7 +321,7 @@ else if (story != null)
                         ["@type"] = "Chapter",
                         ["@id"] = ToAbsolute($"/read/{c.Id}"),
                         ["name"] = c.Title,
-                        ["position"] = c.Order,
+                        ["position"] = c.Order + 1,
                         ["url"] = ToAbsolute($"/read/{c.Id}")
                     })
                     .ToList();
@@ -340,7 +340,7 @@ else if (story != null)
                         ["@type"] = "PublicationVolume",
                         ["@id"] = ToAbsolute($"/stories/{StoryId}#book-{b.Id}"),
                         ["name"] = b.Title,
-                        ["position"] = b.Order,
+                        ["position"] = b.Order + 1,
                         ["url"] = ToAbsolute($"/stories/{StoryId}#book-{b.Id}"),
                         ["hasPart"] = b.Chapters?
                             .OrderBy(c => c.Order)
@@ -349,7 +349,7 @@ else if (story != null)
                                 ["@type"] = "Chapter",
                                 ["@id"] = ToAbsolute($"/read/{c.Id}"),
                                 ["name"] = c.Title,
-                                ["position"] = c.Order,
+                                ["position"] = c.Order + 1,
                                 ["url"] = ToAbsolute($"/read/{c.Id}")
                             })
                             .ToList()

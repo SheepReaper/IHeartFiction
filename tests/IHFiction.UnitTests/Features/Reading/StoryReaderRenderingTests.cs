@@ -111,11 +111,19 @@ public sealed class StoryReaderRenderingTests
         }
         if (kind == "Persisted") fakeReader.ContentCalls.Should().Be(0);
         html.Should().Contain("Chapter One");
+        html.Should().Contain($"/authors/{meta.Authors.Single().Id}");
         html.Should().Contain("Opening note");
         html.Should().Contain("Complete body");
         html.Should().Contain("The full chapter text.");
         html.Should().Contain("Closing note");
         html.Should().Contain($"/read/{nextChapterId}");
+        if (kind == "Chapter")
+        {
+            html.Should().Contain("Chapter 1 of 2");
+            html.Should().Contain("aria-label=\"Jump to chapter\"");
+            html.Should().Contain("Chapter 1: Chapter One");
+            html.Should().Contain("Chapter 2: Chapter Two");
+        }
         html.Should().NotContain("Loading...");
         html.Should().NotContain("Finding your place...");
     }

@@ -51,11 +51,27 @@ else if (Meta is not null)
                     <div class="level-item">
                         <div>
                             <h1 class="title is-4 mb-1">@Meta.Title</h1>
-                            @if (!string.IsNullOrWhiteSpace(Byline))
+                            @if (Meta.Authors.Any())
                             {
-                                <p class="subtitle is-6 mb-0">@Byline</p>
+                                <p class="subtitle is-6 mb-0">
+                                    by
+                                    @for (var i = 0; i < Meta.Authors.Count; i++)
+                                    {
+                                        var author = Meta.Authors.ElementAt(i);
+                                        if (i > 0)
+                                        {
+                                            <span>, </span>
+                                        }
+                                        <a href="/authors/@author.Id">@author.Name</a>
+                                    }
+                                </p>
                             }
                             <p class="is-size-7 has-text-grey" title="@($"{Meta.ReadCount:N0} reads")">
+                                @if (Meta.WorkType == "Chapter" && currentChapterIndex >= 0 && orderedChildren.Count > 0)
+                                {
+                                    <span>Chapter @(currentChapterIndex + 1) of @orderedChildren.Count</span>
+                                    <span aria-hidden="true"> · </span>
+                                }
                                 <span class="icon is-small"><i class="fas fa-eye" aria-hidden="true"></i></span>
                                 <span>@ReadCountFormatter.Format(Meta.ReadCount) reads</span>
                             </p>
@@ -216,10 +232,6 @@ else if (Meta is not null)
     private string? observedElementId;
     private PersistingComponentStateSubscription persistingSubscription;
     private long loadGeneration;
-
-    private string? Byline => Meta.Authors.Any()
-        ? $"by {string.Join(", ", Meta.Authors.Select(a => a.Name))}"
-        : null;
 
     protected override void OnInitialized()
     {
