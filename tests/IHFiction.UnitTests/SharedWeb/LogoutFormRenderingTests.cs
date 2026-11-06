@@ -38,9 +38,9 @@ public sealed class LogoutFormRenderingTests
             var component = await renderer.RenderComponentAsync<CascadingValue<string>>(ParameterView.FromDictionary(
                 new Dictionary<string, object?>
                 {
-                    [nameof(CascadingValue<string>.Name)] = "LogoutReturnUrl",
-                    [nameof(CascadingValue<string>.Value)] = destination,
-                    [nameof(CascadingValue<string>.ChildContent)] = (RenderFragment)(builder =>
+                    [nameof(CascadingValue<>.Name)] = "LogoutReturnUrl",
+                    [nameof(CascadingValue<>.Value)] = destination,
+                    [nameof(CascadingValue<>.ChildContent)] = (RenderFragment)(builder =>
                     {
                         builder.OpenComponent<LoginDisplay>(0);
                         builder.CloseComponent();
