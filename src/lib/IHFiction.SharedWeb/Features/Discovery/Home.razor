@@ -40,10 +40,30 @@
                     <span class="icon" aria-hidden="true"><i class="fas fa-tags"></i></span>
                     <span>Explore Tags</span>
                 </a>
-                <a href="/become-author" class="button has-background-link-soft has-text-link-bold is-large">
-                    <span class="icon" aria-hidden="true"><i class="fas fa-pen-nib"></i></span>
-                    <span>Start Writing</span>
-                </a>
+                <AuthorizeView>
+                    <Authorized>
+                        @if (context.User.IsInRole("author"))
+                        {
+                            <a href="/my-stories" class="button has-background-link-soft has-text-link-bold is-large">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+                                <span>My Stories</span>
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="/become-author" class="button has-background-link-soft has-text-link-bold is-large">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-pen-nib"></i></span>
+                                <span>Start Writing</span>
+                            </a>
+                        }
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/become-author" class="button has-background-link-soft has-text-link-bold is-large">
+                            <span class="icon" aria-hidden="true"><i class="fas fa-pen-nib"></i></span>
+                            <span>Start Writing</span>
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
             </div>
         </div>
     </div>
@@ -174,10 +194,30 @@
                 </div>
                 <div class="column is-narrow has-text-centered-mobile">
                     <div class="buttons">
-                        <a href="/become-author" class="button is-primary is-medium">
-                            <span class="icon" aria-hidden="true"><i class="fas fa-rocket"></i></span>
-                            <span>Become an Author</span>
-                        </a>
+                        <AuthorizeView>
+                            <Authorized>
+                                @if (context.User.IsInRole("author"))
+                                {
+                                    <a href="/my-stories" class="button is-primary is-medium">
+                                        <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+                                        <span>My Stories</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="/become-author" class="button is-primary is-medium">
+                                        <span class="icon" aria-hidden="true"><i class="fas fa-rocket"></i></span>
+                                        <span>Become an Author</span>
+                                    </a>
+                                }
+                            </Authorized>
+                            <NotAuthorized>
+                                <a href="/become-author" class="button is-primary is-medium">
+                                    <span class="icon" aria-hidden="true"><i class="fas fa-rocket"></i></span>
+                                    <span>Become an Author</span>
+                                </a>
+                            </NotAuthorized>
+                        </AuthorizeView>
                         <a href="/about" class="button has-background-scheme-main has-text-text is-medium">
                             <span>Learn More</span>
                         </a>

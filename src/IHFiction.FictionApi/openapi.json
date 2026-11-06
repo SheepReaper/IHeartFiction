@@ -3,7 +3,7 @@
   "info": {
     "title": "IHFiction.FictionApi | v1",
     "description": "I❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
-    "termsOfService": "http://localhost",
+    "termsOfService": "https://iheartfiction.net/terms",
     "contact": {
       "name": "Bryan Gonzalez",
       "email": "bgonza868+fictionadmin@gmail.com"

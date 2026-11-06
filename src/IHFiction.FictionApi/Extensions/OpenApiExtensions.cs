@@ -92,7 +92,7 @@ internal static class OpenApiExtensions
             Description = "I❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
             License = new() { Name = "MIT License", Identifier = "MIT" },
             Summary = "I❤️Fiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
-            TermsOfService = new("http://localhost") // I don't have ToS yet
+            TermsOfService = new("https://iheartfiction.net/terms")
         };
 
         if (document.Tags is { } tags)

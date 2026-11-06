@@ -1,0 +1,157 @@
+@using IHFiction.SharedKernel.Infrastructure
+@using Sidio.Sitemap.Core
+
+@page "/privacy"
+
+@attribute [Sitemap(ChangeFrequency.Monthly, 0.5, "2026-11-06")]
+@inject MetadataUrlService MetadataUrls
+
+<SocialPreviewMetadata
+    Title="Privacy Policy"
+    Description="Read the IHeartFiction privacy policy explaining how we process personal data, protect your privacy, and support your rights."
+    CanonicalUrl="/privacy" />
+
+<StructuredDataMetadata Schemas="@PrivacySchemas" />
+
+<section class="hero is-primary is-small">
+    <div class="hero-body">
+        <div class="container">
+            <h1 class="title is-2">Privacy Policy</h1>
+            <h2 class="subtitle is-5">How we handle your data, protect your privacy, and respect your rights</h2>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container content">
+        <AppBreadcrumbs Items="@BreadcrumbItems" />
+
+        <div class="box p-5 p-6-tablet">
+            <div class="notification is-light mb-5">
+                <p class="mb-1"><strong>Data Controller:</strong> Bryan Gonzalez, United States</p>
+                <p class="mb-0"><strong>Privacy Inquiries &amp; Requests:</strong> <a href="mailto:privacy@iheartfiction.net">privacy@iheartfiction.net</a></p>
+            </div>
+
+            <p class="is-size-6 has-text-grey mb-5"><em>Effective date: November 6, 2026</em></p>
+
+            <p>
+                This policy covers <code>iheartfiction.net</code>, <code>api.iheartfiction.net</code>, and the IHeartFiction account service.
+                It explains what information we process when you read stories, create an account, publish fiction, or use our platform features.
+            </p>
+
+            <h3 class="title is-4 mt-5">1. Information We Collect</h3>
+            <p><strong>Account information:</strong> When you register, we collect your username, email address, and password. Passwords are stored in cryptographically hashed form, and email verification is required. If you choose optional third-party sign-in (such as Google), we receive the basic profile details authorized by the provider (name, email address, account identifier). We never receive or store third-party passwords.</p>
+            <p><strong>Profiles and content:</strong> We store profile details (bio, avatar, optional social/sponsor links), stories, chapters, covers, and authoring metadata you submit, along with records of ownership, collaboration, and publication. Personal information included in public profiles or autobiographical fiction is visible to all visitors.</p>
+            <p><strong>Reading activity and notifications:</strong> We record anonymous or account-linked reading progress and stories or authors you follow to count unique reads accurately and provide notifications. If you enable browser push notifications, we store the device endpoint token needed to deliver them.</p>
+            <p><strong>Technical diagnostics:</strong> We and our infrastructure providers process network details such as IP addresses, browser user-agents, request timestamps, and diagnostic error reports to maintain site availability and security.</p>
+            <p><strong>Correspondence:</strong> If you contact us for support or privacy inquiries, we retain the message and contact details necessary to resolve your request.</p>
+
+            <h3 class="title is-4 mt-5">2. How We Use Information</h3>
+            <p>We process your information to:</p>
+            <ul>
+                <li>Authenticate your identity and secure account sessions.</li>
+                <li>Deliver publishing, reading, and bookmarking functionality.</li>
+                <li>Calculate aggregate readership metrics and deduplicate read counts.</li>
+                <li>Deliver notification feeds and requested browser alerts.</li>
+                <li>Diagnose operational errors, detect automated abuse, and protect platform integrity.</li>
+                <li>Comply with applicable legal obligations and resolve disputes.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">3. Public vs. Private Information</h3>
+            <p><strong>Public:</strong> Your author pseudonym, public bio, published stories, chapters, tags, and comments are accessible to any web or API visitor and may be indexed by search engines. Do not share sensitive personal information in public works.</p>
+            <p><strong>Private:</strong> Your account email, hashed password, private story drafts, unread notification feeds, and private reading activity are restricted to your account and authorized system administrators.</p>
+
+            <h3 class="title is-4 mt-5">4. Cookies and Third-Party Services</h3>
+            <p>We use essential cookies and browser storage to maintain session state, CSRF protection, and user interface preferences (such as light/dark theme selection). Third parties integrated into the platform include:</p>
+            <ul>
+                <li><strong>Cloudflare:</strong> Provides CDN delivery, DDoS protection, and SSL termination. <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare Privacy Policy</a>.</li>
+                <li><strong>Disqus:</strong> Powers optional story discussion threads when enabled by authors. <a href="https://help.disqus.com/en/articles/1717103-disqus-privacy-policy" target="_blank" rel="noopener noreferrer">Disqus Privacy Policy</a>.</li>
+                <li><strong>MailerSend:</strong> Delivers transactional emails (such as verification and password reset emails).</li>
+                <li><strong>Google reCAPTCHA:</strong> Defends account endpoints against automated bot attacks.</li>
+                <li><strong>Gravatar:</strong> Provides profile avatars via hashed email representations when enabled.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">5. Data Retention and Erasure</h3>
+            <p>
+                You retain control of your stories and account:
+            </p>
+            <ul>
+                <li><strong>Content Removal:</strong> Authors can edit, unpublish, or delete their solely authored stories and chapters at any time through the authoring interface.</li>
+                <li><strong>Account Deletion &amp; Erasure:</strong> To delete your account or exercise your right to erasure, email <a href="mailto:privacy@iheartfiction.net">privacy@iheartfiction.net</a> from your registered address. Upon confirmation, we permanently remove your account credentials, profile, private drafts, and notification subscriptions.</li>
+                <li><strong>Shared or Retained Works:</strong> Co-authored works and published works you elect to leave online remain accessible to readers and co-authors; your personal attribution is disassociated and assigned to a neutral system author without transferring your underlying copyright.</li>
+                <li><strong>Backups &amp; Logs:</strong> Infrastructure operational logs rotate within 30 days. Encrypted system disaster-recovery backups expire automatically according to standard retention cycles.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">6. Your Rights Under GDPR &amp; UK GDPR</h3>
+            <p>Subject to statutory limits, you have the right to:</p>
+            <ul>
+                <li>Request access to the personal data we hold about you.</li>
+                <li>Request correction of inaccurate personal data.</li>
+                <li>Request erasure (the "right to be forgotten") of your personal data.</li>
+                <li>Object to or restrict certain processing based on legitimate interests.</li>
+                <li>Request data portability for data you provided to us.</li>
+            </ul>
+            <p>
+                To exercise any of these rights, email <a href="mailto:privacy@iheartfiction.net">privacy@iheartfiction.net</a>. We verify requests and respond within one month without charge.
+                You also have the right to lodge a complaint with a data protection authority in your country of residence or the UK Information Commissioner's Office (ICO).
+            </p>
+
+            <h3 class="title is-4 mt-5">7. Underage Users</h3>
+            <p>IHeartFiction is intended for users who have reached the age of digital consent in their jurisdiction (generally 13 or older, or 16 in certain European regions). We do not knowingly collect personal data from children under these ages. If you believe a child has created an account, contact us at <a href="mailto:privacy@iheartfiction.net">privacy@iheartfiction.net</a> for immediate review and deletion.</p>
+
+            <h3 class="title is-4 mt-5">8. Changes to This Policy</h3>
+            <p>We may update this Privacy Policy from time to time. When significant updates occur, we will post notice on the website or update the effective date at the top of this page.</p>
+
+            <div class="has-text-centered mt-6">
+                <a href="/terms" class="button is-link is-outlined mr-2">Terms of Service</a>
+                <a href="/about" class="button is-light">About I❤️Fiction</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("Privacy Policy", null, IsActive: true)
+    ];
+
+    private IEnumerable<object> PrivacySchemas =>
+    [
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["@id"] = ToAbsolute("/privacy#breadcrumb"),
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Privacy Policy",
+                    ["item"] = ToAbsolute("/privacy")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "WebPage",
+            ["@id"] = ToAbsolute("/privacy"),
+            ["name"] = "IHeartFiction Privacy Policy",
+            ["description"] = "Privacy Policy and data processing terms for IHeartFiction.",
+            ["url"] = ToAbsolute("/privacy")
+        }
+    ];
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
+}

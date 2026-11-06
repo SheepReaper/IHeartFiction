@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -10,6 +11,7 @@ using IHFiction.SharedWeb.Services;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -26,6 +28,9 @@ public sealed class HomeRenderingTests
         var builder = WebApplication.CreateBuilder();
         var services = builder.Services;
         services.AddLogging();
+        services.AddAuthorizationCore();
+        services.AddCascadingAuthenticationState();
+        services.AddSingleton<AuthenticationStateProvider>(new TestAuthStateProvider());
         services.AddRazorComponents();
         services.AddSingleton<NavigationManager, TestNavigation>();
         services.AddSingleton(new MetadataUrlService(Options.Create(new SiteUrlOptions { BaseUrl = new Uri("https://example.test/") })));
@@ -130,6 +135,12 @@ public sealed class HomeRenderingTests
         html.Should().Contain("book");
         html.Should().Contain("Write on I❤️Fiction");
         html.Should().Contain("Become an Author");
+    }
+
+    private sealed class TestAuthStateProvider : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync() =>
+            Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
     }
 
     private sealed class TestNavigation : NavigationManager

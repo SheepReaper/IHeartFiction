@@ -1,0 +1,144 @@
+@using IHFiction.SharedKernel.Infrastructure
+@using Sidio.Sitemap.Core
+
+@page "/terms"
+
+@attribute [Sitemap(ChangeFrequency.Monthly, 0.5, "2026-11-06")]
+@inject MetadataUrlService MetadataUrls
+
+<SocialPreviewMetadata
+    Title="Terms of Service & Author Rights"
+    Description="Read the IHeartFiction Terms of Service, author ownership guarantees, and community publishing standards."
+    CanonicalUrl="/terms" />
+
+<StructuredDataMetadata Schemas="@TermsSchemas" />
+
+<section class="hero is-primary is-small">
+    <div class="hero-body">
+        <div class="container">
+            <h1 class="title is-2">Terms of Service &amp; Author Rights</h1>
+            <h2 class="subtitle is-5">Clear commitments to creator ownership, transparent publishing, and a respectful community</h2>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container content">
+        <AppBreadcrumbs Items="@BreadcrumbItems" />
+
+        <div class="box p-5 p-6-tablet">
+            <div class="notification is-light mb-5">
+                <p class="mb-1"><strong>Platform Operator:</strong> Bryan Gonzalez, United States</p>
+                <p class="mb-0"><strong>Inquiries &amp; Support:</strong> <a href="mailto:support@iheartfiction.net">support@iheartfiction.net</a> · <strong>Privacy:</strong> <a href="mailto:privacy@iheartfiction.net">privacy@iheartfiction.net</a></p>
+            </div>
+
+            <p class="is-size-6 has-text-grey mb-5"><em>Effective date: November 6, 2026</em></p>
+
+            <p>
+                Welcome to <strong>IHeartFiction</strong> (<code>iheartfiction.net</code>, <code>api.iheartfiction.net</code>).
+                These Terms of Service govern your access to and use of our reading, authoring, and API services.
+                By visiting the site, creating an account, or consuming our public API, you agree to be bound by these terms.
+            </p>
+
+            <h3 class="title is-4 mt-5">1. Author Ownership and Rights</h3>
+            <div class="notification is-info is-light">
+                <p class="is-size-5 mb-1"><strong>Your Stories Belong to You.</strong></p>
+                <p class="mb-0">You retain 100% of your copyright, title, and ownership in the original fiction, poetry, prose, and artwork you create and publish on IHeartFiction.</p>
+            </div>
+            <ul>
+                <li><strong>No Transfer of Copyright:</strong> Publishing on IHeartFiction never transfers your copyright or intellectual property rights to the platform or its operator.</li>
+                <li><strong>Separation from Open-Source Code License:</strong> The open-source MIT software license that governs the IHeartFiction application code applies exclusively to the software infrastructure. It <em>never</em> applies to or licenses author fiction, creative prose, or user-submitted content.</li>
+                <li><strong>Limited Hosting License:</strong> When you publish a story, chapter, or cover image, you grant IHeartFiction a non-exclusive, worldwide, royalty-free license solely to store, display, format, paginate, and transmit your published work to readers across our web interface, mobile readers, RSS/Atom feeds, and public discovery APIs.</li>
+                <li><strong>No AI Model Training:</strong> We do not sell, scrape, or license your fiction content to third parties, nor do we use your creative texts to train commercial generative AI models.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">2. Content and Community Standards</h3>
+            <p>IHeartFiction is a welcoming home for serialized original and fanfiction. To maintain a safe and transparent reading environment, all authors agree to the following standards:</p>
+            <ul>
+                <li><strong>Originality &amp; Plagiarism:</strong> You must own or have explicit permission to post the content you publish. Submitting plagiarized, stolen, or unauthorized copies of another creator's work is strictly prohibited.</li>
+                <li><strong>Transformative &amp; Fan Works:</strong> Transformative fan fiction is warmly welcomed. Authors must tag fandoms, franchises, and inspirations honestly and not commercially monetize fan works on the platform.</li>
+                <li><strong>Accurate Categorization &amp; Warnings:</strong> Works containing mature, sensitive, or explicit themes must be accurately tagged with appropriate <code>content-warning</code> and age-appropriate ratings. Mature works require reader authentication.</li>
+                <li><strong>AI-Assisted and AI-Generated Works:</strong> Stories created with the assistance of artificial intelligence tools are permitted, provided they are transparently tagged as AI-assisted or AI-generated in the story taxonomy.</li>
+                <li><strong>Prohibited Conduct:</strong> You may not post illegal material, child sexual abuse material (CSAM), non-consensual imagery, malicious exploits, hate speech targeting protected characteristics, or content intended to harass or dox individuals.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">3. Human Moderation, DMCA &amp; Appeals</h3>
+            <ul>
+                <li><strong>Moderation Philosophy:</strong> We believe in transparent, proportional moderation. While automated filters assist in identifying spam, bot networks, and malicious links, substantive moderation and content action decisions are made by human operators.</li>
+                <li><strong>Copyright Infringement (DMCA):</strong> If you believe your copyrighted work has been published without authorization, submit a notice to <a href="mailto:support@iheartfiction.net">support@iheartfiction.net</a> including the location of the infringing material, proof of ownership, and your contact details. We investigate and act on valid takedown requests promptly.</li>
+                <li><strong>Appeals:</strong> If your story or account is subject to moderation action, you have the right to request a fresh review by emailing <a href="mailto:support@iheartfiction.net">support@iheartfiction.net</a>.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">4. Content Management &amp; Account Closure</h3>
+            <ul>
+                <li><strong>Editing &amp; Unpublishing:</strong> You may edit, update, or remove your solely-authored stories and chapters at any time through the author tools.</li>
+                <li><strong>Account Deletion:</strong> You can request closure of your account and erasure of your personal data at any time by emailing <a href="mailto:privacy@iheartfiction.net">privacy@iheartfiction.net</a>.</li>
+                <li><strong>Co-Authored Works:</strong> If you co-author a work with another creator, neither collaborator may unilaterally destroy the work without mutual agreement. In the event of account closure, retained co-authored works remain accessible to their remaining collaborators, with the departing author's attribution disassociated.</li>
+            </ul>
+
+            <h3 class="title is-4 mt-5">5. Disclaimers and Limitations of Liability</h3>
+            <p>
+                IHeartFiction is operated as an independent platform with care and dedication.
+                The service is provided on an "as is" and "as available" basis without warranties of any kind, whether express or implied.
+                To the maximum extent permitted by applicable law, the operator shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the platform, user-generated content, or service interruptions.
+            </p>
+
+            <h3 class="title is-4 mt-5">6. Modifications to These Terms</h3>
+            <p>
+                We may revise these Terms of Service periodically. Significant changes will be announced on the platform or by updating the effective date above. Continued use of IHeartFiction following any revisions constitutes your acceptance of the updated terms.
+            </p>
+
+            <div class="has-text-centered mt-6">
+                <a href="/privacy" class="button is-link is-outlined mr-2">Privacy Policy</a>
+                <a href="/become-author" class="button is-primary is-outlined mr-2">Author Guidelines</a>
+                <a href="/about" class="button is-light">About I❤️Fiction</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<BreadcrumbItem> BreadcrumbItems =
+    [
+        new("Home", "/"),
+        new("Terms of Service", null, IsActive: true)
+    ];
+
+    private IEnumerable<object> TermsSchemas =>
+    [
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "BreadcrumbList",
+            ["@id"] = ToAbsolute("/terms#breadcrumb"),
+            ["itemListElement"] = new object[]
+            {
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 1,
+                    ["name"] = "Home",
+                    ["item"] = ToAbsolute("/")
+                },
+                new Dictionary<string, object?>
+                {
+                    ["@type"] = "ListItem",
+                    ["position"] = 2,
+                    ["name"] = "Terms of Service",
+                    ["item"] = ToAbsolute("/terms")
+                }
+            }
+        },
+        new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "WebPage",
+            ["@id"] = ToAbsolute("/terms"),
+            ["name"] = "IHeartFiction Terms of Service",
+            ["description"] = "Terms of Service and Author Rights for IHeartFiction.",
+            ["url"] = ToAbsolute("/terms")
+        }
+    ];
+
+    private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
+}

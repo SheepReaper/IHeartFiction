@@ -1,18 +1,51 @@
 @page "/become-author"
-@attribute [Authorize]
 @inherits CancellableComponent
 @inject AccountService AccountService
 @inject NavigationManager Navigation
 @inject LoaderService LoaderService
 
+<SocialPreviewMetadata
+    Title="Become an Author"
+    Description="Review author guidelines, publishing expectations, and join the IHeartFiction writer community."
+    CanonicalUrl="/become-author" />
+
 <div class="container">
     <h1 class="title">Become an Author</h1>
     <h2 class="subtitle">Publish with clarity and confidence</h2>
 
+    <AuthorizeView>
+        <Authorized>
+            @if (context.User.IsInRole("author"))
+            {
+                <div class="notification is-info is-light mb-5">
+                    <div class="level">
+                        <div class="level-left">
+                            <div>
+                                <span class="icon is-medium mr-2" aria-hidden="true"><i class="fas fa-check-circle fa-lg"></i></span>
+                                <strong class="is-size-5">You are already registered as an author!</strong>
+                                <p class="is-size-6 has-text-grey-dark">You have full publishing access. Manage your serialized stories or start a new draft.</p>
+                            </div>
+                        </div>
+                        <div class="level-right mt-3-mobile">
+                            <a href="/my-stories" class="button is-info">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-book-open"></i></span>
+                                <span>My Stories</span>
+                            </a>
+                            <a href="/stories/new" class="button is-primary ml-2">
+                                <span class="icon" aria-hidden="true"><i class="fas fa-plus"></i></span>
+                                <span>New Story</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </Authorized>
+    </AuthorizeView>
+
     <div class="content box">
         <p>
             Welcome to the author community. Before you publish, please review these shared expectations.
-            This is a plain-language guide for authors, not a legal contract.
+            This is a plain-language guide for authors, accompanied by our formal <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>.
         </p>
     </div>
 
@@ -36,7 +69,8 @@
                 <li><strong>No Model Training on Your Stories:</strong> We do not use your original story content to train AI models.</li>
                 <li><strong>Platform AI Features:</strong> We may use AI for categorization, recommendations, and abuse detection. Final moderation decisions are made by humans.</li>
                 <li><strong>Protection Limits:</strong> Public content can be scraped by third parties. We cannot fully prevent this, but we act on valid reports and takedown requests.</li>
-                <li><strong>Privacy Policy:</strong> Your account and personal data are handled under our main Privacy Policy.</li>
+                <li><strong>Privacy Policy:</strong> Your account and personal data are handled under our <a href="/privacy">Privacy Policy</a>.</li>
+                <li><strong>100% Author Ownership:</strong> You retain full copyright of all your stories. See our <a href="/terms">Terms of Service</a> for license details.</li>
             </ul>
 
             <h4>Respecting Creators</h4>
@@ -63,25 +97,48 @@
         </div>
     }
 
-    <div class="field">
-        <div class="control">
-            <label class="checkbox">
-                <input type="checkbox" @bind="_agreedToTerms" />
-                I have read these guidelines and agree to tag honestly, respect creators, and follow these standards.
-            </label>
-        </div>
-    </div>
+    <AuthorizeView>
+        <Authorized>
+            @if (!context.User.IsInRole("author"))
+            {
+                <div class="field">
+                    <div class="control">
+                        <label class="checkbox">
+                            <input type="checkbox" @bind="_agreedToTerms" />
+                            I have read these guidelines and agree to tag honestly, respect creators, and follow these standards.
+                        </label>
+                    </div>
+                </div>
 
-    <div class="field">
-        <div class="control">
-            <button class="button is-primary is-large" disabled="@(!_agreedToTerms || _loading)" @onclick="OnBecomeAuthorClick">
-                <span class="icon is-small" aria-hidden="true">
-                    <i class="fas fa-pen-nib"></i>
-                </span>
-                <span>Start Writing</span>
-            </button>
-        </div>
-    </div>
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary is-large" disabled="@(!_agreedToTerms || _loading)" @onclick="OnBecomeAuthorClick">
+                            <span class="icon is-small" aria-hidden="true">
+                                <i class="fas fa-pen-nib"></i>
+                            </span>
+                            <span>Start Writing</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        </Authorized>
+        <NotAuthorized>
+            <div class="box has-text-centered py-5 has-background-primary-soft">
+                <h3 class="title is-4 has-text-primary-bold">Ready to publish on I❤️Fiction?</h3>
+                <p class="subtitle is-6 mb-4">Create a free account or sign in to accept the author guidelines and start publishing.</p>
+                <div class="buttons is-centered">
+                    <a href="/signup?returnUrl=%2Fbecome-author" class="button is-primary is-medium">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-user-plus"></i></span>
+                        <span>Create Author Account</span>
+                    </a>
+                    <a href="/login?returnUrl=%2Fbecome-author" class="button is-light is-medium">
+                        <span class="icon" aria-hidden="true"><i class="fas fa-sign-in-alt"></i></span>
+                        <span>Sign In</span>
+                    </a>
+                </div>
+            </div>
+        </NotAuthorized>
+    </AuthorizeView>
 
 </div>
 
