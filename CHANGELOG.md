@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.13] - 2026-11-06
+
+
+### Added
+
+- **docs:** Update SKILL.md and tests for story and tag discovery endpoints
+
+- **discovery:** Add contextual Browse by Tag links to StoryList and add tag discovery tests
+
+- **api:** Add source-generated data shaping, sorting registry, and SQL projection pruning
+
+
+### Changed
+
+- Implement complete disposal pattern in CancellableComponent
+
+- Migrate discovery components to CancellableComponent
+
+- Use thread-safe disposal in MainLayout
+
+- **api:** Adopt declarative [Sortable] mappings and automatic endpoint shaping in list use cases
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Maintenance
+
+- **deps:** Update actions/setup-dotnet digest to 0f4a354
+
+- **deps:** Update github/codeql-action digest to 33d7b85
+
+
+### Other
+
+- **tests:** Use unbound generic nameof in LogoutFormRenderingTests
+
+
+
 ## [v1.0.12] - 2026-11-04
 
 
