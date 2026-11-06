@@ -42,17 +42,13 @@ internal sealed class ListAuthors(
         string Search = "",
 
         [property: StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
+        [property: SortsType<ListAuthorsItem>]
         string Sort = "name",
 
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListAuthorsItem>]
         string Fields = ""
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
-
-    private static readonly SortMapping[] SortMappings = [
-        new(nameof(Author.Name)),
-        new(nameof(Author.CreatedAt), nameof(Author.Id)),
-        new(nameof(Author.UpdatedAt), reverse: true)];
 
     /// <summary>
     /// Represents a single author item in the authors list response.
@@ -67,11 +63,11 @@ internal sealed class ListAuthors(
     /// <param name="PublishedStories">Number of published stories by this author</param>
     internal sealed record ListAuthorsItem(
         Ulid Id,
-        string Name,
+        [property: Sortable] string Name,
         string? AvatarUrl,
         string Bio,
-        DateTime CreatedAt,
-        DateTime UpdatedAt,
+        [property: Sortable(nameof(Author.Id))] DateTime CreatedAt,
+        [property: Sortable(reverse: true)] DateTime UpdatedAt,
         int TotalStories,
         int PublishedStories);
 
@@ -89,8 +85,8 @@ internal sealed class ListAuthors(
         // Apply search using the centralized service with multiple fields
         authors = authors.SearchIContains(query, a => a.Name, a => a.Profile.Bio);
 
-        // Apply sorting using the centralized SortingService with type-safe mappings
-        authors = authors.ApplySort(query, SortMappings);
+        // Apply sorting using source-generated mappings
+        authors = authors.ApplySort<Author, ListAuthorsItem>(query);
 
         // Apply projection
         var proj = authors
@@ -132,7 +128,7 @@ internal sealed class ListAuthors(
                         }),
                         query);
 
-                return result.ToOkResult(query);
+                return result.ToOkResult();
             })
             .WithSummary("List Authors")
             .WithDescription("Retrieves a paginated list of all authors who have published at least one story. " +

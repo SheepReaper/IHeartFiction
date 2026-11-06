@@ -56,18 +56,13 @@ internal sealed class ListTags(
         string Search = "",
 
         [property: StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
+        [property: SortsType<ListTagsItem>]
         string Sort = "category",
 
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListTagsItem>]
         string Fields = ""
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
-
-    private static readonly SortMapping[] SortMappings = [
-        new(nameof(ListTagsItem.Category)),
-        new(nameof(ListTagsItem.Value)),
-        new(nameof(ListTagsItem.StoryCount)),
-        new(nameof(ListTagsItem.CreatedAt))];
 
     /// <summary>
     /// Represents a single tag item in the tags list response.
@@ -83,11 +78,11 @@ internal sealed class ListTags(
     /// <param name="RouteKey">Canonical ASCII-safe token used by public tag landing pages</param>
     internal sealed record ListTagsItem(
         Ulid TagId,
-        string Category,
+        [property: Sortable] string Category,
         string? Subcategory,
-        string Value,
-        DateTime CreatedAt,
-        int StoryCount,
+        [property: Sortable] string Value,
+        [property: Sortable] DateTime CreatedAt,
+        [property: Sortable] int StoryCount,
         string DisplayFormat,
         string NormalizedKey,
         string RouteKey)
@@ -158,7 +153,7 @@ internal sealed class ListTags(
                 TagRouteSpec.CreateRouteToken(t.Id, t.Category, t.Subcategory, t.Value)))
             .AsQueryable();
 
-        proj = proj.ApplySort(query, SortMappings);
+        proj = proj.ApplySort(query);
 
         return await paginator.ExecutePagedQueryAsync(proj, query, cancellationToken);
     }
@@ -217,7 +212,7 @@ internal sealed class ListTags(
                         tag => new(tag, new List<LinkItem>()),
                         query);
 
-                return result.ToOkResult(query);
+                return result.ToOkResult();
             })
             .WithSummary("List Tags")
             .WithDescription("Retrieves a paginated list of all available tags used across stories. " +

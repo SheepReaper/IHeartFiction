@@ -50,16 +50,12 @@ internal sealed class GetOwnStories(
         [property: NoHarmfulContent]
         [property: FromQuery(Name = ISearchSupport.QueryParameterName)]
         string Search = "",
+        [property: SortsType<AuthorStoryItem>]
         string Sort = "",
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<AuthorStoryItem>]
         string Fields = ""
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
-
-    private static readonly SortMapping[] SortMappings = [
-        new(nameof(Story.Title)),
-        new(nameof(Story.CreatedAt)),
-        new(nameof(Story.UpdatedAt))];
 
     /// <summary>
     /// Represents a single story item in the current author's stories list.
@@ -83,12 +79,12 @@ internal sealed class GetOwnStories(
     /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     internal sealed record AuthorStoryItem(
         Ulid Id,
-        string Title,
+        [property: Sortable] string Title,
         string Description,
         DateTime? PublishedAt,
         bool IsPublished,
-        DateTime UpdatedAt,
-        DateTime CreatedAt,
+        [property: Sortable] DateTime UpdatedAt,
+        [property: Sortable] DateTime CreatedAt,
         bool IsOwned,
         IEnumerable<string> CollaboratorNames,
         IEnumerable<string> Tags,
@@ -113,9 +109,6 @@ internal sealed class GetOwnStories(
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken = default)
     {
-        // Create pagination request using the service
-        var pagination = paginator.CreatePaginationRequest(query.Page, query.PageSize);
-
         // Get the current author using the centralized authorization service
         var authorResult = await authorizationService.GetCurrentAuthorAsync(claimsPrincipal, cancellationToken);
         if (authorResult.IsFailure) return authorResult.DomainError;
@@ -138,11 +131,10 @@ internal sealed class GetOwnStories(
             .Where(s => body.IsPublished == null || s.IsPublished == body.IsPublished);
 
         // Apply filters
-        // stories = ApplyFilters(stories, query, author.Id);
         stories = stories.SearchIContains(query, s => s.Title, s => s.Description);
 
         // Apply sorting
-        stories = stories.ApplySort(query, SortMappings);
+        stories = stories.ApplySort<Story, AuthorStoryItem>(query);
 
         // Execute paginated query using the centralized service
         var page = await paginator.ExecutePagedQueryAsync(
@@ -164,7 +156,7 @@ internal sealed class GetOwnStories(
                 s.IsValid,
                 s.ReadCount,
                 s.CompletionStatus == StoryCompletionStatus.Complete ? "Complete" : "InProgress")),
-            pagination,
+            query,
             cancellationToken);
 
         return page;
@@ -194,7 +186,7 @@ internal sealed class GetOwnStories(
                         }),
                         query);
 
-                return result.ToOkResult(query);
+                return result.ToOkResult();
             })
             .WithSummary("Get Current Author Stories")
             .WithDescription("Retrieves a paginated list of stories associated with the current authenticated author. " +

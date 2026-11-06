@@ -75,11 +75,6 @@ internal sealed class ListPublishedStories(
         string? TagKey = null
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
-    private static readonly SortMapping[] SortMappings = [
-        new(nameof(Story.PublishedAt)),
-        new(nameof(Story.Title)),
-        new(nameof(Story.UpdatedAt))];
-
     /// <summary>
     /// Represents a single published story item in the stories list response.
     /// </summary>
@@ -99,10 +94,10 @@ internal sealed class ListPublishedStories(
     /// <param name="CompletionStatus">Whether the story is in progress or complete</param>
     internal sealed record ListPublishedStoriesItem(
         Ulid StoryId,
-        string Title,
+        [property: Sortable] string Title,
         string Description,
-        DateTime PublishedAt,
-        DateTime UpdatedAt,
+        [property: Sortable] DateTime PublishedAt,
+        [property: Sortable] DateTime UpdatedAt,
         bool HasContent,
         bool HasChapters,
         bool HasBooks,
@@ -124,7 +119,7 @@ internal sealed class ListPublishedStories(
         ListPublishedStoriesQuery query,
         CancellationToken cancellationToken = default)
     {
-        if (!SortMappings.Validate(query)) return Errors.InvalidSort;
+        if (!SortMappingRegistry.Validate<ListPublishedStoriesItem>(query)) return Errors.InvalidSort;
         if (!DataShapingService.TryValidate<ListPublishedStoriesItem>(query.Fields, out var fieldsError))
             return Errors.InvalidFields(fieldsError.ErrorMessage ?? string.Empty);
 
@@ -168,7 +163,7 @@ internal sealed class ListPublishedStories(
         stories = stories.SearchIContains(query, s => s.Title, s => s.Description, s => s.Owner.Name);
 
         // Apply sorting
-        stories = stories.ApplySort(query, SortMappings);
+        stories = stories.ApplySort<Story, ListPublishedStoriesItem>(query);
 
         // Apply projection
         var proj = stories.Select(s => new ListPublishedStoriesItem(
@@ -223,7 +218,7 @@ internal sealed class ListPublishedStories(
                             new(nameof(ListPublishedStoriesQuery.TagKey), query.TagKey)
                         ]);
 
-                return result.ToOkResult(query);
+                return result.ToOkResult();
             }
                 )
                 .WithSummary("List Published Stories")

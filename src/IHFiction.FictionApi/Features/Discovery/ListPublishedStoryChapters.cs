@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+using Microsoft.AspNetCore.Mvc;
+
 using IHFiction.Data.Contexts;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
@@ -9,8 +11,6 @@ using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
-
-using Microsoft.AspNetCore.Mvc;
 
 namespace IHFiction.FictionApi.Features.Discovery;
 
@@ -59,6 +59,12 @@ internal sealed class ListPublishedStoryChapters(
 
     public async Task<Result<PagedCollection<ListPublishedStoryChaptersItem>>> HandleAsync(
         Ulid id,
+        CancellationToken cancellationToken = default) =>
+        await HandleAsync(id, query: null, cancellationToken);
+
+    public async Task<Result<PagedCollection<ListPublishedStoryChaptersItem>>> HandleAsync(
+        Ulid id,
+        ListPublishedStoryChaptersQuery? query,
         CancellationToken cancellationToken = default)
     {
         var story = await fictionDb.Stories.FindAsync([id], cancellationToken);
@@ -88,7 +94,11 @@ internal sealed class ListPublishedStoryChapters(
             c.ReadCount
         ));
 
-        return await paginator.ExecutePagedQueryAsync(chapterItems, cancellationToken: cancellationToken);
+        var pagination = string.IsNullOrWhiteSpace(query?.Fields)
+            ? null
+            : new PaginationParams(Fields: query.Fields);
+
+        return await paginator.ExecutePagedQueryAsync(chapterItems, pagination, cancellationToken);
     }
     public static string EndpointName => nameof(ListPublishedStoryChapters);
 
@@ -105,7 +115,7 @@ internal sealed class ListPublishedStoryChapters(
                 LinkService linker,
                 CancellationToken cancellationToken) =>
             {
-                var result = (await useCase.HandleAsync(id, cancellationToken))
+                var result = (await useCase.HandleAsync(id, query, cancellationToken))
                     .WithLinks(
                         linker,
                         Name,
