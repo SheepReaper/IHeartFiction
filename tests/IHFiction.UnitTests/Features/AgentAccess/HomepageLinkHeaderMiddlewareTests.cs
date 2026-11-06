@@ -12,11 +12,14 @@ namespace IHFiction.UnitTests.Features.AgentAccess;
 public sealed class HomepageLinkHeaderMiddlewareTests
 {
     [Theory]
-    [InlineData("GET")]
-    [InlineData("HEAD")]
-    public async Task InvokeAsync_ForSuccessfulHomepage_AddsDiscoveryLinks(string method)
+    [InlineData("GET", "/")]
+    [InlineData("HEAD", "/")]
+    [InlineData("GET", "/stories")]
+    [InlineData("GET", "/stories/01J00000000000000000000000")]
+    [InlineData("GET", "/read/01J00000000000000000000000")]
+    public async Task InvokeAsync_ForSuccessfulHomepage_AddsDiscoveryLinks(string method, string path)
     {
-        var context = CreateContext(method, "/");
+        var context = CreateContext(method, path);
         var sut = CreateMiddleware(StatusCodes.Status200OK);
 
         await sut.InvokeAsync(context, Options.Create(new ApiUrlOptions
@@ -38,7 +41,8 @@ public sealed class HomepageLinkHeaderMiddlewareTests
 
     [Theory]
     [InlineData("POST", "/", StatusCodes.Status200OK)]
-    [InlineData("GET", "/stories", StatusCodes.Status200OK)]
+    [InlineData("GET", "/.well-known/ai-catalog.json", StatusCodes.Status200OK)]
+    [InlineData("GET", "/_framework/blazor.web.js", StatusCodes.Status200OK)]
     [InlineData("GET", "/", StatusCodes.Status500InternalServerError)]
     public async Task InvokeAsync_ForIneligibleResponse_DoesNotAddDiscoveryLinks(string method, string path, int statusCode)
     {

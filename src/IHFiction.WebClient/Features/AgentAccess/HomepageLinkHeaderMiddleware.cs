@@ -41,8 +41,22 @@ internal sealed class HomepageLinkHeaderMiddleware(RequestDelegate next)
         await next(context);
     }
 
+    private static readonly PathString[] ExcludedPrefixes =
+    [
+        new("/_framework"),
+        new("/_content"),
+        new("/_blazor"),
+        new("/.well-known"),
+        new("/authentication"),
+        new("/csp-report"),
+        new("/uptime"),
+        new("/robots.txt"),
+        new("/sitemap.xml"),
+    ];
+
     private static bool IsEligibleRequest(HttpRequest request) =>
         (HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method))
-        && (request.Path.Equals(new PathString("/"), StringComparison.OrdinalIgnoreCase)
-            || request.Path.Equals(PathString.Empty, StringComparison.OrdinalIgnoreCase));
+        && Array.TrueForAll(
+            ExcludedPrefixes,
+            prefix => !request.Path.StartsWithSegments(prefix, StringComparison.OrdinalIgnoreCase));
 }

@@ -67,4 +67,37 @@ public static class AiCatalog
                 ),
             ]);
     }
+
+    public static DidWebDocument CreateDidDocument(Uri? siteBaseUri = null, Uri? apiBaseUri = null)
+    {
+        var site = siteBaseUri?.ToString().TrimEnd('/') ?? "https://iheartfiction.net";
+        var api = apiBaseUri?.ToString().TrimEnd('/') ?? "https://api.iheartfiction.net";
+
+        return new DidWebDocument(
+            ["https://www.w3.org/ns/did/v1"],
+            HostIdentifier,
+            [site, api],
+            [
+                new(
+                    $"{HostIdentifier}#ai-catalog",
+                    "AiCatalog",
+                    $"{site}/.well-known/ai-catalog.json"
+                ),
+                new(
+                    $"{HostIdentifier}#api-catalog",
+                    "ApiCatalog",
+                    $"{api}/.well-known/api-catalog"
+                ),
+                new(
+                    $"{HostIdentifier}#agent-skills",
+                    "AgentSkillsIndex",
+                    $"{site}/.well-known/agent-skills/index.json"
+                ),
+                new(
+                    $"{HostIdentifier}#jwks",
+                    "JsonWebKeySet",
+                    $"{api}/.well-known/jwks.json"
+                ),
+            ]);
+    }
 }

@@ -22,6 +22,7 @@ namespace IHFiction.FictionApi.Infrastructure;
 [JsonSerializable(typeof(OAuthProtectedResourceMetadata))]
 [JsonSerializable(typeof(AgentSkillsDiscoveryDocument))]
 [JsonSerializable(typeof(AiCatalogDocument))]
+[JsonSerializable(typeof(DidWebDocument))]
 
 
 // Keycloak

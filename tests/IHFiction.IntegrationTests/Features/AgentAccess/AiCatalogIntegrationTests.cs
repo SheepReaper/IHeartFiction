@@ -43,4 +43,41 @@ public sealed class AiCatalogIntegrationTests(IntegrationTestWebAppFactory facto
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task GetDidWebDocument_Returns200WithW3CDidDocument()
+    {
+        var response = await _client.GetAsync(
+            "/.well-known/did.json",
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
+
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        root.GetProperty("id").GetString().Should().Be(AiCatalog.HostIdentifier);
+        root.GetProperty("@context")[0].GetString().Should().Be("https://www.w3.org/ns/did/v1");
+        root.GetProperty("service").GetArrayLength().Should().Be(4);
+    }
+
+    [Fact]
+    public async Task GetApiCatalog_ReturnsStandardOpenApiMediaType()
+    {
+        var response = await _client.GetAsync(
+            "/.well-known/api-catalog",
+            TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        using var doc = JsonDocument.Parse(json);
+        var serviceDesc = doc.RootElement
+            .GetProperty("linkset")[0]
+            .GetProperty("service-desc")[0];
+
+        serviceDesc.GetProperty("type").GetString().Should().Be("application/vnd.oai.openapi+json");
+    }
 }

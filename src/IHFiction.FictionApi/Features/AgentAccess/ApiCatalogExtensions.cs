@@ -10,7 +10,7 @@ namespace IHFiction.FictionApi.Features.AgentAccess;
 internal static class ApiCatalogExtensions
 {
     private const string LinksetMediaTypeName = "application/linkset+json";
-    private const string OpenApiMediaTypeName = "application/vnd/oai/openapi+json";
+    private const string OpenApiMediaTypeName = "application/vnd.oai.openapi+json";
     private const string DefaultPattern = "/.well-known/api-catalog";
     private const string LinksetContentType = $"{LinksetMediaTypeName}; profile=\"https://www.rfc-editor.org/info/rfc9727\"";
 

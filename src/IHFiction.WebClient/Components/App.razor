@@ -1,4 +1,5 @@
 @inject IWebHostEnvironment Env
+@inject Microsoft.Extensions.Options.IOptions<IHFiction.SharedWeb.Configuration.ApiUrlOptions> ApiUrlOptions
 @using IHFiction.WebClient.Features.Reading
 <!DOCTYPE html>
 <html lang="en">
@@ -15,6 +16,18 @@
     }
 
     <base href="/" />
+
+    <link rel="api-catalog" href="/.well-known/api-catalog" type="application/linkset+json" />
+    <link rel="ai-catalog" href="/.well-known/ai-catalog.json" type="application/json" />
+    <link rel="agent-skills" href="/.well-known/agent-skills/index.json" type="application/vnd.agentskills.v0.2.0+json" />
+    @if (!string.IsNullOrEmpty(apiBaseUrl))
+    {
+        <link rel="oauth-protected-resource" href="@($"{apiBaseUrl}/.well-known/oauth-protected-resource")" />
+        <link rel="service-desc" href="@($"{apiBaseUrl}/openapi/v1.json")" type="application/vnd.oai.openapi+json" />
+        <link rel="service-doc" href="@($"{apiBaseUrl}/scalar/v1")" type="text/html" />
+        <link rel="describedby" href="@($"{apiBaseUrl}/openapi/v1.json")" type="application/vnd.oai.openapi+json" />
+    }
+    <link rel="describedby" href="/auth.md" type="text/markdown" />
 
     <script src="@Assets["_content/IHFiction.SharedWeb/js/theme.js"]" nonce="@nonce"></script>
     
@@ -53,10 +66,12 @@
 
     private string? integrity;
     private string? nonce;
+    private string? apiBaseUrl;
     private bool isMarkdownRequest;
 
     protected override void OnInitialized()
     {
+        apiBaseUrl = ApiUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/');
         var hash = Convert.ToBase64String(SHA384.HashData(new UTF8Encoding().GetBytes(HttpContext?
         .GetEndpoint()?
         .Metadata

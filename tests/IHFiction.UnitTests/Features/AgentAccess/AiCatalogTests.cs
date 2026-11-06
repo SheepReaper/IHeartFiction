@@ -52,4 +52,30 @@ public sealed class AiCatalogTests
         doc.Entries.Should().ContainSingle(e => e.Identifier == "urn:air:iheartfiction.net:auth:auth-md")
             .Which.Url.Should().Be("https://custom.site.test/auth.md");
     }
+
+    [Fact]
+    public void DidWebDocument_Serializes_ConformingToW3CDidWeb()
+    {
+        var doc = IHFiction.SharedKernel.AiCatalog.AiCatalog.CreateDidDocument(
+            new Uri("https://custom.site.test/"),
+            new Uri("https://custom.api.test/"));
+        var json = JsonSerializer.Serialize(doc);
+        using var parsed = JsonDocument.Parse(json);
+        var root = parsed.RootElement;
+
+        root.GetProperty("@context")[0].GetString().Should().Be("https://www.w3.org/ns/did/v1");
+        root.GetProperty("id").GetString().Should().Be("did:web:iheartfiction.net");
+        root.GetProperty("alsoKnownAs").EnumerateArray().Select(e => e.GetString()).Should().Equal(
+            "https://custom.site.test",
+            "https://custom.api.test");
+
+        var services = root.GetProperty("service");
+        services.GetArrayLength().Should().Be(4);
+        services.EnumerateArray().Select(s => s.GetProperty("serviceEndpoint").GetString()).Should().Contain([
+            "https://custom.site.test/.well-known/ai-catalog.json",
+            "https://custom.api.test/.well-known/api-catalog",
+            "https://custom.site.test/.well-known/agent-skills/index.json",
+            "https://custom.api.test/.well-known/jwks.json",
+        ]);
+    }
 }

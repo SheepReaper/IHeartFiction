@@ -26,6 +26,7 @@ internal static class MiddlewarePipelineExtensions
 {
     private const string ApiCatalogPath = "/.well-known/api-catalog";
     private const string AiCatalogPath = "/.well-known/ai-catalog.json";
+    private const string DidWebPath = "/.well-known/did.json";
     private const string OAuthAuthorizationServerPath = "/.well-known/oauth-authorization-server";
     private const string OpenIdConfigurationPath = "/.well-known/openid-configuration";
     private const string OAuthProtectedResourcePath = "/.well-known/oauth-protected-resource";
@@ -143,6 +144,9 @@ internal static class MiddlewarePipelineExtensions
 
         app.MapMethods(AiCatalogPath, [HttpMethods.Get, HttpMethods.Head], (IOptions<SiteUrlOptions> siteUrl, IOptions<ApiUrlOptions> apiUrl) =>
             Results.Json(AiCatalog.CreateDocument(siteUrl.Value.BaseUrl, apiUrl.Value.BaseUrl), contentType: "application/json"));
+
+        app.MapMethods(DidWebPath, [HttpMethods.Get, HttpMethods.Head], (IOptions<SiteUrlOptions> siteUrl, IOptions<ApiUrlOptions> apiUrl) =>
+            Results.Json(AiCatalog.CreateDidDocument(siteUrl.Value.BaseUrl, apiUrl.Value.BaseUrl), contentType: "application/json"));
 
         app.MapMethods(OAuthAuthorizationServerPath, [HttpMethods.Get, HttpMethods.Head], () =>
             Results.Redirect(
