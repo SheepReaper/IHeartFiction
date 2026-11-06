@@ -1,12 +1,13 @@
 @using Markdig
 @using IHFiction.SharedWeb.Features.Discovery
+@using IHFiction.SharedWeb.Components
 @page "/authors/{authorId}"
 @inject AuthorService AuthorService
 @inject MarkdownPipeline mdp
 @inject MetadataUrlService MetadataUrls
 @inject PersistentComponentState ApplicationState
 @using IHFiction.SharedWeb.Features.Following
-@implements IDisposable
+@inherits CancellableComponent
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -362,8 +363,9 @@ else if (author != null)
         };
     }
 
-    public void Dispose()
+    protected override async ValueTask DisposeAsyncCore()
     {
         _persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

@@ -1,6 +1,7 @@
 @using System.Text
 @using IHFiction.SharedWeb.Features.Reading
-@implements IDisposable
+@using IHFiction.SharedWeb.Components
+@inherits CancellableComponent
 @inject PersistentComponentState ApplicationState
 @inject WorkService WorkService
 @inject MetadataUrlService MetadataUrls
@@ -295,10 +296,11 @@ else if (loadFailed)
         return Task.CompletedTask;
     }
 
-    public void Dispose()
+    protected override async ValueTask DisposeAsyncCore()
     {
         loadGeneration++;
         persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 
     private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);

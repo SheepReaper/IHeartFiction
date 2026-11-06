@@ -1,9 +1,10 @@
 @using IHFiction.SharedWeb.Features.Discovery
 @using IHFiction.SharedKernel.Infrastructure
+@using IHFiction.SharedWeb.Components
 @inject PersistentComponentState ApplicationState
 @inject AuthorService AuthorService
 @inject MetadataUrlService MetadataUrls
-@implements IDisposable
+@inherits CancellableComponent
 
 @page "/authors/{authorId}/stories"
 
@@ -159,9 +160,10 @@
         return Task.CompletedTask;
     }
 
-    public void Dispose()
+    protected override async ValueTask DisposeAsyncCore()
     {
         _persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 
     private static string BuildStateKey(string authorId) => $"AuthorStories:Author:{authorId}";

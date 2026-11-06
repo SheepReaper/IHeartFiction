@@ -1,9 +1,10 @@
 @using IHFiction.SharedKernel.Searching
 @using IHFiction.SharedWeb.Features.Discovery
+@using IHFiction.SharedWeb.Components
 @inject TagService TagService
 @inject MetadataUrlService MetadataUrls
 @inject PersistentComponentState ApplicationState
-@implements IDisposable
+@inherits CancellableComponent
 
 @page "/tags"
 
@@ -192,8 +193,9 @@
 
     private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
 
-    public void Dispose()
+    protected override async ValueTask DisposeAsyncCore()
     {
         persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

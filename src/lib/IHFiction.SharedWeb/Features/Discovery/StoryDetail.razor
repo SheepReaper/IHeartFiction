@@ -2,11 +2,12 @@
 @using IHFiction.SharedWeb.Features.Reading
 @using IHFiction.SharedWeb.Features.Following
 @using IHFiction.SharedWeb.Features.Discovery
+@using IHFiction.SharedWeb.Components
 @page "/stories/{storyId}"
 @inject StoryDiscoveryService StoryService
 @inject MetadataUrlService MetadataUrls
 @inject PersistentComponentState ApplicationState
-@implements IDisposable
+@inherits CancellableComponent
 
 <SocialPreviewMetadata
     Title="@MetadataTitle"
@@ -637,8 +638,9 @@ else if (story != null)
         return names.Count == 1 ? names[0] : string.Join(", ", names.Take(3));
     }
 
-    public void Dispose()
+    protected override async ValueTask DisposeAsyncCore()
     {
         persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }

@@ -1,10 +1,11 @@
 @using IHFiction.SharedKernel.Searching
 @using IHFiction.SharedWeb.Features.Discovery
+@using IHFiction.SharedWeb.Components
 @inject MetadataUrlService MetadataUrls
 @inject TagLandingRequestContext RequestContext
 @inject TagService TagService
 @inject PersistentComponentState ApplicationState
-@implements IDisposable
+@inherits CancellableComponent
 
 @page "/tags/{TagSpec}"
 
@@ -83,30 +84,14 @@ else if (resolutionError is not null)
         }
     }
 
-    private string FormattedFanfictionHeading
-    {
-        get
-        {
-            if (resolutionResponse?.Tags is { Count: > 0 } tags)
-            {
-                return $"{string.Join(" + ", tags.Select(t => t.Value))} Fanfiction";
-            }
+    private string FormattedTagHeading => $"{BreadcrumbTagName} Stories";
 
-            if (TagRouteSpec.TryParse(TagSpec, out var tokens, out _) && tokens.Count > 0)
-            {
-                return $"{string.Join(" + ", tokens.Select(t => t.Value.Replace('-', ' ')))} Fanfiction";
-            }
+    private string PageHeading => FormattedTagHeading;
 
-            return $"{TagSpec} Fanfiction";
-        }
-    }
-
-    private string PageHeading => FormattedFanfictionHeading;
-
-    private string MetadataTitle => $"{FormattedFanfictionHeading} | I❤️Fiction";
+    private string MetadataTitle => $"{FormattedTagHeading} | I❤️Fiction";
 
     private string MetadataDescription =>
-        $"Browse published {FormattedFanfictionHeading.ToLowerInvariant()} stories across genres on IHeartFiction and start reading.";
+        $"Browse published {BreadcrumbTagName.ToLowerInvariant()} stories across genres on IHeartFiction and start reading.";
 
     private string CanonicalUrl => NormalizedPage <= 1
         ? $"/tags/{CanonicalSpec}"
@@ -230,7 +215,7 @@ else if (resolutionError is not null)
                 ["@context"] = "https://schema.org",
                 ["@type"] = "ItemList",
                 ["@id"] = ToAbsolute($"{CanonicalUrl}#itemlist"),
-                ["name"] = FormattedFanfictionHeading,
+                ["name"] = FormattedTagHeading,
                 ["url"] = ToAbsolute(CanonicalUrl)
             };
 
@@ -256,8 +241,9 @@ else if (resolutionError is not null)
 
     private string ToAbsolute(string path) => MetadataUrls.ToAbsolute(path);
 
-    public void Dispose()
+    protected override async ValueTask DisposeAsyncCore()
     {
         persistingSubscription.Dispose();
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 }
