@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.14] - 2026-11-06
+
+
+### Added
+
+- **auth:** Add accessible auth link buttons and direct-challenge shortcuts
+
+- **discovery:** Redesign homepage call-to-action flow with deep royal indigo theme
+
+- **legal:** Add privacy policy, terms of service, global footer, and improve become-author flow
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Fixed
+
+- **reading:** Redirect container /read/{id} links to DefaultReadableWorkId
+
+- **discovery:** Fix api-catalog media type, serve did.json, and expand discovery links
+
+- **reading:** Nullable chapter BookId, 1-based JSON-LD position, and reader UX
+
+- **discovery:** Canonicalize content_warning tags and structure story detail taxonomy
+
+- **api:** Consolidate published story collection on GET /stories
+
+
+### Maintenance
+
+- **tools:** Remove temporary machine-specific playwright script
+
+
+
 ## [v1.0.13] - 2026-11-06
 
 
