@@ -113,7 +113,11 @@ internal sealed class ListTags(
         var categoryFilter = InputSanitizationService.SanitizeTag(body.Category);
         if (!string.IsNullOrWhiteSpace(categoryFilter))
         {
-            tags = [.. tags.Where(tag => tag.Category.Equals(categoryFilter, StringComparison.OrdinalIgnoreCase))];
+            var normalizedCategoryFilter = TagRouteSpec.NormalizeIdentityComponent(categoryFilter);
+            tags = [.. tags.Where(tag => string.Equals(
+                TagRouteSpec.NormalizeIdentityComponent(tag.Category),
+                normalizedCategoryFilter,
+                StringComparison.OrdinalIgnoreCase))];
         }
 
         var searchFilter = InputSanitizationService.SanitizeTag(query.Search);

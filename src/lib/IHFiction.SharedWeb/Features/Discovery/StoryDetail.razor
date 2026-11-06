@@ -76,11 +76,24 @@ else if (story != null)
                         <p class="is-size-5">@story.Description</p>
                     </div>
 
-                    @if (story.Tags.Any())
+                    @{
+                        var warningTagItems = BuildWarningTagItems();
+                        var primaryTagItems = BuildPrimaryTagItems();
+                    }
+
+                    @if (warningTagItems.Count > 0)
                     {
-                        <div class="field">
-                            <h2 class="label">Tags</h2>
-                            <TagDisplay Items="@story.Tags.Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))" />
+                        <section class="notification has-background-warning-soft mb-4" aria-labelledby="story-content-warnings-heading">
+                            <h2 id="story-content-warnings-heading" class="title is-6 mb-2">Content Warnings</h2>
+                            <TagDisplay Items="@warningTagItems" />
+                        </section>
+                    }
+
+                    @if (primaryTagItems.Count > 0)
+                    {
+                        <div class="field mb-4">
+                            <h2 class="label">Primary Tags</h2>
+                            <TagDisplay Items="@primaryTagItems" />
                         </div>
                     }
                 </div>
@@ -190,6 +203,22 @@ else if (story != null)
                     </div>
                 </div>
             </div>
+
+            @{
+                var secondaryTagItems = BuildSecondaryTagItems();
+            }
+
+            @if (secondaryTagItems.Count > 0)
+            {
+                <details class="box mb-5">
+                    <summary class="title is-6 mb-0 is-clickable">
+                        Additional Tags (@secondaryTagItems.Count across @TagDisplayItem.Group(secondaryTagItems).Count categories)
+                    </summary>
+                    <div class="mt-4">
+                        <TagDisplay Items="@secondaryTagItems" />
+                    </div>
+                </details>
+            }
 
             @if (story.Type == MultiChapter && ((story.Chapters?.Any() ?? false) || (chapters?.Data?.Any() ?? false)))
             {
@@ -398,8 +427,8 @@ else if (story != null)
                 }
 
                 var contentWarnings = tags
-                    .Where(tag => string.Equals(tag.Category, "content-warning", StringComparison.OrdinalIgnoreCase))
-                    .Select(tag => tag.Value)
+                    .Where(tag => TagDisplayItem.IsContentWarningCategory(tag.Category))
+                    .Select(tag => TagDisplayItem.FormatValue(tag.Value))
                     .ToList();
 
                 if (contentWarnings.Count > 0)
@@ -411,11 +440,11 @@ else if (story != null)
                     .Where(tag => !string.Equals(tag.Category, "genre", StringComparison.OrdinalIgnoreCase)
                                && !string.Equals(tag.Category, "fandom", StringComparison.OrdinalIgnoreCase)
                                && !string.Equals(tag.Category, "language", StringComparison.OrdinalIgnoreCase)
-                               && !string.Equals(tag.Category, "content-warning", StringComparison.OrdinalIgnoreCase))
+                               && !TagDisplayItem.IsContentWarningCategory(tag.Category))
                     .Select(tag => new Dictionary<string, object?>
                     {
                         ["@type"] = "DefinedTerm",
-                        ["name"] = tag.Value,
+                        ["name"] = TagDisplayItem.FormatValue(tag.Value),
                         ["url"] = ToAbsolute($"/tags/{tag.RouteKey}")
                     })
                     .ToList();
@@ -463,6 +492,25 @@ else if (story != null)
 
     // Helper to provide a non-null story id string for markup
     private string StoryIdString => story?.Id.ToString() ?? string.Empty;
+
+    private IReadOnlyList<TagDisplayItem> BuildWarningTagItems() =>
+        story?.Tags
+            .Where(tag => TagDisplayItem.IsContentWarningCategory(tag.Category))
+            .Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))
+            .ToList() ?? [];
+
+    private IReadOnlyList<TagDisplayItem> BuildPrimaryTagItems() =>
+        story?.Tags
+            .Where(tag => TagDisplayItem.IsPrimarySelectionCategory(tag.Category))
+            .Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))
+            .ToList() ?? [];
+
+    private IReadOnlyList<TagDisplayItem> BuildSecondaryTagItems() =>
+        story?.Tags
+            .Where(tag => !TagDisplayItem.IsContentWarningCategory(tag.Category)
+                       && !TagDisplayItem.IsPrimarySelectionCategory(tag.Category))
+            .Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))
+            .ToList() ?? [];
 
     private string ToAbsolute(string url) => MetadataUrls.ToAbsolute(url);
 
