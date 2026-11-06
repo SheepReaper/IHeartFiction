@@ -77,7 +77,7 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("/scalar/v1");
 
         // Search & Listing
-        markdown.Should().Contain("GET https://api.iheartfiction.net/stories/published");
+        markdown.Should().Contain("GET https://api.iheartfiction.net/stories?q=");
         markdown.Should().Contain("GET https://api.iheartfiction.net/tags");
         markdown.Should().Contain("`q`");
         markdown.Should().Contain("`TagKey`");
@@ -89,7 +89,7 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("`Fields`");
         markdown.Should().Contain("\"data\":");
         markdown.Should().Contain("\"currentPage\":");
-        markdown.Should().NotContain("GET https://api.iheartfiction.net/stories?");
+        markdown.Should().NotContain("/stories/published");
 
         // Story Details, Chapters & Work Metadata
         markdown.Should().Contain("/stories/{id}");
@@ -105,7 +105,7 @@ public sealed class AgentSkillsCatalogTests
         // Authors
         markdown.Should().Contain("GET https://api.iheartfiction.net/authors?");
         markdown.Should().Contain("/authors/{id}");
-        markdown.Should().Contain("GET https://api.iheartfiction.net/stories/published?AuthorId=");
+        markdown.Should().Contain("GET https://api.iheartfiction.net/stories?AuthorId=");
         markdown.Should().NotContain("https://api.iheartfiction.net/authors/01J8Y6M1A2B3C4D5E6F7G8H9J0/stories");
         markdown.Should().NotContain("GET /authors/{id}/stories");
 

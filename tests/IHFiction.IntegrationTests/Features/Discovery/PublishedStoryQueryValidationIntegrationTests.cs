@@ -14,7 +14,7 @@ public sealed class PublishedStoryQueryValidationIntegrationTests(IntegrationTes
     public async Task InvalidSort_ReturnsActionableBadRequest(string sort)
     {
         var response = await _client.GetAsync(
-            $"/stories/published?Sort={Uri.EscapeDataString(sort)}",
+            $"/stories?Sort={Uri.EscapeDataString(sort)}",
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -31,7 +31,7 @@ public sealed class PublishedStoryQueryValidationIntegrationTests(IntegrationTes
     public async Task InvalidFields_ReturnsActionableBadRequest(string fields)
     {
         var response = await _client.GetAsync(
-            $"/stories/published?Fields={Uri.EscapeDataString(fields)}",
+            $"/stories?Fields={Uri.EscapeDataString(fields)}",
             TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

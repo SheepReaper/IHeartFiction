@@ -47,10 +47,10 @@ Homepage `Link` response headers on `https://iheartfiction.net/` announce machin
 
 ## 2. Story & Tag Discovery
 
-Search and filter published fiction stories using `GET /stories/published` on `https://api.iheartfiction.net/stories/published`.
-(`POST /stories` is an authenticated authoring endpoint; `GET /stories` is not a listing route.)
+Search and filter published fiction stories using `GET /stories` on `https://api.iheartfiction.net/stories`.
+(`POST /stories` is an authenticated authoring endpoint.)
 
-### Query Parameters (`GET /stories/published`)
+### Query Parameters (`GET /stories`)
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -70,7 +70,7 @@ Use `GET https://api.iheartfiction.net/tags` (`q`, `category`, `subcategory`, `P
 ### Example: Search Published Stories
 
 ```http
-GET https://api.iheartfiction.net/stories/published?q=space&TagKey=genre:sci-fi&Sort=publishedAt%20desc&Page=1&PageSize=10 HTTP/1.1
+GET https://api.iheartfiction.net/stories?q=space&TagKey=genre:sci-fi&Sort=publishedAt%20desc&Page=1&PageSize=10 HTTP/1.1
 Accept: application/json
 ```
 
@@ -116,7 +116,7 @@ Accept: application/json
   "hasNextPage": false,
   "links": [
     {
-      "href": "https://api.iheartfiction.net/stories/published?q=space&TagKey=genre:sci-fi&Sort=publishedAt%20desc&Page=1&PageSize=10",
+      "href": "https://api.iheartfiction.net/stories?q=space&TagKey=genre:sci-fi&Sort=publishedAt%20desc&Page=1&PageSize=10",
       "rel": "self",
       "method": "GET"
     }
@@ -250,14 +250,14 @@ Accept: application/json
 
 Returns `userId`, `name`, `updatedAt`, `bio`, `publishedStories` (the author's published stories embedded directly), and `links`.
 
-### Filter Published Stories by Author (`GET /stories/published?AuthorId={id}`)
+### Filter Published Stories by Author (`GET /stories?AuthorId={id}`)
 
 ```http
-GET https://api.iheartfiction.net/stories/published?AuthorId=01J8Y6M1A2B3C4D5E6F7G8H9J0 HTTP/1.1
+GET https://api.iheartfiction.net/stories?AuthorId=01J8Y6M1A2B3C4D5E6F7G8H9J0 HTTP/1.1
 Accept: application/json
 ```
 
-(On the Web Application, `https://iheartfiction.net/authors/{id}/stories` is an HTML/Markdown page route; the REST API uses `GET /stories/published?AuthorId={id}` or the `publishedStories` array on `GET /authors/{id}`.)
+(On the Web Application, `https://iheartfiction.net/authors/{id}/stories` is an HTML/Markdown page route; the REST API uses `GET /stories?AuthorId={id}` or the `publishedStories` array on `GET /authors/{id}`.)
 
 ---
 

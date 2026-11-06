@@ -46,7 +46,7 @@ public class LinkServiceTests
     public void Create_WhenMethodNotProvided_DefaultsToGet()
     {
         // Arrange
-        var linkGenerator = new StubLinkGenerator("https://localhost/stories/published");
+        var linkGenerator = new StubLinkGenerator("https://localhost/stories");
         var httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
 
         var sut = new LinkService(linkGenerator, httpContextAccessor);
@@ -55,7 +55,7 @@ public class LinkServiceTests
         var link = sut.Create("stories-list", "self");
 
         // Assert
-        link.Href.Should().Be("https://localhost/stories/published");
+        link.Href.Should().Be("https://localhost/stories");
         link.Rel.Should().Be("self");
         link.Method.Should().Be(HttpMethods.Get);
     }

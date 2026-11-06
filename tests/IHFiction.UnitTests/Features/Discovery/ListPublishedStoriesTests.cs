@@ -606,6 +606,22 @@ public class ListPublishedStoriesTests
         Assert.All(linked.Links, link => Assert.Contains("Fields=storyId,title", link.Href, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void MapEndpoint_MapsConsolidatedStoriesRoute()
+    {
+        var app = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder().Build();
+        new ListPublishedStories.Endpoint().MapEndpoint(app);
+
+        var routes = ((IEndpointRouteBuilder)app).DataSources
+            .SelectMany(ds => ds.Endpoints)
+            .OfType<RouteEndpoint>()
+            .Select(ep => ep.RoutePattern.RawText)
+            .ToList();
+
+        Assert.Contains("stories", routes);
+        Assert.DoesNotContain("stories/published", routes);
+    }
+
     private static LinkService CreateLinkService()
     {
         var linkGenerator = new FakeLinkGenerator();
@@ -678,7 +694,7 @@ public class ListPublishedStoriesTests
                 ? $"&Fields={fieldsValue}"
                 : "";
 
-            return $"/stories/published?page={page}&pageSize={pageSize}{tagKey}{fields}";
+            return $"/stories?page={page}&pageSize={pageSize}{tagKey}{fields}";
         }
 
         public override string? GetUriByAddress<TAddress>(
@@ -727,7 +743,7 @@ public class ListPublishedStoriesTests
                 ? $"&Fields={fieldsValue}"
                 : "";
 
-            return $"https://example.test/stories/published?page={page}&pageSize={pageSize}{tagKey}{fields}";
+            return $"https://example.test/stories?page={page}&pageSize={pageSize}{tagKey}{fields}";
         }
     }
 }

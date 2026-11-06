@@ -19,7 +19,7 @@ namespace IHFiction.IntegrationTests.Features.Discovery;
 public sealed class PublishedStoryPaginationLinkTests(IntegrationTestWebAppFactory factory) : IConfigureServices<PublishedStoryPaginationLinkTests>
 {
     [Theory]
-    [InlineData("/stories/published")]
+    [InlineData("/stories")]
     [InlineData("/authors")]
     [InlineData("/tags")]
     [InlineData("/me/stories")]
@@ -65,7 +65,7 @@ public sealed class PublishedStoryPaginationLinkTests(IntegrationTestWebAppFacto
             ["q"] = "Magic café", ["AuthorId"] = author.Id.ToString(), ["CompletionStatus"] = "Complete",
             ["TagKey"] = tag.NormalizedKey, ["Fields"] = "storyId,title", ["Sort"] = "title asc", ["PageSize"] = "1"
         };
-        string? next = QueryHelpers.AddQueryString("/stories/published", filters);
+        string? next = QueryHelpers.AddQueryString("/stories", filters);
         var visited = new List<string>();
         for (var page = 1; page <= 3; page++)
         {

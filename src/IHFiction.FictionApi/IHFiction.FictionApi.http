@@ -452,62 +452,62 @@ Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
 ###
 
 # List published stories (public endpoint - no auth required)
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published
+GET {{IHFiction.FictionApi_HostAddress}}/stories
 
 ###
 
 # List published stories with pagination
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?page=1&pageSize=10
+GET {{IHFiction.FictionApi_HostAddress}}/stories?page=1&pageSize=10
 
 ###
 
 # List published stories with search
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?search=adventure
+GET {{IHFiction.FictionApi_HostAddress}}/stories?search=adventure
 
 ###
 
 # List published stories sorted by title ascending
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortBy=title&sortOrder=asc
+GET {{IHFiction.FictionApi_HostAddress}}/stories?sortBy=title&sortOrder=asc
 
 ###
 
 # List published stories sorted by most recently updated
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortBy=updatedAt&sortOrder=desc
+GET {{IHFiction.FictionApi_HostAddress}}/stories?sortBy=updatedAt&sortOrder=desc
 
 ###
 
 # List published stories with combined parameters
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?page=2&pageSize=5&search=fantasy&sortBy=publishedAt&sortOrder=asc
+GET {{IHFiction.FictionApi_HostAddress}}/stories?page=2&pageSize=5&search=fantasy&sortBy=publishedAt&sortOrder=asc
 
 ###
 
 # List published stories with large page size
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?pageSize=50
+GET {{IHFiction.FictionApi_HostAddress}}/stories?pageSize=50
 
 ###
 
 # List published stories with maximum page size
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?pageSize=100
+GET {{IHFiction.FictionApi_HostAddress}}/stories?pageSize=100
 
 ###
 
 # Try invalid page size (should return 400)
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?pageSize=150
+GET {{IHFiction.FictionApi_HostAddress}}/stories?pageSize=150
 
 ###
 
 # Try invalid page (should return 400)
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?page=0
+GET {{IHFiction.FictionApi_HostAddress}}/stories?page=0
 
 ###
 
 # Try invalid sort by (should return 400)
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortBy=invalid
+GET {{IHFiction.FictionApi_HostAddress}}/stories?sortBy=invalid
 
 ###
 
 # Try invalid sort order (should return 400)
-GET {{IHFiction.FictionApi_HostAddress}}/stories/published?sortOrder=invalid
+GET {{IHFiction.FictionApi_HostAddress}}/stories?sortOrder=invalid
 
 ###
 

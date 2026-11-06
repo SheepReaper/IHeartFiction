@@ -101,7 +101,7 @@ public sealed class PaginationServiceTests
             paged.TotalCount,
             paged.CurrentPage,
             paged.PageSize,
-            [new LinkItem("/stories/published", "self", "GET")]);
+            [new LinkItem("/stories", "self", "GET")]);
 
         var shaped = (IDictionary<string, object?>)DataShapingService.ShapeData(linked, "title");
         var shapedItems = ((IEnumerable<object>)shaped["Data"]!).Cast<IDictionary<string, object?>>().ToList();

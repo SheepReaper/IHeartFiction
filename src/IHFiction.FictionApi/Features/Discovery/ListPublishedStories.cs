@@ -195,10 +195,10 @@ internal sealed class ListPublishedStories(
 
         public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
         {
-            return builder.MapGet("stories/published", async (
+            return builder.MapGet("stories", async (
                 [AsParameters] ListPublishedStoriesQuery query,
-                ListPublishedStories useCase,
-                LinkService linker,
+                [FromServices] ListPublishedStories useCase,
+                [FromServices] LinkService linker,
                 CancellationToken cancellationToken) =>
             {
                 var result = (await useCase
@@ -219,8 +219,7 @@ internal sealed class ListPublishedStories(
                         ]);
 
                 return result.ToOkResult();
-            }
-                )
+            })
                 .WithSummary("List Published Stories")
                 .WithDescription("Retrieves a paginated list of all publicly published stories. " +
                 "Supports searching by title, description, or author name. " +
