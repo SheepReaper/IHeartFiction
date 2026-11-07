@@ -62,7 +62,7 @@
     <PackageVersion Include="Microsoft.Testing.Platform" Version="2.5.2" />
     <PackageVersion Include="MongoDB.Bson" Version="3.13.0" />
     <PackageVersion Include="MongoDB.Driver" Version="3.13.0" />
-    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.4" />
+    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.5" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="Npgsql" Version="10.0.3" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.3" />
