@@ -65,7 +65,7 @@ public sealed class CookieAuthenticationTests
     }
 
     [Fact]
-    public void CreateRegisterProperties_SetsKeycloakRegisterActionAndPrompt()
+    public void CreateRegisterProperties_SetsKeycloakRegisterAction_WithoutInvalidPrompt()
     {
         var context = new DefaultHttpContext();
 
@@ -74,7 +74,7 @@ public sealed class CookieAuthenticationTests
         properties.IsPersistent.Should().BeTrue();
         properties.RedirectUri.Should().Be("/stories");
         properties.Items.Should().ContainKey("kc_action").WhoseValue.Should().Be("register");
-        properties.Items.Should().ContainKey("prompt").WhoseValue.Should().Be("create");
+        properties.Items.Should().NotContainKey("prompt");
     }
 
     [Theory]

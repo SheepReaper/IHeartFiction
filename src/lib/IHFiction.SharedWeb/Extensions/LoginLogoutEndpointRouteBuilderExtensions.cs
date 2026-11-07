@@ -129,7 +129,6 @@ public static class LoginLogoutEndpointRouteBuilderExtensions
     {
         var properties = CreateLoginProperties(returnUrl, context);
         properties.Items["kc_action"] = "register";
-        properties.Items["prompt"] = "create";
         return properties;
     }
 }

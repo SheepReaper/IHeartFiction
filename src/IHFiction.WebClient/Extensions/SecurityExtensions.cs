@@ -48,7 +48,11 @@ internal static class SecurityExtensions
                         context.ProtocolMessage.SetParameter("kc_action", kcAction);
                     }
 
-                    if (context.Properties.Items.TryGetValue("prompt", out var prompt) && !string.IsNullOrEmpty(prompt))
+                    // Google OAuth strictly rejects prompt=create with "Error 400: invalid_request" when Keycloak
+                    // forwards the prompt parameter to upstream identity providers.
+                    if (context.Properties.Items.TryGetValue("prompt", out var prompt) &&
+                        !string.IsNullOrEmpty(prompt) &&
+                        !string.Equals(prompt, "create", StringComparison.OrdinalIgnoreCase))
                     {
                         context.ProtocolMessage.Prompt = prompt;
                     }
