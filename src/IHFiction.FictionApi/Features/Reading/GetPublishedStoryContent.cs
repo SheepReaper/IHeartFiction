@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Features.Discovery;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
@@ -119,7 +120,11 @@ internal sealed class GetPublishedStoryContent(
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
                 return result
-                    .WithLinks(linker, GetPublishedStoryContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .WithLinks(storyContent =>
+                    [
+                        linker.Create<GetPublishedStoryContent>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", storyContent.StoryId.ToString())]),
+                        linker.Create<GetPublishedStory>("story", HttpMethods.Get, [new KeyValuePair<string, string?>("id", storyContent.StoryId.ToString())])
+                    ])
                     .ToOkResult(query);
             })
             .WithSummary("Get Published Story Content")

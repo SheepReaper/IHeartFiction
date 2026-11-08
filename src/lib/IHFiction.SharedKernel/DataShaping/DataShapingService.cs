@@ -539,6 +539,13 @@ public static class DataShapingService
             return true;
         }
 
+        if (memberName.Equals("HasContent", StringComparison.OrdinalIgnoreCase) ||
+            memberName.Equals("HasChapters", StringComparison.OrdinalIgnoreCase) ||
+            memberName.Equals("HasBooks", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return false;
     }
 

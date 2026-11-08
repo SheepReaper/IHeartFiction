@@ -4,6 +4,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Features.Discovery;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
@@ -324,6 +325,32 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
 
     public static string EndpointName => nameof(GetPublishedWorkMeta);
 
+    internal static List<LinkItem> BuildWorkMetaLinks(LinkService linker, GetPublishedWorkMetaResponse meta)
+    {
+        var workId = meta.Id.ToString();
+        var links = new List<LinkItem>
+        {
+            linker.Create<GetPublishedWorkMeta>("self", HttpMethods.Get, [new("id", workId)])
+        };
+
+        if (meta.IsDirectlyReadable)
+        {
+            links.Add(linker.Create<GetPublishedWorkContent>("content", HttpMethods.Get, [new("id", workId)]));
+        }
+
+        if (meta.StoryId is { } storyId)
+        {
+            links.Add(linker.Create<GetPublishedStory>("story", HttpMethods.Get, [new("id", storyId.ToString())]));
+        }
+
+        if (meta.Authors.FirstOrDefault() is { } primaryAuthor)
+        {
+            links.Add(linker.Create<GetAuthor>("author", HttpMethods.Get, [new("id", primaryAuthor.Id.ToString())]));
+        }
+
+        return links;
+    }
+
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
@@ -340,7 +367,7 @@ internal sealed class GetPublishedWorkMeta(FictionDbContext context) : IUseCase,
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
                 return result
-                    .WithLinks(linker, GetPublishedWorkMeta.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .WithLinks(meta => BuildWorkMetaLinks(linker, meta))
                     .ToOkResult(query);
             })
             .WithSummary("Get Published Work Metadata")

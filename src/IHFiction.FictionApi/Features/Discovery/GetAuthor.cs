@@ -109,7 +109,8 @@ internal sealed class GetAuthor(FictionDbContext context) : IUseCase, INameEndpo
 
                 var okResult = result
                     .WithLinks([
-                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())])
+                        linker.Create<GetAuthor>("self", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())]),
+                        linker.Create<ListPublishedStories>("stories", HttpMethods.Get, [new KeyValuePair<string, string?>(nameof(ListPublishedStories.ListPublishedStoriesQuery.AuthorId), id.ToString())])
                     ])
                     .ToOkResult(query);
 

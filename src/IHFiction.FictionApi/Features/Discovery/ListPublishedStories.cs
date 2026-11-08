@@ -7,6 +7,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Features.Reading;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
@@ -189,6 +190,28 @@ internal sealed class ListPublishedStories(
 
     public static string EndpointName => nameof(ListPublishedStories);
 
+    internal static List<LinkItem> BuildStoryItemLinks(LinkService linker, ListPublishedStoriesItem story)
+    {
+        var storyId = story.StoryId.ToString();
+        var links = new List<LinkItem>
+        {
+            linker.Create<GetPublishedStory>("self", HttpMethods.Get, [new("id", storyId)]),
+            linker.Create<GetAuthor>("author", HttpMethods.Get, [new("id", story.AuthorId.ToString())])
+        };
+
+        if (story.HasChapters || story.HasBooks)
+        {
+            links.Add(linker.Create<ListPublishedStoryChapters>("chapters", HttpMethods.Get, [new("id", storyId)]));
+        }
+
+        if (story.HasContent)
+        {
+            links.Add(linker.Create<GetPublishedStoryContent>("content", HttpMethods.Get, [new("id", storyId)]));
+        }
+
+        return links;
+    }
+
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
@@ -206,9 +229,7 @@ internal sealed class ListPublishedStories(
                     .WithLinks(
                         linker,
                         Name,
-                        story => new(story, new List<LinkItem>() {
-                            linker.Create<GetPublishedStory>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", story.StoryId.ToString()) })
-                        }),
+                        story => new(story, BuildStoryItemLinks(linker, story)),
                         query,
                         routeValues:
                         [

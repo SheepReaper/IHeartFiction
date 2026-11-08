@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Features.Reading;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
@@ -194,6 +195,29 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
 
     public static string EndpointName => nameof(GetPublishedStory);
 
+    internal static List<LinkItem> BuildStoryLinks(LinkService linker, GetPublishedStoryResponse story)
+    {
+        var storyId = story.Id.ToString();
+        var links = new List<LinkItem>
+        {
+            linker.Create<GetPublishedStory>("self", HttpMethods.Get, [new("id", storyId)]),
+            linker.Create<GetAuthor>("author", HttpMethods.Get, [new("id", story.OwnerId.ToString())]),
+            linker.Create<GetPublishedWorkMeta>("meta", HttpMethods.Get, [new("id", storyId)])
+        };
+
+        if (story.Type is StoryType.MultiChapter or StoryType.MultiBook || story.Chapters.Any() || story.Books.Any())
+        {
+            links.Add(linker.Create<ListPublishedStoryChapters>("chapters", HttpMethods.Get, [new("id", storyId)]));
+        }
+
+        if (story.Type == StoryType.SingleBody)
+        {
+            links.Add(linker.Create<GetPublishedStoryContent>("content", HttpMethods.Get, [new("id", storyId)]));
+        }
+
+        return links;
+    }
+
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
@@ -210,7 +234,7 @@ internal sealed class GetPublishedStory(EntityLoaderService entityLoader) : IUse
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
                 return result
-                    .WithLinks(linker, GetPublishedStory.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .WithLinks(story => BuildStoryLinks(linker, story))
                     .ToOkResult(query);
             })
             .WithSummary("Get Story by ID")

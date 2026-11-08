@@ -1,17 +1,30 @@
+using System.Text.Json;
+
+using Cysharp.Serialization.Json;
+
 using IHFiction.Data.Authors.Domain;
 using IHFiction.Data.Contexts;
 using IHFiction.Data.Searching.Domain;
 using IHFiction.Data.Stories.Domain;
+using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
 using IHFiction.FictionApi.Features.Discovery;
+using IHFiction.FictionApi.Features.Reading;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.Linking;
 using IHFiction.SharedKernel.Pagination;
 
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+
+using MongoDB.Bson;
 
 namespace IHFiction.UnitTests.Features.Discovery;
 
@@ -622,6 +635,224 @@ public class ListPublishedStoriesTests
         Assert.DoesNotContain("stories/published", routes);
     }
 
+    [Fact]
+    public async Task HypermediaLinks_AllowTraversalFromStoriesWithProjectionToAuthorStoryAndChapters()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        var authorId = Ulid.NewUlid();
+        var storyId = Ulid.NewUlid();
+        var chapter1Id = Ulid.NewUlid();
+        var chapter2Id = Ulid.NewUlid();
+
+        await using (var seedContext = CreateContext(databaseName))
+        {
+            var author = new Author
+            {
+                Id = authorId,
+                UserId = Guid.NewGuid(),
+                Name = "Jane Navigator"
+            };
+            var story = new Story
+            {
+                Id = storyId,
+                Title = "Navigable Odyssey",
+                Description = "A multi-chapter story with navigable links.",
+                Owner = author,
+                OwnerId = author.Id,
+                PublishedAt = DateTime.UtcNow,
+                CompletionStatus = StoryCompletionStatus.InProgress
+            };
+            story.Authors.Add(author);
+
+            var chapter1 = new Chapter
+            {
+                Id = chapter1Id,
+                Title = "Chapter 1: Departure",
+                Order = 1,
+                Owner = author,
+                OwnerId = author.Id,
+                Story = story,
+                StoryId = story.Id,
+                PublishedAt = DateTime.UtcNow,
+                WorkBodyId = ObjectId.GenerateNewId()
+            };
+            var chapter2 = new Chapter
+            {
+                Id = chapter2Id,
+                Title = "Chapter 2: Orbit",
+                Order = 2,
+                Owner = author,
+                OwnerId = author.Id,
+                Story = story,
+                StoryId = story.Id,
+                PublishedAt = DateTime.UtcNow,
+                WorkBodyId = ObjectId.GenerateNewId()
+            };
+
+            seedContext.AddRange(author, story, chapter1, chapter2);
+            await seedContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var builder = WebApplication.CreateBuilder();
+        builder.Configuration["AllowedHosts"] = "*";
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.Configure<RouteOptions>(options =>
+        {
+            options.ConstraintMap["ulid"] = typeof(UlidRouteConstraint);
+        });
+        builder.Services.AddPagination();
+        builder.Services.AddScoped<LinkService>();
+        builder.Services.AddScoped(_ => CreateContext(databaseName));
+        builder.Services.AddScoped<EntityLoaderService>();
+        builder.Services.AddScoped<ResolveTagLanding>();
+        builder.Services.AddScoped<ListPublishedStories>();
+        builder.Services.AddScoped<GetPublishedStory>();
+        builder.Services.AddScoped<ListPublishedStoryChapters>();
+        builder.Services.AddScoped<GetAuthor>();
+        builder.Services.AddScoped<ListAuthors>();
+        builder.Services.AddScoped<GetPublishedWorkMeta>();
+        builder.Services.AddScoped<GetPublishedChapterContent>(_ => new GetPublishedChapterContent(workBodies: null!, CreateContext(databaseName)));
+        builder.Services.AddScoped<GetPublishedStoryContent>(_ => new GetPublishedStoryContent(workBodies: null!, new EntityLoaderService(CreateContext(databaseName))));
+        builder.Services.AddScoped<GetPublishedWorkContent>(_ => new GetPublishedWorkContent(workBodies: null!, CreateContext(databaseName)));
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
+            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.SerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+            options.SerializerOptions.Converters.Add(new UlidJsonConverter());
+            options.SerializerOptions.Converters.Add(new LinkedConverterFactory());
+            options.SerializerOptions.TypeInfoResolverChain.Insert(0, FictionApiJsonSerializerContext.Default);
+        });
+
+        await using var app = builder.Build();
+        var group = app.MapGroup("").AddEndpointFilter<DataShapingEndpointFilter>();
+
+        IEndpoint[] endpoints =
+        [
+            new ListPublishedStories.Endpoint(),
+            new GetPublishedStory.Endpoint(),
+            new ListPublishedStoryChapters.Endpoint(),
+            new GetAuthor.Endpoint(),
+            new ListAuthors.Endpoint(),
+            new GetPublishedWorkMeta.Endpoint(),
+            new GetPublishedChapterContent.Endpoint(),
+            new GetPublishedStoryContent.Endpoint(),
+            new GetPublishedWorkContent.Endpoint()
+        ];
+
+        foreach (var endpoint in endpoints)
+        {
+            endpoint.MapEndpoint(group).WithName(endpoint.Name);
+        }
+
+        await app.StartAsync(TestContext.Current.CancellationToken);
+
+        var baseAddress = app.Services.GetRequiredService<IServer>()
+            .Features.Get<IServerAddressesFeature>()!
+            .Addresses.Single();
+        using var httpClient = new HttpClient { BaseAddress = new Uri(baseAddress) };
+
+        // 1. Start at GET /stories with Fields projection omitting hasChapters/hasContent/authorId
+        using var storiesResponse = await httpClient.GetAsync(
+            new Uri("/stories?Fields=storyId,title", UriKind.Relative),
+            TestContext.Current.CancellationToken);
+        Assert.True(storiesResponse.IsSuccessStatusCode);
+        using var storiesDoc = JsonDocument.Parse(
+            await storiesResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var storyItem = Assert.Single(storiesDoc.RootElement.GetProperty("data").EnumerateArray());
+        Assert.Equal("Navigable Odyssey", storyItem.GetProperty("title").GetString());
+        Assert.False(storyItem.TryGetProperty("description", out _));
+        Assert.False(storyItem.TryGetProperty("hasChapters", out _));
+
+        var storyItemLinks = storyItem.GetProperty("links").EnumerateArray()
+            .ToDictionary(l => l.GetProperty("rel").GetString()!, l => l.GetProperty("href").GetString()!);
+        Assert.Contains("self", storyItemLinks.Keys);
+        Assert.Contains("author", storyItemLinks.Keys);
+        Assert.Contains("chapters", storyItemLinks.Keys);
+        Assert.DoesNotContain("content", storyItemLinks.Keys);
+
+        // 2. Follow rel="author" -> GET /authors/{id} -> verify rel="stories"
+        using var authorResponse = await httpClient.GetAsync(
+            new Uri(storyItemLinks["author"]),
+            TestContext.Current.CancellationToken);
+        Assert.True(authorResponse.IsSuccessStatusCode);
+        using var authorDoc = JsonDocument.Parse(
+            await authorResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("Jane Navigator", authorDoc.RootElement.GetProperty("name").GetString());
+        var authorLinks = authorDoc.RootElement.GetProperty("links").EnumerateArray()
+            .ToDictionary(l => l.GetProperty("rel").GetString()!, l => l.GetProperty("href").GetString()!);
+        Assert.Contains("self", authorLinks.Keys);
+        Assert.Contains("stories", authorLinks.Keys);
+        Assert.Contains($"AuthorId={authorId}", authorLinks["stories"], StringComparison.OrdinalIgnoreCase);
+
+        // 3. Follow rel="self" on story item -> GET /stories/{id} -> verify self, author, meta, chapters
+        using var storyDetailResponse = await httpClient.GetAsync(
+            new Uri(storyItemLinks["self"]),
+            TestContext.Current.CancellationToken);
+        Assert.True(storyDetailResponse.IsSuccessStatusCode);
+        using var storyDetailDoc = JsonDocument.Parse(
+            await storyDetailResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var storyDetailLinks = storyDetailDoc.RootElement.GetProperty("links").EnumerateArray()
+            .ToDictionary(l => l.GetProperty("rel").GetString()!, l => l.GetProperty("href").GetString()!);
+        Assert.Contains("self", storyDetailLinks.Keys);
+        Assert.Contains("author", storyDetailLinks.Keys);
+        Assert.Contains("meta", storyDetailLinks.Keys);
+        Assert.Contains("chapters", storyDetailLinks.Keys);
+
+        // 4. Follow rel="meta" -> GET /works/{id}/meta -> verify self, story, author
+        using var metaResponse = await httpClient.GetAsync(
+            new Uri(storyDetailLinks["meta"]),
+            TestContext.Current.CancellationToken);
+        Assert.True(metaResponse.IsSuccessStatusCode);
+        using var metaDoc = JsonDocument.Parse(
+            await metaResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var metaLinks = metaDoc.RootElement.GetProperty("links").EnumerateArray()
+            .ToDictionary(l => l.GetProperty("rel").GetString()!, l => l.GetProperty("href").GetString()!);
+        Assert.Contains("self", metaLinks.Keys);
+        Assert.Contains("story", metaLinks.Keys);
+        Assert.Contains("author", metaLinks.Keys);
+
+        // 5. Follow rel="chapters" -> GET /stories/{id}/chapters -> verify collection rel="story" and chapter links
+        using var chaptersResponse = await httpClient.GetAsync(
+            new Uri(storyDetailLinks["chapters"]),
+            TestContext.Current.CancellationToken);
+        Assert.True(chaptersResponse.IsSuccessStatusCode);
+        using var chaptersDoc = JsonDocument.Parse(
+            await chaptersResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        var chaptersCollectionLinks = chaptersDoc.RootElement.GetProperty("links").EnumerateArray()
+            .ToDictionary(l => l.GetProperty("rel").GetString()!, l => l.GetProperty("href").GetString()!);
+        Assert.Contains("self", chaptersCollectionLinks.Keys);
+        Assert.Contains("story", chaptersCollectionLinks.Keys);
+
+        var chaptersArray = chaptersDoc.RootElement.GetProperty("data").EnumerateArray().ToArray();
+        Assert.Equal(2, chaptersArray.Length);
+        var firstChapterLinks = chaptersArray[0].GetProperty("links").EnumerateArray()
+            .ToDictionary(l => l.GetProperty("rel").GetString()!, l => l.GetProperty("href").GetString()!);
+        Assert.Contains("self", firstChapterLinks.Keys);
+        Assert.Contains("content", firstChapterLinks.Keys);
+        Assert.Contains("story", firstChapterLinks.Keys);
+        Assert.EndsWith($"/chapters/{chapter1Id}/content", firstChapterLinks["content"], StringComparison.OrdinalIgnoreCase);
+
+        // 6. Verify adjacent chapter resolution & link building on GetPublishedChapterContent
+        await using var verifyContext = CreateContext(databaseName);
+        var chapterContentUseCase = new GetPublishedChapterContent(workBodies: null!, verifyContext);
+        var (prev1, next1) = await chapterContentUseCase.GetAdjacentChapterIdsAsync(
+            chapter1Id,
+            storyId,
+            bookId: null,
+            TestContext.Current.CancellationToken);
+        Assert.Null(prev1);
+        Assert.Equal(chapter2Id, next1);
+
+        var (prev2, next2) = await chapterContentUseCase.GetAdjacentChapterIdsAsync(
+            chapter2Id,
+            storyId,
+            bookId: null,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(chapter1Id, prev2);
+        Assert.Null(next2);
+    }
+
     private static LinkService CreateLinkService()
     {
         var linkGenerator = new FakeLinkGenerator();
@@ -643,10 +874,10 @@ public class ListPublishedStoriesTests
         CompletionStatus = completionStatus
     };
 
-    private static FictionDbContext CreateContext()
+    private static FictionDbContext CreateContext(string? databaseName = null)
     {
         var options = new DbContextOptionsBuilder<FictionDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString())
             .Options;
 
         return new FictionDbContext(options);

@@ -106,6 +106,16 @@ internal sealed class ListAuthors(
 
     public static string EndpointName => nameof(ListAuthors);
 
+    internal static List<LinkItem> BuildAuthorItemLinks(LinkService linker, ListAuthorsItem author)
+    {
+        var authorId = author.Id.ToString();
+        return
+        [
+            linker.Create<GetAuthor>("self", HttpMethods.Get, [new("id", authorId)]),
+            linker.Create<ListPublishedStories>("stories", HttpMethods.Get, [new(nameof(ListPublishedStories.ListPublishedStoriesQuery.AuthorId), authorId)])
+        ];
+    }
+
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
@@ -123,9 +133,7 @@ internal sealed class ListAuthors(
                     .WithLinks(
                         linker,
                         Name,
-                        a => new(a, new List<LinkItem>() {
-                            linker.Create<GetAuthor>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", a.Id.ToString()) })
-                        }),
+                        author => new(author, BuildAuthorItemLinks(linker, author)),
                         query);
 
                 return result.ToOkResult();

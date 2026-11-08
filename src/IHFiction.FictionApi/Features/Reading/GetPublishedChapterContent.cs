@@ -4,6 +4,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Features.Discovery;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
@@ -127,7 +128,67 @@ internal sealed class GetPublishedChapterContent(
                 workBody.UpdatedAt,
                 chapter.UpdatedAt);
     }
+    public async Task<(Ulid? PreviousChapterId, Ulid? NextChapterId)> GetAdjacentChapterIdsAsync(
+        Ulid chapterId,
+        Ulid storyId,
+        Ulid? bookId,
+        CancellationToken cancellationToken = default)
+    {
+        var orderedChapterIds = bookId is not null
+            ? await context.Chapters
+                .AsNoTracking()
+                .Where(c => c.BookId == bookId && c.PublishedAt != null)
+                .OrderBy(c => c.Order)
+                .ThenBy(c => c.Id)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken)
+            : await context.Chapters
+                .AsNoTracking()
+                .Where(c => c.StoryId == storyId && c.BookId == null && c.PublishedAt != null)
+                .OrderBy(c => c.Order)
+                .ThenBy(c => c.Id)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+
+        var index = orderedChapterIds.IndexOf(chapterId);
+        if (index < 0)
+        {
+            return (null, null);
+        }
+
+        Ulid? previousId = index > 0 ? orderedChapterIds[index - 1] : null;
+        Ulid? nextId = index + 1 < orderedChapterIds.Count ? orderedChapterIds[index + 1] : null;
+        return (previousId, nextId);
+    }
+
     public static string EndpointName => nameof(GetPublishedChapterContent);
+
+    internal static List<LinkItem> BuildChapterContentLinks(
+        LinkService linker,
+        GetPublishedChapterContentResponse chapterContent,
+        Ulid? previousChapterId,
+        Ulid? nextChapterId)
+    {
+        var storyId = chapterContent.StoryId.ToString();
+        var links = new List<LinkItem>
+        {
+            linker.Create<GetPublishedChapterContent>("self", HttpMethods.Get, [new("id", chapterContent.ChapterId.ToString())]),
+            linker.Create<GetPublishedStory>("story", HttpMethods.Get, [new("id", storyId)]),
+            linker.Create<ListPublishedStoryChapters>("chapters", HttpMethods.Get, [new("id", storyId)])
+        };
+
+        if (previousChapterId is { } prevId)
+        {
+            links.Add(linker.Create<GetPublishedChapterContent>("previous-chapter", HttpMethods.Get, [new("id", prevId.ToString())]));
+        }
+
+        if (nextChapterId is { } nextId)
+        {
+            links.Add(linker.Create<GetPublishedChapterContent>("next-chapter", HttpMethods.Get, [new("id", nextId.ToString())]));
+        }
+
+        return links;
+    }
 
     internal sealed class Endpoint : IEndpoint
     {
@@ -143,9 +204,19 @@ internal sealed class GetPublishedChapterContent(
                 CancellationToken cancellationToken) =>
             {
                 var result = await useCase.HandleAsync(id, cancellationToken);
+                if (result.IsFailure)
+                {
+                    return result.DomainError.ToProblemDetailsResult();
+                }
+
+                var (previousId, nextId) = await useCase.GetAdjacentChapterIdsAsync(
+                    result.Value.ChapterId,
+                    result.Value.StoryId,
+                    result.Value.BookId,
+                    cancellationToken);
 
                 return result
-                    .WithLinks(linker, GetPublishedChapterContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .WithLinks(chapter => BuildChapterContentLinks(linker, chapter, previousId, nextId))
                     .ToOkResult(query);
             })
             .WithSummary("Get Published Chapter Content")

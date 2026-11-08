@@ -4,6 +4,7 @@ using IHFiction.Data.Contexts;
 using IHFiction.Data.Stories.Domain;
 using IHFiction.FictionApi.Common;
 using IHFiction.FictionApi.Extensions;
+using IHFiction.FictionApi.Features.Discovery;
 using IHFiction.FictionApi.Infrastructure;
 using IHFiction.SharedKernel.DataShaping;
 using IHFiction.SharedKernel.Infrastructure;
@@ -187,6 +188,29 @@ internal sealed class GetPublishedWorkContent(
 
     public static string EndpointName => nameof(GetPublishedWorkContent);
 
+    internal static List<LinkItem> BuildWorkContentLinks(LinkService linker, GetPublishedWorkContentResponse workContent)
+    {
+        var workId = workContent.Id.ToString();
+        var links = new List<LinkItem>
+        {
+            linker.Create<GetPublishedWorkContent>("self", HttpMethods.Get, [new("id", workId)]),
+            linker.Create<GetPublishedWorkMeta>("meta", HttpMethods.Get, [new("id", workId)])
+        };
+
+        if (workContent.StoryId is { } storyId)
+        {
+            var storyIdString = storyId.ToString();
+            links.Add(linker.Create<GetPublishedStory>("story", HttpMethods.Get, [new("id", storyIdString)]));
+
+            if (string.Equals(workContent.WorkType, nameof(Chapter), StringComparison.OrdinalIgnoreCase))
+            {
+                links.Add(linker.Create<ListPublishedStoryChapters>("chapters", HttpMethods.Get, [new("id", storyIdString)]));
+            }
+        }
+
+        return links;
+    }
+
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
@@ -203,7 +227,7 @@ internal sealed class GetPublishedWorkContent(
                 var result = await useCase.HandleAsync(id, cancellationToken);
 
                 return result
-                    .WithLinks(linker, GetPublishedWorkContent.EndpointName, values: [new KeyValuePair<string, string?>("id", id.ToString())])
+                    .WithLinks(workContent => BuildWorkContentLinks(linker, workContent))
                     .ToOkResult(query);
             })
             .WithSummary("Get Published Work Content")

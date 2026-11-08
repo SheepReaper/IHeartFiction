@@ -102,6 +102,17 @@ internal sealed class ListPublishedStoryChapters(
     }
     public static string EndpointName => nameof(ListPublishedStoryChapters);
 
+    internal static List<LinkItem> BuildChapterItemLinks(LinkService linker, Ulid storyId, ListPublishedStoryChaptersItem chapter)
+    {
+        var chapterId = chapter.ChapterId.ToString();
+        return
+        [
+            linker.Create<GetPublishedChapterContent>("self", HttpMethods.Get, [new("id", chapterId)]),
+            linker.Create<GetPublishedChapterContent>("content", HttpMethods.Get, [new("id", chapterId)]),
+            linker.Create<GetPublishedStory>("story", HttpMethods.Get, [new("id", storyId.ToString())])
+        ];
+    }
+
     internal sealed class Endpoint : IEndpoint
     {
         public string Name => EndpointName;
@@ -119,11 +130,10 @@ internal sealed class ListPublishedStoryChapters(
                     .WithLinks(
                         linker,
                         Name,
-                        chapter => new(chapter, new List<LinkItem>() {
-                            linker.Create<GetPublishedChapterContent>("self", HttpMethods.Get, new[] { new KeyValuePair<string, string?>("id", chapter.ChapterId.ToString()) })
-                        }),
+                        chapter => new(chapter, BuildChapterItemLinks(linker, id, chapter)),
                         query,
-                        routeValues: [new KeyValuePair<string, string?>("id", id.ToString())]);
+                        routeValues: [new KeyValuePair<string, string?>("id", id.ToString())],
+                        extraCollectionLinks: [linker.Create<GetPublishedStory>("story", HttpMethods.Get, [new KeyValuePair<string, string?>("id", id.ToString())])]);
 
                 return result.ToOkResult(query);
             })
