@@ -65,7 +65,7 @@ Search and filter published fiction stories using `GET /stories` on `https://api
 
 ### Discovering Tags (`GET /tags`)
 
-Use `GET https://api.iheartfiction.net/tags` (`q`, `category`, `subcategory`, `Page`, `PageSize` 1–100) to discover canonical tag keys and story counts before filtering with `TagKey`.
+Use `GET https://api.iheartfiction.net/tags` (`q`, `Category`, `Subcategory`, `Sort`, `Fields`, `Page`, `PageSize` 1–200) to discover canonical tag keys and story counts before filtering with `TagKey`.
 
 ### Example: Search Published Stories
 

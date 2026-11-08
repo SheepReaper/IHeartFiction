@@ -23,7 +23,8 @@ public partial class StoryService(FictionApiClient client, ILogger<StoryService>
             q: search,
             sort: "value",
             fields: null,
-            body: new ListTagsBody(),
+            category: null,
+            subcategory: null,
             cancellationToken: cancellationToken).HandleApiException();
 
     public async ValueTask<Result<LinkedOfAddTagsToStoryResponse>> AddTagsToStoryAsync(

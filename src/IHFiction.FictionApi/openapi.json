@@ -3959,7 +3959,7 @@
           "Tags"
         ],
         "summary": "List Tags",
-        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by category and searching by tag value. Each result exposes the normalized key accepted by the published-story tag filter. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
+        "description": "Retrieves a paginated list of all available tags used across stories. Supports filtering by Category and Subcategory query parameters and searching by tag value (q). Each result exposes the normalized key accepted by the published-story tag filter. Tags can be sorted by category, value, usage count, or creation date. This is a public endpoint that does not require authentication.",
         "operationId": "ListTags",
         "parameters": [
           {
@@ -4031,24 +4031,26 @@
               "default": ""
             },
             "example": "name,createdAt"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "oneOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/components/schemas/ListTagsBody"
-                  }
-                ]
-              }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          {
+            "name": "Subcategory",
+            "in": "query",
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
             }
           }
-        },
+        ],
         "responses": {
           "400": {
             "description": "Bad Request",
@@ -9813,21 +9815,6 @@
           }
         },
         "description": "An object representing a hypermedia link."
-      },
-      "ListTagsBody": {
-        "type": "object",
-        "properties": {
-          "category": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Optional filter to show tags from a specific category only."
-          }
-        },
-        "description": "Request model for listing tags with pagination, search, and filtering capabilities."
       },
       "MarkDeviceNotificationReadResponse": {
         "required": [

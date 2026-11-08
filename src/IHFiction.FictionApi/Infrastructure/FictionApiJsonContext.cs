@@ -193,7 +193,6 @@ namespace IHFiction.FictionApi.Infrastructure;
 
 // Tags
 [JsonSerializable(typeof(ListTags.ListTagsQuery))]
-[JsonSerializable(typeof(ListTags.ListTagsBody))]
 [JsonSerializable(typeof(LinkedPagedCollection<ListTags.ListTagsItem>))]
 [JsonSerializable(typeof(ResolveTagLanding.ResolveTagLandingQuery))]
 [JsonSerializable(typeof(ResolveTagLanding.ResolveTagLandingResponse))]

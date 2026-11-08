@@ -136,7 +136,6 @@ public sealed class TagTaxonomyIntegrationTests : BaseIntegrationTest, IConfigur
         var listTags = new ListTags(_context, paginator);
         var tagsResult = await listTags.HandleAsync(
             new ListTags.ListTagsQuery(PageSize: 200),
-            new ListTags.ListTagsBody(),
             TestContext.Current.CancellationToken);
 
         Assert.True(tagsResult.IsSuccess);

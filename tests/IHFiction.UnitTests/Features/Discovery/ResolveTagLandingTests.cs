@@ -79,7 +79,7 @@ public sealed class ResolveTagLandingTests
         await context.SaveChangesAsync(TestContext.Current.CancellationToken);
         var listed = await new ListTags(context, new IHFiction.FictionApi.Infrastructure.PaginationService(
             Microsoft.Extensions.Options.Options.Create(new IHFiction.FictionApi.Infrastructure.PaginationOptions())))
-            .HandleAsync(new ListTags.ListTagsQuery(), new ListTags.ListTagsBody(), TestContext.Current.CancellationToken);
+            .HandleAsync(new ListTags.ListTagsQuery(), TestContext.Current.CancellationToken);
         Assert.True(listed.IsSuccess);
         Assert.Equal(1, Assert.Single(listed.Value.Data).StoryCount);
     }

@@ -40,10 +40,18 @@ public sealed class TagService(FictionApiClient client)
         }
     }
 
-    public async ValueTask<Result<LinkedPagedCollectionOfListTagsItem>> ListAsync(
+    public ValueTask<Result<LinkedPagedCollectionOfListTagsItem>> ListAsync(
         int page = 1,
         int pageSize = 100,
         CancellationToken cancellationToken = default) =>
-        await client.ListTagsAsync(page, pageSize, null, "value", null, new ListTagsBody(), cancellationToken)
+        ListAsync(page, pageSize, null, null, cancellationToken);
+
+    public async ValueTask<Result<LinkedPagedCollectionOfListTagsItem>> ListAsync(
+        int page,
+        int pageSize,
+        string? category,
+        string? subcategory = null,
+        CancellationToken cancellationToken = default) =>
+        await client.ListTagsAsync(page, pageSize, null, "value", null, category, subcategory, cancellationToken)
             .HandleApiException();
 }

@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Net.Mime;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 using IHFiction.Data.Contexts;
@@ -35,15 +33,6 @@ internal sealed class ListTags(
         public static readonly DomainError InvalidSortOrder = new("ListTags.InvalidSortOrder", "Sort order must be either 'asc' or 'desc'.");
     }
 
-    /// <summary>
-    /// Request model for listing tags with pagination, search, and filtering capabilities.
-    /// </summary>
-    /// <param name="Category">Optional filter to show tags from a specific category only.</param>
-    internal sealed record ListTagsBody(
-        [property: StringLength(50, ErrorMessage = "Category must be 50 characters or less.")]
-        string? Category = null
-    );
-
     internal sealed record ListTagsQuery(
         [property: Range(1, int.MaxValue, ErrorMessage = "Page must be greater than 0.")]
         int Page = 1,
@@ -61,7 +50,13 @@ internal sealed class ListTags(
 
         [property: StringLength(50, ErrorMessage = "Fields must be 50 characters or less.")]
         [property: ShapesType<ListTagsItem>]
-        string Fields = ""
+        string Fields = "",
+
+        [property: StringLength(50, ErrorMessage = "Category must be 50 characters or less.")]
+        string? Category = null,
+
+        [property: StringLength(50, ErrorMessage = "Subcategory must be 50 characters or less.")]
+        string? Subcategory = null
     ) : IPaginationSupport, ISearchSupport, ISortingSupport, IDataShapingSupport;
 
     /// <summary>
@@ -101,7 +96,6 @@ internal sealed class ListTags(
 
     public async Task<Result<PagedCollection<ListTagsItem>>> HandleAsync(
         ListTagsQuery query,
-        ListTagsBody body,
         CancellationToken cancellationToken = default)
     {
         var tags = await context.Tags
@@ -110,7 +104,7 @@ internal sealed class ListTags(
             .Include(tag => tag.Synonyms)
             .ToListAsync(cancellationToken);
 
-        var categoryFilter = InputSanitizationService.SanitizeTag(body.Category);
+        var categoryFilter = InputSanitizationService.SanitizeTag(query.Category);
         if (!string.IsNullOrWhiteSpace(categoryFilter))
         {
             var normalizedCategoryFilter = TagRouteSpec.NormalizeIdentityComponent(categoryFilter);
@@ -118,6 +112,18 @@ internal sealed class ListTags(
                 TagRouteSpec.NormalizeIdentityComponent(tag.Category),
                 normalizedCategoryFilter,
                 StringComparison.OrdinalIgnoreCase))];
+        }
+
+        var subcategoryFilter = InputSanitizationService.SanitizeTag(query.Subcategory);
+        if (!string.IsNullOrWhiteSpace(subcategoryFilter))
+        {
+            var normalizedSubcategoryFilter = TagRouteSpec.NormalizeIdentityComponent(subcategoryFilter);
+            tags = [.. tags.Where(tag =>
+                tag.Subcategory is not null &&
+                string.Equals(
+                    TagRouteSpec.NormalizeIdentityComponent(tag.Subcategory),
+                    normalizedSubcategoryFilter,
+                    StringComparison.OrdinalIgnoreCase))];
         }
 
         var searchFilter = InputSanitizationService.SanitizeTag(query.Search);
@@ -204,31 +210,34 @@ internal sealed class ListTags(
         {
             return builder.MapGet("tags", async (
                 [AsParameters] ListTagsQuery query,
-                [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ListTagsBody? body,
                 ListTags useCase,
                 LinkService linker,
                 CancellationToken cancellationToken) =>
             {
-                var result = (await useCase.HandleAsync(query, body ?? new(), cancellationToken))
+                var result = (await useCase.HandleAsync(query, cancellationToken))
                     .WithLinks(
                         linker,
                         Name,
                         tag => new(tag, new List<LinkItem>()),
-                        query);
+                        query,
+                        routeValues:
+                        [
+                            new(nameof(ListTagsQuery.Category), string.IsNullOrWhiteSpace(query.Category) ? null : query.Category),
+                            new(nameof(ListTagsQuery.Subcategory), string.IsNullOrWhiteSpace(query.Subcategory) ? null : query.Subcategory)
+                        ]);
 
                 return result.ToOkResult();
             })
             .WithSummary("List Tags")
             .WithDescription("Retrieves a paginated list of all available tags used across stories. " +
-                "Supports filtering by category and searching by tag value. " +
+                "Supports filtering by Category and Subcategory query parameters and searching by tag value (q). " +
                 "Each result exposes the normalized key accepted by the published-story tag filter. " +
                 "Tags can be sorted by category, value, usage count, or creation date. " +
                 "This is a public endpoint that does not require authentication.")
             .WithTags(ApiTags.Tags)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(conflict: false, notFound: false, unauthorized: false, forbidden: false)
-            .Produces<LinkedPagedCollection<ListTagsItem>>()
-            .Accepts<ListTagsBody>(true, MediaTypeNames.Application.Json);
+            .Produces<LinkedPagedCollection<ListTagsItem>>();
         }
     }
 }
