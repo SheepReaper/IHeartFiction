@@ -89,11 +89,65 @@ internal static class OpenApiExtensions
         {
             // Title and version are already set
             Contact = new() { Email = "bgonza868+fictionadmin@gmail.com", Name = "Bryan Gonzalez" },
-            Description = "I❤️Fiction platform content management and browsing API.\n[Experimental]: This API is in an unstable state. Use at risk of headache.",
+            Description = """
+                I❤️Fiction platform public reading, discovery, and authoring API.
+
+                ### Anonymous Public Reading (No Authentication Required)
+                All public discovery and reading endpoints (`GET /stories`, `GET /stories/{id}`, `GET /stories/{id}/chapters`, `GET /chapters/{id}/content`, `GET /stories/{id}/content`, `GET /works/{id}/meta`, `GET /works/{id}/content`, `GET /tags`, `GET /tags/resolve`, `GET /authors`, `GET /authors/{id}`) declare `security: []` and work **anonymously without an `Authorization` header**:
+
+                1. **Discover stories:** `GET /stories?Page=1&PageSize=10` (or discover tag keys via `GET /tags` and filter with `TagKey`).
+                2. **Inspect story & chapters:** `GET /stories/{id}` or `GET /stories/{id}/chapters` (each chapter item's `rel="self"` link points to `/chapters/{chapterId}/content`).
+                3. **Read prose Markdown:** `GET /chapters/{id}/content` or `GET /works/{id}/content`.
+
+                ### Authenticated Operations
+                Authoring, account management (`/me/*`), and administrative endpoints require OAuth 2.0 / Bearer authentication (`401 Unauthorized` responses include `WWW-Authenticate` pointing to `/.well-known/oauth-protected-resource`). Delegated read-only agent authentication is documented at `https://iheartfiction.net/auth.md`, and the complete agent reading skill is published at `https://iheartfiction.net/.well-known/agent-skills/read-iheartfiction-content/SKILL.md`.
+                """,
             License = new() { Name = "MIT License", Identifier = "MIT" },
-            Summary = "I❤️Fiction API - your gateway to creating and discovering amazing fictional stories. Front-end too limited? Try this.",
+            Summary = "I❤️Fiction API - anonymous public fiction discovery and reading, plus authenticated authoring.",
             TermsOfService = new("https://iheartfiction.net/terms")
         };
+
+        if (document.Paths is { Count: > 0 } paths)
+        {
+            static bool HasAnonymousGet(IOpenApiPathItem item) =>
+                item.Operations is not null
+                && item.Operations.TryGetValue(HttpMethod.Get, out var getOp)
+                && getOp.Security is { Count: 0 };
+
+            static int GetMethodPriority(HttpMethod method) => method.Method switch
+            {
+                "GET" => 0,
+                "POST" => 1,
+                "PUT" => 2,
+                "PATCH" => 3,
+                "DELETE" => 4,
+                _ => 5
+            };
+
+            var orderedPaths = paths
+                .OrderBy(kvp => HasAnonymousGet(kvp.Value) ? 0 : 1)
+                .ThenBy(kvp => kvp.Key.Count(ch => ch == '/'))
+                .ThenBy(kvp => kvp.Key, StringComparer.Ordinal)
+                .ToList();
+
+            paths.Clear();
+            foreach (var (pathKey, pathItem) in orderedPaths)
+            {
+                if (pathItem is OpenApiPathItem concreteItem && concreteItem.Operations is { Count: > 1 } ops)
+                {
+                    var orderedOps = ops
+                        .OrderBy(op => GetMethodPriority(op.Key))
+                        .ToList();
+                    ops.Clear();
+                    foreach (var (method, operation) in orderedOps)
+                    {
+                        ops[method] = operation;
+                    }
+                }
+
+                paths[pathKey] = pathItem;
+            }
+        }
 
         if (document.Tags is { } tags)
         {

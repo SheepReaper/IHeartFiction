@@ -43,6 +43,16 @@ IHeartFiction provides two public hostnames:
 
 Homepage `Link` response headers on `https://iheartfiction.net/` announce machine-readable resources via `rel="api-catalog"`, `rel="service-desc"`, `rel="service-doc"`, and `rel="describedby"`.
 
+### Anonymous Reading Quick Start (Discovery to Prose)
+
+All public discovery and reading endpoints declare `security: []` in OpenAPI and require **no authentication and no `Authorization` header**:
+
+1. **Discover or Search Published Stories**: `GET https://api.iheartfiction.net/stories?Page=1&PageSize=10` (or discover tag keys via `GET https://api.iheartfiction.net/tags` and filter with `TagKey`).
+2. **Inspect Story Structure & Chapters**: `GET https://api.iheartfiction.net/stories/{storyId}` (returns `type`, `tags`, `chapters`, `books`) or `GET https://api.iheartfiction.net/stories/{storyId}/chapters` (returns ordered published chapters; each item's `rel="self"` link points to `/chapters/{chapterId}/content`).
+3. **Read Prose Markdown**: `GET https://api.iheartfiction.net/chapters/{chapterId}/content` or `GET https://api.iheartfiction.net/works/{workId}/content` (or fetch `https://iheartfiction.net/read/{workId}` with `Accept: text/markdown`).
+
+Protected authoring and account endpoints (such as `GET /me/profile`, `GET /me/stories`, and `POST /stories`) require OAuth2 / Bearer authentication and return `401 Unauthorized` with `WWW-Authenticate: Bearer resource_metadata="https://api.iheartfiction.net/.well-known/oauth-protected-resource"`.
+
 ---
 
 ## 2. Story & Tag Discovery
@@ -65,7 +75,7 @@ Search and filter published fiction stories using `GET /stories` on `https://api
 
 ### Discovering Tags (`GET /tags`)
 
-Use `GET https://api.iheartfiction.net/tags` (`q`, `Category`, `Subcategory`, `Sort`, `Fields`, `Page`, `PageSize` 1–200) to discover canonical tag keys and story counts before filtering with `TagKey`.
+Use `GET https://api.iheartfiction.net/tags` (`q`, `Category`, `Subcategory`, `Sort`, `Fields`, `Page`, `PageSize` 1–200) to discover canonical tag keys (`normalizedKey`), route tokens (`routeKey`), and published `storyCount` values before filtering `GET /stories` with `TagKey`.
 
 ### Example: Search Published Stories
 
@@ -75,6 +85,8 @@ Accept: application/json
 ```
 
 ### Illustrative Example Response (`LinkedPagedCollection`)
+
+All paginated endpoints (`GET /stories`, `GET /stories/{id}/chapters`, `GET /tags`, `GET /authors`) return a `LinkedPagedCollection` JSON object with `data`, `totalCount`, `currentPage`, `pageSize`, `totalPages`, and hypermedia `links` (`rel="self"`, plus `rel="next-page"` and `rel="previous-page"` when adjacent pages exist):
 
 ```json
 {
@@ -99,21 +111,14 @@ Accept: application/json
           "href": "https://api.iheartfiction.net/stories/01J8Y6N0E5K8Z7R1P4M3B2V9X0",
           "rel": "self",
           "method": "GET"
-        },
-        {
-          "href": "https://api.iheartfiction.net/stories/01J8Y6N0E5K8Z7R1P4M3B2V9X0/chapters",
-          "rel": "list-published-chapters",
-          "method": "GET"
         }
       ]
     }
   ],
+  "totalCount": 1,
   "currentPage": 1,
   "pageSize": 10,
-  "totalCount": 1,
   "totalPages": 1,
-  "hasPreviousPage": false,
-  "hasNextPage": false,
   "links": [
     {
       "href": "https://api.iheartfiction.net/stories?q=space&TagKey=genre:sci-fi&Sort=publishedAt%20desc&Page=1&PageSize=10",
@@ -128,7 +133,7 @@ Accept: application/json
 
 ## 3. Story Details, Chapters, & Work Metadata
 
-Published stories expose structure flags indicating how their prose is organized:
+In `GET /stories` list items, published stories expose boolean structure flags indicating how their prose is organized:
 - `hasContent: true`: Standalone single-body story with direct body content.
 - `hasChapters: true`: Story composed of ordered chapters.
 - `hasBooks: true`: Story organized into books containing chapters.
@@ -140,7 +145,7 @@ GET https://api.iheartfiction.net/stories/01J8Y6N0E5K8Z7R1P4M3B2V9X0 HTTP/1.1
 Accept: application/json
 ```
 
-Returns detailed story metadata, including `storyId`, `title`, `description`, `publishedAt`, `updatedAt`, `workUpdatedAt`, `hasContent`, `hasChapters`, `hasBooks`, `hasCoverImage`, `readCount`, `completionStatus`, `ownerId`, `ownerName`, `authors`, `tags` (`canonicalTags` and `customTags`), `chapters`, `books`, and HATEOAS `links`. Supports optional `Fields` projection.
+Returns detailed story metadata: `id`, `title`, `description`, `completionStatus` (`"InProgress"` or `"Complete"`), `publishedAt`, `isPublished`, `updatedAt`, `createdAt`, `ownerId`, `ownerName`, `type` (`"SingleBody"`, `"MultiChapter"`, or `"MultiBook"`), `hasCoverImage`, `authors` (`[{ id, name }]`), `tags` (`[{ category, subcategory, value, routeKey }]`), `books` (`[{ id, title, description, order, chapters, readCount }]`), `chapters` (`[{ id, title, order, readCount }]`), `readCount`, and `links` (`rel="self"`). Supports optional `Fields` projection.
 
 ### List Published Chapters for a Story (`GET /stories/{id}/chapters`)
 
@@ -149,7 +154,7 @@ GET https://api.iheartfiction.net/stories/01J8Y6N0E5K8Z7R1P4M3B2V9X0/chapters HT
 Accept: application/json
 ```
 
-Returns a collection (`data`, `totalCount`, `links`) of published chapters ordered by narrative `order` ascending, with `chapterId`, `title`, `order`, `publishedAt`, `updatedAt`, `contentUpdatedAt`, `readCount`, and per-chapter `links` (including `rel="get-chapter-content"`). Supports optional `Fields` projection.
+Returns a `LinkedPagedCollection` (`data`, `totalCount`, `currentPage`, `pageSize`, `totalPages`, `links`) of published chapters ordered by narrative `order` ascending. Each item contains `chapterId`, `title`, `order`, `publishedAt`, `createdAt`, `updatedAt`, `hasContent`, `readCount`, and per-chapter `links` where `rel="self"` points directly to `https://api.iheartfiction.net/chapters/{chapterId}/content`. Supports optional `Fields` projection.
 
 ### Resolve Reader Metadata (`GET /works/{id}/meta`)
 
@@ -158,7 +163,7 @@ GET https://api.iheartfiction.net/works/01J8Y6N0E5K8Z7R1P4M3B2V9X0/meta HTTP/1.1
 Accept: application/json
 ```
 
-Returns unified reader metadata for any published work ULID (`workType`, `readerKind`, `isDirectlyReadable`, `defaultReadableWorkId`, `readableChildren`, `authors`, `readCount`, `links`). For container stories or books, `defaultReadableWorkId` identifies the first directly readable work.
+Returns unified reader metadata for any published work ULID (`id`, `workType`, `readerKind`, `title`, `description`, `publishedAt`, `updatedAt`, `isDirectlyReadable`, `canIndex`, `canonicalUrl`, `pageUrl`, `coverImageUrl`, `coverStoryId`, `storyId`, `storyTitle`, `bookId`, `bookTitle`, `defaultReadableWorkId`, `readableChildren`, `authors`, `readCount`, `links`). For container stories or books, `defaultReadableWorkId` identifies the first directly readable work, and `links` includes `rel="content"` when `isDirectlyReadable` is `true`.
 
 ---
 
@@ -194,7 +199,7 @@ Accept: application/json
 ```json
 {
   "id": "01J8Y6P3Q4R5S6T7U8V9W0X1Y2",
-  "workType": "chapter",
+  "workType": "Chapter",
   "title": "Chapter 1: The Launch",
   "storyId": "01J8Y6N0E5K8Z7R1P4M3B2V9X0",
   "storyTitle": "Starlight Odyssey",
@@ -217,7 +222,7 @@ Accept: application/json
 }
 ```
 
-> **Note:** On `GET /works/{id}/content`, `bookId` is `null` when a chapter does not belong to a book. On `GET /chapters/{id}/content`, the response uses `chapterId`, `chapterTitle`, `chapterUpdatedAt`, and a non-nullable `bookId` (`"00000000000000000000000000"` when not in a book).
+> **Note:** On both `GET /works/{id}/content` and `GET /chapters/{id}/content`, `bookId` and `bookTitle` are `null` when a chapter does not belong to a book, and `note1` / `note2` are `null` when absent. On `GET /chapters/{id}/content`, the response fields are `chapterId`, `chapterTitle`, `storyId`, `storyTitle`, `bookId`, `bookTitle`, `contentId`, `content`, `note1`, `note2`, `contentUpdatedAt`, `chapterUpdatedAt`, and `links` (`rel="self"`).
 
 ### Markdown Content Negotiation via Web Client
 
@@ -248,7 +253,7 @@ GET https://api.iheartfiction.net/authors/01J8Y6M1A2B3C4D5E6F7G8H9J0 HTTP/1.1
 Accept: application/json
 ```
 
-Returns `userId`, `name`, `updatedAt`, `bio`, `publishedStories` (the author's published stories embedded directly), and `links`.
+Returns `userId`, `name`, `avatarUrl` (nullable), `createdAt`, `updatedAt`, `deletedAt` (nullable), `profile` (`{ bio, socialLinks }`), `publishedStories` (`[{ id, title, publishedAt, readCount }]`), `totalStories`, and `links` (`rel="self"`).
 
 ### Filter Published Stories by Author (`GET /stories?AuthorId={id}`)
 

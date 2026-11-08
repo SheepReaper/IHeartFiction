@@ -77,9 +77,12 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("/scalar/v1");
 
         // Search & Listing
+        markdown.Should().Contain("### Anonymous Reading Quick Start (Discovery to Prose)");
         markdown.Should().Contain("GET https://api.iheartfiction.net/stories?q=");
         markdown.Should().Contain("GET https://api.iheartfiction.net/tags");
         markdown.Should().Contain("`q`");
+        markdown.Should().Contain("`Category`");
+        markdown.Should().Contain("`Subcategory`");
         markdown.Should().Contain("`TagKey`");
         markdown.Should().Contain("`AuthorId`");
         markdown.Should().Contain("`CompletionStatus`");
@@ -90,6 +93,11 @@ public sealed class AgentSkillsCatalogTests
         markdown.Should().Contain("\"data\":");
         markdown.Should().Contain("\"currentPage\":");
         markdown.Should().NotContain("/stories/published");
+        markdown.Should().NotContain("\"hasPreviousPage\"");
+        markdown.Should().NotContain("\"hasNextPage\"");
+        markdown.Should().NotContain("list-published-chapters");
+        markdown.Should().NotContain("get-chapter-content");
+        markdown.Should().NotContain("00000000000000000000000000");
 
         // Story Details, Chapters & Work Metadata
         markdown.Should().Contain("/stories/{id}");
@@ -134,6 +142,40 @@ public sealed class AgentSkillsCatalogTests
         var catalogMarkdown = AgentSkillsCatalog.ReadContentSkillMarkdown.ReplaceLineEndings("\n").TrimEnd('\n');
 
         fileMarkdown.Should().Be(catalogMarkdown);
+    }
+
+    [Fact]
+    public void OpenApiSpecification_DocumentsAnonymousReadingQuickStart_AndPlacesAnonymousGetPathsFirst()
+    {
+        var repoRoot = FindRepositoryRoot();
+        var openApiPath = Path.Combine(repoRoot, "src", "IHFiction.FictionApi", "openapi.json");
+
+        File.Exists(openApiPath).Should().BeTrue($"expected generated OpenAPI document at {openApiPath}");
+
+        using var doc = JsonDocument.Parse(File.ReadAllText(openApiPath, Encoding.UTF8));
+        var root = doc.RootElement;
+
+        var description = root.GetProperty("info").GetProperty("description").GetString();
+        description.Should().Contain("Anonymous Public Reading (No Authentication Required)");
+        description.Should().Contain("GET /stories?Page=1&PageSize=10");
+        description.Should().Contain("GET /chapters/{id}/content");
+
+        var paths = root.GetProperty("paths");
+        var pathKeys = paths.EnumerateObject().Select(p => p.Name).ToList();
+        var storiesIndex = pathKeys.IndexOf("/stories");
+        var storiesByIdIndex = pathKeys.IndexOf("/stories/{id}");
+        var storiesChaptersIndex = pathKeys.IndexOf("/stories/{id}/chapters");
+        var storiesBooksIndex = pathKeys.IndexOf("/stories/{id}/books");
+        var ownStoriesIndex = pathKeys.IndexOf("/me/stories");
+
+        storiesIndex.Should().BeGreaterThanOrEqualTo(0);
+        storiesIndex.Should().BeLessThan(storiesByIdIndex);
+        storiesByIdIndex.Should().BeLessThan(storiesChaptersIndex);
+        storiesChaptersIndex.Should().BeLessThan(storiesBooksIndex);
+        storiesChaptersIndex.Should().BeLessThan(ownStoriesIndex);
+
+        var storiesMethods = paths.GetProperty("/stories").EnumerateObject().Select(m => m.Name).ToList();
+        storiesMethods[0].Should().Be("get");
     }
 
     private static string FindRepositoryRoot()
