@@ -14,6 +14,9 @@ public class ErrorExtensionsTests
     [InlineData("MergeCanonicalTags.InvalidSelection", StatusCodes.Status400BadRequest)]
     [InlineData("MergeCanonicalTags.InvalidReason", StatusCodes.Status400BadRequest)]
     [InlineData("RenameCanonicalTag.InvalidTag", StatusCodes.Status400BadRequest)]
+    [InlineData("GetStoryContent.NoContent", StatusCodes.Status404NotFound)]
+    [InlineData("GetStoryContent.ContentNotFound", StatusCodes.Status404NotFound)]
+    [InlineData("GetChapterContent.ChapterNotFound", StatusCodes.Status404NotFound)]
     public void ToProblemDetailsTypedResult_MapsTaxonomyErrorsToClientStatusCodes(
         string code,
         int expectedStatusCode)

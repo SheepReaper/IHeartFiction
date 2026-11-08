@@ -35,7 +35,7 @@ internal sealed class GetPublishedStoryContent(
         // Business logic errors specific to content retrieval
         public static readonly DomainError InvalidStoryStructure = new("GetStoryContent.InvalidStoryStructure", "Story has chapters or books and cannot have direct content.");
         public static readonly DomainError ContentNotFound = new("GetStoryContent.ContentNotFound", "Story content not found.");
-        public static readonly DomainError NoContent = new("GetStoryContent.NoContent", "Story does not have content yet.");
+        public static readonly DomainError NoContent = new("GetStoryContent.NoContent", "Story does not have direct content. Multi-chapter stories organize content under /stories/{id}/chapters.");
         public static readonly DomainError StoryNotPublished = new("GetStoryContent.StoryNotPublished", "Story is not published and cannot be accessed.");
     }
 
