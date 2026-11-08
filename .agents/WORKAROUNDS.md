@@ -2,6 +2,15 @@
 
 This file records intentional temporary workarounds and unusual build plumbing. Check it before removing code that looks like a local band aid.
 
+## Bounded temporary dashboard telemetry storage
+
+- **Location:** `infra/docker-compose.deploy.yaml`, `internal-dashboard`.
+- **Symptom:** the Aspire 13.6 dashboard's temporary SQLite telemetry database produced sustained multi-MiB/s persistent writes and storage contention.
+- **Mitigation:** put `/tmp` on a 512 MiB tmpfs and retain at most 10,000 logs, 10,000 traces, and 1,000 metric points per dimension. Keep authentication and data-protection key storage unchanged. Dashboard telemetry remains temporary across restarts. Retention counts do not guarantee a byte limit; monitor tmpfs occupancy and available memory.
+- **Removal criteria:** a dashboard release or measured configuration keeps persistent write volume and storage latency acceptable under representative telemetry ingestion without exhausting memory or disk. Do not merely remove the tmpfs while retaining an unmeasured SQLite workload.
+- **Verification:** validate merged Compose with `docker stack config -c infra/docker-compose.yaml -c infra/docker-compose.deploy.yaml`; verify the running container's `/tmp` filesystem, telemetry ingestion, memory/space headroom, process write-byte deltas, and storage latency after rollout.
+- **References:** [dashboard persistence](https://aspire.dev/dashboard/data-persistence/) and [telemetry configuration](https://aspire.dev/dashboard/configuration/).
+
 ## Temporary Ubuntu 22.04 build runner for MongoDB integration tests
 
 - **Location:** `.github/workflows/build.yml`, build job OS matrix.
