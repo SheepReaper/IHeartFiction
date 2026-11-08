@@ -3,6 +3,8 @@ using FluentAssertions;
 using IHFiction.SharedWeb.Configuration;
 using IHFiction.WebClient.Features.AgentAccess;
 
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Endpoints;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
@@ -56,6 +58,33 @@ public sealed class HomepageLinkHeaderMiddlewareTests
 
         context.Response.Headers.Should().NotContainKey("Link");
     }
+
+    [Theory]
+    [InlineData("/stories/01J00000000000000000000000", "")]
+    [InlineData("/read/01J00000000000000000000000", "")]
+    [InlineData("/authors/01J00000000000000000000000", "")]
+    [InlineData("/stories", "?page=2")]
+    public async Task InvokeAsync_ForComponentEndpoint_AddsMarkdownAlternateAndPreservesExistingLinks(string path, string queryString)
+    {
+        var context = CreateContext(HttpMethods.Get, path);
+        context.Request.QueryString = new QueryString(queryString);
+        context.Response.Headers.Link = "<https://example.test/custom>; rel=\"custom\"";
+        context.SetEndpoint(new Endpoint(
+            _ => Task.CompletedTask,
+            new EndpointMetadataCollection(new ComponentTypeMetadata(typeof(TestComponent))),
+            "component"));
+
+        var sut = CreateMiddleware(StatusCodes.Status200OK);
+        await sut.InvokeAsync(context, Options.Create(new ApiUrlOptions
+        {
+            BaseUrl = new Uri("https://api.example.test"),
+        }));
+
+        context.Response.Headers.Link.Should().Contain("<https://example.test/custom>; rel=\"custom\"");
+        context.Response.Headers.Link.Should().Contain($"<{path}{queryString}>; rel=\"alternate\"; type=\"text/markdown\"");
+    }
+
+    private sealed class TestComponent : ComponentBase;
 
     private static HomepageLinkHeaderMiddleware CreateMiddleware(int statusCode) =>
         new(async context =>

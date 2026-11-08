@@ -8,6 +8,7 @@
     @if (EmitCanonical)
     {
         <link rel="canonical" href="@ResolvedCanonicalUrl" />
+        <link rel="alternate" type="text/markdown" href="@ResolvedCanonicalUrl" />
     }
 
     @if (!string.IsNullOrWhiteSpace(ResolvedPreviousUrl))

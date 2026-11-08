@@ -2,6 +2,7 @@ namespace IHFiction.WebClient.Features.AgentAccess;
 
 using IHFiction.SharedWeb.Configuration;
 
+using Microsoft.AspNetCore.Components.Endpoints;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
@@ -22,16 +23,25 @@ internal sealed class HomepageLinkHeaderMiddleware(RequestDelegate next)
                 if (context.Response.StatusCode == StatusCodes.Status200OK)
                 {
                     var apiBase = apiUrlOptions.Value.BaseUrl?.ToString().TrimEnd('/') ?? string.Empty;
-                    context.Response.Headers.Link = new StringValues([
-                        ApiCatalogRel,
-                        "</.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/json\"",
-                        "</.well-known/agent-skills/index.json>; rel=\"agent-skills\"; type=\"application/vnd.agentskills.v0.2.0+json\"",
-                        $"<{apiBase}/.well-known/oauth-protected-resource>; rel=\"oauth-protected-resource\"",
-                        $"<{apiBase}/openapi/v1.json>; rel=\"service-desc\"; type=\"application/vnd.oai.openapi+json\"",
-                        $"<{apiBase}/scalar/v1>; rel=\"service-doc\"; type=\"text/html\"",
-                        $"<{apiBase}/openapi/v1.json>; rel=\"describedby\"; type=\"application/vnd.oai.openapi+json\"",
-                        "</auth.md>; rel=\"describedby\"; type=\"text/markdown\"",
-                    ]);
+                    var links = new List<string>(context.Response.Headers.Link.Where(static link => !string.IsNullOrWhiteSpace(link))!);
+                    AddIfMissing(links, ApiCatalogRel);
+                    AddIfMissing(links, "</.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/json\"");
+                    AddIfMissing(links, "</.well-known/agent-skills/index.json>; rel=\"agent-skills\"; type=\"application/vnd.agentskills.v0.2.0+json\"");
+                    AddIfMissing(links, $"<{apiBase}/.well-known/oauth-protected-resource>; rel=\"oauth-protected-resource\"");
+                    AddIfMissing(links, $"<{apiBase}/openapi/v1.json>; rel=\"service-desc\"; type=\"application/vnd.oai.openapi+json\"");
+                    AddIfMissing(links, $"<{apiBase}/scalar/v1>; rel=\"service-doc\"; type=\"text/html\"");
+                    AddIfMissing(links, $"<{apiBase}/openapi/v1.json>; rel=\"describedby\"; type=\"application/vnd.oai.openapi+json\"");
+                    AddIfMissing(links, "</auth.md>; rel=\"describedby\"; type=\"text/markdown\"");
+
+                    if (SupportsMarkdownNegotiation(context))
+                    {
+                        var pathAndQuery = string.Concat(
+                            context.Request.Path.HasValue ? context.Request.Path.Value : "/",
+                            context.Request.QueryString.Value);
+                        AddIfMissing(links, $"<{pathAndQuery}>; rel=\"alternate\"; type=\"text/markdown\"");
+                    }
+
+                    context.Response.Headers.Link = new StringValues([.. links]);
                 }
 
                 return Task.CompletedTask;
@@ -40,6 +50,18 @@ internal sealed class HomepageLinkHeaderMiddleware(RequestDelegate next)
 
         await next(context);
     }
+
+    private static void AddIfMissing(List<string> links, string candidate)
+    {
+        if (!links.Contains(candidate, StringComparer.Ordinal))
+        {
+            links.Add(candidate);
+        }
+    }
+
+    private static bool SupportsMarkdownNegotiation(HttpContext context) =>
+        HttpMethods.IsGet(context.Request.Method)
+        && context.GetEndpoint()?.Metadata.GetMetadata<ComponentTypeMetadata>() is not null;
 
     private static readonly PathString[] ExcludedPrefixes =
     [
