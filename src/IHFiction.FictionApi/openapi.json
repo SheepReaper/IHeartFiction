@@ -8251,6 +8251,7 @@
           "coverStoryId",
           "storyId",
           "storyTitle",
+          "storyCompletionStatus",
           "bookId",
           "bookTitle",
           "defaultReadableWorkId",
@@ -8338,6 +8339,9 @@
               "null",
               "string"
             ]
+          },
+          "storyCompletionStatus": {
+            "type": "string"
           },
           "bookId": {
             "oneOf": [

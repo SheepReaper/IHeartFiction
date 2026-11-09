@@ -29,6 +29,7 @@ public sealed class GetPublishedWorkTests(MongoDbFixture mongoDbFixture) : IClas
         Assert.Equal($"/read/{story.Id}", result.Value.CanonicalUrl);
         Assert.Equal(nameof(Story), result.Value.WorkType);
         Assert.Equal(StoryType.SingleBody, result.Value.ReaderKind);
+        Assert.Equal(nameof(StoryCompletionStatus.InProgress), result.Value.StoryCompletionStatus);
         Assert.Empty(result.Value.ReadableChildren);
     }
 
@@ -38,6 +39,7 @@ public sealed class GetPublishedWorkTests(MongoDbFixture mongoDbFixture) : IClas
         await using var context = CreateContext();
         var author = AddAuthor(context);
         var story = AddStory(context, author, published: true);
+        story.CompletionStatus = StoryCompletionStatus.Complete;
         var chapter1 = AddStoryChapter(story, author, "Chapter 1", 1, published: true);
         var chapter2 = AddStoryChapter(story, author, "Chapter 2", 2, published: true);
         context.Chapters.AddRange(chapter1, chapter2);
@@ -54,6 +56,7 @@ public sealed class GetPublishedWorkTests(MongoDbFixture mongoDbFixture) : IClas
         Assert.Equal(nameof(Chapter), result.Value.WorkType);
         Assert.Equal(story.Id, result.Value.StoryId);
         Assert.Equal(story.Title, result.Value.StoryTitle);
+        Assert.Equal(nameof(StoryCompletionStatus.Complete), result.Value.StoryCompletionStatus);
         Assert.Equal(new[] { chapter1.Id, chapter2.Id }, result.Value.ReadableChildren.Select(child => child.Id));
     }
 

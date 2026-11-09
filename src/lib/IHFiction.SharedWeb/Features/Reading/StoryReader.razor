@@ -41,7 +41,8 @@ else if (Meta is not null)
         && currentChapter is not null
         && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
         && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
-    var isEndOfStory = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
+    var isLastPublishedChapter = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
+    var isStoryComplete = string.Equals(Meta.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
 
     <div class="section" @key="WorkId">
         <div class="container">
@@ -144,10 +145,17 @@ else if (Meta is not null)
                             </p>
                         </div>
                     }
-                    else if (isEndOfStory)
+                    else if (isLastPublishedChapter)
                     {
                         <div class="notification has-background-success-soft has-text-success-bold">
-                            <p>You've reached the end of this story.</p>
+                            @if (isStoryComplete)
+                            {
+                                <p>You've reached the end of this story.</p>
+                            }
+                            else
+                            {
+                                <p>You're caught up with the latest published chapter. This story is still in progress.</p>
+                            }
                             @if (Meta.StoryId is not null)
                             {
                                 <p class="mt-2">

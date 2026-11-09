@@ -79,7 +79,8 @@ else if (reader is not null)
                     }
                     else if (currentIndex >= 0)
                     {
-                        <li>End of story</li>
+                        var isStoryComplete = string.Equals(Meta.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
+                        <li>@(isStoryComplete ? "End of story" : "Caught up (story in progress)")</li>
                     }
                 </ul>
             </nav>

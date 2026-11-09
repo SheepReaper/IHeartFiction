@@ -167,6 +167,124 @@ public sealed class StoryReaderRenderingTests
         });
     }
 
+    [Theory]
+    [InlineData("InProgress", "You're caught up with the latest published chapter. This story is still in progress.", "You've reached the end of this story.")]
+    [InlineData("Complete", "You've reached the end of this story.", "You're caught up with the latest published chapter. This story is still in progress.")]
+    public async Task RenderAsync_FinalPublishedChapter_DistinguishesCaughtUpFromCompletedStory(
+        string storyCompletionStatus,
+        string expectedBannerText,
+        string unexpectedBannerText)
+    {
+        var storyId = Ulid.NewUlid();
+        var chapter1Id = Ulid.NewUlid();
+        var chapter2Id = Ulid.NewUlid();
+        var meta = new LinkedOfGetPublishedWorkMetaResponse
+        {
+            Id = chapter2Id,
+            Title = "Chapter Two",
+            StoryId = storyId,
+            StoryTitle = "Ongoing Odyssey",
+            StoryCompletionStatus = storyCompletionStatus,
+            WorkType = "Chapter",
+            ReaderKind = "Chapter",
+            IsDirectlyReadable = true,
+            Authors = [new WorkAuthor { Id = Ulid.NewUlid(), Name = "Test Author" }],
+            ReadableChildren =
+            [
+                new ReadableWorkItem { Id = chapter1Id, Title = "Chapter One", Order = 0 },
+                new ReadableWorkItem { Id = chapter2Id, Title = "Chapter Two", Order = 1 }
+            ],
+            Links = []
+        };
+        var content = new LinkedOfGetPublishedWorkContentResponse
+        {
+            Id = chapter2Id,
+            Title = "Chapter Two",
+            WorkType = "Chapter",
+            StoryId = storyId,
+            StoryTitle = "Ongoing Odyssey",
+            Content = "The latest published chapter text.",
+            ContentUpdatedAt = new DateTime(2026, 9, 30, 0, 0, 0, DateTimeKind.Utc),
+            Links = []
+        };
+
+        var fakeReader = new FakePublishedWorkReader(meta, content);
+        await using var services = CreateServices(fakeReader);
+        await using var renderer = new HtmlRenderer(
+            services,
+            services.GetRequiredService<ILoggerFactory>());
+
+        var html = await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            var component = await renderer.RenderComponentAsync<StoryReader>(Parameters(meta));
+            return component.ToHtmlString();
+        });
+
+        html.Should().Contain(expectedBannerText);
+        html.Should().NotContain(unexpectedBannerText);
+        html.Should().Contain("Back to Story Details");
+        html.Should().Contain($"href=\"/stories/{storyId}\"");
+    }
+
+    [Fact]
+    public async Task RenderAsync_CrossBookTransitionChapter_ShowsContinueToNextBookInsteadOfEndBanner()
+    {
+        var storyId = Ulid.NewUlid();
+        var book1Id = Ulid.Parse("01J00000000000000000000001");
+        var book2Id = Ulid.Parse("01J00000000000000000000002");
+        var chapter1Id = Ulid.NewUlid();
+        var chapter2Id = Ulid.NewUlid();
+        var meta = new LinkedOfGetPublishedWorkMetaResponse
+        {
+            Id = chapter1Id,
+            Title = "Book One Finale",
+            StoryId = storyId,
+            StoryTitle = "Saga",
+            StoryCompletionStatus = "InProgress",
+            BookId = book1Id,
+            BookTitle = "Book One",
+            WorkType = "Chapter",
+            ReaderKind = "Chapter",
+            IsDirectlyReadable = true,
+            Authors = [],
+            ReadableChildren =
+            [
+                new ReadableWorkItem { Id = chapter1Id, Title = "Book One Finale", Order = 0, BookId = book1Id, BookTitle = "Book One" },
+                new ReadableWorkItem { Id = chapter2Id, Title = "Book Two Opening", Order = 0, BookId = book2Id, BookTitle = "Book Two" }
+            ],
+            Links = []
+        };
+        var content = new LinkedOfGetPublishedWorkContentResponse
+        {
+            Id = chapter1Id,
+            Title = "Book One Finale",
+            WorkType = "Chapter",
+            StoryId = storyId,
+            StoryTitle = "Saga",
+            Content = "End of book one.",
+            ContentUpdatedAt = new DateTime(2026, 9, 30, 0, 0, 0, DateTimeKind.Utc),
+            Links = []
+        };
+
+        var fakeReader = new FakePublishedWorkReader(meta, content);
+        await using var services = CreateServices(fakeReader);
+        await using var renderer = new HtmlRenderer(
+            services,
+            services.GetRequiredService<ILoggerFactory>());
+
+        var html = await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            var component = await renderer.RenderComponentAsync<StoryReader>(Parameters(meta));
+            return component.ToHtmlString();
+        });
+
+        html.Should().Contain("You finished Book One. Next up: Book Two.");
+        html.Should().Contain("Continue to Book Two");
+        html.Should().Contain($"href=\"/read/{chapter2Id}\"");
+        html.Should().NotContain("You're caught up with the latest published chapter.");
+        html.Should().NotContain("You've reached the end of this story.");
+    }
+
     private static ParameterView Parameters(LinkedOfGetPublishedWorkMetaResponse meta) =>
         ParameterView.FromDictionary(new Dictionary<string, object?>
         {

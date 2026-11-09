@@ -173,7 +173,7 @@ GET https://api.iheartfiction.net/works/01J8Y6N0E5K8Z7R1P4M3B2V9X0/meta HTTP/1.1
 Accept: application/json
 ```
 
-Returns unified reader metadata for any published work ULID (`id`, `workType`, `readerKind`, `title`, `description`, `publishedAt`, `updatedAt`, `isDirectlyReadable`, `canIndex`, `canonicalUrl`, `pageUrl`, `coverImageUrl`, `coverStoryId`, `storyId`, `storyTitle`, `bookId`, `bookTitle`, `defaultReadableWorkId`, `readableChildren`, `authors`, `readCount`, `links`). For container stories or books, `defaultReadableWorkId` identifies the first directly readable work, and `links` includes `rel="self"`, `rel="story"`, `rel="author"`, and `rel="content"` when `isDirectlyReadable` is `true`.
+Returns unified reader metadata for any published work ULID (`id`, `workType`, `readerKind`, `title`, `description`, `publishedAt`, `updatedAt`, `isDirectlyReadable`, `canIndex`, `canonicalUrl`, `pageUrl`, `coverImageUrl`, `coverStoryId`, `storyId`, `storyTitle`, `storyCompletionStatus`, `bookId`, `bookTitle`, `defaultReadableWorkId`, `readableChildren`, `authors`, `readCount`, `links`). For container stories or books, `defaultReadableWorkId` identifies the first directly readable work, and `links` includes `rel="self"`, `rel="story"`, `rel="author"`, and `rel="content"` when `isDirectlyReadable` is `true`.
 
 ---
 
