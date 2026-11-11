@@ -64,7 +64,8 @@ public sealed class AuthorProfileContractTests(IntegrationTestWebAppFactory fact
                     Assert.False(root.TryGetProperty("updatedAt", out _));
                 }
                 var links = root.GetProperty("links").EnumerateArray().ToArray();
-                var self = Assert.Single(links);
+                var self = Assert.Single(links, link => link.GetProperty("rel").GetString() == "self");
+                Assert.Equal(new[] { "self", "stories" }, links.Select(link => link.GetProperty("rel").GetString()).Order());
                 Assert.Equal("self", self.GetProperty("rel").GetString());
                 Assert.Equal("GET", self.GetProperty("method").GetString());
                 Assert.Equal($"/authors/{author.Id}", new Uri(self.GetProperty("href").GetString()!).AbsolutePath);
