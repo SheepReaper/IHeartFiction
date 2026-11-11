@@ -47,7 +47,9 @@ public sealed class PublishedChapterOrderingTests(IntegrationTestWebAppFactory f
         Assert.Equal(2, list.RootElement.GetProperty("totalCount").GetInt32());
         foreach (var item in items)
         {
-            var link = Assert.Single(item.GetProperty("links").EnumerateArray());
+            var itemLinks = item.GetProperty("links").EnumerateArray().ToArray();
+            Assert.Equal(new[] { "content", "self", "story" }, itemLinks.Select(l => l.GetProperty("rel").GetString()).Order());
+            var link = Assert.Single(itemLinks, l => l.GetProperty("rel").GetString() == "content");
             Assert.EndsWith($"/chapters/{item.GetProperty("chapterId").GetString()}/content", link.GetProperty("href").GetString());
         }
         using var shaped = await ReadAsync(path + "?Fields=chapterId,title");
