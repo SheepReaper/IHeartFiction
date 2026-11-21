@@ -134,7 +134,7 @@ public static class Extensions
             options.AddPolicy(HealthChecksTimeoutPolicy, TimeSpan.FromSeconds(5)));
 
         builder.Services.AddOutputCache(static options =>
-            options.AddPolicy(HealthChecksOutputCachePolicy, policy => policy.Expire(TimeSpan.FromSeconds(10))));
+            options.AddPolicy(HealthChecksOutputCachePolicy, policy => policy.Expire(TimeSpan.FromSeconds(5))));
 
         builder.Services.AddHealthChecks()
             // Add a default liveness check to ensure app is responsive

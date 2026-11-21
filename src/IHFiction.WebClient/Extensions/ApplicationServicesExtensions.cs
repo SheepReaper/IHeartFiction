@@ -10,6 +10,7 @@ using IHFiction.WebClient.Infrastructure;
 
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace IHFiction.WebClient.Extensions;
 
@@ -49,6 +50,11 @@ internal static class ApplicationServicesExtensions
         builder.Services.AddTransient<VisitorIdentityHandler>();
         builder.Services.AddHttpClient(FictionApiTransport.Name, client =>
             client.BaseAddress = new("https+http://fiction"));
+        builder.Services.AddHttpClient(FictionApiHealthCheck.ClientName, client =>
+            client.BaseAddress = new("https+http://fiction"));
+
+        builder.Services.AddHealthChecks()
+            .AddCheck<FictionApiHealthCheck>(FictionApiHealthCheck.Name, HealthStatus.Unhealthy, ["ready"]);
         builder.Services.AddScoped<FictionApiTransport>();
         builder.Services.AddScoped(services => new FictionApiClient(services.GetRequiredService<FictionApiTransport>().Client));
 

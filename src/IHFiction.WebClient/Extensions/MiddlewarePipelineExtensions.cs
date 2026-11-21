@@ -188,8 +188,6 @@ internal static class MiddlewarePipelineExtensions
 
         app.UseSitemap();
 
-        app.MapMethods("/uptime", [HttpMethods.Head, HttpMethods.Get], () => Results.Ok());
-
         app.MapDefaultEndpoints();
 
         app.UseAuthorization();

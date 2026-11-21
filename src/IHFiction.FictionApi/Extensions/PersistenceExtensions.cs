@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 using IHFiction.Data;
 using IHFiction.Data.Contexts;
@@ -47,6 +48,15 @@ internal static class PersistenceExtensions
         );
 
         builder.AddRedisClient("redis");
+
+        builder.Services.AddOptions<HealthCheckServiceOptions>()
+            .PostConfigure(static options =>
+            {
+                foreach (var reg in options.Registrations.Where(static reg => reg.Name.Contains("redis", StringComparison.OrdinalIgnoreCase)))
+                {
+                    reg.FailureStatus = HealthStatus.Degraded;
+                }
+            });
 
         builder.Services.AddSingleton(services => services
             .GetRequiredService<IMongoDatabase>()

@@ -52,12 +52,14 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WaitFor(redis)
     .WaitFor(storiesDb)
     .WaitFor(fictionDb)
-    .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
+    .WithHttpProbe(ProbeType.Liveness, "/alive", endpointName: "http")
+    .WithHttpProbe(ProbeType.Readiness, "/health", endpointName: "http")
     .WithReplicas(builder.Configuration.GetValue("Containers:Api:ReplicaCount", 1));
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
-    .WithHttpProbe(ProbeType.Liveness, "/health", endpointName: "http")
+    .WithHttpProbe(ProbeType.Liveness, "/alive", endpointName: "http")
+    .WithHttpProbe(ProbeType.Readiness, "/health", endpointName: "http")
     .WithReference(fictionApi) // API transport uses service discovery; ApiBaseUrl is only its public identity
     .WithReference(fictionDb) // Blazor server-side uses db directly via service discovery
     .WithReference(keycloak) // Blazor server-side uses Keycloak directly via service discovery
