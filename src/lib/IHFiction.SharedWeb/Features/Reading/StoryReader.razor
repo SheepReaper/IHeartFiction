@@ -42,7 +42,6 @@ else if (Meta is not null)
         && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
         && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
     var isLastPublishedChapter = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
-    var isStoryComplete = string.Equals(Meta.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
 
     <div class="section" @key="WorkId">
         <div class="container">
@@ -148,7 +147,7 @@ else if (Meta is not null)
                     else if (isLastPublishedChapter)
                     {
                         <div class="notification has-background-success-soft has-text-success-bold">
-                            @if (isStoryComplete)
+                            @if (IsStoryComplete)
                             {
                                 <p>You've reached the end of this story.</p>
                             }
@@ -229,6 +228,7 @@ else if (Meta is not null)
 
     private MarkdownReaderModel? reader;
     private LinkedOfGetPublishedWorkContentResponse? content => reader?.Content;
+    private bool IsStoryComplete => string.Equals(Meta?.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
     private bool isLoading = true;
     private string? errorMessage;
     private string? appliedParameterKey;

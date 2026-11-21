@@ -5,7 +5,7 @@
 
 @if (TargetWorkId is { } target)
 {
-    <a href="/read/@target" class="button is-primary is-fullwidth is-large">
+    <a href="/read/@target" class="button is-primary is-fullwidth @ButtonSizeClass">
         <span class="icon"><i class="fas fa-book-open" aria-hidden="true"></i></span>
         <span>@Label</span>
     </a>
@@ -16,12 +16,13 @@
 }
 else
 {
-    <button class="button is-fullwidth is-large" disabled>Start Reading</button>
+    <button class="button is-fullwidth @ButtonSizeClass" disabled>Start Reading</button>
     <p class="help">@(isLoading ? "Loading reading options..." : errorMessage ?? "No published readable chapters are available yet.")</p>
 }
 
 @code {
     [Parameter, EditorRequired] public string StoryId { get; set; } = string.Empty;
+    [Parameter] public bool Compact { get; set; }
 
     private LinkedOfGetPublishedWorkMetaResponse? meta;
     private string? requestedStoryId;
@@ -43,6 +44,7 @@ else
         }
     }
     private Ulid? TargetWorkId => resumeWorkId ?? DefaultWorkId;
+    private string ButtonSizeClass => Compact ? string.Empty : "is-large";
     private string Label
     {
         get
@@ -115,7 +117,7 @@ else
         catch (InvalidOperationException) { /* Browser storage can be unavailable. */ }
     }
 
-    private string StateKey() => $"StoryReadingLink:Meta:{StoryId}";
+    private string StateKey() => Compact ? $"StoryReadingLink:Meta:{StoryId}:Compact" : $"StoryReadingLink:Meta:{StoryId}";
 
     protected override async ValueTask DisposeAsyncCore()
     {

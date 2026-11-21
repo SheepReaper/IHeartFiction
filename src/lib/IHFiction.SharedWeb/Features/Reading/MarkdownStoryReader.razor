@@ -79,8 +79,7 @@ else if (reader is not null)
                     }
                     else if (currentIndex >= 0)
                     {
-                        var isStoryComplete = string.Equals(Meta.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
-                        <li>@(isStoryComplete ? "End of story" : "Caught up (story in progress)")</li>
+                        <li>@(IsStoryComplete ? "End of story" : "Caught up (story in progress)")</li>
                     }
                 </ul>
             </nav>
@@ -97,6 +96,7 @@ else if (reader is not null)
     private MarkdownReaderModel? reader;
     private string? errorMessage;
     private string? resolvedParameterKey;
+    private bool IsStoryComplete => string.Equals(Meta?.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnParametersSetAsync()
     {

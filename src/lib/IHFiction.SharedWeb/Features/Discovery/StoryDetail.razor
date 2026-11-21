@@ -72,18 +72,47 @@ else if (story != null)
                         }
                     </p>
 
+                    <div class="box is-hidden-tablet mb-4" role="region" aria-label="Reading actions">
+                        @if (story.IsPublished)
+                        {
+                            <StoryReadingLink StoryId="@StoryId" Compact="true" />
+                        }
+                        else
+                        {
+                            <button class="button is-fullwidth" disabled>
+                                <span class="icon" aria-hidden="true">
+                                    <i class="fas fa-clock"></i>
+                                </span>
+                                <span>Not Published</span>
+                            </button>
+                        }
+
+                        @if (warningTagItems.Count > 0)
+                        {
+                            <div class="notification has-background-warning-soft is-size-7 py-2 px-3 mt-3 mb-0">
+                                <p class="mb-1">
+                                    <span class="icon is-small" aria-hidden="true">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                    <strong>Content Warnings (@warningTagItems.Count):</strong>
+                                    <span>@warningSummary</span>
+                                </p>
+                                <p class="mb-0">
+                                    <a href="@($"/stories/{StoryId}#story-content-warnings")" class="has-text-warning-bold is-underlined">
+                                        Review all content warnings
+                                    </a>
+                                </p>
+                            </div>
+                        }
+                    </div>
+
                     <div class="content">
                         <p class="is-size-5">@story.Description</p>
                     </div>
 
-                    @{
-                        var warningTagItems = BuildWarningTagItems();
-                        var primaryTagItems = BuildPrimaryTagItems();
-                    }
-
                     @if (warningTagItems.Count > 0)
                     {
-                        <section class="notification has-background-warning-soft mb-4" aria-labelledby="story-content-warnings-heading">
+                        <section id="story-content-warnings" class="notification has-background-warning-soft mb-4" aria-labelledby="story-content-warnings-heading">
                             <h2 id="story-content-warnings-heading" class="title is-6 mb-2">Content Warnings</h2>
                             <TagDisplay Items="@warningTagItems" />
                         </section>
@@ -102,7 +131,7 @@ else if (story != null)
                     <div class="card">
                         <div class="card-content">
                             <div class="content">
-                                <div class="field">
+                                <div class="field is-hidden-mobile">
                                     @if (story.IsPublished)
                                     {
                                         <StoryReadingLink StoryId="@StoryId" />
@@ -115,6 +144,24 @@ else if (story != null)
                                             </span>
                                             <span>Not Published</span>
                                         </button>
+                                    }
+
+                                    @if (warningTagItems.Count > 0)
+                                    {
+                                        <div class="notification has-background-warning-soft is-size-7 py-2 px-3 mt-3 mb-0">
+                                            <p class="mb-1">
+                                                <span class="icon is-small" aria-hidden="true">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </span>
+                                                <strong>Content Warnings (@warningTagItems.Count):</strong>
+                                                <span>@warningSummary</span>
+                                            </p>
+                                            <p class="mb-0">
+                                                <a href="@($"/stories/{StoryId}#story-content-warnings")" class="has-text-warning-bold is-underlined">
+                                                    Review all content warnings
+                                                </a>
+                                            </p>
+                                        </div>
                                     }
                                 </div>
 
@@ -204,10 +251,6 @@ else if (story != null)
                 </div>
             </div>
 
-            @{
-                var secondaryTagItems = BuildSecondaryTagItems();
-            }
-
             @if (secondaryTagItems.Count > 0)
             {
                 <details class="box mb-5">
@@ -266,6 +309,10 @@ else if (story != null)
 
     private LinkedOfGetPublishedStoryResponse? story;
     private LinkedPagedCollectionOfListPublishedStoryChaptersItem? chapters;
+    private IReadOnlyList<TagDisplayItem> warningTagItems = [];
+    private IReadOnlyList<TagDisplayItem> primaryTagItems = [];
+    private IReadOnlyList<TagDisplayItem> secondaryTagItems = [];
+    private string warningSummary = string.Empty;
     private bool isLoading = true;
     private string? errorMessage;
     private string? loadedStoryId;
@@ -499,6 +546,30 @@ else if (story != null)
             .Select(tag => new TagDisplayItem(tag.Category, tag.Subcategory, tag.Value, tag.RouteKey))
             .ToList() ?? [];
 
+    private static string FormatWarningSummary(IReadOnlyList<TagDisplayItem> warningTags)
+    {
+        const int maxPreviewItems = 3;
+        var formatted = warningTags
+            .Select(tag => TagDisplayItem.FormatValue(tag.Value))
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (formatted.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        if (formatted.Count <= maxPreviewItems)
+        {
+            return string.Join(", ", formatted);
+        }
+
+        var preview = string.Join(", ", formatted.Take(maxPreviewItems));
+        return $"{preview}, and {formatted.Count - maxPreviewItems} more";
+    }
+
     private IReadOnlyList<TagDisplayItem> BuildPrimaryTagItems() =>
         story?.Tags
             .Where(tag => TagDisplayItem.IsPrimarySelectionCategory(tag.Category))
@@ -555,6 +626,10 @@ else if (story != null)
 
         story = null;
         chapters = null;
+        warningTagItems = [];
+        primaryTagItems = [];
+        secondaryTagItems = [];
+        warningSummary = string.Empty;
         errorMessage = null;
         isLoading = true;
         loadedStoryId = null;
@@ -633,6 +708,10 @@ else if (story != null)
     private void ApplyStory(LinkedOfGetPublishedStoryResponse loadedStory)
     {
         story = loadedStory;
+        warningTagItems = BuildWarningTagItems();
+        primaryTagItems = BuildPrimaryTagItems();
+        secondaryTagItems = BuildSecondaryTagItems();
+        warningSummary = FormatWarningSummary(warningTagItems);
         errorMessage = null;
         isLoading = false;
 
