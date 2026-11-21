@@ -5,6 +5,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.15] - 2026-11-21
+
+
+### Added
+
+- **tags:** Enhance ListTags API to support filtering by Category and Subcategory
+
+- **errors:** Enhance error handling for content retrieval and map new domain errors to appropriate HTTP status codes
+
+- **hateoas:** Enhance Hypermedia Links for Stories, Authors, and Chapters
+
+- **markdown:** Add alternate markdown link support in HomepageLinkHeaderMiddleware and SocialPreviewMetadata
+
+- **metadata:** Add StoryCompletionStatus to published work metadata and update related components
+
+- **web:** Enhance story detail rendering with mobile actions and content warnings
+
+- **web:** Implement health check for Fiction API and update health check endpoints
+
+
+### CI
+
+- Retrigger
+
+
+### Changed
+
+- **web:** Streamline pagination and navigation logic in BookManager, ChapterManager, ChapterList, MarkdownStoryReader, and StoryReader components
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+- **workarounds:** Add details for temporary dashboard telemetry storage mitigation and verification
+
+- **agent:** Enhance documentation for anonymous reading and update OpenAPI specification
+
+
+### Fixed
+
+- **auth:** Remove invalid prompt=create to resolve Google OAuth 400 on sign up
+
+
+### Maintenance
+
+- **deps:** Update opentelemetry-dotnet-contrib monorepo to 1.20.2
+
+- **deps:** Update dependency mongodb.entityframeworkcore to 10.0.5
+
+- **deps:** Update dependency xunit.v3.mtp-v2 to 4.0.3
+
+- **deps:** Update Aspire packages to version 13.6.5
+
+- **deps:** Add Humanizer.Core package version 3.0.10
+
+- **deps:** Update dependency markdig to 1.6.0
+
+- **deps:** Update wolverine monorepo to 6.64.0
+
+- **deps:** Update dependency microsoft.testing.platform to 2.5.3
+
+- **deps:** Update dependency nswag.codegeneration.csharp to 14.8.0
+
+- **deps:** Update dotnet monorepo
+
+- **deps:** Update dependency scalar.aspnetcore to 2.21.0
+
+- **deps:** Update dependency scalar.aspnetcore to v3
+
+- **deps:** Update dependency coverlet.collector to 10.1.1
+
+- **deps:** Update dependency sidio.sitemap.blazor to 2.1.0
+
+- **deps:** Update wolverine monorepo to 6.64.2
+
+- **deps:** Update dependency sonaranalyzer.csharp to 10.36.0.15337
+
+- **deps:** Update mongo-csharp-driver monorepo to 3.14.1
+
+
+### Tests
+
+- Assert full link sets in discovery contract tests
+
+
+
 ## [v1.0.14] - 2026-11-06
 
 
