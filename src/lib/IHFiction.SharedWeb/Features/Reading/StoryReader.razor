@@ -30,19 +30,6 @@ else if (!string.IsNullOrWhiteSpace(errorMessage))
 }
 else if (Meta is not null)
 {
-    var orderedChildren = BuildNavigationChapters().ToList();
-    var currentChapterIndex = orderedChildren.FindIndex(chapter => chapter.Id == Meta.Id.ToString());
-    var currentChapter = currentChapterIndex >= 0 ? orderedChildren[currentChapterIndex] : null;
-    var nextChapter = currentChapterIndex >= 0 && currentChapterIndex < orderedChildren.Count - 1
-        ? orderedChildren[currentChapterIndex + 1]
-        : null;
-    var isCrossBookTransition =
-        nextChapter is not null
-        && currentChapter is not null
-        && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
-        && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
-    var isLastPublishedChapter = Meta.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
-
     <div class="section" @key="WorkId">
         <div class="container">
             <AppBreadcrumbs Items="@BreadcrumbItems" />
@@ -229,6 +216,12 @@ else if (Meta is not null)
     private MarkdownReaderModel? reader;
     private LinkedOfGetPublishedWorkContentResponse? content => reader?.Content;
     private bool IsStoryComplete => string.Equals(Meta?.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
+    private List<ReaderChapterNavItem> orderedChildren = [];
+    private int currentChapterIndex = -1;
+    private ReaderChapterNavItem? currentChapter;
+    private ReaderChapterNavItem? nextChapter;
+    private bool isCrossBookTransition;
+    private bool isLastPublishedChapter;
     private bool isLoading = true;
     private string? errorMessage;
     private string? appliedParameterKey;
@@ -254,6 +247,7 @@ else if (Meta is not null)
 
     protected override async Task OnParametersSetAsync()
     {
+        UpdateNavigationState();
         var parameterKey = BuildParameterKey();
         if (appliedParameterKey == parameterKey) return;
         appliedParameterKey = parameterKey;
@@ -346,6 +340,22 @@ else if (Meta is not null)
                 child.BookTitle,
                 child.ReadCount))
             .ToList() ?? [];
+    }
+
+    private void UpdateNavigationState()
+    {
+        orderedChildren = BuildNavigationChapters().ToList();
+        currentChapterIndex = Meta is null ? -1 : orderedChildren.FindIndex(chapter => chapter.Id == Meta.Id.ToString());
+        currentChapter = currentChapterIndex >= 0 ? orderedChildren[currentChapterIndex] : null;
+        nextChapter = currentChapterIndex >= 0 && currentChapterIndex < orderedChildren.Count - 1
+            ? orderedChildren[currentChapterIndex + 1]
+            : null;
+        isCrossBookTransition =
+            nextChapter is not null
+            && currentChapter is not null
+            && !string.IsNullOrWhiteSpace(nextChapter.BookTitle)
+            && !string.Equals(nextChapter.BookTitle, currentChapter.BookTitle, StringComparison.OrdinalIgnoreCase);
+        isLastPublishedChapter = Meta?.WorkType == "Chapter" && nextChapter is null && orderedChildren.Count > 0;
     }
 
     private void OnThemeChanged(object? sender, ThemeChangedEventArgs e)

@@ -24,16 +24,12 @@
             style="margin-bottom: 1.5rem;">
             <a class="pagination-previous" @onclick="e => SelectPreviousChapter()">&lt; Previous</a>
             <ul class="pagination-list">
-                @{
-                    var _sortedChaps = GetSortedChapters();
-                }
-                @for (int i = 0; i < _sortedChaps.Count; i++)
+                @foreach (var (chapter, index) in SortedChapters.Select((c, i) => (c, i)))
                 {
-                    var chapter = _sortedChaps[i];
                     <li @key="chapter.Id">
                         <a class="pagination-link has-tooltip-top @(chapter.Id == Chapter?.Id ? "is-current" : "")"
-                            aria-label="Chapter @(i + 1)" title="@chapter.Title" data-tooltip="@chapter.Title"
-                            @onclick="async () => await SelectChapter(chapter)">@(i + 1)</a>
+                            aria-label="Chapter @(index + 1)" title="@chapter.Title" data-tooltip="@chapter.Title"
+                            @onclick="async () => await SelectChapter(chapter)">@(index + 1)</a>
                     </li>
                 }
                 <li>
@@ -144,6 +140,8 @@
         MultiBook => StoryEditorService.CurrentBook?.Chapters,
         _ => null
     };
+
+    private List<ChapterEditorModel> SortedChapters => GetSortedChapters();
 
     // Provide a stable, order-sorted view for rendering and navigation
     private List<ChapterEditorModel> GetSortedChapters()

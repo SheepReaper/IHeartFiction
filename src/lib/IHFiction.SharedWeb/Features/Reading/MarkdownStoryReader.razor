@@ -15,11 +15,6 @@
 }
 else if (reader is not null)
 {
-    var chapters = BuildNavigationChapters(Meta).ToList();
-    var currentIndex = chapters.FindIndex(chapter => chapter.Id == reader.WorkId);
-    var previous = currentIndex > 0 ? chapters[currentIndex - 1] : null;
-    var next = currentIndex >= 0 && currentIndex < chapters.Count - 1 ? chapters[currentIndex + 1] : null;
-
     <article class="content">
         <h1>@Meta.Title</h1>
         @if (Meta.Authors.Any())
@@ -97,6 +92,10 @@ else if (reader is not null)
     private string? errorMessage;
     private string? resolvedParameterKey;
     private bool IsStoryComplete => string.Equals(Meta?.StoryCompletionStatus, "Complete", StringComparison.OrdinalIgnoreCase);
+    private List<ReaderChapterNavItem> chapters = [];
+    private int currentIndex = -1;
+    private ReaderChapterNavItem? previous;
+    private ReaderChapterNavItem? next;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -115,10 +114,12 @@ else if (reader is not null)
             if (result.IsSuccess)
             {
                 reader = result.Value;
+                UpdateNavigation();
             }
             else
             {
                 errorMessage = result.DomainError.Description ?? "This work is not available.";
+                ResetNavigation();
             }
         }
         catch (OperationCanceledException) when (CancellationToken.IsCancellationRequested)
@@ -127,6 +128,22 @@ else if (reader is not null)
         }
 
         resolvedParameterKey = parameterKey;
+    }
+
+    private void UpdateNavigation()
+    {
+        chapters = BuildNavigationChapters(Meta).ToList();
+        currentIndex = reader is null ? -1 : chapters.FindIndex(chapter => chapter.Id == reader.WorkId);
+        previous = currentIndex > 0 ? chapters[currentIndex - 1] : null;
+        next = currentIndex >= 0 && currentIndex < chapters.Count - 1 ? chapters[currentIndex + 1] : null;
+    }
+
+    private void ResetNavigation()
+    {
+        chapters = [];
+        currentIndex = -1;
+        previous = null;
+        next = null;
     }
 
     private static IEnumerable<ReaderChapterNavItem> BuildNavigationChapters(
