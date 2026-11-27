@@ -220,6 +220,7 @@
     private Task<AuthenticationState> AuthenticationState { get; set; } = default!;
 
     private bool _interactive;
+    private int _reloadGeneration;
     private Task<AuthenticationState>? _loadedAuthenticationState;
     private bool _loading = true;
     private bool _actionBusy;
@@ -247,18 +248,27 @@
 
     private async Task ReloadAsync()
     {
+        var generation = ++_reloadGeneration;
+        var authenticationTask = AuthenticationState;
+        _loadedAuthenticationState = authenticationTask;
+        bool IsCurrentReload() => generation == _reloadGeneration && authenticationTask == AuthenticationState;
+
+        _follows = null;
+        _inbox = null;
         _loading = true;
         _error = null;
         LoaderService.Show();
 
         try
         {
-            _loadedAuthenticationState = AuthenticationState;
-            var authState = await AuthenticationState;
-            _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+            var authState = await authenticationTask;
+            if (!IsCurrentReload()) return;
+            var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
 
-            var followsResult = await NotificationService.GetFollowSnapshotAsync(_isAuthenticated, CancellationToken);
-            var inboxResult = await NotificationService.GetNotificationsAsync(_isAuthenticated, cancellationToken: CancellationToken);
+            var followsResult = await NotificationService.GetFollowSnapshotAsync(isAuthenticated, CancellationToken);
+            if (!IsCurrentReload()) return;
+            var inboxResult = await NotificationService.GetNotificationsAsync(isAuthenticated, cancellationToken: CancellationToken);
+            if (!IsCurrentReload()) return;
 
             if (followsResult.IsFailure)
             {
@@ -272,13 +282,17 @@
                 return;
             }
 
+            _isAuthenticated = isAuthenticated;
             _follows = followsResult.Value;
             _inbox = inboxResult.Value;
         }
         finally
         {
-            _loading = false;
-            LoaderService.Hide();
+            if (IsCurrentReload())
+            {
+                _loading = false;
+                LoaderService.Hide();
+            }
         }
     }
 

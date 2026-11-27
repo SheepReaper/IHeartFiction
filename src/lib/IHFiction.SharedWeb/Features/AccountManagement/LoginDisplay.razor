@@ -71,15 +71,22 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_loadedAuthenticationState == AuthenticationState) return;
-        _loadedAuthenticationState = AuthenticationState;
-        _avatarUrl = null;
-        var authState = await AuthenticationState;
+        var authenticationTask = AuthenticationState;
+        _loadedAuthenticationState = authenticationTask;
+        if (_avatarUrl is not null)
+        {
+            _avatarUrl = null;
+            StateHasChanged();
+        }
+        var authState = await authenticationTask;
+        if (authenticationTask != AuthenticationState) return;
         if (authState.User.Identity?.IsAuthenticated != true)
         {
             return;
         }
 
         var result = await AccountService.GetUserProfileAsync();
+        if (authenticationTask != AuthenticationState) return;
         if (result.IsSuccess && !string.IsNullOrWhiteSpace(result.Value.GravatarEmail))
         {
             _avatarUrl = BuildGravatarUrl(result.Value.GravatarEmail);
