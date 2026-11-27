@@ -40,6 +40,8 @@ else
     [Parameter] public bool IsPublished { get; set; } = true;
 
     private Task<AuthenticationState>? _loadedAuthenticationState;
+    private bool _interactive;
+    private int _lookupGeneration;
     private bool _loaded;
     private bool _isAuthenticated;
     private bool _isFollowing;
@@ -92,40 +94,45 @@ else
 
         _storyId = StoryId;
 
-        _loadedAuthenticationState = AuthenticationState;
-        var authState = await AuthenticationState;
-        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
-
-        if (IsPublished)
-        {
-            var result = await NotificationService.IsStoryFollowedAsync(_storyId, _isAuthenticated);
-            if (result.IsSuccess)
-            {
-                _isFollowing = result.Value;
-            }
-            else
-            {
-                _error = result.DomainError.Description;
-            }
-        }
-
-        _loaded = true;
+        _interactive = true;
+        await LoadFollowStateAsync();
         StateHasChanged();
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!_loaded || _loadedAuthenticationState == AuthenticationState) return;
-        _loadedAuthenticationState = AuthenticationState;
-        var authState = await AuthenticationState;
-        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
-        var result = await NotificationService.IsStoryFollowedAsync(_storyId, _isAuthenticated);
-        if (result.IsSuccess) _isFollowing = result.Value;
-        else _error = result.DomainError.Description;
+        if (_interactive && _loadedAuthenticationState != AuthenticationState)
+            await LoadFollowStateAsync();
+    }
+
+    private async Task LoadFollowStateAsync()
+    {
+        var generation = ++_lookupGeneration;
+        var authenticationTask = AuthenticationState;
+        _loadedAuthenticationState = authenticationTask;
+        _loaded = false;
+        _error = null;
+        var authState = await authenticationTask;
+        if (generation != _lookupGeneration || authenticationTask != AuthenticationState) return;
+        var isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        var isFollowing = false;
+        string? error = null;
+        if (IsPublished)
+        {
+            var result = await NotificationService.IsStoryFollowedAsync(_storyId, isAuthenticated);
+            if (result.IsSuccess) isFollowing = result.Value;
+            else error = result.DomainError.Description;
+        }
+        if (generation != _lookupGeneration || authenticationTask != AuthenticationState) return;
+        _isFollowing = isFollowing;
+        _error = error;
+        _isAuthenticated = isAuthenticated;
+        _loaded = true;
     }
 
     private async Task ToggleFollowAsync()
     {
+        if (!_loaded || _loadedAuthenticationState != AuthenticationState) return;
         _error = null;
         _submitting = true;
 
