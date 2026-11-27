@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.16] - 2026-11-27
+
+
+### Added
+
+- **watchdog:** Implement watchdog service with recovery and monitoring capabilities
+
+
+### Documentation
+
+- **changelog:** Update generated changelog
+
+
+### Maintenance
+
+- **deps:** Update opentelemetry-dotnet monorepo to 1.21.0
+
+- **deps:** Update github/codeql-action digest to 1bd86f2
+
+- **deps:** Update dependency npgsql to 10.0.4
+
+- **deps:** Update dependency npgsql.dependencyinjection to 10.0.4
+
+- **deps:** Update dependency mongodb.entityframeworkcore to 10.0.6
+
+- **deps:** Update dependency npgsql.entityframeworkcore.postgresql to 10.0.4
+
+- **deps:** Update github/codeql-action digest to 915412f
+
+- **deps:** Update dependency npgsql.opentelemetry to 10.0.4
+
+
+
 ## [v1.0.15] - 2026-11-21
 
 
