@@ -55,7 +55,7 @@ jobs:
       - name: Show resolved build version
         shell: pwsh
         run: |
-          $dll = Join-Path $PWD "src/lib/IHFiction.SharedKernel/bin/Debug/net10.0/IHFiction.SharedKernel.dll"
+          $dll = Join-Path $PWD "src/lib/IHFiction.SharedKernel/bin/Debug/net11.0/IHFiction.SharedKernel.dll"
           if (-not (Test-Path $dll)) { throw "Expected assembly not found: $dll" }
 
           $resolvedDll = (Resolve-Path $dll).Path

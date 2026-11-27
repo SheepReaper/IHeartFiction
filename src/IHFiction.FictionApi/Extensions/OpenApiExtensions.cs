@@ -336,10 +336,15 @@ internal static class OpenApiExtensions
 
     public static IServiceCollection AddOpenApiWithAuth(this IServiceCollection services, string? oidcScheme = null)
     {
-        services.AddOpenApi(options => options
-            .AddDocumentTransformer(CreatePrimaryDocumentTransformer(oidcScheme))
-            .AddSchemaTransformer(SchemaTransformer)
-            .AddOperationTransformer(OperationTransformer));
+        services.AddOpenApi(options =>
+        {
+            // Preserve the published document version for generated clients.
+            options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+            options
+                .AddDocumentTransformer(CreatePrimaryDocumentTransformer(oidcScheme))
+                .AddSchemaTransformer(SchemaTransformer)
+                .AddOperationTransformer(OperationTransformer);
+        });
 
         // Skip cloudflare OpenAPI document when running under API description server
         var isApiDescriptionServer = Environment.CommandLine.Contains("GetDocument.Insider", StringComparison.OrdinalIgnoreCase);

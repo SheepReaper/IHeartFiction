@@ -10,7 +10,7 @@ namespace IHFiction.FictionApi.Features.AgentAccess;
 
 internal static class RegisterAgentIdentity
 {
-    private sealed record IdentityRequest(
+    internal sealed record IdentityRequest(
         string Type,
         [property: JsonPropertyName("assertion_type")] string AssertionType,
         string Assertion);

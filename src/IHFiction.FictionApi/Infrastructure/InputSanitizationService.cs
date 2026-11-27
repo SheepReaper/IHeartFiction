@@ -300,7 +300,7 @@ internal static partial class InputSanitizationService
 
         // Find the last space before the max length to avoid cutting words
         var truncateAt = maxLength - suffix.Length;
-        var lastSpace = sanitized.LastIndexOf(' ', truncateAt);
+        var lastSpace = sanitized.LastIndexOf(' ', truncateAt, StringComparison.Ordinal);
         
         if (lastSpace > 0 && lastSpace > truncateAt - 20) // Don't go too far back
             truncateAt = lastSpace;

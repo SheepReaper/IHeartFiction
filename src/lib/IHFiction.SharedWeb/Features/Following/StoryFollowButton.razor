@@ -2,7 +2,6 @@
 @using IHFiction.SharedKernel.Notifications
 
 @inject NotificationService NotificationService
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JS
 @inject IOptions<WebPushOptions> WebPushOptions
 
@@ -34,9 +33,13 @@ else
 }
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationState { get; set; } = default!;
+
     [Parameter, EditorRequired] public Ulid StoryId { get; set; }
     [Parameter] public bool IsPublished { get; set; } = true;
 
+    private Task<AuthenticationState>? _loadedAuthenticationState;
     private bool _loaded;
     private bool _isAuthenticated;
     private bool _isFollowing;
@@ -70,7 +73,14 @@ else
             return;
         }
 
-        module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Layout/MainLayout.razor.js");
+        try
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./_content/IHFiction.SharedWeb/Layout/MainLayout.razor.js");
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
+        }
 
         if (StoryId == Ulid.Empty)
         {
@@ -82,7 +92,8 @@ else
 
         _storyId = StoryId;
 
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _loadedAuthenticationState = AuthenticationState;
+        var authState = await AuthenticationState;
         _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
 
         if (IsPublished)
@@ -100,6 +111,17 @@ else
 
         _loaded = true;
         StateHasChanged();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_loaded || _loadedAuthenticationState == AuthenticationState) return;
+        _loadedAuthenticationState = AuthenticationState;
+        var authState = await AuthenticationState;
+        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        var result = await NotificationService.IsStoryFollowedAsync(_storyId, _isAuthenticated);
+        if (result.IsSuccess) _isFollowing = result.Value;
+        else _error = result.DomainError.Description;
     }
 
     private async Task ToggleFollowAsync()
@@ -144,6 +166,14 @@ else
             {
                 _error = result.DomainError.Description;
             }
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit ended while requesting a subscription.
+        }
+        catch (JSException)
+        {
+            _error = "Notifications are unavailable right now. Please try again.";
         }
         finally
         {

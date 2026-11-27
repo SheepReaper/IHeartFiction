@@ -6,7 +6,7 @@
     <LangVersion>preview</LangVersion>
     <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)</OpenApiDocumentsDirectory>
-    <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
+    <OpenApiGenerateDocumentsOptions>--file-name openapi --openapi-version OpenApi3_1</OpenApiGenerateDocumentsOptions>
     <!-- <PublishAot>true</PublishAot> -->
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
   </PropertyGroup>

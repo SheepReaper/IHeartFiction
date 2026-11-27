@@ -39,7 +39,7 @@ internal sealed class ListAuthors(
 
         [property: FromQuery(Name = ISearchSupport.QueryParameterName)]
         [property: StringLength(100, MinimumLength = 2, ErrorMessage = "Search term must be between 2 and 100 characters.")]
-        string Search = "",
+        string? Search = null,
 
         [property: StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
         [property: SortsType<ListAuthorsItem>]

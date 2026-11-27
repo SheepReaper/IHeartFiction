@@ -14,7 +14,15 @@ internal static class CoreServicesExtensions
     {
         builder.Services.AddProblemDetails(options =>
             options.CustomizeProblemDetails = context =>
-                context.ProblemDetails.Extensions.Add("requestId", context.HttpContext.TraceIdentifier));
+            {
+                context.ProblemDetails.Extensions.Add("requestId", context.HttpContext.TraceIdentifier);
+                if (context.ProblemDetails is HttpValidationProblemDetails validationProblem
+                    && context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<ValidationErrorMapping>() is { } mapping
+                    && mapping.Resolve(validationProblem) is { } error)
+                {
+                    context.ProblemDetails.Extensions.Add("domainError", new { error.Code, error.Description });
+                }
+            });
 
         builder.Services.AddValidation(); // .NET 10 built-in validation support for minimal APIs
         builder.Services.AddExceptionHandler<ValidationExceptionHandler>();

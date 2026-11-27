@@ -161,7 +161,6 @@ else if (resolutionError is not null)
     private void OnStoriesLoaded(IReadOnlyList<LinkedOfListPublishedStoriesItem> stories)
     {
         loadedStories = stories;
-        StateHasChanged();
     }
 
     private Task PersistResolution()

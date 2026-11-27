@@ -149,15 +149,13 @@ public sealed class StoryReadingLinkTests
             Ulid id, string? fields = null, CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Reading links must not fetch bodies.");
     }
-    private sealed class StorageRuntime : IJSRuntime
+    private class StorageState
     {
         public Dictionary<string, string?> Values { get; } = [];
         public int Reads { get; private set; }
         public bool Unavailable { get; set; }
         public TaskCompletionSource<string?>? Pending { get; set; }
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
-            InvokeAsync<TValue>(identifier, CancellationToken.None, args);
-        public async ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+        protected async ValueTask<TValue> InvokeCoreAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
         {
             var key = (string)args![0]!;
             if (identifier == "localStorage.setItem") Values[key] = (string?)args[1];
@@ -171,5 +169,15 @@ public sealed class StoryReadingLinkTests
             }
             return default!;
         }
+    }
+
+    private sealed class StorageRuntime : StorageState, IJSRuntime
+    {
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+            InvokeCoreAsync<TValue>(identifier, CancellationToken.None, args);
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) =>
+            InvokeCoreAsync<TValue>(identifier, cancellationToken, args);
+
+
     }
 }

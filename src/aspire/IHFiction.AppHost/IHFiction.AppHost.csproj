@@ -19,7 +19,6 @@
     <PackageReference Include="Aspire.Hosting.PostgreSQL" />
     <PackageReference Include="Aspire.Hosting.Redis" />
     <PackageReference Include="Humanizer.Core" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="MongoDB.Bson" />
     <PackageReference Include="MongoDB.Driver" />
     <PackageReference Include="Npgsql" />

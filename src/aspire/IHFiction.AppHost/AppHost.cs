@@ -44,7 +44,7 @@ var migrations = builder.AddProject<Projects.IHFiction_MigrationService>("migrat
     .WaitFor(storiesDb);
 
 var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
-    .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
+    .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:11.0-alpine")
     .WithReference(keycloak)
     .WithReference(fictionDb)
     .WithReference(redis)
@@ -57,7 +57,7 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithReplicas(builder.Configuration.GetValue("Containers:Api:ReplicaCount", 1));
 
 var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
-    .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:10.0-alpine")
+    .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:11.0-alpine")
     .WithHttpProbe(ProbeType.Liveness, "/alive", endpointName: "http")
     .WithHttpProbe(ProbeType.Readiness, "/health", endpointName: "http")
     .WithReference(fictionApi) // API transport uses service discovery; ApiBaseUrl is only its public identity

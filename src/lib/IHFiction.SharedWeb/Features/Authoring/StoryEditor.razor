@@ -527,7 +527,6 @@ else
         _isBusy = true;
         _errorMessage = null;
 
-        StateHasChanged();
 
         var publishResult = await EditorService.PublishStoryAsync();
 
@@ -537,7 +536,6 @@ else
 
         _isBusy = false;
 
-        StateHasChanged();
     }
 
     private void Cancel()
