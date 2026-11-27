@@ -65,13 +65,11 @@ public sealed class DisqusThreadTests
         public TestNavigation() => Initialize("https://example.com/", "https://example.com/read/one");
     }
 
-    private sealed class DisqusRuntime : IJSRuntime, IJSObjectReference
+    private class DisqusState
     {
         public int Imports { get; private set; }
         public List<(string Url, string Identifier)> Threads { get; } = [];
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
-            InvokeAsync<TValue>(identifier, CancellationToken.None, args);
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
+        protected ValueTask<TValue> InvokeCoreAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args)
         {
             if (identifier == "import")
             {
@@ -82,6 +80,15 @@ public sealed class DisqusThreadTests
             Threads.Add(((string)args![0]!, (string)args[1]!));
             return ValueTask.FromResult(default(TValue)!);
         }
+    }
+
+    private sealed class DisqusRuntime : DisqusState, IJSRuntime, IJSObjectReference
+    {
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+            InvokeCoreAsync<TValue>(identifier, CancellationToken.None, args);
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) =>
+            InvokeCoreAsync<TValue>(identifier, cancellationToken, args);
+
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

@@ -11,7 +11,7 @@ public interface ISearchSupport
     /// Must be between 2 and 100 characters when provided.
     /// </summary>
     /// <example>fantasy adventure</example>
-    string Search { get; }
+    string? Search { get; }
 
     /// <summary>
     /// Query parameter name used when generating links for this search request.

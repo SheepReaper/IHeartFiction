@@ -1,7 +1,6 @@
 @inject NavigationManager Navigation
 @inject LoaderService LoaderService
 @inject AccountService AccountService
-@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @using System.Security.Cryptography
 @using System.Text
@@ -50,6 +49,9 @@
 </AuthorizeView>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationState { get; set; } = default!;
+
     [CascadingParameter(Name = "LogoutReturnUrl")]
     public string? LogoutReturnUrl { get; set; }
 
@@ -64,14 +66,14 @@
     private string? _avatarUrl;
     private bool _isMenuOpen;
 
+    private Task<AuthenticationState>? _loadedAuthenticationState;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
-        {
-            return;
-        }
-
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (_loadedAuthenticationState == AuthenticationState) return;
+        _loadedAuthenticationState = AuthenticationState;
+        _avatarUrl = null;
+        var authState = await AuthenticationState;
         if (authState.User.Identity?.IsAuthenticated != true)
         {
             return;

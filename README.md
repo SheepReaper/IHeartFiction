@@ -8,7 +8,7 @@ I❤️Fiction is an ambitious open-source project to build a modern, feature-ri
 
 To get the project running locally, you'll need the following installed:
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - `python3` on Linux when forcing a local source-generator package refresh
 

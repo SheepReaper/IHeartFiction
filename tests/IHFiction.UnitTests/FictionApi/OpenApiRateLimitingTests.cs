@@ -40,6 +40,7 @@ public sealed class OpenApiRateLimitingTests
         };
 
         using var json = JsonDocument.Parse(await client.GetStringAsync($"/openapi/{document}.json", TestContext.Current.CancellationToken));
+        json.RootElement.GetProperty("openapi").GetString().Should().StartWith(document == "v1" ? "3.1." : "3.0.");
         var paths = json.RootElement.GetProperty("paths");
         foreach (var (path, method) in new[] { ("/global", "get"), ("/explicit", "post"), ("/custom", "get"), ("/group/limited", "post") })
         {

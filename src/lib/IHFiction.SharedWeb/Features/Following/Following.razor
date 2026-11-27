@@ -1,7 +1,6 @@
 @page "/following"
 @inherits CancellableComponent
 @inject NotificationService NotificationService
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject LoaderService LoaderService
 
 <PageTitle>Following & Notifications — IHeartFiction</PageTitle>
@@ -217,6 +216,11 @@
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationState { get; set; } = default!;
+
+    private bool _interactive;
+    private Task<AuthenticationState>? _loadedAuthenticationState;
     private bool _loading = true;
     private bool _actionBusy;
     private bool _isAuthenticated;
@@ -231,7 +235,14 @@
             return;
         }
 
+        _interactive = true;
         await ReloadAsync();
+        StateHasChanged();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_interactive && _loadedAuthenticationState != AuthenticationState) await ReloadAsync();
     }
 
     private async Task ReloadAsync()
@@ -242,7 +253,8 @@
 
         try
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            _loadedAuthenticationState = AuthenticationState;
+            var authState = await AuthenticationState;
             _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
 
             var followsResult = await NotificationService.GetFollowSnapshotAsync(_isAuthenticated, CancellationToken);
@@ -267,7 +279,6 @@
         {
             _loading = false;
             LoaderService.Hide();
-            StateHasChanged();
         }
     }
 

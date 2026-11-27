@@ -58,7 +58,7 @@ internal sealed class ListPublishedStories(
 
         [property: FromQuery(Name = ISearchSupport.QueryParameterName)]
         [property: StringLength(100, MinimumLength = 2, ErrorMessage = "Search term must be between 2 and 100 characters.")]
-        string Search = "",
+        string? Search = null,
 
         [property: StringLength(50, ErrorMessage = "Sort field must be 50 characters or less.")]
         string Sort = "publishedAt",
@@ -255,6 +255,10 @@ internal sealed class ListPublishedStories(
                 "Invalid Sort or Fields values return HTTP 400 with a domainError code and guidance. " +
                 "This is a public endpoint that does not require authentication and only " +
                 "returns stories that have been explicitly published by their authors.")
+            .WithMetadata(new ValidationErrorMapping(problem =>
+                problem.Errors.TryGetValue(nameof(ListPublishedStoriesQuery.Fields), out var errors)
+                    ? Errors.InvalidFields(string.Join(" ", errors))
+                    : null))
             .WithTags(ApiTags.Stories)
             .AllowAnonymous() // Public endpoint - no authentication required
             .WithStandardResponses(notFound: false, conflict: true, unauthorized: false, forbidden: false)

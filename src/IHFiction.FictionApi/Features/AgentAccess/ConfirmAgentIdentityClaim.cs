@@ -11,7 +11,7 @@ namespace IHFiction.FictionApi.Features.AgentAccess;
 
 internal static class ConfirmAgentIdentityClaim
 {
-    private sealed record ConfirmClaimRequest(string UserCode);
+    internal sealed record ConfirmClaimRequest(string UserCode);
 
     internal sealed class Endpoint : IEndpoint
     {

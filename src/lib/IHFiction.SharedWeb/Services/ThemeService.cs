@@ -13,13 +13,20 @@ public sealed class ThemeService(IJSRuntime js)
     /// </summary>
     public async Task InitializeThemeAsync(CancellationToken cancellationToken = default)
     {
-        var initialTheme = await js.InvokeAsync<string>("theme.getTheme", cancellationToken);
-        if (!string.IsNullOrEmpty(initialTheme) && CurrentTheme != initialTheme)
+        try
         {
-            CurrentTheme = initialTheme;
-            // No need to call JS to set the theme, as it's already set by the startup script.
-            // We just notify the rest of the Blazor app of the current theme.
-            ThemeChanged?.Invoke(this, new(CurrentTheme));
+            var initialTheme = await js.InvokeAsync<string>("theme.getTheme", cancellationToken);
+            if (!string.IsNullOrEmpty(initialTheme) && CurrentTheme != initialTheme)
+            {
+                CurrentTheme = initialTheme;
+                // No need to call JS to set the theme, as it's already set by the startup script.
+                // We just notify the rest of the Blazor app of the current theme.
+                ThemeChanged?.Invoke(this, new(CurrentTheme));
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit ended before the theme could be read.
         }
     }
 
@@ -27,8 +34,15 @@ public sealed class ThemeService(IJSRuntime js)
     {
         if (CurrentTheme != theme)
         {   
+            try
+            {
+                await js.InvokeVoidAsync("theme.setTheme", cancellationToken, theme);
+            }
+            catch (JSDisconnectedException)
+            {
+                return;
+            }
             CurrentTheme = theme;
-            await js.InvokeVoidAsync("theme.setTheme", cancellationToken, theme);
             ThemeChanged?.Invoke(this, new(theme));
         }
     }

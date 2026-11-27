@@ -1,6 +1,6 @@
 # Copilot Instructions for IHeartFiction
 
-IHeartFiction is a .NET 10 fiction reading and publishing platform. It uses ASP.NET Core Minimal APIs, a Blazor Web App in Interactive Server mode, .NET Aspire orchestration, PostgreSQL/EF Core for relational metadata, MongoDB for document bodies, Redis/WolverineFx for distributed messaging, and Keycloak for authentication.
+IHeartFiction is a .NET 11 fiction reading and publishing platform. It uses ASP.NET Core Minimal APIs, a Blazor Web App in Interactive Server mode, .NET Aspire orchestration, PostgreSQL/EF Core for relational metadata, MongoDB for document bodies, Redis/WolverineFx for distributed messaging, and Keycloak for authentication.
 
 Treat `AGENTS.md` as the canonical repository guardrail file. Read it before changing code, and read `.agents/WORKAROUNDS.md` before removing unusual build targets, package plumbing, suppressions, or deployment transformations. For end-to-end feature work, follow `.agents/skills/ihfiction-feature-workflow/SKILL.md` and load only the references relevant to the task.
 
@@ -10,7 +10,7 @@ Treat `AGENTS.md` as the canonical repository guardrail file. Read it before cha
 - Read the files being changed, their tests, and one nearby complete analogue before designing a new pattern.
 - Prefer targeted `rg` searches over broad directory reads.
 - Use `Directory.Packages.props` for package versions; this solution uses Central Package Management.
-- Use the SDK selected by `global.json` (currently .NET SDK 10.0.302 with `latestFeature` roll-forward). Do not substitute .NET 8 or 9.
+- Use the SDK selected by `global.json` (currently .NET SDK 11.0.100 with `latestFeature` roll-forward). Do not substitute .NET 8 or 9.
 - Repository-local `Aspire.Cli` and `dotnet-ef` versions are pinned in `.config/dotnet-tools.json` and restored by the bootstrap scripts.
 
 ## Bootstrap, build, and test
