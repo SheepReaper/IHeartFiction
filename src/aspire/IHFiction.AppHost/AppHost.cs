@@ -137,11 +137,13 @@ if (builder.Environment.IsProduction())
     fictionApi
         .WithContainerRegistry(registry)
         .ConfigureFictionApiForSwarm()
+        .WithWatchdog(restartOnFailure: true)
         .WithCloudflareTunnel(cfTunnel, hostname: "api.iheartfiction.net", endpointName: "http");
 
     webClient
         .WithContainerRegistry(registry)
         .ConfigureWebClientForSwarm()
+        .WithWatchdog(restartOnFailure: true)
         .WithCloudflareTunnel(cfTunnel, hostname: "iheartfiction.net", endpointName: "http");
 }
 

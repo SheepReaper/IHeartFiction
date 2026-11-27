@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="watchdog/main.go" LogicalName="IHFiction.AppHost.watchdog.main.go" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Docker" />
     <PackageReference Include="Aspire.Hosting.KeyCloak" />
     <PackageReference Include="Aspire.Hosting.MongoDB" />

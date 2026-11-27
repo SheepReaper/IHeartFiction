@@ -24,8 +24,31 @@ internal static class ProductionConfigExtensions
     const string ContainerNetwork = "containers";
     const string DataPath = "/mnt/swarm/data/ihfiction";
     const string SecretsPath = "/mnt/swarm/config/ihfiction/secrets";
+    private static readonly string[] DisabledSocketProxyCategories = ["AUTH", "BUILD", "COMMIT", "CONFIGS", "CONTAINERS", "DISTRIBUTION", "EVENTS", "EXEC", "IMAGES", "NETWORKS", "NODES", "PLUGINS", "SECRETS", "SESSION", "SWARM", "SYSTEM", "TASKS", "VOLUMES"];
 
-    public static IResourceBuilder<DockerComposeEnvironmentResource> ConfigureSwarmCompose(this IDistributedApplicationBuilder builder) => builder
+    public static IResourceBuilder<DockerComposeEnvironmentResource> ConfigureSwarmCompose(this IDistributedApplicationBuilder builder)
+    {
+        const string controlNetwork = "ihfiction-watchdog-control";
+        const string proxyName = "ihfiction-watchdog-socket-proxy";
+        builder.AddContainer(proxyName, "lscr.io/linuxserver/socket-proxy:latest")
+            .PublishAsDockerComposeService((_, service) =>
+            {
+                service.Environment["SERVICES"] = "1";
+                service.Environment["POST"] = "1";
+                foreach (var category in DisabledSocketProxyCategories)
+                    service.Environment[category] = "0";
+                service.Networks = [controlNetwork];
+                service.Volumes = [new() { Name = "docker-socket", Type = "bind", Source = "/var/run/docker.sock", Target = "/var/run/docker.sock", ReadOnly = true }];
+                service.Deploy = new() { Replicas = 1, Placement = new() { Constraints = ["node.role == manager"] } };
+            });
+        builder.AddWatchdog("ihfiction-watchdog", "golang:1.24-alpine", $"tcp://{proxyName}:2375", "ihfiction")
+            .PublishAsDockerComposeService((_, service) =>
+            {
+                service.Networks = [ContainerNetwork, controlNetwork];
+                service.Deploy = new() { Replicas = 1, Placement = new() { Constraints = ["node.role == manager"] } };
+            });
+
+        return builder
         .AddDockerComposeEnvironment("internal")
         .WithDashboard(dash => dash
             .WithForwardedHeaders()
@@ -56,6 +79,7 @@ internal static class ProductionConfigExtensions
             }))
         .ConfigureComposeFile(file =>
         {
+            file.AddNetwork(new() { Name = controlNetwork, Internal = true });
             file.AddNetwork(new()
             {
                 Name = AdminNetwork,
@@ -113,6 +137,7 @@ internal static class ProductionConfigExtensions
             // Swarm does not load .env. Required values are resolved literals or mounted secret files.
             file.Clear();
         });
+    }
 
     public static IResourceBuilder<PostgresServerResource> ConfigureForSwarm(this IResourceBuilder<PostgresServerResource> builder) => builder
         .WithDockerHealthcheck(["CMD", "pg_isready", "-U", "postgres"])
