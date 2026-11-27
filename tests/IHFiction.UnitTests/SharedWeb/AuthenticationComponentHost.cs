@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Reflection;
 
 using IHFiction.SharedKernel.Notifications;
 using IHFiction.SharedWeb;
@@ -28,7 +29,8 @@ internal sealed class AuthenticationComponentHost : IAsyncDisposable
     public LoaderService Loader => services.GetRequiredService<LoaderService>();
     public Task ParametersChanged => activator.Component!.ParametersChanged;
 
-    public AuthenticationComponentHost(Type componentType, FictionApiClient client, Dictionary<string, object>? parameters = null)
+    public AuthenticationComponentHost(Type componentType, FictionApiClient client, Dictionary<string, object>? parameters = null,
+        Func<Task<BrowserPushSubscription?>>? requestSubscription = null)
     {
         child = builder =>
         {
@@ -41,7 +43,7 @@ internal sealed class AuthenticationComponentHost : IAsyncDisposable
             .AddSingleton(new NotificationService(client, () => Task.FromResult<string?>("test-device")))
             .AddSingleton(new AccountService(client))
             .AddSingleton<LoaderService>()
-            .AddSingleton<IJSRuntime, ModuleRuntime>()
+            .AddSingleton<IJSRuntime>(new ModuleRuntime(requestSubscription ?? (() => Task.FromResult<BrowserPushSubscription?>(null))))
             .AddSingleton(Options.Create(new WebPushOptions { PublicKey = "test", PrivateKey = "test", Subject = "mailto:test@example.test" }))
             .AddSingleton<NavigationManager, Navigation>()
             .AddSingleton<AntiforgeryStateProvider, TokenState>()
@@ -59,6 +61,13 @@ internal sealed class AuthenticationComponentHost : IAsyncDisposable
 
     public Task ChangeAuthenticationAsync(Task<AuthenticationState> state) => activator.Cascade!.SetParametersAsync(Parameters(state));
     public Task HydrateAsync(bool firstRender = true) => activator.Component!.HydrateAsync(firstRender);
+
+    // HtmlRenderer does not dispatch interactive DOM events. Invoke the bound handler,
+    // then use normal parameter rendering to inspect its final UI state.
+    public Task InvokeActionAsync(string name, params object[] args) => (Task)activator.Component!.GetType().BaseType!
+        .GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(activator.Component, args)!;
+
+    public Task RenderCurrentAsync() => ((ComponentBase)activator.Component!).SetParametersAsync(ParameterView.Empty);
 
     private ParameterView Parameters(Task<AuthenticationState> state) => ParameterView.FromDictionary(new Dictionary<string, object?>
     {
@@ -123,10 +132,18 @@ internal sealed class AuthenticationComponentHost : IAsyncDisposable
         }
     }
 
-    private sealed class ModuleRuntime : IJSRuntime, IJSObjectReference
+    private class ModuleState(Func<Task<BrowserPushSubscription?>> requestSubscription)
     {
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) => new((TValue)(object)this);
-        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) => new((TValue)(object)this);
+        protected async Task<TValue> SubscriptionAsync<TValue>() => (TValue)(object)(await requestSubscription())!;
+    }
+
+    private sealed class ModuleRuntime(Func<Task<BrowserPushSubscription?>> requestSubscription)
+        : ModuleState(requestSubscription), IJSRuntime, IJSObjectReference
+    {
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+            identifier == "import" ? new((TValue)(object)this) : new(SubscriptionAsync<TValue>());
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, CancellationToken cancellationToken, object?[]? args) =>
+            identifier == "import" ? new((TValue)(object)this) : new(SubscriptionAsync<TValue>());
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 

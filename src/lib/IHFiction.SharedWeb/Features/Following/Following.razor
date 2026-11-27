@@ -255,6 +255,7 @@
 
         _follows = null;
         _inbox = null;
+        _actionBusy = false;
         _loading = true;
         _error = null;
         LoaderService.Show();
@@ -296,12 +297,20 @@
         }
     }
 
+    private bool IsCurrentAction(Task<AuthenticationState> authenticationTask, int generation) =>
+        authenticationTask == AuthenticationState && generation == _reloadGeneration;
+
     private async Task OnUnfollowAuthorAsync(Ulid authorId)
     {
+        if (_loading || _actionBusy || _loadedAuthenticationState != AuthenticationState) return;
+        var authenticationTask = AuthenticationState;
+        var generation = _reloadGeneration;
+        var isAuthenticated = _isAuthenticated;
         _actionBusy = true;
         try
         {
-            var result = await NotificationService.UnfollowAuthorAsync(authorId, _isAuthenticated, CancellationToken);
+            var result = await NotificationService.UnfollowAuthorAsync(authorId, isAuthenticated, CancellationToken);
+            if (!IsCurrentAction(authenticationTask, generation)) return;
             if (result.IsFailure)
             {
                 _error = result.DomainError.Description;
@@ -315,16 +324,21 @@
         }
         finally
         {
-            _actionBusy = false;
+            if (IsCurrentAction(authenticationTask, generation)) _actionBusy = false;
         }
     }
 
     private async Task OnUnfollowStoryAsync(Ulid storyId)
     {
+        if (_loading || _actionBusy || _loadedAuthenticationState != AuthenticationState) return;
+        var authenticationTask = AuthenticationState;
+        var generation = _reloadGeneration;
+        var isAuthenticated = _isAuthenticated;
         _actionBusy = true;
         try
         {
-            var result = await NotificationService.UnfollowStoryAsync(storyId, _isAuthenticated, CancellationToken);
+            var result = await NotificationService.UnfollowStoryAsync(storyId, isAuthenticated, CancellationToken);
+            if (!IsCurrentAction(authenticationTask, generation)) return;
             if (result.IsFailure)
             {
                 _error = result.DomainError.Description;
@@ -338,16 +352,21 @@
         }
         finally
         {
-            _actionBusy = false;
+            if (IsCurrentAction(authenticationTask, generation)) _actionBusy = false;
         }
     }
 
     private async Task OnMarkReadAsync(Ulid notificationId)
     {
+        if (_loading || _actionBusy || _loadedAuthenticationState != AuthenticationState) return;
+        var authenticationTask = AuthenticationState;
+        var generation = _reloadGeneration;
+        var isAuthenticated = _isAuthenticated;
         _actionBusy = true;
         try
         {
-            var result = await NotificationService.MarkNotificationReadAsync(notificationId, _isAuthenticated, CancellationToken);
+            var result = await NotificationService.MarkNotificationReadAsync(notificationId, isAuthenticated, CancellationToken);
+            if (!IsCurrentAction(authenticationTask, generation)) return;
             if (result.IsFailure)
             {
                 _error = result.DomainError.Description;
@@ -369,7 +388,7 @@
         }
         finally
         {
-            _actionBusy = false;
+            if (IsCurrentAction(authenticationTask, generation)) _actionBusy = false;
         }
     }
 

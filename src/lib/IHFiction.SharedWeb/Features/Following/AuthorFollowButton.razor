@@ -93,6 +93,7 @@ else
         var authenticationTask = AuthenticationState;
         _loadedAuthenticationState = authenticationTask;
         _loaded = false;
+        _submitting = false;
         _error = null;
         var authState = await authenticationTask;
         if (generation != _lookupGeneration || authenticationTask != AuthenticationState) return;
@@ -107,13 +108,19 @@ else
 
     private async Task ToggleFollowAsync()
     {
-        if (!_loaded || _loadedAuthenticationState != AuthenticationState) return;
+        if (!_loaded || _submitting || _loadedAuthenticationState != AuthenticationState) return;
+        var authenticationTask = AuthenticationState;
+        var generation = _lookupGeneration;
+        var wasFollowing = _isFollowing;
+        var isAuthenticated = _isAuthenticated;
+        bool IsCurrentAction() => authenticationTask == AuthenticationState && generation == _lookupGeneration;
+
         _error = null;
         _submitting = true;
 
         try
         {
-            if (!_isFollowing)
+            if (!wasFollowing)
             {
                 if (module is null)
                 {
@@ -122,13 +129,15 @@ else
                 }
 
                 var subscription = await module.InvokeAsync<BrowserPushSubscription?>("requestSubscription", WebPushOptions.Value.PublicKey);
+                if (!IsCurrentAction()) return;
                 if (subscription is null)
                 {
                     _error = "Notifications are not available or permission was not granted.";
                     return;
                 }
 
-                var subscriptionResult = await NotificationService.RegisterPushSubscriptionAsync(subscription, _isAuthenticated);
+                var subscriptionResult = await NotificationService.RegisterPushSubscriptionAsync(subscription, isAuthenticated);
+                if (!IsCurrentAction()) return;
                 if (subscriptionResult.IsFailure)
                 {
                     _error = subscriptionResult.DomainError.Description;
@@ -136,13 +145,14 @@ else
                 }
             }
 
-            var result = _isFollowing
-                ? await NotificationService.UnfollowAuthorAsync(_authorId, _isAuthenticated)
-                : await NotificationService.FollowAuthorAsync(_authorId, _isAuthenticated);
+            var result = wasFollowing
+                ? await NotificationService.UnfollowAuthorAsync(_authorId, isAuthenticated)
+                : await NotificationService.FollowAuthorAsync(_authorId, isAuthenticated);
 
+            if (!IsCurrentAction()) return;
             if (result.IsSuccess)
             {
-                _isFollowing = !_isFollowing;
+                _isFollowing = !wasFollowing;
             }
             else
             {
@@ -155,11 +165,11 @@ else
         }
         catch (JSException)
         {
-            _error = "Notifications are unavailable right now. Please try again.";
+            if (IsCurrentAction()) _error = "Notifications are unavailable right now. Please try again.";
         }
         finally
         {
-            _submitting = false;
+            if (IsCurrentAction()) _submitting = false;
         }
     }
 
