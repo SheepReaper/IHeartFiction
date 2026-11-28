@@ -3,6 +3,9 @@ using IHFiction.SharedWeb.Csp;
 using IHFiction.SharedWeb.Features.Reading;
 
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 using NSubstitute;
 
@@ -10,6 +13,24 @@ namespace IHFiction.UnitTests.Csp;
 
 public sealed class CspPolicyProviderTests
 {
+    [Theory]
+    [InlineData("https://auth.example.test/realms/fiction", "https://auth.example.test")]
+    [InlineData("https://localhost:8080/realms/fiction", "https://localhost:8080")]
+    public void RenderPolicy_AllowsFormRedirectOnlyToConfiguredIdentityProvider(string authority, string origin)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(
+            new Dictionary<string, string?> { ["OidcAuthority"] = authority }).Build());
+        services.AddSingleton(Options.Create(new SiteUrlOptions { BaseUrl = new Uri("https://example.test") }));
+        services.AddSingleton(Options.Create(new DisqusOptions { ShortName = "example" }));
+        services.AddSingleton(Substitute.For<IHostEnvironment>());
+        services.AddCspProvider();
+        using var provider = services.BuildServiceProvider();
+        var policy = provider.GetRequiredService<CspPolicyProvider>().RenderPolicy("nonce");
+        var formAction = policy.Split(';').Single(d => d.TrimStart().StartsWith("form-action ", StringComparison.Ordinal)).Trim();
+        Assert.Equal($"form-action 'self' {origin}", formAction);
+    }
+
     [Theory]
     [InlineData("Development", true)]
     [InlineData("Production", false)]
@@ -20,7 +41,7 @@ public sealed class CspPolicyProviderTests
         environment.EnvironmentName.Returns(environmentName);
         var provider = new CspPolicyProvider(
             new SiteUrlOptions { BaseUrl = new Uri("https://localhost:7000") },
-            new DisqusOptions { ShortName = "example" }, environment);
+            new DisqusOptions { ShortName = "example" }, environment, new Uri("https://auth.example.test/realms/fiction"));
 
         var policy = provider.RenderPolicy("test-nonce");
         var connectSources = policy.Split(';').Single(directive => directive.TrimStart().StartsWith("connect-src ", StringComparison.Ordinal));

@@ -22,11 +22,17 @@ public sealed partial class CspPolicyProvider
     private readonly string[] _policySegments;
     private readonly string[] _policyReportOnlySegments;
 
-    public CspPolicyProvider(SiteUrlOptions siteUrlOptions, DisqusOptions disqusOptions, IHostEnvironment environment)
+    public CspPolicyProvider(SiteUrlOptions siteUrlOptions, DisqusOptions disqusOptions, IHostEnvironment environment, Uri oidcAuthority)
     {
         ArgumentNullException.ThrowIfNull(siteUrlOptions);
         ArgumentNullException.ThrowIfNull(disqusOptions);
         ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(oidcAuthority);
+        if (!oidcAuthority.IsAbsoluteUri || (oidcAuthority.Scheme != Uri.UriSchemeHttps && oidcAuthority.Scheme != Uri.UriSchemeHttp))
+            throw new ArgumentException("OIDC authority must be an absolute HTTP(S) URI.", nameof(oidcAuthority));
+
+        // Chromium applies form-action to the redirect from our logout POST to the identity provider.
+        var identityProviderOrigin = oidcAuthority.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
 
         var baseUrl = siteUrlOptions.BaseUrl?.ToString().TrimEnd('/') ?? string.Empty;
         var reportTo = $"csp-endpoint=\"{baseUrl}{CspReportsEndpoint}\"";
@@ -46,7 +52,7 @@ public sealed partial class CspPolicyProvider
             default-src 'none';
             connect-src 'self' {webSocketHost}{browserRefreshSources} https://links.services.disqus.com https://glitter.services.disqus.com https://referrer.disqus.com;
             font-src 'self' data:;
-            form-action 'self';
+            form-action 'self' {identityProviderOrigin};
             frame-src 'self' data: https://disqus.com https://{disqusHost};
             img-src 'self' data: https://referrer.disqus.com https://c.disquscdn.com https://cdn.viglink.com https://www.gravatar.com;
             manifest-src 'self';
