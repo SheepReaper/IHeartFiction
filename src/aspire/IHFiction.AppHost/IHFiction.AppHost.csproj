@@ -1,6 +1,6 @@
 <?xml-model href="http://schemas.microsoft.com/developer/msbuild/2003"?>
 
-<Project Sdk="Aspire.AppHost.Sdk/17.0.0">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>c6f7845b-4507-4b76-9d66-de04efbd8180</UserSecretsId>
@@ -13,6 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" />
     <PackageReference Include="Aspire.Hosting.Docker" />
     <PackageReference Include="Aspire.Hosting.KeyCloak" />
     <PackageReference Include="Aspire.Hosting.MongoDB" />
@@ -26,9 +28,4 @@
     <PackageReference Include="WebPush" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="../../IHFiction.FictionApi/IHFiction.FictionApi.csproj" />
-    <ProjectReference Include="../IHFiction.MigrationService/IHFiction.MigrationService.csproj" />
-    <ProjectReference Include="../../IHFiction.WebClient/IHFiction.WebClient.csproj" />
-  </ItemGroup>
 </Project>

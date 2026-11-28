@@ -2,6 +2,7 @@
 #pragma warning disable ASPIRECOMPUTE003 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 using Aspire.Hosting.Docker;
+using Aspire.Hosting.Dotnet;
 using Aspire.Hosting.Publishing;
 
 using static IHFiction.AppHost.Extensions.DockerSwarmExtensions;
@@ -224,7 +225,7 @@ internal static class ProductionConfigExtensions
         });
 
 
-    public static IResourceBuilder<ProjectResource> ConfigureMigrationsForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
+    public static IResourceBuilder<DotnetProjectResource> ConfigureMigrationsForSwarm(this IResourceBuilder<DotnetProjectResource> builder) => builder
         .WithCommonOptions()
         .PublishAsDockerComposeService((res, service) =>
         {
@@ -251,7 +252,7 @@ internal static class ProductionConfigExtensions
                 service.Image = $"{reference.ToRegistryStringAsync().GetAwaiter().GetResult()}/{res.Name}:latest";
         });
 
-    public static IResourceBuilder<ProjectResource> ConfigureFictionApiForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
+    public static IResourceBuilder<DotnetProjectResource> ConfigureFictionApiForSwarm(this IResourceBuilder<DotnetProjectResource> builder) => builder
         .WithCommonOptions()
         .WithDockerHealthcheck(configureOptions: options =>
         {
@@ -313,7 +314,7 @@ internal static class ProductionConfigExtensions
                 service.Image = $"{reference.ToRegistryStringAsync().GetAwaiter().GetResult()}/{res.Name}:latest";
         });
 
-    public static IResourceBuilder<ProjectResource> ConfigureWebClientForSwarm(this IResourceBuilder<ProjectResource> builder) => builder
+    public static IResourceBuilder<DotnetProjectResource> ConfigureWebClientForSwarm(this IResourceBuilder<DotnetProjectResource> builder) => builder
         .WithCommonOptions()
         .WithDockerHealthcheck(configureOptions: options =>
         {
