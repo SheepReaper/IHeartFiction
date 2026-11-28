@@ -20,6 +20,7 @@ public sealed partial class CspPolicyProvider
     // Recompute if Firefox reports style-src-elem violations from _framework/blazor.web.*.js after a Blazor update.
     // private const string BlazorWebHash = "SfuC48/zZyM2iVQsbRmS3bpkry8OrkY1Mxt9WZ6EYU0=";
     private readonly string[] _policySegments;
+    private readonly string[] _authenticatedDocumentPolicySegments;
     private readonly string[] _remoteSignOutPolicySegments;
     private readonly string[] _policyReportOnlySegments;
 
@@ -32,7 +33,6 @@ public sealed partial class CspPolicyProvider
         if (!oidcAuthority.IsAbsoluteUri || (oidcAuthority.Scheme != Uri.UriSchemeHttps && oidcAuthority.Scheme != Uri.UriSchemeHttp))
             throw new ArgumentException("OIDC authority must be an absolute HTTP(S) URI.", nameof(oidcAuthority));
 
-        // Chromium applies form-action to the redirect from our logout POST to the identity provider.
         var identityProviderOrigin = oidcAuthority.GetComponents(UriComponents.SchemeAndServer, UriFormat.UriEscaped);
 
         var baseUrl = siteUrlOptions.BaseUrl?.ToString().TrimEnd('/') ?? string.Empty;
@@ -53,7 +53,7 @@ public sealed partial class CspPolicyProvider
             default-src 'none';
             connect-src 'self' {webSocketHost}{browserRefreshSources} https://links.services.disqus.com https://glitter.services.disqus.com https://referrer.disqus.com;
             font-src 'self' data:;
-            form-action 'self' {identityProviderOrigin};
+            form-action 'self';
             frame-src 'self' data: https://disqus.com https://{disqusHost};
             img-src 'self' data: https://referrer.disqus.com https://c.disquscdn.com https://cdn.viglink.com https://www.gravatar.com;
             manifest-src 'self';
@@ -73,6 +73,10 @@ public sealed partial class CspPolicyProvider
         ReportTo = reportTo;
 
         _policySegments = GetSegments(policyTemplate, NonceMarker);
+        // The account menu's logout form is rendered on authenticated pages. Chromium checks
+        // its redirect against the source document's CSP, not the logout POST response's CSP.
+        _authenticatedDocumentPolicySegments = GetSegments(policyTemplate.Replace(
+            "form-action 'self';", $"form-action 'self' {identityProviderOrigin};", StringComparison.Ordinal), NonceMarker);
         // Only the OIDC remote-sign-out response may be embedded by the identity provider.
         _remoteSignOutPolicySegments = GetSegments(policyTemplate.Replace(
             "frame-ancestors 'self';", $"frame-ancestors 'self' {identityProviderOrigin};", StringComparison.Ordinal), NonceMarker);
@@ -90,6 +94,8 @@ public sealed partial class CspPolicyProvider
     }
 
     public string RenderRemoteSignOutPolicy(string nonce) => FormatPolicy(nonce, _remoteSignOutPolicySegments);
+
+    public string RenderAuthenticatedDocumentPolicy(string nonce) => FormatPolicy(nonce, _authenticatedDocumentPolicySegments);
 
     public string RenderPolicyReportOnly(string nonce)
     {

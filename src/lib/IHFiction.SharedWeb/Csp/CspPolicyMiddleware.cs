@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Microsoft.Net.Http.Headers;
 
 using static IHFiction.SharedWeb.Csp.CspConstants;
 
@@ -38,9 +39,20 @@ public sealed class CspPolicyMiddleware(
 
                 // Enforced frame-ancestors takes precedence over legacy X-Frame-Options,
                 // including SAMEORIGIN added by an upstream proxy (CSP section 6.4.2.2).
-                context.Response.Headers.ContentSecurityPolicy = isRemoteSignOut
-                    ? policyProvider.RenderRemoteSignOutPolicy(nonce)
-                    : policyProvider.RenderPolicy(nonce);
+                if (isRemoteSignOut)
+                {
+                    context.Response.Headers.ContentSecurityPolicy = policyProvider.RenderRemoteSignOutPolicy(nonce);
+                }
+                else if (context.User.Identity?.IsAuthenticated == true &&
+                    MediaTypeHeaderValue.TryParse(context.Response.ContentType, out var contentType) &&
+                    contentType.MediaType.Equals("text/html", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Response.Headers.ContentSecurityPolicy = policyProvider.RenderAuthenticatedDocumentPolicy(nonce);
+                }
+                else
+                {
+                    context.Response.Headers.ContentSecurityPolicy = policyProvider.RenderPolicy(nonce);
+                }
 
                 var reportOnlyPolicy = policyProvider.RenderPolicyReportOnly(nonce);
 
