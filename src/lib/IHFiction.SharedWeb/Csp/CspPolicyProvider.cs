@@ -20,6 +20,7 @@ public sealed partial class CspPolicyProvider
     // Recompute if Firefox reports style-src-elem violations from _framework/blazor.web.*.js after a Blazor update.
     // private const string BlazorWebHash = "SfuC48/zZyM2iVQsbRmS3bpkry8OrkY1Mxt9WZ6EYU0=";
     private readonly string[] _policySegments;
+    private readonly string[] _remoteSignOutPolicySegments;
     private readonly string[] _policyReportOnlySegments;
 
     public CspPolicyProvider(SiteUrlOptions siteUrlOptions, DisqusOptions disqusOptions, IHostEnvironment environment, Uri oidcAuthority)
@@ -72,6 +73,9 @@ public sealed partial class CspPolicyProvider
         ReportTo = reportTo;
 
         _policySegments = GetSegments(policyTemplate, NonceMarker);
+        // Only the OIDC remote-sign-out response may be embedded by the identity provider.
+        _remoteSignOutPolicySegments = GetSegments(policyTemplate.Replace(
+            "frame-ancestors 'self';", $"frame-ancestors 'self' {identityProviderOrigin};", StringComparison.Ordinal), NonceMarker);
         _policyReportOnlySegments = GetSegments(policyReportOnlyTemplate, NonceMarker);
     }
 
@@ -84,6 +88,8 @@ public sealed partial class CspPolicyProvider
     {
         return FormatPolicy(nonce, _policySegments);
     }
+
+    public string RenderRemoteSignOutPolicy(string nonce) => FormatPolicy(nonce, _remoteSignOutPolicySegments);
 
     public string RenderPolicyReportOnly(string nonce)
     {
