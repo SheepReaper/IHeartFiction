@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -36,7 +37,9 @@ public static partial class Extensions
             var siteUrlOptions = sp.GetRequiredService<IOptions<SiteUrlOptions>>().Value;
             var disqusOptions = sp.GetRequiredService<IOptions<DisqusOptions>>().Value;
 
-            return new CspPolicyProvider(siteUrlOptions, disqusOptions, sp.GetRequiredService<IHostEnvironment>());
+            var authority = sp.GetRequiredService<IConfiguration>()["OidcAuthority"]
+                ?? throw new InvalidOperationException("OidcAuthority configuration is required for CSP form redirects.");
+            return new CspPolicyProvider(siteUrlOptions, disqusOptions, sp.GetRequiredService<IHostEnvironment>(), new Uri(authority, UriKind.Absolute));
         });
 
         return services;
