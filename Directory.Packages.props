@@ -82,7 +82,7 @@
     <PackageVersion Include="Scalar.AspNetCore" Version="3.0.1" />
     <PackageVersion Include="Shirubasoft.Aspire.CloudflareTunnels" Version="2.5.1" />
     <PackageVersion Include="Sidio.Sitemap.Blazor" Version="2.1.0" />
-    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.36.0.15337">
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.37.0.15768">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
