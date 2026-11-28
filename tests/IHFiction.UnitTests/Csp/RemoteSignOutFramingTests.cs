@@ -72,5 +72,6 @@ public sealed class RemoteSignOutFramingTests
         Assert.Equal("SAMEORIGIN", Assert.Single(response.Headers.GetValues("X-Frame-Options")));
         Assert.DoesNotContain("untrusted.test", policy);
         Assert.Contains("object-src 'none'", policy);
+        Assert.Contains("form-action 'self';", policy);
     }
 }

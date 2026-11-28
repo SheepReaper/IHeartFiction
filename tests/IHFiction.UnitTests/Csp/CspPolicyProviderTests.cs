@@ -16,7 +16,7 @@ public sealed class CspPolicyProviderTests
     [Theory]
     [InlineData("https://auth.example.test/realms/fiction", "https://auth.example.test")]
     [InlineData("https://localhost:8080/realms/fiction", "https://localhost:8080")]
-    public void RenderPolicy_AllowsFormRedirectOnlyToConfiguredIdentityProvider(string authority, string origin)
+    public void AuthenticatedDocumentPolicy_AllowsFormRedirectOnlyToConfiguredIdentityProvider(string authority, string origin)
     {
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(
@@ -26,9 +26,12 @@ public sealed class CspPolicyProviderTests
         services.AddSingleton(Substitute.For<IHostEnvironment>());
         services.AddCspProvider();
         using var provider = services.BuildServiceProvider();
-        var policy = provider.GetRequiredService<CspPolicyProvider>().RenderPolicy("nonce");
+        var policyProvider = provider.GetRequiredService<CspPolicyProvider>();
+        var policy = policyProvider.RenderAuthenticatedDocumentPolicy("nonce");
         var formAction = policy.Split(';').Single(d => d.TrimStart().StartsWith("form-action ", StringComparison.Ordinal)).Trim();
         Assert.Equal($"form-action 'self' {origin}", formAction);
+        Assert.Contains("form-action 'self';", policyProvider.RenderPolicy("nonce"));
+        Assert.Contains("form-action 'self';", policyProvider.RenderRemoteSignOutPolicy("nonce"));
     }
 
     [Theory]
