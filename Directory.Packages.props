@@ -17,7 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageVersion>
-    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageVersion Include="EFCore.NamingConventions" Version="11.0.0" />
     <!-- Pin FluentAssertions due to their licensing change in v8 -->
     <PackageVersion Include="FluentAssertions" Version="[7.2.2,8.0.0)" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
@@ -64,9 +64,9 @@
     <PackageVersion Include="MongoDB.Driver" Version="3.14.1" />
     <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="10.0.6" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
-    <PackageVersion Include="Npgsql" Version="10.0.4" />
+    <PackageVersion Include="Npgsql" Version="11.0.0" />
     <PackageVersion Include="Npgsql.DependencyInjection" Version="10.0.4" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.4" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0" />
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.4" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="ReverseMarkdown" Version="6.3.0" />
@@ -90,11 +90,11 @@
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="Ulid" Version="1.4.1" />
     <PackageVersion Include="WebPush" Version="1.0.13" />
-    <PackageVersion Include="WolverineFx" Version="6.64.2" />
-    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.64.2" />
-    <PackageVersion Include="WolverineFx.Postgresql" Version="6.64.2" />
-    <PackageVersion Include="WolverineFx.Redis" Version="6.64.2" />
-    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.64.2" />
+    <PackageVersion Include="WolverineFx" Version="6.65.0" />
+    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.65.0" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="6.65.0" />
+    <PackageVersion Include="WolverineFx.Redis" Version="6.65.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.65.0" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="4.0.3" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
