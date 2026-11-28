@@ -37,13 +37,13 @@ var fictionDb = postgres.AddDatabase("fiction-db");
 var keycloak = builder.AddKeycloak("keycloak", 8080)
     .WithLifetime(ContainerLifetime.Persistent);
 
-var migrations = builder.AddProject<Projects.IHFiction_MigrationService>("migrations")
+var migrations = builder.AddDotnetProject("migrations", "../IHFiction.MigrationService/IHFiction.MigrationService.csproj")
     .WithReference(fictionDb)
     .WithReference(storiesDb)
     .WaitFor(postgres)
     .WaitFor(storiesDb);
 
-var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
+var fictionApi = builder.AddDotnetProject("fiction", "../../IHFiction.FictionApi/IHFiction.FictionApi.csproj")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:11.0-alpine")
     .WithReference(keycloak)
     .WithReference(fictionDb)
@@ -56,7 +56,7 @@ var fictionApi = builder.AddProject<Projects.IHFiction_FictionApi>("fiction")
     .WithHttpProbe(ProbeType.Readiness, "/health", endpointName: "http")
     .WithReplicas(builder.Configuration.GetValue("Containers:Api:ReplicaCount", 1));
 
-var webClient = builder.AddProject<Projects.IHFiction_WebClient>("web")
+var webClient = builder.AddDotnetProject("web", "../../IHFiction.WebClient/IHFiction.WebClient.csproj")
     .WithDockerfileBaseImage(runtimeImage: "mcr.microsoft.com/dotnet/aspnet:11.0-alpine")
     .WithHttpProbe(ProbeType.Liveness, "/alive", endpointName: "http")
     .WithHttpProbe(ProbeType.Readiness, "/health", endpointName: "http")
